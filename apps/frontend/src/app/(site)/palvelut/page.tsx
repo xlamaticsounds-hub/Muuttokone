@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Services from "@/components/Services";
+import Services from "@/features/services";
 import ServicesDivider from "@/components/ServicesDivider";
-import { directusFetch, assetUrl } from "@/libs/directus";
+import { directusFetch, assetUrl } from "@/lib/directus";
 import type { Service } from "@/types/service";
 
 export const metadata: Metadata = {

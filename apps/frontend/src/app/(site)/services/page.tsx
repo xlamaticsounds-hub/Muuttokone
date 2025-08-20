@@ -2,13 +2,13 @@ import React from "react";
 import Image from "next/image";
 import { Metadata } from "next";
 import { NextPage } from "next";
-import Services from "@/components/Services";
+import Services from "@/features/services";
 import SectionTitle from "@/components/SectionTitle";
-import ContactFormBox from "@/components/Contact/ContactFormBox";
+import ContactFormBox from "@/features/contact/ContactFormBox";
 import Cta from "@/components/Cta";
-import { directusFetch, assetUrl } from "@/libs/directus";
+import { directusFetch, assetUrl } from "@/lib/directus";
 import type { Service } from "@/types/service";
-import serviceData from "@/components/Services/serviceData";
+import serviceData from "@/features/services/serviceData";
 
 
 export const metadata: Metadata = {

@@ -1,18 +1,15 @@
 import type { Metadata } from "next";
 import HeroArea from "@/components/HeroArea";
-import Testimonials from "@/components/Testimonials";
 import About from "@/components/About";
-import Services from "@/components/Services";
+import Services from "@/features/services";
 import ServicesDivider from "@/components/ServicesDivider";
-// import Pricing from "@/components/Pricing"; // Temporarily hidden per requirements
 import SmallFeatures from "@/components/SmallFeatures";
-import Contact from "@/components/Contact";
+import Contact from "@/features/contact";
 import Cta from "@/components/Cta";
-import QuickQuote from "@/components/Forms/QuickQuote";
-import { integrations } from "../../../integrations.config";
-import { directusFetch, assetUrl } from "@/libs/directus";
+import QuickQuote from "@/features/quote/quick-quote";
+import { directusFetch, assetUrl } from "@/lib/directus";
 import type { Service } from "@/types/service";
-import staticServiceData from "@/components/Services/serviceData";
+import staticServiceData from "@/features/services/serviceData";
 
 export const metadata: Metadata = {
   title: "Muuttokone.fi - Luotettava muuttopalvelu koko Suomessa",
@@ -57,7 +54,6 @@ export default async function Home() {
       />
       <About />
       {/* <Testimonials /> */}
-  {/* <Pricing /> */}
       <Contact />
       <Cta />
     </>

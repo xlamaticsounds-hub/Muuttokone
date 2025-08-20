@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { DIRECTUS_URL } from "@/libs/directus";
+import { DIRECTUS_URL } from "@/lib/directus";
 
 export const revalidate = 3600; // cache for 1h on the edge/cache layer if possible
 

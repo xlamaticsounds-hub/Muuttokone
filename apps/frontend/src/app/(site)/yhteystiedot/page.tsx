@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Contact from "@/components/Contact";
+import Contact from "@/features/contact";
 
 export const metadata: Metadata = {
   title: "Yhteystiedot – Muuttokone.fi",

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
-import { onScroll } from "@/utils/scrollActive";
+import { onScroll } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";

@@ -2,13 +2,10 @@
   A[/ /] --> B[/palvelut]
   A --> C[/kotimuutto]
   A --> D[/yritysmuutto]
-  A --> E[/hinnat]
   A --> F[/tarjouspyynto]
   A --> G[/yhteystiedot]
   A -.legacy.-> H[/services]
   H -.redir.-> B
-  A -.legacy.-> I[/pricing]
-  I -.redir.-> E
   A -.legacy.-> J[/services/residential-moves]
   J -.redir.-> C
   A -.legacy.-> K[/services/business-moves]

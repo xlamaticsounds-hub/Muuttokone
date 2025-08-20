@@ -7,7 +7,6 @@ Tämä tiedosto kokoaa konkreettiset tehtävät ja etenemissuunnitelman guide.md
 - [x] Etusivun metadata FI (title/desc)
 - [x] Contact-sektio korjattu ja suomennettu (Contact/index.tsx, contactData, formData, validoinnit)
 - [x] Testimonials-osion korjaus ja suomennos
-- [x] Pricing-osion otsikot suomeksi
 - [x] Footerin kuvaus ja valikkoryhmät suomeksi, uutiskirjeen tekstit suomeksi
 - [x] Etusivulla `Contact`-import korjattu
 - [x] QuickQuote upotettuna etusivulle
@@ -41,7 +40,7 @@ Hyväksymiskriteerit:
 
 Huomio:
 - Dynaaminen reitti `/toimialueet/[city]` on poistettu laajuudesta (descoped pyynnöstä).
- - Legacy EN-reitit ohjataan FI-reiteille (`/services*` → FI vastineet, `/pricing` → `/hinnat`, `/contact` → `/yhteystiedot`).
+ - Legacy EN-reitit ohjataan FI-reiteille (`/services*` → FI vastineet, `/contact` → `/yhteystiedot`).
 
 Hyväksymiskriteerit:
 - [x] Reitit renderöityvät ja linkittyvät headerissa; 404 ei esiinny perusnavigaatiossa

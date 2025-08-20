@@ -7,7 +7,7 @@ import ScrollToTop from "@/components/ScrollToTop";
 import React from "react";
 import { Providers } from "./providers";
 import { Inter, Outfit } from "next/font/google";
-import { getSiteConfig } from "@/libs/siteConfig.server";
+import { getSiteConfig } from "@/server/site-config";
 import Script from "next/script";
 import GA from "@/components/Analytics/GA";
 

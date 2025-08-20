@@ -9,11 +9,20 @@ const menuData: Menu[] = [
     label: "Palvelut",
     route: "/palvelut",
   },
-  // Removed Yritys, Hinnat, Blogi per request
+  // Removed Yritys, Blogi per request
   {
     label: "Yhteystiedot",
     route: "/yhteystiedot",
   },
+  // --- Maybe ---
+  // {
+  //   label: "Kotimuutto",
+  //   route: "/kotimuutto",
+  // },
+  // {
+  //   label: "Yritysmuutto",
+  //   route: "/yritysmuutto",
+  // },
 ];
 
 export default menuData;

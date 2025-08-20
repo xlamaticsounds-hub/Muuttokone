@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { DIRECTUS_URL } from "@/libs/directus";
+import { DIRECTUS_URL } from "@/lib/directus";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
