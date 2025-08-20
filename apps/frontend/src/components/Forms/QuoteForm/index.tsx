@@ -29,8 +29,29 @@ export default function QuoteForm() {
   const [step, setStep] = useState(1);
   const [data, setData] = useState<QuoteData>({ name: "" });
 
-  const next = () => setStep((s) => Math.min(2, s + 1));
-  const back = () => setStep((s) => Math.max(1, s - 1));
+  // On mount, load quick quote data from localStorage if present
+  React.useEffect(() => {
+    if (typeof window !== "undefined") {
+      const quickQuote = localStorage.getItem("quickQuoteData");
+      if (quickQuote) {
+        try {
+          const parsed = JSON.parse(quickQuote);
+          setData((d) => ({
+            ...d,
+            name: parsed.name || d.name,
+            phone: parsed.phone || d.phone,
+            from: parsed.fromLocation || d.from,
+            to: parsed.toLocation || d.to,
+            size: parsed.homeSize || d.size,
+          }));
+          localStorage.removeItem("quickQuoteData");
+        } catch {}
+      }
+    }
+  }, []);
+
+  const next = () => setStep((s: number) => Math.min(2, s + 1));
+  const back = () => setStep((s: number) => Math.max(1, s - 1));
 
   return (
     <div className="rounded-lg bg-white p-7.5 shadow-3 dark:bg-black">

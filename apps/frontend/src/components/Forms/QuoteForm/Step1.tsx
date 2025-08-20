@@ -24,7 +24,7 @@ export default function Step1({ data, setData, onNext }: Props) {
           <input
             className="w-full rounded-lg border border-strokedark bg-transparent px-4 py-3 focus:border-primary focus:outline-hidden dark:border-stroke"
             value={data.name || ""}
-            onChange={(e) => setData((d) => ({ ...d, name: e.target.value }))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setData((d: QuoteData) => ({ ...d, name: e.target.value }))}
             required
           />
         </div>
@@ -34,7 +34,7 @@ export default function Step1({ data, setData, onNext }: Props) {
             type="email"
             className="w-full rounded-lg border border-strokedark bg-transparent px-4 py-3 focus:border-primary focus:outline-hidden dark:border-stroke"
             value={data.email || ""}
-            onChange={(e) => setData((d) => ({ ...d, email: e.target.value }))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setData((d: QuoteData) => ({ ...d, email: e.target.value }))}
           />
         </div>
         <div>
@@ -42,20 +42,28 @@ export default function Step1({ data, setData, onNext }: Props) {
           <input
             className="w-full rounded-lg border border-strokedark bg-transparent px-4 py-3 focus:border-primary focus:outline-hidden dark:border-stroke"
             value={data.phone || ""}
-            onChange={(e) => setData((d) => ({ ...d, phone: e.target.value }))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setData((d: QuoteData) => ({ ...d, phone: e.target.value }))}
             required
           />
         </div>
         <div>
-          <label className="mb-2 block">Mistä → minne (postinumerot)</label>
+          <label className="mb-2 block">Mistä (postinumero)</label>
           <input
-            placeholder="00100 → 20100"
+            placeholder="00100"
             className="w-full rounded-lg border border-strokedark bg-transparent px-4 py-3 focus:border-primary focus:outline-hidden dark:border-stroke"
-            value={data.from && data.to ? `${data.from} → ${data.to}` : ""}
-            onChange={(e) => {
-              const [from, to] = e.target.value.split("→").map((s) => s.trim());
-              setData((d) => ({ ...d, from, to }));
-            }}
+            value={data.from || ""}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setData((d: QuoteData) => ({ ...d, from: e.target.value }))}
+            required
+          />
+        </div>
+        <div>
+          <label className="mb-2 block">Minne (postinumero)</label>
+          <input
+            placeholder="20100"
+            className="w-full rounded-lg border border-strokedark bg-transparent px-4 py-3 focus:border-primary focus:outline-hidden dark:border-stroke"
+            value={data.to || ""}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setData((d: QuoteData) => ({ ...d, to: e.target.value }))}
+            required
           />
         </div>
         <div>
@@ -63,7 +71,7 @@ export default function Step1({ data, setData, onNext }: Props) {
           <select
             className="w-full rounded-lg border border-strokedark bg-transparent px-4 py-3 focus:border-primary focus:outline-hidden dark:border-stroke"
             value={data.size || ""}
-            onChange={(e) => setData((d) => ({ ...d, size: e.target.value }))}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setData((d: QuoteData) => ({ ...d, size: e.target.value }))}
           >
             <option value="">Valitse</option>
             <option>Yksiö</option>
@@ -81,7 +89,7 @@ export default function Step1({ data, setData, onNext }: Props) {
             min={new Date().toISOString().split("T")[0]}
             className="w-full rounded-lg border border-strokedark bg-transparent px-4 py-3 focus:border-primary focus:outline-hidden dark:border-stroke"
             value={data.date || ""}
-            onChange={(e) => setData((d) => ({ ...d, date: e.target.value }))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setData((d: QuoteData) => ({ ...d, date: e.target.value }))}
             required
           />
           <div className="mt-3 flex gap-2">
@@ -106,7 +114,7 @@ export default function Step1({ data, setData, onNext }: Props) {
               id="isBusiness"
               type="checkbox"
               checked={!!data.isBusiness}
-              onChange={(e) => setData((d) => ({ ...d, isBusiness: e.target.checked }))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setData((d: QuoteData) => ({ ...d, isBusiness: e.target.checked }))}
             />
             <label htmlFor="isBusiness">Olen yritysasiakas</label>
           </div>
@@ -116,7 +124,7 @@ export default function Step1({ data, setData, onNext }: Props) {
               <input
                 className="w-full rounded-lg border border-strokedark bg-transparent px-4 py-3 focus:border-primary focus:outline-hidden dark:border-stroke"
                 value={data.businessId || ""}
-                onChange={(e) => setData((d) => ({ ...d, businessId: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setData((d: QuoteData) => ({ ...d, businessId: e.target.value }))}
                 required
               />
             </div>
@@ -128,7 +136,7 @@ export default function Step1({ data, setData, onNext }: Props) {
           <input
             className="w-full rounded-lg border border-strokedark bg-transparent px-4 py-3 focus:border-primary focus:outline-hidden dark:border-stroke"
             value={data.fromExtra || ""}
-            onChange={(e) => setData((d) => ({ ...d, fromExtra: e.target.value }))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setData((d: QuoteData) => ({ ...d, fromExtra: e.target.value }))}
             placeholder="Esim. porttikoodi, pitkät portaat, sisäpiha"
           />
         </div>
@@ -137,7 +145,7 @@ export default function Step1({ data, setData, onNext }: Props) {
           <input
             className="w-full rounded-lg border border-strokedark bg-transparent px-4 py-3 focus:border-primary focus:outline-hidden dark:border-stroke"
             value={data.toExtra || ""}
-            onChange={(e) => setData((d) => ({ ...d, toExtra: e.target.value }))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setData((d: QuoteData) => ({ ...d, toExtra: e.target.value }))}
             placeholder="Esim. pysäköinti, kantomatka, hissi"
           />
         </div>

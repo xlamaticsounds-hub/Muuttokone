@@ -1,5 +1,4 @@
 import "../../css/style.css";
-import PreLoader from "@/components/PreLoader";
 import NextTopLoader from "nextjs-toploader";
 import Header from "@/components/Header";
 import ToasterContext from "@/app/context/ToastContext";
@@ -22,9 +21,8 @@ export default async function RootLayout({
 }>) {
   const siteConfig = await getSiteConfig();
   return (
-    <html lang="en" suppressHydrationWarning className="h-full overflow-x-clip">
+    <html lang="fi" suppressHydrationWarning className="h-full overflow-x-clip">
       <body className={`dark:bg-black ${inter.variable} ${outfit.variable} h-full overflow-x-hidden` }>
-        <PreLoader />
         <>
           <ToasterContext />
           <Providers siteConfig={siteConfig}>
