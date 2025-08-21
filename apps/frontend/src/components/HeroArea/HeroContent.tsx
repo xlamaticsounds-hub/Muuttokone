@@ -83,8 +83,8 @@ export default function HeroContent() {
               </span>
             </h1>
             <p className="text-regular text-black/70 sm:text-lg dark:text-white/80">
-              Nopea, turvallinen ja läpinäkyvä muutto koko Suomessa. Vakuutettu ja kokenut
-              muuttopalvelu yksityis- ja yritysasiakkaille. Ei piilokuluja, vain rehellinen
+              Nopea, turvallinen ja läpinäkyvä muutto koko Suomessa. Ammattitaitoiset ja tehokkaat
+              muuttopalvelut yksityis- ja yritysasiakkaille. Ei piilokuluja, vain rehellinen
               hinnoittelu.
             </p>
 

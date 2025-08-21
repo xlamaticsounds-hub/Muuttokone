@@ -63,7 +63,7 @@ export default function AboutContent() {
               </svg>
             </div>
             <span className="font-medium text-black dark:text-white">
-              Vakuutettu palvelu ja SMPY-jäsenyys
+              Kokeneet ja tehokkaat tekijät
             </span>
           </div>
         </div>

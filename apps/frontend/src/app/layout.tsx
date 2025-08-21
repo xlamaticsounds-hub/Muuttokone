@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     default: 'Muuttokone.fi - Luotettava muuttopalvelu koko Suomessa',
   },
   description:
-    'Nopea, turvallinen ja läpinäkyvä muutto. Koti- ja yritysmuutot, pakkaus, varastointi ja siivous. Vakuutettu SMPY-jäsen. Pyydä maksuton tarjous!',
+    'Nopea, turvallinen ja läpinäkyvä muutto. Koti- ja yritysmuutot, pakkaus, varastointi ja siivous. Pyydä maksuton tarjous!',
   keywords: [
     'muutto',
     'muuttofirma',
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
     siteName: 'Muuttokone.fi',
     title: 'Muuttokone.fi - Luotettava muuttopalvelu koko Suomessa',
     description:
-      'Nopea, turvallinen ja läpinäkyvä muutto. Koti- ja yritysmuutot, pakkaus, varastointi ja siivous. Vakuutettu SMPY-jäsen.',
+      'Nopea, turvallinen ja läpinäkyvä muutto. Koti- ja yritysmuutot, pakkaus, varastointi ja siivous.',
     images: [
       {
         url: '/images/og-image.jpg',

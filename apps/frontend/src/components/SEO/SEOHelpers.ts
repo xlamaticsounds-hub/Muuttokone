@@ -56,14 +56,14 @@ export function generateSEOMetadata({
 export const SEOConfigs = {
   home: {
     title: 'Muuttokone.fi - Luotettava muuttopalvelu koko Suomessa',
-    description: 'Nopea, turvallinen ja läpinäkyvä muutto. Koti- ja yritysmuutot, pakkaus, varastointi ja siivous. Vakuutettu SMPY-jäsen. Pyydä maksuton tarjous!',
+    description: 'Nopea, turvallinen ja läpinäkyvä muutto. Koti- ja yritysmuutot, pakkaus, varastointi ja siivous. Tehokkaat ja ammattitaitoiset tekijät. Pyydä maksuton tarjous!',
     keywords: ['muutto', 'muuttofirma', 'muuttopalvelu', 'Helsinki', 'Tampere', 'Turku', 'Suomi'],
     canonical: '/',
   },
   
   services: {
     title: 'Palvelut - Muuttopalvelumme',
-    description: 'Kattavat muuttopalvelut: kotimuutto, yritysmuutto, pakkauspalvelut, varastointi ja siivous. SMPY-jäsen, vakuutettu ja luotettava.',
+    description: 'Kattavat muuttopalvelut: kotimuutto, yritysmuutto, pakkauspalvelut, varastointi ja siivous. Tehokkaat ja ammattitaitoiset tekijät.',
     keywords: ['muuttopalvelut', 'kotimuutto', 'yritysmuutto', 'pakkaus', 'varastointi', 'siivous'],
     canonical: '/palvelut',
   },
