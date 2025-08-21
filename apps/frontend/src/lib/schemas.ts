@@ -13,12 +13,5 @@ export {
   type NewsletterData,
 } from '@/features/contact/schemas';
 
-export {
-  quoteSchema,
-  quickQuoteSchema,
-  type QuoteFormData,
-  type QuickQuoteData,
-} from '@/features/quote/schemas';
-
 // Also export shared helpers if needed in future
 export * from '@/lib/form-helpers';

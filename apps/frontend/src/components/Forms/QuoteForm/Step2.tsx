@@ -1,10 +1,8 @@
 'use client';
 
-import { Dispatch, SetStateAction, useMemo, useState } from 'react';
+import { Dispatch, SetStateAction, useState } from 'react';
 import { QuoteData } from '.';
-import axios from 'axios';
 import toast from 'react-hot-toast';
-import Image from 'next/image';
 
 type Props = {
   data: QuoteData;
@@ -13,150 +11,68 @@ type Props = {
 };
 
 export default function Step2({ data, setData, onBack }: Props) {
-  const [files, setFiles] = useState<File[]>([]);
-  const previews = useMemo(() => files.map((f) => URL.createObjectURL(f)), [files]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const submit = async () => {
-    try {
-      const formData = new FormData();
-
-  // Send as a quote submission: create lead (name,email,phone) and a separate quote JSON
-  formData.append('type', 'quote');
-
-  // Contact fields (leads are minimal: name, email, phone)
-  if (data.name) formData.append('name', data.name);
-  if (data.email) formData.append('email', data.email);
-  if (data.phone) formData.append('phone', data.phone);
-
-  // Quote payload: submit the full quote info as JSON string
-  formData.append('quote', JSON.stringify(data));
-
-  // Meta information
-  formData.append('source', 'website');
-  if (typeof navigator !== 'undefined') formData.append('user_agent', navigator.userAgent);
-
-  // Append files (these will be uploaded and file ids stored on the quote)
-  files.forEach((f) => formData.append('files', f));
-
-  // Let axios set the Content-Type with boundary
-  const res = await axios.post('/api/submit', formData);
-      if (res.status === 200) {
-        toast.success('Kiitos! Järjestelmämme laskee parasta tarjousta ja palaamme sähköpostitse.');
-      } else {
-        toast.error('Lähetys epäonnistui.');
-      }
-    } catch (e: any) {
-      toast.error(e?.response?.data || 'Virhe lähetyksessä');
+    if (isSubmitting) return;
+    
+    if (!data.name.trim()) {
+      toast.error('Nimi on pakollinen');
+      return;
     }
-  };
 
-  const toggleService = (s: string) => {
-    setData((d) => {
-      const list = new Set(d.services || []);
-      list.has(s) ? list.delete(s) : list.add(s);
-      return { ...d, services: Array.from(list) };
-    });
+    setIsSubmitting(true);
+
+    try {
+      // Submit directly to leads collection
+      const response = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'lead',
+          data: {
+            name: data.name,
+            phone: data.phone || null,
+            from_location: data.from_location || null,
+            to_location: data.to_location || null,
+            apartment_size: data.apartment_size || null,
+            moving_date: data.moving_date || null,
+            message: data.message || null,
+            service_type: 'quote_request',
+            source: 'website',
+          }
+        })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success('Tarjouspyyntö lähetetty onnistuneesti!');
+        // Reset form
+        setData({ name: '' });
+        onBack(); // Go back to step 1 (which will now be empty)
+      } else {
+        throw new Error(result.message || 'Lähetys epäonnistui');
+      }
+    } catch (error) {
+      console.error('Quote submission error:', error);
+      toast.error('Tarjouspyynnön lähetys epäonnistui. Yritä uudelleen.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-        <div>
-          <label className="mb-2 block">Lisäpalvelut</label>
-          <div className="flex flex-wrap gap-2">
-            {[
-              'Pakkaus',
-              'Siivous',
-              'Muuttolaatikot',
-              'Varastointi',
-              'Pianon siirto',
-              'Nosturi',
-            ].map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => toggleService(s)}
-                className={`rounded-full border px-4 py-2 ${data.services?.includes(s) ? 'bg-primary border-primary text-white' : 'border-strokedark'}`}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div>
-          <label className="mb-2 block">Inventaario / huomioita</label>
-          <textarea
-            rows={6}
-            className="border-strokedark focus:border-primary dark:border-stroke w-full rounded-lg border bg-transparent px-4 py-3 focus:outline-hidden"
-            value={data.inventory || ''}
-            onChange={(e) => setData((d) => ({ ...d, inventory: e.target.value }))}
-          />
-        </div>
-        <div>
-          <label className="mb-2 block">Hissi olemassa?</label>
-          <select
-            className="border-strokedark focus:border-primary dark:border-stroke w-full rounded-lg border bg-transparent px-4 py-3 focus:outline-hidden"
-            value={data.elevator ? 'kylla' : data.elevator === false ? 'ei' : ''}
-            onChange={(e) => setData((d) => ({ ...d, elevator: e.target.value === 'kylla' }))}
-          >
-            <option value="">Valitse</option>
-            <option value="kylla">Kyllä</option>
-            <option value="ei">Ei</option>
-          </select>
-        </div>
-        <div>
-          <label className="mb-2 block">Kantomatka (arvio)</label>
-          <input
-            placeholder="esim. 30 m"
-            className="border-strokedark focus:border-primary dark:border-stroke w-full rounded-lg border bg-transparent px-4 py-3 focus:outline-hidden"
-            value={data.distance || ''}
-            onChange={(e) => setData((d) => ({ ...d, distance: e.target.value }))}
-          />
-        </div>
-        <div className="md:col-span-2">
-          <label className="mb-2 block">Lisähuomiot</label>
-          <textarea
-            rows={4}
-            className="border-strokedark focus:border-primary dark:border-stroke w-full rounded-lg border bg-transparent px-4 py-3 focus:outline-hidden"
-            value={data.notes || ''}
-            onChange={(e) => setData((d) => ({ ...d, notes: e.target.value }))}
-          />
-        </div>
-
-        <div className="md:col-span-2">
-          <label className="mb-2 block">Yhteydenoton toiveet (valinnainen)</label>
-          <input
-            className="border-strokedark focus:border-primary dark:border-stroke w-full rounded-lg border bg-transparent px-4 py-3 focus:outline-hidden"
-            value={data.contactNotes || ''}
-            onChange={(e) => setData((d) => ({ ...d, contactNotes: e.target.value }))}
-            placeholder="Paras soittoaika, muut toiveet..."
-          />
-        </div>
-
-        <div className="md:col-span-2">
-          <label className="mb-2 block">Lisää kuvia (valinnainen)</label>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={(e) => {
-              const fl = Array.from(e.target.files || []);
-              setFiles(fl);
-            }}
-          />
-          {previews.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-3">
-              {previews.map((src, i) => (
-                <Image
-                  key={i}
-                  src={src}
-                  alt={`liite ${i + 1}`}
-                  className="h-20 w-20 rounded object-cover"
-                />
-              ))}
-            </div>
-          )}
-        </div>
+      <div>
+        <label className="mb-2 block">Lisätietoja (valinnainen)</label>
+        <textarea
+          rows={6}
+          className="border-strokedark focus:border-primary dark:border-stroke w-full rounded-lg border bg-transparent px-4 py-3 focus:outline-hidden"
+          value={data.message || ''}
+          onChange={(e) => setData((d) => ({ ...d, message: e.target.value }))}
+          placeholder="Kerro muutostasi lisää: kodin koko, erikoishuomiot, aikataulutoiveet..."
+        />
       </div>
 
       <div className="flex justify-between">
@@ -164,15 +80,17 @@ export default function Step2({ data, setData, onBack }: Props) {
           className="border-strokedark rounded-full border px-7.5 py-3"
           type="button"
           onClick={onBack}
+          disabled={isSubmitting}
         >
           Takaisin
         </button>
         <button
-          className="bg-primary rounded-full px-7.5 py-3 text-white"
+          className="bg-primary rounded-full px-7.5 py-3 text-white disabled:opacity-50 disabled:cursor-not-allowed"
           type="button"
           onClick={submit}
+          disabled={isSubmitting}
         >
-          Lähetä
+          {isSubmitting ? 'Lähetetään...' : 'Lähetä tarjouspyyntö'}
         </button>
       </div>
     </div>

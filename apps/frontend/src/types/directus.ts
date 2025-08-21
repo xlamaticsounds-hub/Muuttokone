@@ -190,20 +190,18 @@ export interface NewsletterSubmission {
 }
 
 export interface LeadSubmission {
-  email: string;
-  first_name?: string;
-  last_name?: string;
+  name?: string;
+  email?: string;
   phone?: string;
-  message?: string;
-  service_type?: string;
-  moving_date?: string;
   from_location?: string;
   to_location?: string;
   apartment_size?: string;
+  moving_date?: string;
+  message?: string;
+  service_type?: string;
   source?: string;
-  utm_campaign?: string;
-  utm_source?: string;
-  utm_medium?: string;
+  ip?: string;
+  user_agent?: string;
   files?: File[];
 }
 

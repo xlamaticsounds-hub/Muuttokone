@@ -176,60 +176,47 @@ export type NewsletterSubmission = {
 };
 
 export type LeadSubmission = {
-  // Minimal lead fields
   name?: string;
-  email?: string;
-  phone?: string;
-  // legacy/optional fields kept for compatibility
-  first_name?: string;
-  last_name?: string;
-  message?: string;
+  email?: string | null;
+  phone?: string | null;
+  from_location?: string | null;
+  to_location?: string | null;
+  apartment_size?: string | null;
+  moving_date?: string | null;
+  message?: string | null;
   service_type?: string;
-  moving_date?: string;
-  from_location?: string;
-  to_location?: string;
-  apartment_size?: string;
   source?: string;
-  utm_campaign?: string;
-  utm_source?: string;
-  utm_medium?: string;
+  ip?: string;
+  user_agent?: string;
   files?: string[];
 };
 
 export async function submitNewsletter(data: NewsletterSubmission): Promise<void> {
   await createDirectusItem('newsletter_email_addresses', {
-    ...data,
-    date_created: new Date().toISOString(),
-    status: 'active'
+    email: data.email,
+    status: 'active',
+    source: data.source || null,
+    utm_campaign: data.utm_campaign || null,
+    utm_source: data.utm_source || null,
+    utm_medium: data.utm_medium || null,
   });
 }
 
 export async function submitLead(data: LeadSubmission): Promise<void> {
   await createDirectusItem('leads', {
-    // Support minimal lead shape: prefer explicit name/email/phone
-    name: data.name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || null,
+    name: data.name || null,
     email: data.email || null,
     phone: data.phone || null,
-    // keep other fields if present
-    message: data.message || null,
-    service_type: data.service_type || null,
-    moving_date: data.moving_date || null,
     from_location: data.from_location || null,
     to_location: data.to_location || null,
     apartment_size: data.apartment_size || null,
+    moving_date: data.moving_date || null,
+    message: data.message || null,
+    service_type: data.service_type || null,
     source: data.source || null,
+    ip: data.ip || null,
+    user_agent: data.user_agent || null,
     files: data.files || null,
-    date_created: new Date().toISOString(),
     status: 'new',
-  });
-}
-
-export async function createQuote(payload: { lead_id?: string | number; quote: string; files?: string[]; source?: string; }) {
-  return createDirectusItem('quotes', {
-    lead_id: payload.lead_id || null,
-    quote: payload.quote,
-    files: payload.files || null,
-    source: payload.source || null,
-    created_at: new Date().toISOString(),
   });
 }

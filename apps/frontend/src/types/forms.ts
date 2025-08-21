@@ -3,17 +3,15 @@
  */
 
 import {
-  quoteSchema as quoteFormSchema,
   contactSchema as contactFormSchema,
   newsletterSchema,
-  type QuoteFormData,
   type ContactFormData,
   type NewsletterData,
 } from '@/lib/schemas';
 
 // Re-export for backward compatibility
-export { quoteFormSchema, contactFormSchema, newsletterSchema };
-export type { QuoteFormData, ContactFormData, NewsletterData };
+export { contactFormSchema, newsletterSchema };
+export type { ContactFormData, NewsletterData };
 
 // Form submission states
 export type FormSubmissionState =

@@ -1,39 +1,16 @@
-import { siteConfig } from '@/config/site';
-
 const formData = [
   {
-    label: 'Koko nimi',
+    label: 'Nimi',
     type: 'text',
     name: 'name',
-    placeholder: 'Matti Virtanen',
+    placeholder: 'Nimesi',
     autocomplete: 'name',
-  },
-  {
-    label: 'Sähköpostiosoite',
-    type: 'email',
-    name: 'email',
-    placeholder: siteConfig.contact.email,
-    autocomplete: 'email',
-  },
-  {
-    label: 'Puhelinnumero',
-    type: 'tel',
-    name: 'phone',
-    placeholder: siteConfig.contact.phone.display,
-    autocomplete: 'tel',
-  },
-  {
-    label: 'Aihe',
-    type: 'text',
-    name: 'subject',
-    placeholder: 'Tarjouspyyntö kotimuuttoon',
-    autocomplete: 'off', // Subject is form-specific
   },
   {
     label: 'Viesti',
     type: 'message',
     name: 'message',
-    placeholder: 'Kerro meille muuttosi yksityiskohdista...',
+    placeholder: 'Kerro meille kuinka voimme auttaa...',
     autocomplete: 'off', // Message is form-specific
   },
 ];

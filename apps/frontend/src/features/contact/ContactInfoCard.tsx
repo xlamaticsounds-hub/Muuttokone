@@ -36,7 +36,7 @@ export default function ContactInfoCard() {
             <li>
               <Link
                 aria-label="Contact Link for Facebook"
-                href="/facebook"
+                href="https://facebook.com/muuttokone"
                 className="group hover:bg-primary flex h-10 w-10 items-center justify-center rounded-full duration-300 ease-in-out"
               >
                 <svg
@@ -57,7 +57,7 @@ export default function ContactInfoCard() {
             <li>
               <Link
                 aria-label="Contact Link for Twitter"
-                href="/twitter"
+                href="https://twitter.com/muuttokone"
                 className="group hover:bg-primary flex h-10 w-10 items-center justify-center rounded-full duration-300 ease-in-out"
               >
                 <svg
@@ -78,7 +78,7 @@ export default function ContactInfoCard() {
             <li>
               <Link
                 aria-label="Contact Link for Linkedin"
-                href="/linkedin"
+                href="https://linkedin.com/company/muuttokone"
                 className="group hover:bg-primary flex h-10 w-10 items-center justify-center rounded-full duration-300 ease-in-out"
               >
                 <svg
@@ -99,7 +99,7 @@ export default function ContactInfoCard() {
             <li>
               <Link
                 aria-label="Contact Link for Behance"
-                href="/behance"
+                href="https://behance.net/muuttokone"
                 className="group hover:bg-primary flex h-10 w-10 items-center justify-center rounded-full duration-300 ease-in-out"
               >
                 <svg

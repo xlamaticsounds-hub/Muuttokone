@@ -6,23 +6,12 @@ import Progress from './Progress';
 
 export type QuoteData = {
   name: string;
-  email?: string;
   phone?: string;
-  from?: string;
-  to?: string;
-  size?: string;
-  date?: string;
-  dateFlex?: 'exact' | '+/-3' | '+/-7';
-  services?: string[];
-  inventory?: string;
-  elevator?: boolean;
-  distance?: string;
-  notes?: string;
-  isBusiness?: boolean;
-  businessId?: string; // Y-tunnus
-  contactNotes?: string;
-  fromExtra?: string;
-  toExtra?: string;
+  from_location?: string;
+  to_location?: string;
+  apartment_size?: string;
+  moving_date?: string;
+  message?: string;
 };
 
 export default function QuoteForm() {
@@ -36,24 +25,14 @@ export default function QuoteForm() {
       if (quickQuote) {
         try {
           const parsed = JSON.parse(quickQuote);
-          setData((d) => {
-            // Map compact homeSize codes from quick-quote to the full labels used by the full form
-            const sizeMap: Record<string, string> = {
-              '1h': 'Yksiö',
-              '2h': 'Kaksio',
-              '3h': 'Kolmio',
-              '4h+': 'Neliö+',
-            };
-            const mappedSize = parsed.homeSize ? sizeMap[parsed.homeSize] || parsed.homeSize : d.size;
-            return {
-              ...d,
-              name: parsed.name || d.name,
-              phone: parsed.phone || d.phone,
-              from: parsed.fromLocation || d.from,
-              to: parsed.toLocation || d.to,
-              size: mappedSize,
-            };
-          });
+          setData((d) => ({
+            ...d,
+            name: parsed.name || d.name,
+            phone: parsed.phone || d.phone,
+            from_location: parsed.fromLocation || d.from_location,
+            to_location: parsed.toLocation || d.to_location,
+            apartment_size: parsed.homeSize || d.apartment_size,
+          }));
           localStorage.removeItem('quickQuoteData');
         } catch {
           // Invalid JSON in localStorage, ignore
@@ -71,15 +50,13 @@ export default function QuoteForm() {
       try {
         const fields: Partial<QuoteData> = {};
         const nameEl = document.querySelector<HTMLInputElement>('input[name="fullName"]');
-        const emailEl = document.querySelector<HTMLInputElement>('input[name="email"]');
         const phoneEl = document.querySelector<HTMLInputElement>('input[name="phone"]');
-        const fromEl = document.querySelector<HTMLInputElement>('input[name="fromPostal"]');
-        const toEl = document.querySelector<HTMLInputElement>('input[name="toPostal"]');
+        const fromEl = document.querySelector<HTMLInputElement>('input[name="fromLocation"]');
+        const toEl = document.querySelector<HTMLInputElement>('input[name="toLocation"]');
         if (nameEl?.value) fields.name = nameEl.value;
-        if (emailEl?.value) fields.email = emailEl.value;
         if (phoneEl?.value) fields.phone = phoneEl.value;
-        if (fromEl?.value) fields.from = fromEl.value;
-        if (toEl?.value) fields.to = toEl.value;
+        if (fromEl?.value) fields.from_location = fromEl.value;
+        if (toEl?.value) fields.to_location = toEl.value;
         // merge only if we found values
         if (Object.keys(fields).length > 0) setData((d) => ({ ...d, ...fields }));
       } catch {
