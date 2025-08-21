@@ -11,18 +11,17 @@ const menuData: Menu[] = [
   },
   // Removed Yritys, Blogi per request
   {
+    label: "Kotimuutto",
+    route: "/kotimuutto",
+  },
+  {
+    label: "Yritysmuutto",
+    route: "/yritysmuutto",
+  },
+  {
     label: 'Yhteystiedot',
     route: '/yhteystiedot',
   },
-  // --- Maybe ---
-  // {
-  //   label: "Kotimuutto",
-  //   route: "/kotimuutto",
-  // },
-  // {
-  //   label: "Yritysmuutto",
-  //   route: "/yritysmuutto",
-  // },
 ];
 
 export default menuData;

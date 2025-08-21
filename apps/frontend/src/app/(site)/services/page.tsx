@@ -6,31 +6,23 @@ import Services from '@/features/services';
 import SectionTitle from '@/components/SectionTitle';
 import ContactFormBox from '@/features/contact/ContactFormBox';
 import Cta from '@/components/Cta';
-import { getServices } from '@server/data';
+import type { Service } from '@/types/service';
 import serviceData from '@/features/services/serviceData';
 
 export const metadata: Metadata = {
-  title: 'Services - Muuttokone',
-  description: 'Our moving services.',
+  title: 'Palvelut - Muuttopalvelumme | Muuttokone.fi',
+  description: 'Kattavat muuttopalvelut: kotimuutto, yritysmuutto, pakkauspalvelut, varastointi ja siivous. SMPY-jäsen, vakuutettu ja luotettava.',
+  keywords: 'muuttopalvelut, kotimuutto, yritysmuutto, pakkaus, varastointi, siivous, SMPY',
 };
 
-async function getServicesData() {
-  try {
-    // Try to get services from Directus with caching
-    const directusServices = await getServices();
-    if (directusServices?.length > 0) {
-      return directusServices;
-    }
-    // Fallback to static data if no Directus services
-    return serviceData;
-  } catch (error) {
-    console.warn('Failed to fetch services from Directus, using static data:', error);
-    return serviceData;
-  }
+async function getServicesData(): Promise<Service[]> {
+  // Fallback to static data if no Directus services
+  const data = serviceData;
+  return data;
 }
 
 const ServicesPage: NextPage = async () => {
-  const items = await getServicesData();
+  const items= await getServicesData();
   return (
     <>
       <Services

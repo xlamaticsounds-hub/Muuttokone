@@ -9,13 +9,13 @@ import { unstable_cache } from 'next/cache';
 export const getSiteConfig = unstable_cache(
   async (): Promise<SiteConfig> => {
     try {
-      const res = await directusFetch<{ data: Array<{ key: string; value: any }> }>(
-        '/items/configs?filter[key][_in]=brand,contact',
-        { cache: 'no-store' },
-      );
+    //   const res = await directusFetch<{ data: Array<{ key: string; value: any }> }>(
+    //     '/items/configs?filter[key][_in]=brand,contact',
+    //     { cache: 'no-store' },
+    //   );
 
       const map = new Map<string, any>();
-      for (const row of res?.data || []) map.set(row.key, row.value);
+    //   for (const row of res?.data || []) map.set(row.key, row.value);
 
       const brand = map.get('brand') || {};
       const contact = map.get('contact') || {};
@@ -27,12 +27,12 @@ export const getSiteConfig = unstable_cache(
         },
         contact: {
           phone: {
-            display: contact.phone?.display || localSiteConfig.contact.phone.display,
-            tel: contact.phone?.tel || localSiteConfig.contact.phone.tel,
+            display: localSiteConfig.contact.phone.display,
+            tel: localSiteConfig.contact.phone.tel,
           },
-          email: contact.email || localSiteConfig.contact.email,
-          openingHours: contact.openingHours || localSiteConfig.contact.openingHours,
-          social: contact.social || localSiteConfig.contact.social,
+          email: localSiteConfig.contact.email,
+          openingHours: localSiteConfig.contact.openingHours,
+          social: localSiteConfig.contact.social,
         },
       } as const;
 
