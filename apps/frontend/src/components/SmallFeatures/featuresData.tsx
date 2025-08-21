@@ -5,8 +5,8 @@ import { Feature } from '@/types/feature';
 const featuresData: Feature[] = [
   {
     icon: '/images/muuttokone/webp/turva.webp',
-    title: 'Vakuutettu ja turvallinen',
-    description: 'Täysi vastuuvakuutus ja SMPY-jäsenyys takaavat huolettoman muuton.',
+    title: 'Luotettava ja rehellinen',
+    description: 'Avoin toimintatapa ja turvallinen käsittely tavaroillesi.',
     bgClass: 'bg-primary/10',
   },
   {
