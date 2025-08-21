@@ -3,7 +3,7 @@ const nextConfig = {
   async redirects() {
     return [
       // @.muuttokone.fi redirect -> www.muuttokone.fi
-      { source: "/(.*)", has: [{ type: "host", value: "muuttokone.fi" }], destination: "https://www.muuttokone.fi/$1", permanent: true },
+      { source: "/", has: [{ type: "host", value: "muuttokone.fi" }], destination: "https://www.muuttokone.fi/", permanent: true },
 
   // Legacy quotes route
   { source: "/pyyda-tarjous", destination: "/tarjouspyynto", permanent: true },
