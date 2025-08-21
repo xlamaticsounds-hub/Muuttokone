@@ -7,6 +7,20 @@ const formData = [
     autocomplete: 'name',
   },
   {
+    label: 'Sähköposti',
+    type: 'email',
+    name: 'email',
+    placeholder: 'sähköposti@esimerkki.fi',
+    autocomplete: 'email',
+  },
+  {
+    label: 'Puhelinnumero',
+    type: 'tel',
+    name: 'phone',
+    placeholder: '+358 40 123 4567',
+    autocomplete: 'tel',
+  },
+  {
     label: 'Viesti',
     type: 'message',
     name: 'message',

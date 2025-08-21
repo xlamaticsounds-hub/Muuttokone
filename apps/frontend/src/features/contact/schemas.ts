@@ -11,6 +11,19 @@ export const contactSchema = z.object({
     .min(2, 'Nimi tulee olla vähintään 2 merkkiä')
     .max(100, 'Nimi voi olla enintään 100 merkkiä'),
 
+  email: z
+    .string()
+    .email('Anna kelvollinen sähköpostiosoite')
+    .max(255, 'Sähköpostiosoite on liian pitkä')
+    .optional(),
+
+  phone: z
+    .string()
+    .min(6, 'Puhelinnumero tulee olla vähintään 6 merkkiä')
+    .max(20, 'Puhelinnumero voi olla enintään 20 merkkiä')
+    .regex(/^[+]?[\d\s\-()]+$/, 'Puhelinnumero sisältää virheellisiä merkkejä')
+    .optional(),
+
   message: z
     .string()
     .min(10, 'Viesti tulee olla vähintään 10 merkkiä')
@@ -42,5 +55,7 @@ export type NewsletterData = z.infer<typeof newsletterSchema>;
 // Field validation helpers
 export const contactFieldValidators = {
   name: (value: string) => contactSchema.shape.name.safeParse(value),
+  email: (value: string) => contactSchema.shape.email.safeParse(value),
+  phone: (value: string) => contactSchema.shape.phone.safeParse(value),
   message: (value: string) => contactSchema.shape.message.safeParse(value),
 };

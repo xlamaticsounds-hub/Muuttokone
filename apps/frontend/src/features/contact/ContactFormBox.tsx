@@ -5,6 +5,8 @@ import toast from 'react-hot-toast';
 export default function ContactFormBox() {
   const [data, setData] = useState({
     name: '',
+    email: '',
+    phone: '',
     message: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -32,6 +34,8 @@ export default function ContactFormBox() {
           type: 'lead',
           data: {
             name: data.name,
+            email: data.email || null,
+            phone: data.phone || null,
             message: data.message,
             service_type: 'contact',
             source: 'website',
@@ -46,6 +50,8 @@ export default function ContactFormBox() {
         // Reset form
         setData({
           name: '',
+          email: '',
+          phone: '',
           message: '',
         });
       } else {
@@ -76,6 +82,38 @@ export default function ContactFormBox() {
             value={data.name}
             onChange={handleChange}
             required
+            className="border-strokedark shadow-4 placeholder:text-body/50 focus:border-primary focus:shadow-5 dark:border-stroke dark:focus:border-primary w-full rounded-lg border bg-transparent px-6 py-3.5 focus-visible:outline-hidden dark:shadow-none"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="email" className="mb-4 block">
+            Sähköposti
+          </label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="sähköposti@esimerkki.fi"
+            autoComplete="email"
+            value={data.email}
+            onChange={handleChange}
+            className="border-strokedark shadow-4 placeholder:text-body/50 focus:border-primary focus:shadow-5 dark:border-stroke dark:focus:border-primary w-full rounded-lg border bg-transparent px-6 py-3.5 focus-visible:outline-hidden dark:shadow-none"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="phone" className="mb-4 block">
+            Puhelinnumero
+          </label>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            placeholder="+358 40 123 4567"
+            autoComplete="tel"
+            value={data.phone}
+            onChange={handleChange}
             className="border-strokedark shadow-4 placeholder:text-body/50 focus:border-primary focus:shadow-5 dark:border-stroke dark:focus:border-primary w-full rounded-lg border bg-transparent px-6 py-3.5 focus-visible:outline-hidden dark:shadow-none"
           />
         </div>

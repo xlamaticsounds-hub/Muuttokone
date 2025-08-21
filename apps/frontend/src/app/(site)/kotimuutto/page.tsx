@@ -1,12 +1,17 @@
 import type { Metadata } from 'next';
 import Cta from '@/components/Cta';
 import SmallFeatures from '@/components/SmallFeatures';
+import { generateSEOMetadata, SEOConfigs } from '@/components/SEO/SEOHelpers';
 
-export const metadata: Metadata = {
-  title: 'Kotimuutto – Muuttokone.fi',
-  description:
-    'Ammattitaitoinen kotimuutto koko Suomessa. Pakkaus, kuljetus ja suojaus. Pyydä maksuton tarjous.',
-};
+export const metadata: Metadata = generateSEOMetadata({
+  ...SEOConfigs.residentialMoves,
+  openGraph: {
+    title: SEOConfigs.residentialMoves.title,
+    description: SEOConfigs.residentialMoves.description,
+    image: '/images/og-kotimuutto.jpg',
+    type: 'website',
+  },
+});
 
 export default function Page() {
   return (

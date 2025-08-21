@@ -1,11 +1,17 @@
 import type { Metadata } from 'next';
 import Cta from '@/components/Cta';
 import SmallFeatures from '@/components/SmallFeatures';
+import { generateSEOMetadata, SEOConfigs } from '@/components/SEO/SEOHelpers';
 
-export const metadata: Metadata = {
-  title: 'Yritysmuutto – Muuttokone.fi',
-  description: 'Yritysmuutot ja toimistosiirrot – aikataulut pitävät ja omaisuus pysyy turvassa.',
-};
+export const metadata: Metadata = generateSEOMetadata({
+  ...SEOConfigs.businessMoves,
+  openGraph: {
+    title: SEOConfigs.businessMoves.title,
+    description: SEOConfigs.businessMoves.description,
+    image: '/images/og-yritysmuutto.jpg',
+    type: 'website',
+  },
+});
 
 export default function Page() {
   return (

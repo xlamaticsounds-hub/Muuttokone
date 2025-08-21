@@ -7,7 +7,7 @@ const menuData: Menu[] = [
   },
   {
     label: 'Palvelut',
-    route: '/palvelut',
+    route: '/#palvelut',
   },
   // Removed Yritys, Blogi per request
   {
@@ -15,12 +15,12 @@ const menuData: Menu[] = [
     route: "/kotimuutto",
   },
   {
-    label: "Yritysmuutto",
-    route: "/yritysmuutto",
+    label: "Miksi me?",
+    route: "/#about",
   },
   {
     label: 'Yhteystiedot',
-    route: '/yhteystiedot',
+    route: '/#yhteystiedot',
   },
 ];
 

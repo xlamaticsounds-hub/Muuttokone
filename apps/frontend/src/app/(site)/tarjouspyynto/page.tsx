@@ -1,9 +1,16 @@
+import type { Metadata } from 'next';
 import QuoteForm from '@/components/Forms/QuoteForm';
+import { generateSEOMetadata, SEOConfigs } from '@/components/SEO/SEOHelpers';
 
-export const metadata = {
-  title: 'Tarjouspyyntö | Muuttokone.fi',
-  description: 'Pyydä tarjous muutosta – täytä tiedot ja palaamme pian.',
-};
+export const metadata: Metadata = generateSEOMetadata({
+  ...SEOConfigs.quote,
+  openGraph: {
+    title: SEOConfigs.quote.title,
+    description: SEOConfigs.quote.description,
+    image: '/images/og-quote.jpg',
+    type: 'website',
+  },
+});
 
 export default function Page() {
   return (
