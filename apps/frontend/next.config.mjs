@@ -2,6 +2,9 @@
 const nextConfig = {
   async redirects() {
     return [
+      // @.muuttokone.fi redirect -> www.muuttokone.fi
+      { source: "/(.*)", has: [{ type: "host", value: "muuttokone.fi" }], destination: "https://www.muuttokone.fi/$1", permanent: true },
+
   // Legacy quotes route
   { source: "/pyyda-tarjous", destination: "/tarjouspyynto", permanent: true },
       // Legacy EN -> FI route alignment
@@ -15,6 +18,7 @@ const nextConfig = {
       { source: "/blogi", destination: "/blog", permanent: true },
       { source: "/ota-yhteytta", destination: "/yhteystiedot", permanent: true },
   { source: "/usein-kysytyt-kysymykset", destination: "/ukk", permanent: true },
+  
     ];
   },
   images: {
