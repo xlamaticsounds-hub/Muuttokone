@@ -44,7 +44,6 @@ services:
       - ./apps/admin/extensions:/directus/extensions:Z
     depends_on:
       - database
-      - cache
     environment:
       SECRET: "titty"
       DB_CLIENT: "pg"
@@ -53,11 +52,6 @@ services:
       DB_DATABASE: "postgres"
       DB_USER: "axu"           # <-- was "postgres", must match POSTGRES_USER
       DB_PASSWORD: "kakskasi"
-
-      CACHE_ENABLED: "true"
-      CACHE_AUTO_PURGE: "true"
-      CACHE_STORE: "redis"
-      REDIS: "redis://cache:6379"
 
       ADMIN_EMAIL: "alex@muuttokone.fi"
       ADMIN_PASSWORD: "titty"
