@@ -11,6 +11,8 @@ services:
       - "80:80"
     volumes:
       - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:rw
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - directus
     networks: [network]
@@ -29,16 +31,6 @@ services:
       POSTGRES_USER: "axu"
       POSTGRES_PASSWORD: "kakskasi"
       # POSTGRES_HOST_AUTH_METHOD: "trust"  # not needed if using a password
-
-  cache:
-    image: redis:6
-    networks: [network]
-    container_name: cache
-    restart: always
-    ports:
-      - "6379:6379"
-    volumes:
-      - ./data/cache:/data:Z    # <-- SELinux Z
 
   directus:
     image: directus/directus:11.10.2
