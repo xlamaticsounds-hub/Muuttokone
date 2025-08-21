@@ -1,4 +1,10 @@
-import { PortableTextBlock } from 'sanity';
+// Local fallback for PortableTextBlock to avoid requiring 'sanity' types in this repo
+export type PortableTextBlock = {
+  _type?: string;
+  _key?: string;
+  children?: Array<{ _type?: string; text: string; marks?: string[] }>;
+  [key: string]: any;
+};
 
 export type Author = {
   name: string;

@@ -1,6 +1,7 @@
 import React from 'react';
 import Image from 'next/image';
 
+
 const Graphics = () => {
   return (
     <>
@@ -11,7 +12,7 @@ const Graphics = () => {
         {/* Portrait hero image with smart sizing */}
         <div className="relative z-10 flex items-end justify-center md:justify-end">
           <Image
-            src="/images/hero/hero.png"
+            src="/images/webp/hero/hero.webp"
             alt="Hero"
             width={448}
             height={720}

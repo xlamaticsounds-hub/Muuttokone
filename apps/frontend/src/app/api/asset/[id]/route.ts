@@ -3,8 +3,8 @@ import { DIRECTUS_URL } from '@/lib/directus';
 
 export const revalidate = 3600; // cache for 1h on the edge/cache layer if possible
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const { id } = params;
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
   const token = process.env.DIRECTUS_STATIC_TOKEN;

@@ -1,16 +1,23 @@
-// Minimal Directus REST helper for server-side fetches
+// Enhanced Directus client with SDK for server-side operations
 import 'server-only';
+import { createDirectus, rest, staticToken, readItems, createItem, updateItem, deleteItem, uploadFiles } from '@directus/sdk';
 import { unstable_cache } from 'next/cache';
 import { revalidateTag } from 'next/cache';
 
 // Server API URL (used by server-side fetches). In Docker this should point to the directus container (http://directus:8055).
 export const DIRECTUS_URL = process.env.DIRECTUS_URL || 'http://localhost:8055';
-const DIRECTUS_TOKEN = process.env.DIRECTUS_STATIC_TOKEN;
+const DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN || process.env.DIRECTUS_STATIC_TOKEN;
 
 // Public URL used for browser asset requests. Prefer NEXT_PUBLIC_DIRECTUS_URL, then DIRECTUS_PUBLIC_URL, otherwise fall back to DIRECTUS_URL.
 export const DIRECTUS_PUBLIC_URL =
   process.env.NEXT_PUBLIC_DIRECTUS_URL || process.env.DIRECTUS_PUBLIC_URL || DIRECTUS_URL;
 
+// Initialize Directus SDK client
+export const directus = createDirectus(DIRECTUS_URL)
+  .with(rest())
+  .with(staticToken(DIRECTUS_TOKEN || ''));
+
+// Legacy fetch function for backwards compatibility
 type FetchOpts = {
   method?: string;
   headers?: Record<string, string>;
@@ -20,8 +27,13 @@ type FetchOpts = {
 };
 
 export async function directusFetch<T = any>(path: string, opts: FetchOpts = {}): Promise<T> {
+  if (!DIRECTUS_TOKEN) {
+    throw new Error('DIRECTUS_TOKEN is required for server-side operations');
+  }
+  
   const url = `${DIRECTUS_URL.replace(/\/$/, '')}${path.startsWith('/') ? '' : '/'}${path}`;
   const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
     ...(opts.headers || {}),
   };
   if (DIRECTUS_TOKEN) headers['Authorization'] = `Bearer ${DIRECTUS_TOKEN}`;
@@ -126,4 +138,73 @@ export function assetUrl(
     ),
   ).toString();
   return `${base}${qs ? `?${qs}` : ''}`;
+}
+
+// SDK-based operations for better type safety and performance
+export async function getItems<T = any>(collection: string, options?: any): Promise<T[]> {
+  const items = await directus.request(readItems(collection, options));
+  return items as T[];
+}
+
+export async function createDirectusItem<T = any>(collection: string, data: any): Promise<T> {
+  const item = await directus.request(createItem(collection, data));
+  return item as T;
+}
+
+export async function updateDirectusItem<T = any>(collection: string, id: string | number, data: any): Promise<T> {
+  const item = await directus.request(updateItem(collection, id, data));
+  return item as T;
+}
+
+export async function deleteDirectusItem(collection: string, id: string | number): Promise<void> {
+  await directus.request(deleteItem(collection, id));
+}
+
+export async function uploadFile(file: File): Promise<any> {
+  const formData = new FormData();
+  formData.append('file', file);
+  return directus.request(uploadFiles(formData));
+}
+
+// Unified form submission helpers
+export type NewsletterSubmission = {
+  email: string;
+  source?: string;
+  utm_campaign?: string;
+  utm_source?: string;
+  utm_medium?: string;
+};
+
+export type LeadSubmission = {
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  phone?: string;
+  message?: string;
+  service_type?: string;
+  moving_date?: string;
+  from_location?: string;
+  to_location?: string;
+  apartment_size?: string;
+  source?: string;
+  utm_campaign?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  files?: string[];
+};
+
+export async function submitNewsletter(data: NewsletterSubmission): Promise<void> {
+  await createDirectusItem('newsletter_email_addresses', {
+    ...data,
+    date_created: new Date().toISOString(),
+    status: 'active'
+  });
+}
+
+export async function submitLead(data: LeadSubmission): Promise<void> {
+  await createDirectusItem('leads', {
+    ...data,
+    date_created: new Date().toISOString(),
+    status: 'new'
+  });
 }
