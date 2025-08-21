@@ -77,6 +77,7 @@ export function formatValidationErrors(fieldErrors?: Record<string, string>): st
 // Generic form action wrapper
 export async function safeFormAction<TInput, TOutput>(
   schema: z.ZodSchema<TInput>,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   action: (_data: TInput) => Promise<FormResult<TOutput>>,
   formData: FormData | unknown,
 ): Promise<FormResult<TOutput>> {

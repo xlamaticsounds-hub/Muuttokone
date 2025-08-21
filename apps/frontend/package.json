@@ -6,8 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "next lint",
-    "lint:fix": "next lint --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
     "format": "prettier --write \"**/*.{js,ts,tsx,json,css,md}\"",
     "images:convert": "node ./scripts/convert-png-to-webp.mjs",
     "stripe:listen": "stripe listen --forward-to http://localhost:3000/api/stripe/webhook",
@@ -40,6 +40,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
     "@tailwindcss/postcss": "^4.1.3",
     "@tailwindcss/typography": "^0.5.16",
     "@types/bcrypt": "^5.0.2",

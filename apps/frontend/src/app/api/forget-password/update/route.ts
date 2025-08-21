@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json('Password Updated', { status: 200 });
-  } catch (error) {
-    return new NextResponse('Internal Error', { status: 500 });
+  } catch (error: unknown) {
+    return new NextResponse('Internal Error + ' + (error instanceof Error ? error.message : 'Unknown error'), { status: 500 });
   }
 }

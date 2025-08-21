@@ -57,6 +57,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     return NextResponse.json('An error has occurred. Please try again!', {
       status: 500,
+      statusText: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }
