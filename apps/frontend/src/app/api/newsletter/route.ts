@@ -1,10 +1,10 @@
-import type { NextApiResponse } from "next";
-import { NextResponse } from "next/server";
+import type { NextApiResponse } from 'next';
+import { NextResponse } from 'next/server';
 
 export async function POST(req: Request, res: NextApiResponse) {
   const { email } = await req.json();
   if (!email) {
-    return res.status(400).json({ error: "Email is required" });
+    return res.status(400).json({ error: 'Email is required' });
   }
 
   const MailchimpKey = process.env.MAILCHIMP_API_KEY;
@@ -15,19 +15,19 @@ export async function POST(req: Request, res: NextApiResponse) {
 
   try {
     const response = await fetch(customUrl, {
-      method: "POST",
+      method: 'POST',
       headers: {
         Authorization: `apikey ${MailchimpKey}`,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         email_address: email,
-        status: "subscribed",
+        status: 'subscribed',
       }),
     });
     const received = await response.json();
     return NextResponse.json(received);
   } catch (error) {
-    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+    return NextResponse.json({ error: 'Something went wrong' }, { status: 500 });
   }
 }

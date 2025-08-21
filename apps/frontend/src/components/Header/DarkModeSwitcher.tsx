@@ -1,6 +1,6 @@
-import useColorMode from "@/hooks/useColorMode";
-import React from "react";
-import { usePathname } from "next/navigation";
+import useColorMode from '@/hooks/useColorMode';
+import React from 'react';
+import { usePathname } from 'next/navigation';
 
 const DarkModeSwitcher = ({ sticky }: any) => {
   const [colorMode, setColorMode] = useColorMode();
@@ -12,14 +12,14 @@ const DarkModeSwitcher = ({ sticky }: any) => {
         aria-label="Toggle Dark Mode"
         className="mr-4"
         onClick={() => {
-          if (typeof setColorMode === "function") {
-            setColorMode(colorMode === "light" ? "dark" : "light");
+          if (typeof setColorMode === 'function') {
+            setColorMode(colorMode === 'light' ? 'dark' : 'light');
           }
         }}
       >
         <span className="dark:hidden">
           <svg
-            className={`fill-body ${pathUrl === "/" && "md:fill-white"} ${pathUrl === "/" && sticky && "fill-body!"}`}
+            className={`fill-body ${pathUrl === '/' && 'md:fill-white'} ${pathUrl === '/' && sticky && 'fill-body!'}`}
             width="27"
             height="27"
             viewBox="0 0 27 27"
@@ -56,12 +56,7 @@ const DarkModeSwitcher = ({ sticky }: any) => {
             </g>
             <defs>
               <clipPath id="clip0_7_69">
-                <rect
-                  width="24"
-                  height="24"
-                  fill="white"
-                  transform="translate(0.516602)"
-                />
+                <rect width="24" height="24" fill="white" transform="translate(0.516602)" />
               </clipPath>
             </defs>
           </svg>

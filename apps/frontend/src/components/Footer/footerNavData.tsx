@@ -1,4 +1,4 @@
-import { FooterMenu } from "@/types/footerMenu";
+import { FooterMenu } from '@/types/footerMenu';
 
 const footerNavData: FooterMenu[] = [
   // {
@@ -19,16 +19,16 @@ const footerNavData: FooterMenu[] = [
   //   ],
   // },
   {
-    title: "Asiakaspalvelu",
+    title: 'Asiakaspalvelu',
     navItems: [
       {
-        label: "Yhteystiedot",
-        route: "/yhteystiedot",
+        label: 'Yhteystiedot',
+        route: '/yhteystiedot',
       },
-  // UKK and Blogi pages removed
+      // UKK and Blogi pages removed
       {
-        label: "Ota yhteyttä",
-        route: "/yhteystiedot",
+        label: 'Ota yhteyttä',
+        route: '/yhteystiedot',
       },
     ],
   },

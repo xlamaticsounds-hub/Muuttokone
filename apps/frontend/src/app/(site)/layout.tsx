@@ -1,18 +1,18 @@
-import "../../css/style.css";
-import NextTopLoader from "nextjs-toploader";
-import Header from "@/components/Header";
-import ToasterContext from "@/app/context/ToastContext";
-import Footer from "@/components/Footer";
-import ScrollToTop from "@/components/ScrollToTop";
-import React from "react";
-import { Providers } from "./providers";
-import { Inter, Outfit } from "next/font/google";
-import { getSiteConfig } from "@/server/site-config";
-import Script from "next/script";
-import GA from "@/components/Analytics/GA";
+import '../../css/style.css';
+import NextTopLoader from 'nextjs-toploader';
+import Header from '@/components/Header';
+import ToasterContext from '@/app/context/ToastContext';
+import Footer from '@/components/Footer';
+import ScrollToTop from '@/components/ScrollToTop';
+import React from 'react';
+import { Providers } from './providers';
+import { Inter, Outfit } from 'next/font/google';
+import { getSiteConfig } from '@/server/site-config';
+import Script from 'next/script';
+import GA from '@/components/Analytics/GA';
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' });
 
 export default async function RootLayout({
   children,
@@ -22,16 +22,13 @@ export default async function RootLayout({
   const siteConfig = await getSiteConfig();
   return (
     <html lang="fi" suppressHydrationWarning className="h-full overflow-x-clip">
-      <body className={`dark:bg-black ${inter.variable} ${outfit.variable} h-full overflow-x-hidden` }>
+      <body
+        className={`dark:bg-black ${inter.variable} ${outfit.variable} h-full overflow-x-hidden`}
+      >
         <>
           <ToasterContext />
           <Providers siteConfig={siteConfig}>
-            <NextTopLoader
-              color="#006BFF"
-              crawlSpeed={300}
-              showSpinner={false}
-              shadow="none"
-            />
+            <NextTopLoader color="#006BFF" crawlSpeed={300} showSpinner={false} shadow="none" />
             {/* Page background and decorative glows for depth */}
             <div className="relative min-h-screen">
               <div
@@ -40,11 +37,11 @@ export default async function RootLayout({
               />
               <div
                 aria-hidden
-                className="pointer-events-none absolute left-1/2 top-[-240px] -z-10 h-[720px] w-[1100px] -translate-x-1/2 rounded-[999px] bg-primary/15 blur-3xl dark:bg-primary/20"
+                className="bg-primary/15 dark:bg-primary/20 pointer-events-none absolute top-[-240px] left-1/2 -z-10 h-[720px] w-[1100px] -translate-x-1/2 rounded-[999px] blur-3xl"
               />
               <div
                 aria-hidden
-                className="pointer-events-none absolute right-[-250px] top-[20%] -z-10 h-[520px] w-[520px] rounded-full bg-blue-400/10 blur-3xl dark:bg-blue-400/15"
+                className="pointer-events-none absolute top-[20%] right-[-250px] -z-10 h-[520px] w-[520px] rounded-full bg-blue-400/10 blur-3xl dark:bg-blue-400/15"
               />
 
               <Header />

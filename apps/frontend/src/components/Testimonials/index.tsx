@@ -1,5 +1,5 @@
-import SectionTitle from "@/components/SectionTitle";
-import TestimonialSlider from "@/components/Testimonials/TestimonialSlider";
+import SectionTitle from '@/components/SectionTitle';
+import TestimonialSlider from '@/components/Testimonials/TestimonialSlider';
 
 export default function Testimonials() {
   return (
@@ -10,7 +10,7 @@ export default function Testimonials() {
           subtitle="Tuhannet tyytyväiset asiakkaat ovat luottaneet meihin muutossaan. Lue, mitä asiakkaamme sanovat palveluistamme ja ammattitaidostamme."
         />
 
-  <div className="mx-auto mb-20 mt-12.5 max-w-1390 px-4 md:px-8 xl:mt-17.5 xl:px-21">
+        <div className="mx-auto mt-12.5 mb-20 max-w-1390 px-4 md:px-8 xl:mt-17.5 xl:px-21">
           <TestimonialSlider />
         </div>
       </section>

@@ -1,7 +1,7 @@
-import SectionTitle from "@/components/SectionTitle";
-import ServiceItem from "@/features/services/ServiceItem";
-import type { Service } from "@/types/service";
-import CallCta from "./CallCta";
+import SectionTitle from '@/components/SectionTitle';
+import ServiceItem from '@/features/services/ServiceItem';
+import type { Service } from '@/types/service';
+import CallCta from './CallCta';
 
 interface ServicesProps {
   title: string;
@@ -14,13 +14,10 @@ export default function Services({ title, subtitle, items = [] }: ServicesProps)
     <>
       <section
         id="palvelut"
-        className="scroll-mt-20 bg-gradient-to-b from-white to-gray-50/60 py-8 dark:from-[#0b0c0f] dark:to-black lg:py-12 xl:py-14"
+        className="scroll-mt-20 bg-gradient-to-b from-white to-gray-50/60 py-8 lg:py-12 xl:py-14 dark:from-[#0b0c0f] dark:to-black"
       >
-  <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
-          <SectionTitle
-            title={title}
-            subtitle={subtitle}
-          />
+        <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
+          <SectionTitle title={title} subtitle={subtitle} />
 
           <div className="mx-auto mt-15 max-w-6xl">
             <div className="grid grid-cols-1 gap-7.5 md:grid-cols-2 lg:grid-cols-3 xl:gap-10">

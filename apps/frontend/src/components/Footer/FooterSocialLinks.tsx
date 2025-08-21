@@ -1,7 +1,6 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useSiteConfig } from "@/app/context/SiteConfigContext";
+import { useSiteConfig } from '@/app/context/SiteConfigContext';
 
 export default function FooterSocialLinks() {
   const siteConfig = useSiteConfig();
@@ -9,9 +8,14 @@ export default function FooterSocialLinks() {
     <>
       <ul className="flex items-center gap-5">
         <li>
-          <a aria-label="Footer Link for Facebook" href={siteConfig.contact.social.facebook} target="_blank" rel="noopener noreferrer">
+          <a
+            aria-label="Footer Link for Facebook"
+            href={siteConfig.contact.social.facebook}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <svg
-              className="fill-body transition-all duration-300 hover:fill-primary"
+              className="fill-body hover:fill-primary transition-all duration-300"
               width="24"
               height="24"
               viewBox="0 0 24 24"
@@ -33,9 +37,14 @@ export default function FooterSocialLinks() {
           </a>
         </li>
         <li>
-          <a aria-label="Footer Link for Twitter" href={siteConfig.contact.social.twitter} target="_blank" rel="noopener noreferrer">
+          <a
+            aria-label="Footer Link for Twitter"
+            href={siteConfig.contact.social.twitter}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <svg
-              className="fill-body transition-all duration-300 hover:fill-primary"
+              className="fill-body hover:fill-primary transition-all duration-300"
               width="24"
               height="24"
               viewBox="0 0 24 24"
@@ -57,9 +66,14 @@ export default function FooterSocialLinks() {
           </a>
         </li>
         <li>
-          <a aria-label="Footer Link for Linkedin" href={siteConfig.contact.social.linkedin} target="_blank" rel="noopener noreferrer">
+          <a
+            aria-label="Footer Link for Linkedin"
+            href={siteConfig.contact.social.linkedin}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <svg
-              className="fill-body transition-all duration-300 hover:fill-primary"
+              className="fill-body hover:fill-primary transition-all duration-300"
               width="24"
               height="24"
               viewBox="0 0 24 24"
@@ -81,9 +95,14 @@ export default function FooterSocialLinks() {
           </a>
         </li>
         <li>
-          <a aria-label="Footer Link for Behance" href={siteConfig.contact.social.behance} target="_blank" rel="noopener noreferrer">
+          <a
+            aria-label="Footer Link for Behance"
+            href={siteConfig.contact.social.behance}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
             <svg
-              className="fill-body transition-all duration-300 hover:fill-primary"
+              className="fill-body hover:fill-primary transition-all duration-300"
               width="24"
               height="24"
               viewBox="0 0 24 24"

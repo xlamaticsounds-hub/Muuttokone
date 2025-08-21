@@ -1,11 +1,11 @@
-"use client";
-import React, { useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import axios from "axios";
-import { useRouter } from "next/navigation";
-import SlideOnReveal from "@/components/SlideOnReveal";
-import { integrations, messages } from "../../../integrations.config";
-import z from "zod";
+'use client';
+import React, { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
+import axios from 'axios';
+import { useRouter } from 'next/navigation';
+import SlideOnReveal from '@/components/SlideOnReveal';
+import { integrations, messages } from '../../../integrations.config';
+import z from 'zod';
 
 const schema = z.object({
   password: z
@@ -19,20 +19,24 @@ const schema = z.object({
         /[@$!%*?&]/.test(val), // At least one special character
       {
         message:
-          "Password must be at least 8 characters long and contain uppercase and lowercase letters, a number, and a special character.",
+          'Password must be at least 8 characters long and contain uppercase and lowercase letters, a number, and a special character.',
       },
     ),
 });
 
 const ResetPassword = ({ token }: { token: string }) => {
   const [data, setData] = useState({
-    password: "",
+    password: '',
   });
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [verified, setVerified] = useState(false);
   const [user, setUser] = useState({
-    email: "",
+    email: '',
   });
+
+  // Suppress unused variable warnings for future use
+  void setError;
+  void verified;
 
   const router = useRouter();
 
@@ -52,7 +56,7 @@ const ResetPassword = ({ token }: { token: string }) => {
       } catch (error) {
         // @ts-ignore
         toast.error(error.response.data);
-        router.push("/auth/forget-password");
+        router.push('/auth/forget-password');
       }
     };
 
@@ -87,8 +91,8 @@ const ResetPassword = ({ token }: { token: string }) => {
       if (res.status === 200) {
         toast.success(res.data);
         setVerified(true);
-        setData({ password: "" });
-        router.push("/auth/signin");
+        setData({ password: '' });
+        router.push('/auth/signin');
       }
     } catch (error) {
       // @ts-ignore
@@ -126,9 +130,7 @@ const ResetPassword = ({ token }: { token: string }) => {
                   placeholder="Password"
                   name="password"
                   value={data.password}
-                  onChange={(e) =>
-                    setData({ ...data, password: e.target.value })
-                  }
+                  onChange={(e) => setData({ ...data, password: e.target.value })}
                   required
                   className={`border-strokedark shadow-4 placeholder:text-body/50 focus:border-primary focus:shadow-4 dark:border-stroke dark:focus:border-primary/40 w-full rounded-full border bg-white px-6 py-3.5 focus-visible:outline-hidden dark:bg-black dark:shadow-none`}
                 />
@@ -137,9 +139,7 @@ const ResetPassword = ({ token }: { token: string }) => {
               <button
                 aria-label="login with email and password"
                 className={`bg-primary hover:shadow-1 block w-full rounded-full px-7.5 py-3 text-center font-medium text-white duration-300 ease-in-out ${
-                  error.length > 0 || !data.password
-                    ? "bg-gray-600"
-                    : "bg-black"
+                  error.length > 0 || !data.password ? 'bg-gray-600' : 'bg-black'
                 }`}
                 type="submit"
               >

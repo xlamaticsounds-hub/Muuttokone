@@ -1,4 +1,4 @@
-import { siteConfig } from "@/config/site";
+import { siteConfig } from '@/config/site';
 
 interface ContactData {
   title: string;
@@ -7,15 +7,15 @@ interface ContactData {
 
 const contactData: ContactData[] = [
   {
-    title: "Sähköposti",
+    title: 'Sähköposti',
     subtitle: siteConfig.contact.email,
   },
   {
-    title: "Puhelinnumero",
+    title: 'Puhelinnumero',
     subtitle: siteConfig.contact.phone.display,
   },
   {
-    title: "Aukioloajat",
+    title: 'Aukioloajat',
     subtitle: siteConfig.contact.openingHours,
   },
 ];

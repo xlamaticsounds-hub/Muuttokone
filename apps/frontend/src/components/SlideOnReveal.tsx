@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { motion, useAnimation, useInView } from "framer-motion";
-import React, { useEffect, useRef } from "react";
+import { motion, useAnimation, useInView } from 'framer-motion';
+import React, { useEffect, useRef } from 'react';
 
 type props = {
   children: React.ReactNode;
@@ -16,7 +16,7 @@ export default function SlideOnReveal({ children, delay, className }: props) {
 
   useEffect(() => {
     if (isInView) {
-      controls.start("visible");
+      controls.start('visible');
     }
   }, [isInView, controls]);
 
@@ -28,7 +28,7 @@ export default function SlideOnReveal({ children, delay, className }: props) {
         visible: { opacity: 1, translateY: 0 },
       }}
       transition={{
-        type: "spring",
+        type: 'spring',
         duration: 0.2,
         damping: 8,
         delay: delay,

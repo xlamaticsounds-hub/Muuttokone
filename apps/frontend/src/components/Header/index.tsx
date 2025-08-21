@@ -1,24 +1,23 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState } from "react";
-import { signOut, useSession } from "next-auth/react";
-import { onScroll } from "@/lib/utils";
-import { usePathname } from "next/navigation";
-import Link from "next/link";
-import Image from "next/image";
-// import GlobalSearchModal from "@/components/GlobalSearch";
-import { useSiteConfig } from "@/app/context/SiteConfigContext";
-import menuData from "@/components/Header/menuData";
+import React, { useEffect, useState } from 'react';
+import { signOut, useSession } from 'next-auth/react';
+import { onScroll } from '@/lib/utils';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
+import { useSiteConfig } from '@/app/context/SiteConfigContext';
+import menuData from '@/components/Header/menuData';
 
 const Header = () => {
   const siteConfig = useSiteConfig();
   useEffect(() => {
-    if (window.location.pathname === "/") {
-      window.addEventListener("scroll", onScroll);
+    if (window.location.pathname === '/') {
+      window.addEventListener('scroll', onScroll);
     }
 
     return () => {
-      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener('scroll', onScroll);
     };
   }, []);
 
@@ -31,8 +30,8 @@ const Header = () => {
     setNavbarOpen(!navbarOpen);
   };
 
-  // Sticky Navbar (always sticky across site)
-  const [sticky] = useState(true);
+  // Sticky Navbar (always sticky across site) - removed sticky state since it's always true
+  // const [sticky] = useState(true);
 
   // submenu handler
   const [openIndex, setOpenIndex] = useState(-1);
@@ -62,21 +61,21 @@ const Header = () => {
       <header
         className={`navbar fixed top-0 left-0 z-999 w-full bg-white/95 shadow-sm backdrop-blur supports-[backdrop-filter]:backdrop-blur md:backdrop-blur-sm dark:bg-black/90`}
       >
-  <div className="relative mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
+        <div className="relative mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
           <div className="flex items-center justify-between">
             <div className="block py-4 lg:py-0">
               <Link href="/" className="block max-w-[145px] sm:max-w-[180px]">
                 <Image
                   width={130}
                   height={44}
-                  src={"/images/logo/logo.png"}
+                  src={'/images/logo/logo.png'}
                   alt="Logo"
                   className="block dark:hidden"
                 />
                 <Image
                   width={130}
                   height={44}
-                  src={"/images/logo/logo-white.svg"}
+                  src={'/images/logo/logo-white.svg'}
                   alt="Logo"
                   className="hidden dark:block"
                 />
@@ -94,9 +93,8 @@ const Header = () => {
               <span className="block h-[2px] w-7 bg-black dark:bg-white"></span>
             </button>
 
-
             <div
-              className={`${navbarOpen ? "" : "hidden"} menu-wrapper relative justify-between lg:flex`}
+              className={`${navbarOpen ? '' : 'hidden'} menu-wrapper relative justify-between lg:flex`}
             >
               <button
                 onClick={() => setNavbarOpen(false)}
@@ -112,19 +110,16 @@ const Header = () => {
                 <ul className="items-center space-y-3 lg:flex lg:space-y-0 lg:space-x-8 xl:space-x-10">
                   {updatedMenuData.map((item, index) =>
                     item.children ? (
-                      <li
-                        key={index}
-                        className="submenu-item menu-item group relative"
-                      >
+                      <li key={index} className="submenu-item menu-item group relative">
                         <Link
                           onClick={() => handleSubmenu(index)}
                           href={item.route}
-                          className={`lg:py-[21px] ${item.children.some((child) => pathUrl === child.route) ? "text-primary" : "text-black/90 dark:text-white"} hover:text-primary group-hover:text-primary inline-flex items-center font-medium`}
+                          className={`lg:py-[21px] ${item.children.some((child) => pathUrl === child.route) ? 'text-primary' : 'text-black/90 dark:text-white'} hover:text-primary group-hover:text-primary inline-flex items-center font-medium`}
                         >
                           {item.label}
                           <span className="pl-3">
                             <svg
-                              className={`h-3 w-3 fill-current ${openIndex === index ? "rotate-180 lg:rotate-0" : ""}`}
+                              className={`h-3 w-3 fill-current ${openIndex === index ? 'rotate-180 lg:rotate-0' : ''}`}
                               xmlns="http://www.w3.org/2000/svg"
                               viewBox="0 0 512 512"
                             >
@@ -134,14 +129,14 @@ const Header = () => {
                         </Link>
 
                         <ul
-                          className={`${openIndex === index ? "" : "hidden"} submenu lg:dark:shadow-card-dark space-y-5 pt-5 duration-300 lg:invisible lg:absolute lg:top-[120%] lg:block lg:w-[250px] lg:rounded-lg lg:bg-white lg:px-8 lg:pb-5 lg:text-left lg:opacity-0 lg:shadow-lg lg:group-hover:visible lg:group-hover:top-full lg:group-hover:opacity-100 dark:lg:border-transparent dark:lg:bg-blacksection`}
+                          className={`${openIndex === index ? '' : 'hidden'} submenu lg:dark:shadow-card-dark dark:lg:bg-blacksection space-y-5 pt-5 duration-300 lg:invisible lg:absolute lg:top-[120%] lg:block lg:w-[250px] lg:rounded-lg lg:bg-white lg:px-8 lg:pb-5 lg:text-left lg:opacity-0 lg:shadow-lg lg:group-hover:visible lg:group-hover:top-full lg:group-hover:opacity-100 dark:lg:border-transparent`}
                         >
                           {item.children.map((childItem, childIndex) => (
                             <li key={childIndex}>
                               <Link
                                 href={childItem.route}
                                 onClick={closeMenu}
-                                className={`${pathUrl === childItem.route && "text-primary"} hover:text-primary inline-flex items-center justify-center text-center`}
+                                className={`${pathUrl === childItem.route && 'text-primary'} hover:text-primary inline-flex items-center justify-center text-center`}
                               >
                                 {childItem.label}
                               </Link>
@@ -150,11 +145,11 @@ const Header = () => {
                         </ul>
                       </li>
                     ) : (
-            <li key={index} className="menu-item">
+                      <li key={index} className="menu-item">
                         <Link
                           href={item.route}
                           onClick={closeMenu}
-              className={`lg:py-[21px] ud-menu-scroll inline-flex items-center font-medium text-black/90 hover:text-primary dark:text-white`}
+                          className={`ud-menu-scroll hover:text-primary inline-flex items-center font-medium text-black/90 lg:py-[21px] dark:text-white`}
                         >
                           {item.label}
                         </Link>
@@ -162,17 +157,17 @@ const Header = () => {
                     ),
                   )}
                   {/* Mobile CTAs */}
-                  <li className="block lg:hidden mt-8">
+                  <li className="mt-8 block lg:hidden">
                     <Link
                       href="/tarjouspyynto"
                       onClick={closeMenu}
-                      className="block w-full rounded-full bg-primary px-7.5 py-3 text-white text-center mb-3"
+                      className="bg-primary mb-3 block w-full rounded-full px-7.5 py-3 text-center text-white"
                     >
                       Pyydä tarjous
                     </Link>
                     <a
                       href={`tel:${siteConfig.contact.phone.tel}`}
-                      className="block w-full rounded-full border border-primary px-7.5 py-3 text-primary text-center"
+                      className="border-primary text-primary block w-full rounded-full border px-7.5 py-3 text-center"
                     >
                       Soita
                     </a>
@@ -182,14 +177,11 @@ const Header = () => {
             </div>
 
             <div className="mr-[60px] flex items-center justify-end lg:mr-0">
-
               {/* Dark mode switch removed by request */}
 
               {session ? (
                 <div className="hidden items-center sm:flex">
-                  <p className="mx-3 text-black dark:text-white">
-                    {session?.user?.name}
-                  </p>
+                  <p className="mx-3 text-black dark:text-white">{session?.user?.name}</p>
                   <button
                     aria-label="SignOut"
                     onClick={() => signOut()}
@@ -202,7 +194,7 @@ const Header = () => {
                 <div className="hidden items-center sm:flex">
                   <a
                     href={`tel:${siteConfig.contact.phone.tel}`}
-                    className="mr-4 font-semibold text-black/80 hover:text-primary dark:text-white"
+                    className="hover:text-primary mr-4 font-semibold text-black/80 dark:text-white"
                   >
                     📞 {siteConfig.contact.phone.display}
                   </a>
@@ -219,11 +211,6 @@ const Header = () => {
           </div>
         </div>
       </header>
-
-      {/* <GlobalSearchModal
-        searchModalOpen={searchModalOpen}
-        setSearchModalOpen={setSearchModalOpen}
-      /> */}
     </>
   );
 };

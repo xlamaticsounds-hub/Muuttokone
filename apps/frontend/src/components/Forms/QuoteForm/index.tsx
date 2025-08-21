@@ -1,8 +1,8 @@
-"use client";
-import React, { useState } from "react";
-import Step1 from "./Step1";
-import Step2 from "./Step2";
-import Progress from "./Progress";
+'use client';
+import React, { useState } from 'react';
+import Step1 from './Step1';
+import Step2 from './Step2';
+import Progress from './Progress';
 
 export type QuoteData = {
   name: string;
@@ -12,7 +12,7 @@ export type QuoteData = {
   to?: string;
   size?: string;
   date?: string;
-  dateFlex?: "exact" | "+/-3" | "+/-7";
+  dateFlex?: 'exact' | '+/-3' | '+/-7';
   services?: string[];
   inventory?: string;
   elevator?: boolean;
@@ -27,12 +27,12 @@ export type QuoteData = {
 
 export default function QuoteForm() {
   const [step, setStep] = useState(1);
-  const [data, setData] = useState<QuoteData>({ name: "" });
+  const [data, setData] = useState<QuoteData>({ name: '' });
 
   // On mount, load quick quote data from localStorage if present
   React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      const quickQuote = localStorage.getItem("quickQuoteData");
+    if (typeof window !== 'undefined') {
+      const quickQuote = localStorage.getItem('quickQuoteData');
       if (quickQuote) {
         try {
           const parsed = JSON.parse(quickQuote);
@@ -44,8 +44,10 @@ export default function QuoteForm() {
             to: parsed.toLocation || d.to,
             size: parsed.homeSize || d.size,
           }));
-          localStorage.removeItem("quickQuoteData");
-        } catch {}
+          localStorage.removeItem('quickQuoteData');
+        } catch {
+          // Invalid JSON in localStorage, ignore
+        }
       }
     }
   }, []);
@@ -54,7 +56,7 @@ export default function QuoteForm() {
   const back = () => setStep((s: number) => Math.max(1, s - 1));
 
   return (
-    <div className="rounded-lg bg-white p-7.5 shadow-3 dark:bg-black">
+    <div className="shadow-3 rounded-lg bg-white p-7.5 dark:bg-black">
       <Progress step={step} />
       {step === 1 ? (
         <Step1 data={data} setData={setData} onNext={next} />

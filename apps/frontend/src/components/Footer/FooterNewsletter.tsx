@@ -1,16 +1,16 @@
-"use client";
-import { useState } from "react";
-import toast from "react-hot-toast";
-import axios from "axios";
-import z from "zod";
-import { integrations, messages } from "../../../integrations.config";
+'use client';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
+import axios from 'axios';
+import z from 'zod';
+import { integrations, messages } from '../../../integrations.config';
 
 const schema = z.object({
-  email: z.string().email("Anna kelvollinen sähköpostiosoite."),
+  email: z.string().email('Anna kelvollinen sähköpostiosoite.'),
 });
 
 export default function FooterNewsletter() {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState('');
 
   const result = schema.safeParse({ email });
 
@@ -30,14 +30,14 @@ export default function FooterNewsletter() {
     }
 
     try {
-      const res = await axios.post("/api/newsletter", { email });
+      const res = await axios.post('/api/newsletter', { email });
 
       if (res.data.status == 400) {
         toast.error(res.data?.detail);
-        setEmail("");
+        setEmail('');
       } else {
-        toast.success("Thanks for signing up!");
-        setEmail("");
+        toast.success('Thanks for signing up!');
+        setEmail('');
       }
     } catch (error: any) {
       toast.error(error.response.data);
@@ -58,7 +58,7 @@ export default function FooterNewsletter() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full rounded-full border border-strokedark py-3 pl-6 pr-12.5 shadow-3 focus:border-primary focus:outline-hidden dark:border-stroke dark:bg-black dark:shadow-none dark:focus:border-primary"
+              className="border-strokedark shadow-3 focus:border-primary dark:border-stroke dark:focus:border-primary w-full rounded-full border py-3 pr-12.5 pl-6 focus:outline-hidden dark:bg-black dark:shadow-none"
             />
 
             <button

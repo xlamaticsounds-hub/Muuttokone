@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { Navigation } from "swiper/modules";
-import { Swiper, SwiperSlide } from "swiper/react";
-import "swiper/css";
-import "swiper/css/navigation";
-import Image from "next/image";
-import testimonialData from "@/components/Testimonials/testimonialData";
+import { Navigation } from 'swiper/modules';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import Image from 'next/image';
+import testimonialData from '@/components/Testimonials/testimonialData';
 
 export default function TestimonialSlider() {
   return (
@@ -15,8 +15,8 @@ export default function TestimonialSlider() {
           className="swiper mySwiper relative z-20 p-20!"
           modules={[Navigation]}
           navigation={{
-            nextEl: ".swiper-button-next",
-            prevEl: ".swiper-button-prev",
+            nextEl: '.swiper-button-next',
+            prevEl: '.swiper-button-prev',
           }}
           loop={true}
           slidesPerView={1}
@@ -24,9 +24,9 @@ export default function TestimonialSlider() {
         >
           {testimonialData.map((testimonial, index) => (
             <SwiperSlide key={index}>
-              <div className="relative rounded-lg bg-white p-9 pr-10 dark:bg-blacksection">
-                <span className="absolute right-0 top-0 block h-1/2 w-1.5 rounded-tr-lg bg-primary"></span>
-                <span className="absolute bottom-0 right-0 block h-1/2 w-1.5 rounded-br-lg bg-secondary"></span>
+              <div className="dark:bg-blacksection relative rounded-lg bg-white p-9 pr-10">
+                <span className="bg-primary absolute top-0 right-0 block h-1/2 w-1.5 rounded-tr-lg"></span>
+                <span className="bg-secondary absolute right-0 bottom-0 block h-1/2 w-1.5 rounded-br-lg"></span>
 
                 <div className="flex flex-col gap-7.5 md:flex-row md:items-center md:justify-between lg:gap-12">
                   <Image
@@ -38,13 +38,8 @@ export default function TestimonialSlider() {
                   />
 
                   <div>
-                    <Image
-                      src="/images/icon/icon-quote.svg"
-                      alt="Quote"
-                      width={56}
-                      height={56}
-                    />
-                    <p className="mb-10 mt-5.5 text-lg font-medium italic lg:text-2xl">
+                    <Image src="/images/icon/icon-quote.svg" alt="Quote" width={56} height={56} />
+                    <p className="mt-5.5 mb-10 text-lg font-medium italic lg:text-2xl">
                       {testimonial.quote}
                     </p>
 
@@ -71,10 +66,7 @@ export default function TestimonialSlider() {
           ))}
         </Swiper>
         <div className="-mt-7.5 flex items-center justify-center gap-4">
-          <button
-            aria-label="Testimonial prev arrow"
-            className="swiper-button-prev group"
-          >
+          <button aria-label="Testimonial prev arrow" className="swiper-button-prev group">
             <svg
               className="fill-body group-hover:fill-white"
               width="14"
@@ -89,10 +81,7 @@ export default function TestimonialSlider() {
               />
             </svg>
           </button>
-          <button
-            aria-label="Testimonial next arrow"
-            className="swiper-button-next group"
-          >
+          <button aria-label="Testimonial next arrow" className="swiper-button-next group">
             <svg
               className="fill-body group-hover:fill-white"
               width="14"

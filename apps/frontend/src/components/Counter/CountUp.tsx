@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from 'react';
 
 interface CountUpProps {
   targetNumber: number;
@@ -10,7 +10,7 @@ const CountUp: React.FC<CountUpProps> = ({ targetNumber }) => {
   const [count, setCount] = useState(0);
   const countRef = useRef<HTMLSpanElement>(null);
 
-  const handleIntersection: IntersectionObserverCallback = (entries) => {
+  const handleIntersection = (entries: IntersectionObserverEntry[]) => {
     const entry = entries[0];
     if (entry.isIntersecting) {
       startCount();

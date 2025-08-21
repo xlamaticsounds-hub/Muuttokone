@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { DIRECTUS_URL } from "@/lib/directus";
+import { NextResponse } from 'next/server';
+import { DIRECTUS_URL } from '@/lib/directus';
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 type QuoteData = {
   name: string;
@@ -12,7 +12,7 @@ type QuoteData = {
   to?: string;
   size?: string;
   date?: string;
-  dateFlex?: "exact" | "+/-3" | "+/-7";
+  dateFlex?: 'exact' | '+/-3' | '+/-7';
   services?: string[];
   inventory?: string;
   elevator?: boolean;
@@ -30,15 +30,15 @@ async function uploadFilesToDirectus(files: File[], token?: string): Promise<str
   for (const f of files) {
     const fd = new FormData();
     // Directus expects key 'file'
-    fd.append("file", f, (f as any).name || "attachment.jpg");
-    const res = await fetch(`${DIRECTUS_URL.replace(/\/$/, "")}/files`, {
-      method: "POST",
+    fd.append('file', f, (f as any).name || 'attachment.jpg');
+    const res = await fetch(`${DIRECTUS_URL.replace(/\/$/, '')}/files`, {
+      method: 'POST',
       headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       body: fd as any,
-      cache: "no-store",
+      cache: 'no-store',
     });
     if (!res.ok) {
-      const text = await res.text().catch(() => "");
+      const text = await res.text().catch(() => '');
       throw new Error(`File upload failed: ${res.status} ${text}`);
     }
     const json = (await res.json()) as any;
@@ -50,31 +50,34 @@ async function uploadFilesToDirectus(files: File[], token?: string): Promise<str
 
 export async function POST(req: Request) {
   try {
-    const contentType = req.headers.get("content-type") || "";
-    if (!contentType.includes("multipart/form-data")) {
-      return NextResponse.json({ error: "Invalid content type" }, { status: 415 });
+    const contentType = req.headers.get('content-type') || '';
+    if (!contentType.includes('multipart/form-data')) {
+      return NextResponse.json({ error: 'Invalid content type' }, { status: 415 });
     }
 
     const form = await req.formData();
-    const payloadRaw = form.get("payload");
-    if (!payloadRaw || typeof payloadRaw !== "string") {
-      return NextResponse.json({ error: "Missing payload" }, { status: 400 });
+    const payloadRaw = form.get('payload');
+    if (!payloadRaw || typeof payloadRaw !== 'string') {
+      return NextResponse.json({ error: 'Missing payload' }, { status: 400 });
     }
 
     let data: QuoteData;
     try {
       data = JSON.parse(payloadRaw);
     } catch {
-      return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid JSON payload' }, { status: 400 });
     }
 
     if (!data.name || !(data.email || data.phone)) {
-      return NextResponse.json({ error: "Name and at least one contact (email or phone) required" }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Name and at least one contact (email or phone) required' },
+        { status: 400 },
+      );
     }
 
     // Collect files
     const files: File[] = [];
-    const images = form.getAll("images");
+    const images = form.getAll('images');
     for (const it of images) {
       if (it instanceof File) files.push(it);
     }
@@ -82,7 +85,10 @@ export async function POST(req: Request) {
     const token = process.env.DIRECTUS_STATIC_TOKEN;
     if (!token) {
       // We can still accept submission but cannot persist to Directus securely
-      return NextResponse.json({ error: "Missing DIRECTUS_STATIC_TOKEN on server" }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Missing DIRECTUS_STATIC_TOKEN on server' },
+        { status: 500 },
+      );
     }
 
     // Upload attachments first (optional)
@@ -92,8 +98,8 @@ export async function POST(req: Request) {
     }
 
     // Create a lead item in Directus
-    const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "";
-    const ua = req.headers.get("user-agent") || "";
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || '';
+    const ua = req.headers.get('user-agent') || '';
 
     const leadBody: any = {
       name: data.name,
@@ -106,10 +112,10 @@ export async function POST(req: Request) {
       dateFlex: data.dateFlex ?? null,
       services: data.services ?? [],
       inventory: data.inventory ?? null,
-      elevator: typeof data.elevator === "boolean" ? data.elevator : null,
+      elevator: typeof data.elevator === 'boolean' ? data.elevator : null,
       distance: data.distance ?? null,
       notes: data.notes ?? null,
-      isBusiness: typeof data.isBusiness === "boolean" ? data.isBusiness : null,
+      isBusiness: typeof data.isBusiness === 'boolean' ? data.isBusiness : null,
       businessId: data.businessId ?? null,
       contactNotes: data.contactNotes ?? null,
       fromExtra: data.fromExtra ?? null,
@@ -119,24 +125,23 @@ export async function POST(req: Request) {
     };
     if (attachmentIds.length > 0) leadBody.attachments = attachmentIds;
 
-    const res = await fetch(`${DIRECTUS_URL.replace(/\/$/, "")}/items/leads`, {
-      method: "POST",
+    const res = await fetch(`${DIRECTUS_URL.replace(/\/$/, '')}/items/leads`, {
+      method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(leadBody),
-      cache: "no-store",
+      cache: 'no-store',
     });
 
     if (!res.ok) {
-      const text = await res.text().catch(() => "");
+      const text = await res.text().catch(() => '');
       return NextResponse.json({ error: `Directus error: ${res.status} ${text}` }, { status: 502 });
     }
 
     return NextResponse.json({ ok: true });
   } catch (e: any) {
-    return NextResponse.json({ error: e?.message || "Server error" }, { status: 500 });
+    return NextResponse.json({ error: e?.message || 'Server error' }, { status: 500 });
   }
 }
- 

@@ -1,6 +1,6 @@
-import Image from "next/image";
-import { Team } from "@/types/team";
-import Link from "next/link";
+import Image from 'next/image';
+import { Team } from '@/types/team';
+import Link from 'next/link';
 
 export default function TeamItem({ team }: { team: Team }) {
   return (
@@ -16,17 +16,14 @@ export default function TeamItem({ team }: { team: Team }) {
           />
 
           <div className="translate-y-25 duration-300 ease-linear group-hover:translate-y-0">
-            <span className="absolute -bottom-21 -left-5 z-20 block h-37.5 w-[120%] rotate-6 bg-primary"></span>
-            <span className="absolute bottom-0 left-0 z-10 block h-17 w-full bg-secondary"></span>
-            <div className="absolute bottom-0 left-0 z-30 w-full pb-5 pt-7.5">
+            <span className="bg-primary absolute -bottom-21 -left-5 z-20 block h-37.5 w-[120%] rotate-6"></span>
+            <span className="bg-secondary absolute bottom-0 left-0 z-10 block h-17 w-full"></span>
+            <div className="absolute bottom-0 left-0 z-30 w-full pt-7.5 pb-5">
               <ul className="flex items-center justify-center gap-8">
                 <li>
-                  <Link
-                    aria-label="Team Social link for Facebook"
-                    href={team.facebookLink}
-                  >
+                  <Link aria-label="Team Social link for Facebook" href={team.facebookLink}>
                     <svg
-                      className="fill-white duration-300 ease-in-out hover:fill-secondary"
+                      className="hover:fill-secondary fill-white duration-300 ease-in-out"
                       width="10"
                       height="18"
                       viewBox="0 0 10 18"
@@ -41,12 +38,9 @@ export default function TeamItem({ team }: { team: Team }) {
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    aria-label="Team Social link for Twitter"
-                    href={team.twitterLink}
-                  >
+                  <Link aria-label="Team Social link for Twitter" href={team.twitterLink}>
                     <svg
-                      className="fill-white duration-300 ease-in-out hover:fill-secondary"
+                      className="hover:fill-secondary fill-white duration-300 ease-in-out"
                       width="18"
                       height="14"
                       viewBox="0 0 18 14"
@@ -61,12 +55,9 @@ export default function TeamItem({ team }: { team: Team }) {
                   </Link>
                 </li>
                 <li>
-                  <Link
-                    aria-label="Team Social link for Linkedin"
-                    href={team.linkedinLink}
-                  >
+                  <Link aria-label="Team Social link for Linkedin" href={team.linkedinLink}>
                     <svg
-                      className="fill-white duration-300 ease-in-out hover:fill-secondary"
+                      className="hover:fill-secondary fill-white duration-300 ease-in-out"
                       width="17"
                       height="16"
                       viewBox="0 0 17 16"
@@ -85,7 +76,7 @@ export default function TeamItem({ team }: { team: Team }) {
           </div>
         </div>
 
-        <h4 className="mb-1 mt-7.5 text-xl text-black dark:text-white md:text-title-sm">
+        <h4 className="md:text-title-sm mt-7.5 mb-1 text-xl text-black dark:text-white">
           {team.name}
         </h4>
         <p>{team.position}</p>

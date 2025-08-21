@@ -67,7 +67,7 @@
       transform: rotate(360deg);
     }
     50% {
-      transform: rotate(0deg)
+      transform: rotate(0deg);
     }
   }
 }
@@ -90,16 +90,13 @@
   }
 
   button:not(:disabled),
-  [role="button"]:not(:disabled) {
+  [role='button']:not(:disabled) {
     cursor: pointer;
   }
 }
 
 @utility dropdown {
-  @apply flex-col gap-4 min-w-max lg:w-[250px] mt-2 lg:mt-0 bg-white dark:bg-black border border-strokedark dark:border-stroke shadow-lg ease-in duration-300 px-8 py-5 rounded-md -left-7.5 hidden
-    lg:translate-y-10 lg:opacity-0 lg:invisible lg:absolute lg:flex
-    lg:before:absolute lg:before:-top-1.5 lg:before:left-10 lg:before:w-3 lg:before:h-3 lg:before:border-l lg:before:border-t lg:before:border-strokedark lg:dark:before:border-stroke lg:before:bg-white lg:dark:before:bg-black lg:before:rotate-45
-    lg:group-hover:translate-y-6.5 lg:group-hover:opacity-100 lg:group-hover:visible;
+  @apply border-strokedark dark:border-stroke lg:before:border-strokedark lg:dark:before:border-stroke -left-7.5 mt-2 hidden min-w-max flex-col gap-4 rounded-md border bg-white px-8 py-5 shadow-lg duration-300 ease-in lg:invisible lg:absolute lg:mt-0 lg:flex lg:w-[250px] lg:translate-y-10 lg:opacity-0 lg:group-hover:visible lg:group-hover:translate-y-6.5 lg:group-hover:opacity-100 lg:before:absolute lg:before:-top-1.5 lg:before:left-10 lg:before:h-3 lg:before:w-3 lg:before:rotate-45 lg:before:border-t lg:before:border-l lg:before:bg-white dark:bg-black lg:dark:before:bg-black;
 }
 
 @utility project-sizer {
@@ -116,8 +113,7 @@
 }
 
 @utility img-white {
-  filter: invert(0%) sepia(96%) saturate(15%) hue-rotate(249deg)
-    brightness(100%) contrast(105%);
+  filter: invert(0%) sepia(96%) saturate(15%) hue-rotate(249deg) brightness(100%) contrast(105%);
 }
 
 @layer base {
@@ -126,10 +122,15 @@
   }
 
   body {
-  @apply font-inter font-normal text-base text-body relative z-1 overflow-x-hidden;
+    @apply font-inter text-body relative z-1 overflow-x-hidden text-base font-normal;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-outfit;
   }
 }
@@ -137,16 +138,16 @@
 /* third-party libraries CSS */
 .swiper-button-prev,
 .swiper-button-next {
-  @apply after:hidden static! h-10! w-10! mt-0! rounded-full border border-body bg-white ease-in-out hover:border-primary hover:bg-primary dark:bg-blacksection dark:hover:border-primary dark:hover:bg-primary duration-300 ;
+  @apply border-body hover:border-primary hover:bg-primary dark:bg-blacksection dark:hover:border-primary dark:hover:bg-primary static! mt-0! h-10! w-10! rounded-full border bg-white duration-300 ease-in-out after:hidden;
 }
 
 .swiper-button-prev svg,
 .swiper-button-next svg {
-  @apply w-auto! h-auto! ;
+  @apply h-auto! w-auto!;
 }
 
 .swiper-slide.swiper-slide-active {
-  @apply shadow-3 dark:shadow-none rounded-lg;
+  @apply shadow-3 rounded-lg dark:shadow-none;
 }
 
 #supportCheckbox:checked ~ div span {

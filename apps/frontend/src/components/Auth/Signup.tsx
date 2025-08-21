@@ -1,21 +1,18 @@
-"use client";
-import axios from "axios";
-import { signIn } from "next-auth/react";
-import Link from "next/link";
-import React, { useState } from "react";
-import toast from "react-hot-toast";
-import validateEmail from "@/app/libs/validate";
-import Graphics from "@/components/Auth/Graphics";
-import SlideOnReveal from "@/components/SlideOnReveal";
-import z from "zod";
-import { integrations, messages } from "../../../integrations.config";
+'use client';
+import axios from 'axios';
+import { signIn } from 'next-auth/react';
+import Link from 'next/link';
+import React, { useState } from 'react';
+import toast from 'react-hot-toast';
+import validateEmail from '@/app/libs/validate';
+import Graphics from '@/components/Auth/Graphics';
+import SlideOnReveal from '@/components/SlideOnReveal';
+import z from 'zod';
+import { integrations, messages } from '../../../integrations.config';
 
 const schema = z.object({
-  fullName: z
-    .string()
-    .min(3, "Please enter your full name.")
-    .max(25, "Full name is too long."),
-  email: z.string().email("Please enter a valid email address."),
+  fullName: z.string().min(3, 'Please enter your full name.').max(25, 'Full name is too long.'),
+  email: z.string().email('Please enter a valid email address.'),
   password: z
     .string()
     .min(8)
@@ -27,7 +24,7 @@ const schema = z.object({
         /[@$!%*?&]/.test(val), // At least one special character
       {
         message:
-          "Password must be at least 8 characters long and contain uppercase and lowercase letters, a number, and a special character.",
+          'Password must be at least 8 characters long and contain uppercase and lowercase letters, a number, and a special character.',
       },
     ),
 });
@@ -35,9 +32,9 @@ const schema = z.object({
 export default function Signup() {
   const [isPassword, setIsPassword] = useState(false);
   const [data, setData] = useState({
-    fullName: "",
-    email: "",
-    password: "",
+    fullName: '',
+    email: '',
+    password: '',
   });
 
   const { fullName, email, password } = data;
@@ -70,38 +67,38 @@ export default function Signup() {
     if (!validateForm(false)) return;
 
     axios
-      .post("/api/register", {
+      .post('/api/register', {
         name: `${fullName}`,
         email,
         password,
       })
       .then(() => {
-        toast.success("User has been registered");
+        toast.success('User has been registered');
         setData({
-          fullName: "",
-          email: "",
-          password: "",
+          fullName: '',
+          email: '',
+          password: '',
         });
       })
-      .catch(() => toast.error("Something went wrong"));
+      .catch(() => toast.error('Something went wrong'));
   };
 
   const signinWithMail = () => {
     if (!email) {
-      return toast.error("Please enter your email address.");
+      return toast.error('Please enter your email address.');
     }
 
     if (!validateEmail(email)) {
-      return toast.error("Please enter a valid email address.");
+      return toast.error('Please enter a valid email address.');
     } else {
-      signIn("email", {
+      signIn('email', {
         redirect: false,
         email: email,
       })
         .then((callback) => {
           if (callback?.ok) {
-            toast.success("Email sent");
-            setData({ ...data, email: "" });
+            toast.success('Email sent');
+            setData({ ...data, email: '' });
           }
         })
         .catch((error) => {
@@ -113,29 +110,29 @@ export default function Signup() {
   return (
     <>
       {/* <!-- ===== SignUp Form Start ===== --> */}
-      <section className="relative overflow-hidden bg-whiter px-4 pb-20 pt-35 dark:bg-blacksection md:px-8 lg:pb-25 lg:pt-45 xl:px-0 xl:pb-30 xl:pt-50">
+      <section className="bg-whiter dark:bg-blacksection relative overflow-hidden px-4 pt-35 pb-20 md:px-8 lg:pt-45 lg:pb-25 xl:px-0 xl:pt-50 xl:pb-30">
         <SlideOnReveal delay={0.3}>
-          <div className="animate_top relative z-10 mx-auto max-w-550 rounded-lg bg-white px-7.5 py-9 shadow-3 dark:bg-black dark:shadow-none md:px-12.5 md:py-11.5 lg:px-17.5 lg:py-16.5">
-            <span className="absolute left-0 top-0 block h-1.5 w-1/2 rounded-tl-lg bg-primary"></span>
-            <span className="absolute right-0 top-0 block h-1.5 w-1/2 rounded-tr-lg bg-secondary"></span>
+          <div className="animate_top shadow-3 relative z-10 mx-auto max-w-550 rounded-lg bg-white px-7.5 py-9 md:px-12.5 md:py-11.5 lg:px-17.5 lg:py-16.5 dark:bg-black dark:shadow-none">
+            <span className="bg-primary absolute top-0 left-0 block h-1.5 w-1/2 rounded-tl-lg"></span>
+            <span className="bg-secondary absolute top-0 right-0 block h-1.5 w-1/2 rounded-tr-lg"></span>
 
             <div className="text-center">
-              <h2 className="mb-2.5 text-title-lg2 font-medium text-black dark:text-white">
+              <h2 className="text-title-lg2 mb-2.5 font-medium text-black dark:text-white">
                 Create an Account
               </h2>
               <p>Lorem ipsum dolor sit amet, consectetur</p>
 
-              <h3 className="mb-5.5 mt-7.5 text-xl font-light text-black dark:text-white">
+              <h3 className="mt-7.5 mb-5.5 text-xl font-light text-black dark:text-white">
                 Sign up with Social Media
               </h3>
 
               <ul className="mb-9 flex items-center justify-center gap-4.5">
                 <li>
-                  <Link
-                    href="#"
+                  <button
+                    type="button"
                     aria-label="sign with google"
-                    onClick={() => signIn("google")}
-                    className="flex h-12.5 w-12.5 items-center justify-center rounded-lg border border-strokedark p-3.5 duration-300 ease-in-out hover:border-primary/40 hover:shadow-5 dark:border-blacksection dark:hover:border-primary/40"
+                    onClick={() => signIn('google')}
+                    className="border-strokedark hover:border-primary/40 hover:shadow-5 dark:border-blacksection dark:hover:border-primary/40 flex h-12.5 w-12.5 items-center justify-center rounded-lg border p-3.5 duration-300 ease-in-out"
                   >
                     <svg
                       width="22"
@@ -168,14 +165,14 @@ export default function Signup() {
                         </clipPath>
                       </defs>
                     </svg>
-                  </Link>
+                  </button>
                 </li>
                 <li>
-                  <Link
-                    href="#"
+                  <button
+                    type="button"
                     aria-label="signup with github"
-                    onClick={() => signIn("github")}
-                    className="flex h-12.5 w-12.5 items-center justify-center rounded-lg border border-strokedark p-3.5 duration-300 ease-in-out hover:border-primary/40 hover:shadow-5 dark:border-blacksection dark:hover:border-primary/40"
+                    onClick={() => signIn('github')}
+                    className="border-strokedark hover:border-primary/40 hover:shadow-5 dark:border-blacksection dark:hover:border-primary/40 flex h-12.5 w-12.5 items-center justify-center rounded-lg border p-3.5 duration-300 ease-in-out"
                   >
                     <svg
                       width="23"
@@ -189,31 +186,31 @@ export default function Signup() {
                         fill="#79808A"
                       />
                     </svg>
-                  </Link>
+                  </button>
                 </li>
               </ul>
 
-              <span className="relative block font-outfit text-lg font-light">
-                <span className="absolute left-0 top-1/2 block h-[1px] w-22.5 bg-strokedark dark:bg-stroke"></span>
-                <span className="absolute right-0 top-1/2 block h-[1px] w-22.5 bg-strokedark dark:bg-stroke"></span>
+              <span className="font-outfit relative block text-lg font-light">
+                <span className="bg-strokedark dark:bg-stroke absolute top-1/2 left-0 block h-[1px] w-22.5"></span>
+                <span className="bg-strokedark dark:bg-stroke absolute top-1/2 right-0 block h-[1px] w-22.5"></span>
                 Or, sign up with your email
               </span>
             </div>
 
-            <div className="mx-auto mb-12 mt-9 flex flex-col items-center justify-center gap-1 rounded-lg border border-strokedark p-1 dark:border-stroke md:flex-row">
+            <div className="border-strokedark dark:border-stroke mx-auto mt-9 mb-12 flex flex-col items-center justify-center gap-1 rounded-lg border p-1 md:flex-row">
               <button
-                className={`w-full rounded-lg px-6 py-3 text-base text-body outline-hidden transition-all duration-300 hover:border-primary hover:bg-primary/5 hover:text-primary dark:border-transparent dark:bg-[#2C303B] dark:text-white dark:hover:border-primary dark:hover:bg-primary/5 dark:hover:text-primary dark:hover:shadow-none ${
+                className={`text-body hover:border-primary hover:bg-primary/5 hover:text-primary dark:hover:border-primary dark:hover:bg-primary/5 dark:hover:text-primary w-full rounded-lg px-6 py-3 text-base outline-hidden transition-all duration-300 dark:border-transparent dark:bg-[#2C303B] dark:text-white dark:hover:shadow-none ${
                   !isPassword &&
-                  "border bg-primary/5 text-primary dark:border-primary dark:bg-primary/5"
+                  'bg-primary/5 text-primary dark:border-primary dark:bg-primary/5 border'
                 }`}
                 onClick={() => setIsPassword(false)}
               >
                 Magic Link
               </button>
               <button
-                className={`w-full rounded-lg px-6 py-3 text-base text-body outline-hidden transition-all duration-300 hover:border-primary hover:bg-primary/5 hover:text-primary dark:border-transparent dark:bg-[#2C303B] dark:text-white dark:hover:border-primary dark:hover:bg-primary/5 dark:hover:text-primary dark:hover:shadow-none ${
+                className={`text-body hover:border-primary hover:bg-primary/5 hover:text-primary dark:hover:border-primary dark:hover:bg-primary/5 dark:hover:text-primary w-full rounded-lg px-6 py-3 text-base outline-hidden transition-all duration-300 dark:border-transparent dark:bg-[#2C303B] dark:text-white dark:hover:shadow-none ${
                   isPassword &&
-                  "border bg-primary/5 text-primary dark:border-primary dark:bg-primary/5"
+                  'bg-primary/5 text-primary dark:border-primary dark:bg-primary/5 border'
                 }`}
                 onClick={() => setIsPassword(true)}
               >
@@ -221,16 +218,13 @@ export default function Signup() {
               </button>
             </div>
 
-            <form
-              onSubmit={(e) => e.preventDefault()}
-              className={`${!isPassword ? "" : "hidden"}`}
-            >
+            <form onSubmit={(e) => e.preventDefault()} className={`${!isPassword ? '' : 'hidden'}`}>
               <div>
                 <input
                   type="email"
                   value={email}
                   placeholder="Email"
-                  className="w-full rounded-full border border-strokedark bg-white px-6 py-3.5 shadow-4 placeholder:text-body/50 focus:border-primary focus:shadow-4 focus-visible:outline-hidden dark:border-stroke dark:bg-black dark:shadow-none dark:focus:border-primary/40"
+                  className="border-strokedark shadow-4 placeholder:text-body/50 focus:border-primary focus:shadow-4 dark:border-stroke dark:focus:border-primary/40 w-full rounded-full border bg-white px-6 py-3.5 focus-visible:outline-hidden dark:bg-black dark:shadow-none"
                   required
                   onChange={(e) => setData({ ...data, email: e.target.value })}
                 />
@@ -238,7 +232,7 @@ export default function Signup() {
                 <div className="mt-6">
                   <button
                     aria-label="login with email and password"
-                    className={`block w-full rounded-full bg-primary px-7.5 py-3 text-center font-medium text-white duration-300 ease-in-out hover:shadow-1`}
+                    className={`bg-primary hover:shadow-1 block w-full rounded-full px-7.5 py-3 text-center font-medium text-white duration-300 ease-in-out`}
                     onClick={signinWithMail}
                   >
                     Send Magic Link
@@ -247,15 +241,9 @@ export default function Signup() {
               </div>
             </form>
 
-            <form
-              onSubmit={registerUser}
-              className={isPassword ? "" : "hidden"}
-            >
+            <form onSubmit={registerUser} className={isPassword ? '' : 'hidden'}>
               <div className="mb-6">
-                <label
-                  htmlFor="fullName"
-                  className="mb-3 block text-black dark:text-white"
-                >
+                <label htmlFor="fullName" className="mb-3 block text-black dark:text-white">
                   Full Name
                 </label>
                 <input
@@ -263,19 +251,14 @@ export default function Signup() {
                   name="fullName"
                   placeholder="First and last name"
                   value={data.fullName}
-                  onChange={(e) =>
-                    setData({ ...data, [e.target.name]: e.target.value })
-                  }
+                  onChange={(e) => setData({ ...data, [e.target.name]: e.target.value })}
                   required
-                  className="w-full rounded-full border border-strokedark bg-white px-6 py-3.5 shadow-4 placeholder:text-body/50 focus:border-primary focus:shadow-4 focus-visible:outline-hidden dark:border-stroke dark:bg-black dark:shadow-none dark:focus:border-primary/40"
+                  className="border-strokedark shadow-4 placeholder:text-body/50 focus:border-primary focus:shadow-4 dark:border-stroke dark:focus:border-primary/40 w-full rounded-full border bg-white px-6 py-3.5 focus-visible:outline-hidden dark:bg-black dark:shadow-none"
                 />
               </div>
 
               <div className="mb-6">
-                <label
-                  htmlFor="email"
-                  className="mb-3 block text-black dark:text-white"
-                >
+                <label htmlFor="email" className="mb-3 block text-black dark:text-white">
                   Work Email
                 </label>
                 <input
@@ -283,19 +266,14 @@ export default function Signup() {
                   type="email"
                   placeholder="Enter your email"
                   value={data.email}
-                  onChange={(e) =>
-                    setData({ ...data, [e.target.name]: e.target.value })
-                  }
+                  onChange={(e) => setData({ ...data, [e.target.name]: e.target.value })}
                   required
-                  className="w-full rounded-full border border-strokedark bg-white px-6 py-3.5 shadow-4 placeholder:text-body/50 focus:border-primary focus:shadow-4 focus-visible:outline-hidden dark:border-stroke dark:bg-black dark:shadow-none dark:focus:border-primary/40"
+                  className="border-strokedark shadow-4 placeholder:text-body/50 focus:border-primary focus:shadow-4 dark:border-stroke dark:focus:border-primary/40 w-full rounded-full border bg-white px-6 py-3.5 focus-visible:outline-hidden dark:bg-black dark:shadow-none"
                 />
               </div>
 
               <div className="mb-6">
-                <label
-                  htmlFor="password"
-                  className="mb-3 block text-black dark:text-white"
-                >
+                <label htmlFor="password" className="mb-3 block text-black dark:text-white">
                   Your password
                 </label>
 
@@ -304,24 +282,22 @@ export default function Signup() {
                   type="password"
                   placeholder="Enter your password"
                   value={data.password}
-                  onChange={(e) =>
-                    setData({ ...data, [e.target.name]: e.target.value })
-                  }
+                  onChange={(e) => setData({ ...data, [e.target.name]: e.target.value })}
                   required
-                  className="w-full rounded-full border border-strokedark bg-white px-6 py-3.5 shadow-4 placeholder:text-body/50 focus:border-primary focus:shadow-4 focus-visible:outline-hidden dark:border-stroke dark:bg-black dark:shadow-none dark:focus:border-primary/40"
+                  className="border-strokedark shadow-4 placeholder:text-body/50 focus:border-primary focus:shadow-4 dark:border-stroke dark:focus:border-primary/40 w-full rounded-full border bg-white px-6 py-3.5 focus-visible:outline-hidden dark:bg-black dark:shadow-none"
                 />
               </div>
 
               <button
                 aria-label="signup with email and password"
                 type="submit"
-                className="block w-full rounded-full bg-primary px-7.5 py-3 text-center font-medium text-white duration-300 ease-in-out hover:shadow-1"
+                className="bg-primary hover:shadow-1 block w-full rounded-full px-7.5 py-3 text-center font-medium text-white duration-300 ease-in-out"
               >
                 Sign Up
               </button>
 
-              <p className="mt-7.5 text-center font-outfit text-lg font-light">
-                Already have an account?{" "}
+              <p className="font-outfit mt-7.5 text-center text-lg font-light">
+                Already have an account?{' '}
                 <Link href="/auth/signin" className="text-primary">
                   Sign in
                 </Link>

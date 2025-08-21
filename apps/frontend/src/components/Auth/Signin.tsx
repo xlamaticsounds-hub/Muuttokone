@@ -1,16 +1,16 @@
-"use client";
-import { signIn } from "next-auth/react";
-import Link from "next/link";
-import React, { useState } from "react";
-import toast from "react-hot-toast";
-import validateEmail from "@/app/libs/validate";
-import Graphics from "@/components/Auth/Graphics";
-import SlideOnReveal from "@/components/SlideOnReveal";
-import z from "zod";
-import { integrations, messages } from "../../../integrations.config";
+'use client';
+import { signIn } from 'next-auth/react';
+import Link from 'next/link';
+import React, { useState } from 'react';
+import toast from 'react-hot-toast';
+import validateEmail from '@/app/libs/validate';
+import Graphics from '@/components/Auth/Graphics';
+import SlideOnReveal from '@/components/SlideOnReveal';
+import z from 'zod';
+import { integrations, messages } from '../../../integrations.config';
 
 const schema = z.object({
-  email: z.string().email("Please enter a valid email address."),
+  email: z.string().email('Please enter a valid email address.'),
   password: z
     .string()
     .min(8)
@@ -22,7 +22,7 @@ const schema = z.object({
         /[@$!%*?&]/.test(val), // At least one special character
       {
         message:
-          "Password must be at least 8 characters long and contain uppercase and lowercase letters, a number, and a special character.",
+          'Password must be at least 8 characters long and contain uppercase and lowercase letters, a number, and a special character.',
       },
     ),
 });
@@ -30,8 +30,8 @@ const schema = z.object({
 const Signin = () => {
   const [isPassword, setIsPassword] = useState(false);
   const [data, setData] = useState({
-    email: "",
-    password: "",
+    email: '',
+    password: '',
     remember: false,
   });
 
@@ -64,14 +64,14 @@ const Signin = () => {
       return;
     }
 
-    signIn("credentials", { ...data, redirect: false }).then((callback) => {
+    signIn('credentials', { ...data, redirect: false }).then((callback) => {
       if (callback?.error) {
         toast.error(callback.error);
       }
 
       if (callback?.ok && !callback?.error) {
-        toast.success("Logged in successfully");
-        setData({ email: "", password: "", remember: false });
+        toast.success('Logged in successfully');
+        setData({ email: '', password: '', remember: false });
       }
     });
   };
@@ -87,16 +87,16 @@ const Signin = () => {
     }
 
     if (!validateEmail(data.email)) {
-      return toast.error("Please enter a valid email address.");
+      return toast.error('Please enter a valid email address.');
     } else {
-      signIn("email", {
+      signIn('email', {
         redirect: false,
         email: data?.email,
       })
         .then((callback) => {
           if (callback?.ok) {
-            toast.success("Email sent");
-            setData({ ...data, email: "" });
+            toast.success('Email sent');
+            setData({ ...data, email: '' });
           }
         })
         .catch((error) => {
@@ -125,10 +125,10 @@ const Signin = () => {
 
               <ul className="mb-9 flex items-center justify-center gap-4.5">
                 <li>
-                  <Link
-                    href="#"
+                  <button
+                    type="button"
                     aria-label="sign with google"
-                    onClick={() => signIn("google")}
+                    onClick={() => signIn('google')}
                     className="border-strokedark hover:border-primary/40 hover:shadow-5 dark:border-blacksection dark:hover:border-primary/40 flex h-12.5 w-12.5 items-center justify-center rounded-lg border p-3.5 duration-300 ease-in-out"
                   >
                     <svg
@@ -162,13 +162,13 @@ const Signin = () => {
                         </clipPath>
                       </defs>
                     </svg>
-                  </Link>
+                  </button>
                 </li>
                 <li>
-                  <Link
-                    href="#"
+                  <button
+                    type="button"
                     aria-label="signup with github"
-                    onClick={() => signIn("github")}
+                    onClick={() => signIn('github')}
                     className="border-strokedark hover:border-primary/40 hover:shadow-5 dark:border-blacksection dark:hover:border-primary/40 flex h-12.5 w-12.5 items-center justify-center rounded-lg border p-3.5 duration-300 ease-in-out"
                   >
                     <svg
@@ -183,7 +183,7 @@ const Signin = () => {
                         fill="#79808A"
                       />
                     </svg>
-                  </Link>
+                  </button>
                 </li>
               </ul>
 
@@ -198,7 +198,7 @@ const Signin = () => {
               <button
                 className={`text-body hover:border-primary hover:bg-primary/5 hover:text-primary dark:hover:border-primary dark:hover:bg-primary/5 dark:hover:text-primary w-full rounded-lg px-6 py-3 text-base outline-hidden transition-all duration-300 dark:border-transparent dark:bg-[#2C303B] dark:text-white dark:hover:shadow-none ${
                   !isPassword &&
-                  "bg-primary/5 text-primary dark:border-primary dark:bg-primary/5 border"
+                  'bg-primary/5 text-primary dark:border-primary dark:bg-primary/5 border'
                 }`}
                 onClick={() => setIsPassword(false)}
               >
@@ -207,7 +207,7 @@ const Signin = () => {
               <button
                 className={`text-body hover:border-primary hover:bg-primary/5 hover:text-primary dark:hover:border-primary dark:hover:bg-primary/5 dark:hover:text-primary w-full rounded-lg px-6 py-3 text-base outline-hidden transition-all duration-300 dark:border-transparent dark:bg-[#2C303B] dark:text-white dark:hover:shadow-none ${
                   isPassword &&
-                  "bg-primary/5 text-primary dark:border-primary dark:bg-primary/5 border"
+                  'bg-primary/5 text-primary dark:border-primary dark:bg-primary/5 border'
                 }`}
                 onClick={() => setIsPassword(true)}
               >
@@ -215,10 +215,7 @@ const Signin = () => {
               </button>
             </div>
 
-            <form
-              onSubmit={(e) => e.preventDefault()}
-              className={`${!isPassword ? "" : "hidden"}`}
-            >
+            <form onSubmit={(e) => e.preventDefault()} className={`${!isPassword ? '' : 'hidden'}`}>
               <div>
                 <input
                   type="email"
@@ -241,15 +238,9 @@ const Signin = () => {
               </div>
             </form>
 
-            <form
-              onSubmit={loginUser}
-              className={`${isPassword ? "" : "hidden"}`}
-            >
+            <form onSubmit={loginUser} className={`${isPassword ? '' : 'hidden'}`}>
               <div className="mb-6">
-                <label
-                  htmlFor="email"
-                  className="mb-3 block text-black dark:text-white"
-                >
+                <label htmlFor="email" className="mb-3 block text-black dark:text-white">
                   Work Email
                 </label>
                 <input
@@ -264,10 +255,7 @@ const Signin = () => {
               </div>
 
               <div className="mb-6">
-                <label
-                  htmlFor="password"
-                  className="mb-3 block text-black dark:text-white"
-                >
+                <label htmlFor="password" className="mb-3 block text-black dark:text-white">
                   Your password
                 </label>
                 <input
@@ -275,9 +263,7 @@ const Signin = () => {
                   placeholder="Enter your password"
                   name="password"
                   value={data.password}
-                  onChange={(e) =>
-                    setData({ ...data, password: e.target.value })
-                  }
+                  onChange={(e) => setData({ ...data, password: e.target.value })}
                   className="border-strokedark shadow-4 placeholder:text-body/50 focus:border-primary focus:shadow-4 dark:border-stroke dark:focus:border-primary/40 w-full rounded-full border bg-white px-6 py-3.5 focus-visible:outline-hidden dark:bg-black dark:shadow-none"
                 />
               </div>
@@ -293,9 +279,7 @@ const Signin = () => {
                       name="checkboxLabel"
                       id="checkboxLabel"
                       className="sr-only"
-                      onChange={(e) =>
-                        setData({ ...data, remember: e.target.checked })
-                      }
+                      onChange={(e) => setData({ ...data, remember: e.target.checked })}
                     />
                     <div className="border-body/30 mr-4 flex h-5 w-5 items-center justify-center rounded-sm border dark:border-white/10">
                       {data?.remember && (
@@ -341,7 +325,7 @@ const Signin = () => {
               </button>
 
               <p className="font-outfit mt-7.5 text-center text-lg font-light">
-                Don&apos;t have an account?{" "}
+                Don&apos;t have an account?{' '}
                 <Link href="/auth/signup" className="text-primary">
                   Sign up
                 </Link>

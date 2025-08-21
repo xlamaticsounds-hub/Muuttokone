@@ -8,7 +8,7 @@ export function formatDate(date: Date | string): string {
   return d.toLocaleDateString('fi-FI', {
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
   });
 }
 
@@ -28,13 +28,13 @@ export function truncate(text: string, length: number): string {
 export function onScroll(): void {
   const sections = document.querySelectorAll('[id]');
   const navLinks = document.querySelectorAll('.ud-menu-scroll');
-  
+
   let current = '';
-  
+
   sections.forEach((section) => {
     const sectionTop = (section as HTMLElement).offsetTop;
-    const sectionHeight = (section as HTMLElement).offsetHeight;
-    
+    // const sectionHeight = (section as HTMLElement).offsetHeight; // Not used currently
+
     if (window.pageYOffset >= sectionTop - 200) {
       current = section.getAttribute('id') || '';
     }

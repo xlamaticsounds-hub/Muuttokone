@@ -31,10 +31,10 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+
 # Installing and Configuring Next.js Boilerplate Templates
 
 Installing boilerplate templates are different than ordinary templates, you have to follow the steps strictly without skipping any of them.
-
 
 1. [Installation](https://nextjstemplates.com/docs/boilerplate#installation)
 2. [Databases Setup](https://nextjstemplates.com/docs/database)
@@ -49,14 +49,15 @@ Installing boilerplate templates are different than ordinary templates, you have
 ---
 
 ### Useful links
+
 - Project guide: `guide.md`
 - Backlog & vision: `muuttokone_vision.md`
 - Tasks: `tasks.md`
 
 External resources:
+
 - [Next.js Documentation](https://nextjs.org/docs)
 - [Next.js Templates support](https://nextjstemplates.com/support)
-
 
 ### Local setup notes
 
@@ -88,10 +89,10 @@ Make sure to edit build command like this when deploying to Vercel.
 
 Follow the steps below to complete the installation, if you get stuck feel free to open a [support ticket](/support), we will get back to you ASAP.
 
-
 ### Update Log
 
 April 10 2025
+
 - Fix peer deps issue and package update
 - Migrated to tailwind v4
 - Migrate react-instantsearch-dom to react-instantsearch
@@ -100,9 +101,11 @@ April 10 2025
 - Font optimization using next/font, include missing typescript types and fix any visible errors.
 
 November 27 2024
+
 - Upgraded to Next.js 15
 
 Oct 30 2024
+
 - Integrated zod for Form validation
 - Added integrations enable/disable features
 - Added Stripe webhook endpoint

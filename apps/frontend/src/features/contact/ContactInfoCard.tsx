@@ -1,47 +1,43 @@
-import Image from "next/image";
-import contactData from "@/features/contact/contactData";
-import Link from "next/link";
+import Image from 'next/image';
+import contactData from '@/features/contact/contactData';
+import Link from 'next/link';
 
 export default function ContactInfoCard() {
   return (
     <>
-      <div className="animate_top relative w-full overflow-hidden rounded-lg bg-white p-7.5 shadow-3 dark:bg-black md:w-2/5 lg:w-1/3 xl:p-12.5">
+      <div className="animate_top shadow-3 relative w-full overflow-hidden rounded-lg bg-white p-7.5 md:w-2/5 lg:w-1/3 xl:p-12.5 dark:bg-black">
         <Image
           src="/images/shape/shape-03.svg"
           alt="Shape"
-          className="absolute right-5 top-5 w-7.5"
+          className="absolute top-5 right-5 w-7.5"
           width={54}
           height={30}
         />
         <Image
           src="/images/shape/shape-06.svg"
           alt="Shape"
-          className="absolute bottom-5 right-5 w-6 rotate-180"
+          className="absolute right-5 bottom-5 w-6 rotate-180"
           width={25}
           height={50}
         />
 
         {contactData.map((item, index) => (
           <div className="mb-10" key={index}>
-            <h4 className="mb-1.5 text-title-xsm text-black dark:text-white">
-              {item.title}
-            </h4>
+            <h4 className="text-title-xsm mb-1.5 text-black dark:text-white">{item.title}</h4>
             <p>{item.subtitle}</p>
           </div>
         ))}
 
-        <span className="mb-10 mt-5 block h-[1px] bg-strokedark dark:bg-stroke"></span>
+        <span className="bg-strokedark dark:bg-stroke mt-5 mb-10 block h-[1px]"></span>
 
         <div>
-          <h4 className="mb-7.5 text-title-xsm text-black dark:text-white">
-            Sosiaalinen media
-          </h4>
+          <h4 className="text-title-xsm mb-7.5 text-black dark:text-white">Sosiaalinen media</h4>
           <ul className="flex items-center gap-4">
             <li>
               <Link
                 aria-label="Contact Link for Facebook"
-                href="#"
-                className="group flex h-10 w-10 items-center justify-center rounded-full duration-300 ease-in-out hover:bg-primary"
+                href="/facebook"
+                className="group hover:bg-primary flex h-10 w-10 items-center justify-center rounded-full duration-300 ease-in-out"
               >
                 <svg
                   className="fill-body duration-300 ease-in-out group-hover:fill-white"
@@ -61,8 +57,8 @@ export default function ContactInfoCard() {
             <li>
               <Link
                 aria-label="Contact Link for Twitter"
-                href="#"
-                className="group flex h-10 w-10 items-center justify-center rounded-full duration-300 ease-in-out hover:bg-primary"
+                href="/twitter"
+                className="group hover:bg-primary flex h-10 w-10 items-center justify-center rounded-full duration-300 ease-in-out"
               >
                 <svg
                   className="fill-body duration-300 ease-in-out group-hover:fill-white"
@@ -82,8 +78,8 @@ export default function ContactInfoCard() {
             <li>
               <Link
                 aria-label="Contact Link for Linkedin"
-                href="#"
-                className="group flex h-10 w-10 items-center justify-center rounded-full duration-300 ease-in-out hover:bg-primary"
+                href="/linkedin"
+                className="group hover:bg-primary flex h-10 w-10 items-center justify-center rounded-full duration-300 ease-in-out"
               >
                 <svg
                   className="fill-body duration-300 ease-in-out group-hover:fill-white"
@@ -103,8 +99,8 @@ export default function ContactInfoCard() {
             <li>
               <Link
                 aria-label="Contact Link for Behance"
-                href="#"
-                className="group flex h-10 w-10 items-center justify-center rounded-full duration-300 ease-in-out hover:bg-primary"
+                href="/behance"
+                className="group hover:bg-primary flex h-10 w-10 items-center justify-center rounded-full duration-300 ease-in-out"
               >
                 <svg
                   className="fill-body duration-300 ease-in-out group-hover:fill-white"

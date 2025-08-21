@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import { Dispatch, SetStateAction, useMemo, useState } from "react";
-import { QuoteData } from ".";
-import axios from "axios";
-import toast from "react-hot-toast";
-import Image from "next/image";
+import { Dispatch, SetStateAction, useMemo, useState } from 'react';
+import { QuoteData } from '.';
+import axios from 'axios';
+import toast from 'react-hot-toast';
+import Image from 'next/image';
 
 type Props = {
   data: QuoteData;
@@ -14,28 +14,23 @@ type Props = {
 
 export default function Step2({ data, setData, onBack }: Props) {
   const [files, setFiles] = useState<File[]>([]);
-  const previews = useMemo(
-    () => files.map((f) => URL.createObjectURL(f)),
-    [files]
-  );
+  const previews = useMemo(() => files.map((f) => URL.createObjectURL(f)), [files]);
 
   const submit = async () => {
     try {
       const formData = new FormData();
-      formData.set("payload", JSON.stringify(data));
-      files.forEach((f) => formData.append("images", f));
-      const res = await axios.post("/api/quote", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      formData.set('payload', JSON.stringify(data));
+      files.forEach((f) => formData.append('images', f));
+      const res = await axios.post('/api/quote', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
       if (res.status === 200) {
-        toast.success(
-          "Kiitos! Järjestelmämme laskee parasta tarjousta ja palaamme sähköpostitse."
-        );
+        toast.success('Kiitos! Järjestelmämme laskee parasta tarjousta ja palaamme sähköpostitse.');
       } else {
-        toast.error("Lähetys epäonnistui.");
+        toast.error('Lähetys epäonnistui.');
       }
     } catch (e: any) {
-      toast.error(e?.response?.data || "Virhe lähetyksessä");
+      toast.error(e?.response?.data || 'Virhe lähetyksessä');
     }
   };
 
@@ -54,18 +49,18 @@ export default function Step2({ data, setData, onBack }: Props) {
           <label className="mb-2 block">Lisäpalvelut</label>
           <div className="flex flex-wrap gap-2">
             {[
-              "Pakkaus",
-              "Siivous",
-              "Muuttolaatikot",
-              "Varastointi",
-              "Pianon siirto",
-              "Nosturi"
+              'Pakkaus',
+              'Siivous',
+              'Muuttolaatikot',
+              'Varastointi',
+              'Pianon siirto',
+              'Nosturi',
             ].map((s) => (
               <button
                 key={s}
                 type="button"
                 onClick={() => toggleService(s)}
-                className={`rounded-full border px-4 py-2 ${data.services?.includes(s) ? "bg-primary text-white border-primary" : "border-strokedark"}`}
+                className={`rounded-full border px-4 py-2 ${data.services?.includes(s) ? 'bg-primary border-primary text-white' : 'border-strokedark'}`}
               >
                 {s}
               </button>
@@ -76,17 +71,17 @@ export default function Step2({ data, setData, onBack }: Props) {
           <label className="mb-2 block">Inventaario / huomioita</label>
           <textarea
             rows={6}
-            className="w-full rounded-lg border border-strokedark bg-transparent px-4 py-3 focus:border-primary focus:outline-hidden dark:border-stroke"
-            value={data.inventory || ""}
+            className="border-strokedark focus:border-primary dark:border-stroke w-full rounded-lg border bg-transparent px-4 py-3 focus:outline-hidden"
+            value={data.inventory || ''}
             onChange={(e) => setData((d) => ({ ...d, inventory: e.target.value }))}
           />
         </div>
         <div>
           <label className="mb-2 block">Hissi olemassa?</label>
           <select
-            className="w-full rounded-lg border border-strokedark bg-transparent px-4 py-3 focus:border-primary focus:outline-hidden dark:border-stroke"
-            value={data.elevator ? "kylla" : data.elevator === false ? "ei" : ""}
-            onChange={(e) => setData((d) => ({ ...d, elevator: e.target.value === "kylla" }))}
+            className="border-strokedark focus:border-primary dark:border-stroke w-full rounded-lg border bg-transparent px-4 py-3 focus:outline-hidden"
+            value={data.elevator ? 'kylla' : data.elevator === false ? 'ei' : ''}
+            onChange={(e) => setData((d) => ({ ...d, elevator: e.target.value === 'kylla' }))}
           >
             <option value="">Valitse</option>
             <option value="kylla">Kyllä</option>
@@ -97,8 +92,8 @@ export default function Step2({ data, setData, onBack }: Props) {
           <label className="mb-2 block">Kantomatka (arvio)</label>
           <input
             placeholder="esim. 30 m"
-            className="w-full rounded-lg border border-strokedark bg-transparent px-4 py-3 focus:border-primary focus:outline-hidden dark:border-stroke"
-            value={data.distance || ""}
+            className="border-strokedark focus:border-primary dark:border-stroke w-full rounded-lg border bg-transparent px-4 py-3 focus:outline-hidden"
+            value={data.distance || ''}
             onChange={(e) => setData((d) => ({ ...d, distance: e.target.value }))}
           />
         </div>
@@ -106,8 +101,8 @@ export default function Step2({ data, setData, onBack }: Props) {
           <label className="mb-2 block">Lisähuomiot</label>
           <textarea
             rows={4}
-            className="w-full rounded-lg border border-strokedark bg-transparent px-4 py-3 focus:border-primary focus:outline-hidden dark:border-stroke"
-            value={data.notes || ""}
+            className="border-strokedark focus:border-primary dark:border-stroke w-full rounded-lg border bg-transparent px-4 py-3 focus:outline-hidden"
+            value={data.notes || ''}
             onChange={(e) => setData((d) => ({ ...d, notes: e.target.value }))}
           />
         </div>
@@ -115,8 +110,8 @@ export default function Step2({ data, setData, onBack }: Props) {
         <div className="md:col-span-2">
           <label className="mb-2 block">Yhteydenoton toiveet (valinnainen)</label>
           <input
-            className="w-full rounded-lg border border-strokedark bg-transparent px-4 py-3 focus:border-primary focus:outline-hidden dark:border-stroke"
-            value={data.contactNotes || ""}
+            className="border-strokedark focus:border-primary dark:border-stroke w-full rounded-lg border bg-transparent px-4 py-3 focus:outline-hidden"
+            value={data.contactNotes || ''}
             onChange={(e) => setData((d) => ({ ...d, contactNotes: e.target.value }))}
             placeholder="Paras soittoaika, muut toiveet..."
           />
@@ -149,10 +144,18 @@ export default function Step2({ data, setData, onBack }: Props) {
       </div>
 
       <div className="flex justify-between">
-        <button className="rounded-full border border-strokedark px-7.5 py-3" type="button" onClick={onBack}>
+        <button
+          className="border-strokedark rounded-full border px-7.5 py-3"
+          type="button"
+          onClick={onBack}
+        >
           Takaisin
         </button>
-        <button className="rounded-full bg-primary px-7.5 py-3 text-white" type="button" onClick={submit}>
+        <button
+          className="bg-primary rounded-full px-7.5 py-3 text-white"
+          type="button"
+          onClick={submit}
+        >
           Lähetä
         </button>
       </div>

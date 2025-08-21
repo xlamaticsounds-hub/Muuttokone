@@ -1,6 +1,6 @@
-import Link from "next/link";
-import clientsData from "@/components/Clients/clientsData";
-import Image from "next/image";
+import Link from 'next/link';
+import clientsData from '@/components/Clients/clientsData';
+import Image from 'next/image';
 
 export default function ClientsWrapper() {
   return (

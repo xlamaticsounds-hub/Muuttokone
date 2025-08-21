@@ -1,14 +1,14 @@
-import { prisma } from "@/app/libs/prismaDB";
-import { NextRequest, NextResponse } from "next/server";
-import crypto from "crypto";
-import { sendEmail } from "@/app/libs/email";
+import { prisma } from '@/app/libs/prismaDB';
+import { NextRequest, NextResponse } from 'next/server';
+import crypto from 'crypto';
+import { sendEmail } from '@/app/libs/email';
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
   const { email } = body;
 
   if (!email) {
-    return new NextResponse("Missing Fields", { status: 400 });
+    return new NextResponse('Missing Fields', { status: 400 });
   }
 
   const user = await prisma.user.findUnique({
@@ -18,14 +18,10 @@ export async function POST(request: NextRequest) {
   });
 
   if (!user) {
-    throw new Error("Email does not exists");
+    throw new Error('Email does not exists');
   }
 
-  const resetToken = crypto.randomBytes(20).toString("hex");
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
+  const resetToken = crypto.randomBytes(20).toString('hex');
 
   const passwordResetTokenExp = new Date();
   passwordResetTokenExp.setHours(passwordResetTokenExp.getHours() + 1);
@@ -45,7 +41,7 @@ export async function POST(request: NextRequest) {
   try {
     await sendEmail({
       to: email,
-      subject: "Reset your password",
+      subject: 'Reset your password',
       html: ` 
       <div>
         <h1>You requested a password reset</h1>
@@ -55,11 +51,11 @@ export async function POST(request: NextRequest) {
       `,
     });
 
-    return NextResponse.json("An email has been sent to your email", {
+    return NextResponse.json('An email has been sent to your email', {
       status: 200,
     });
   } catch (error) {
-    return NextResponse.json("An error has occurred. Please try again!", {
+    return NextResponse.json('An error has occurred. Please try again!', {
       status: 500,
     });
   }

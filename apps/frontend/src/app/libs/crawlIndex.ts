@@ -1,16 +1,16 @@
-import algoliasearch from "algoliasearch";
-import { load } from "cheerio";
+import algoliasearch from 'algoliasearch';
+import { load } from 'cheerio';
 
-const APP_ID = process.env.NEXT_PUBLIC_ALGOLIA_PROJECT_ID ?? "";
-const API_KEY = process.env.NEXT_PUBLIC_ALGOLIA_API_KEY ?? "";
-const INDEX = process.env.NEXT_PUBLIC_ALGOLIA_INDEX ?? "";
+const APP_ID = process.env.NEXT_PUBLIC_ALGOLIA_PROJECT_ID ?? '';
+const API_KEY = process.env.NEXT_PUBLIC_ALGOLIA_API_KEY ?? '';
+const INDEX = process.env.NEXT_PUBLIC_ALGOLIA_INDEX ?? '';
 
 export const structuredAlgoliaHtmlData = async ({
-  pageUrl = "",
-  htmlString = "",
-  title = "",
-  type = "",
-  imageURL = "",
+  pageUrl = '',
+  htmlString = '',
+  title = '',
+  type = '',
+  imageURL = '',
 }) => {
   try {
     const c$ = load(htmlString).text();
@@ -27,7 +27,7 @@ export const structuredAlgoliaHtmlData = async ({
     await addToAlgolia(data);
     return data;
   } catch (error) {
-    console.log("error in structuredAlgoliaHtmlData", error);
+    console.log('error in structuredAlgoliaHtmlData', error);
   }
 };
 
@@ -40,6 +40,6 @@ async function addToAlgolia(record: Record<string, unknown>) {
       autoGenerateObjectIDIfNotExist: true,
     });
   } catch (error) {
-    console.log("error in addToAlgolia", error);
+    console.log('error in addToAlgolia', error);
   }
 }

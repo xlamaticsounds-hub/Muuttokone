@@ -6,7 +6,7 @@ const rateLimit = new Map<string, { count: number; resetTime: number }>();
 export function checkRateLimit(
   identifier: string,
   windowMs: number = 60000, // 1 minute
-  maxRequests: number = 5
+  maxRequests: number = 5,
 ): { success: boolean; resetTime?: number } {
   const now = Date.now();
   const record = rateLimit.get(identifier);
@@ -26,11 +26,14 @@ export function checkRateLimit(
 }
 
 // Cleanup old entries periodically
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of rateLimit.entries()) {
-    if (now > value.resetTime) {
-      rateLimit.delete(key);
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const [key, value] of rateLimit.entries()) {
+      if (now > value.resetTime) {
+        rateLimit.delete(key);
+      }
     }
-  }
-}, 5 * 60 * 1000); // Clean every 5 minutes
+  },
+  5 * 60 * 1000,
+); // Clean every 5 minutes

@@ -1,13 +1,13 @@
-import React from "react";
+import React from 'react';
 
-interface HeroBrands {
+interface BrandItem {
   name: string;
   icon: any;
 }
 
-const brandItems: HeroBrands[] = [
+const brandItems: BrandItem[] = [
   {
-    name: "Bitcoin (BTC)",
+    name: 'Bitcoin (BTC)',
     icon: (
       <svg
         width="28"
@@ -28,7 +28,7 @@ const brandItems: HeroBrands[] = [
     ),
   },
   {
-    name: "Bitcoin (BTC)",
+    name: 'Bitcoin (BTC)',
     icon: (
       <svg
         width="29"
@@ -46,19 +46,14 @@ const brandItems: HeroBrands[] = [
         </g>
         <defs>
           <clipPath id="clip0_73_10326">
-            <rect
-              width="12.1376"
-              height="14"
-              fill="white"
-              transform="translate(8.40039 7)"
-            />
+            <rect width="12.1376" height="14" fill="white" transform="translate(8.40039 7)" />
           </clipPath>
         </defs>
       </svg>
     ),
   },
   {
-    name: "Bitcoin (BTC)",
+    name: 'Bitcoin (BTC)',
     icon: (
       <svg
         width="28"
@@ -88,7 +83,7 @@ const brandItems: HeroBrands[] = [
     ),
   },
   {
-    name: "Bitcoin (BTC)",
+    name: 'Bitcoin (BTC)',
     icon: (
       <svg
         width="28"
@@ -106,26 +101,14 @@ const brandItems: HeroBrands[] = [
             d="M13.9982 6.12451L13.8926 6.48343V16.8976L13.9982 17.003L18.8323 14.1456L13.9982 6.12451Z"
             fill="#D6D6D6"
           />
-          <path
-            d="M13.9982 6.12451L9.16406 14.1456L13.9982 17.003V11.9483V6.12451Z"
-            fill="white"
-          />
+          <path d="M13.9982 6.12451L9.16406 14.1456L13.9982 17.003V11.9483V6.12451Z" fill="white" />
           <path
             d="M13.998 17.9175L13.9385 17.9901V21.6998L13.998 21.8736L18.835 15.0615L13.998 17.9175Z"
             fill="#D6D6D6"
           />
-          <path
-            d="M13.9982 21.8736V17.9175L9.16406 15.0615L13.9982 21.8736Z"
-            fill="white"
-          />
-          <path
-            d="M13.998 17.0025L18.8321 14.1451L13.998 11.9478V17.0025Z"
-            fill="#F3F3F3"
-          />
-          <path
-            d="M9.16406 14.1451L13.9982 17.0025V11.9478L9.16406 14.1451Z"
-            fill="#E2E2E2"
-          />
+          <path d="M13.9982 21.8736V17.9175L9.16406 15.0615L13.9982 21.8736Z" fill="white" />
+          <path d="M13.998 17.0025L18.8321 14.1451L13.998 11.9478V17.0025Z" fill="#F3F3F3" />
+          <path d="M9.16406 14.1451L13.9982 17.0025V11.9478L9.16406 14.1451Z" fill="#E2E2E2" />
         </g>
         <defs>
           <clipPath id="clip0_73_10312">
@@ -141,7 +124,7 @@ const brandItems: HeroBrands[] = [
     ),
   },
   {
-    name: "Bitcoin (BTC)",
+    name: 'Bitcoin (BTC)',
     icon: (
       <svg
         width="28"
@@ -159,19 +142,14 @@ const brandItems: HeroBrands[] = [
         </g>
         <defs>
           <clipPath id="clip0_73_10294">
-            <rect
-              width="14"
-              height="12.6"
-              fill="white"
-              transform="translate(7 7)"
-            />
+            <rect width="14" height="12.6" fill="white" transform="translate(7 7)" />
           </clipPath>
         </defs>
       </svg>
     ),
   },
   {
-    name: "Bitcoin (BTC)",
+    name: 'Bitcoin (BTC)',
     icon: (
       <svg
         width="28"
@@ -199,8 +177,8 @@ const HeroBrands = () => {
             <span className="mt-2 flex h-10 w-10 items-center justify-center rounded-full bg-white">
               {item.icon}
             </span>
-            <div className="absolute -top-full left-1/2 z-50 -translate-x-1/2 whitespace-nowrap rounded-full bg-blacksection px-5 py-2 text-white opacity-0 group-hover:opacity-100">
-              <span className="absolute -bottom-1 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-blacksection"></span>
+            <div className="bg-blacksection absolute -top-full left-1/2 z-50 -translate-x-1/2 rounded-full px-5 py-2 whitespace-nowrap text-white opacity-0 group-hover:opacity-100">
+              <span className="bg-blacksection absolute -bottom-1 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45"></span>
               <span>{item.name}</span>
             </div>
           </div>

@@ -1,10 +1,10 @@
-import Link from "next/link";
-import Image from "next/image";
-import FooterBottom from "@/components/Footer/FooterBottom";
-import footerNavData from "@/components/Footer/footerNavData";
-import FooterSocialLinks from "@/components/Footer/FooterSocialLinks";
-import FooterNewsletter from "@/components/Footer/FooterNewsletter";
-import SlideOnReveal from "@/components/SlideOnReveal";
+import Link from 'next/link';
+import Image from 'next/image';
+import FooterBottom from '@/components/Footer/FooterBottom';
+import footerNavData from '@/components/Footer/footerNavData';
+import FooterSocialLinks from '@/components/Footer/FooterSocialLinks';
+import FooterNewsletter from '@/components/Footer/FooterNewsletter';
+import SlideOnReveal from '@/components/SlideOnReveal';
 
 export default function Footer() {
   return (
@@ -31,8 +31,9 @@ export default function Footer() {
                   />
                 </Link>
 
-                <p className="mb-10 mt-5">
-                  Luotettava muuttopalveluyritys Helsingissä. Tarjoamme ammattitaitoisia koti- ja yritysmuuttoja, pakkausta, varastointia ja siivouspalveluja.
+                <p className="mt-5 mb-10">
+                  Luotettava muuttopalveluyritys Helsingissä. Tarjoamme ammattitaitoisia koti- ja
+                  yritysmuuttoja, pakkausta, varastointia ja siivouspalveluja.
                 </p>
 
                 <FooterSocialLinks />
@@ -41,13 +42,13 @@ export default function Footer() {
               <div className="flex w-full flex-col gap-8 md:flex-row md:items-start md:justify-between lg:w-[70%]">
                 {/* Newsletter in the center column (relative to the whole footer) */}
                 <SlideOnReveal delay={0.15}>
-                  <div className="md:max-w-md md:flex-1 mt-8 md:mt-12 md:ml-4 lg:ml-6">
+                  <div className="mt-8 md:mt-12 md:ml-4 md:max-w-md md:flex-1 lg:ml-6">
                     <FooterNewsletter />
                   </div>
                 </SlideOnReveal>
 
                 {/* Navigation groups pushed to the far right */}
-                <div className="md:ml-auto grid grid-cols-1 gap-10 sm:grid-cols-2 mt-8 md:mt-12">
+                <div className="mt-8 grid grid-cols-1 gap-10 sm:grid-cols-2 md:mt-12 md:ml-auto">
                   {footerNavData.map((group, groupIndex) => (
                     <SlideOnReveal key={groupIndex} delay={0.2 + groupIndex * 0.05}>
                       <div>
@@ -58,12 +59,14 @@ export default function Footer() {
                               <li key={index} className="group">
                                 <Link
                                   href={item.route}
-                                  className="mb-3 inline-flex items-center gap-1 transition-colors duration-200 hover:text-primary"
+                                  className="hover:text-primary mb-3 inline-flex items-center gap-1 transition-colors duration-200"
                                 >
                                   {item.label}
-                                  <span className="opacity-0 translate-x-0 transition-all duration-200 group-hover:opacity-100 group-hover:translate-x-1">→</span>
+                                  <span className="translate-x-0 opacity-0 transition-all duration-200 group-hover:translate-x-1 group-hover:opacity-100">
+                                    →
+                                  </span>
                                   {item.badge && (
-                                    <span className="ml-2.5 inline-block rounded-full bg-meta-green px-3 py-0.5 text-xs font-medium text-white">
+                                    <span className="bg-meta-green ml-2.5 inline-block rounded-full px-3 py-0.5 text-xs font-medium text-white">
                                       Hiring
                                     </span>
                                   )}

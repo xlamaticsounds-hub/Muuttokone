@@ -1,34 +1,34 @@
-import Image from "next/image";
+import Image from 'next/image';
 
 export default function Graphics() {
   return (
     <>
-      <span className="absolute left-0 top-0 -z-1 block h-3/5 w-full bg-whiter dark:bg-blacksection"></span>
+      <span className="bg-whiter dark:bg-blacksection absolute top-0 left-0 -z-1 block h-3/5 w-full"></span>
       <Image
-        src={"/images/shape/shape-08.svg"}
+        src={'/images/shape/shape-08.svg'}
         alt="Shape Bg"
-        className="absolute right-0 top-0"
+        className="absolute top-0 right-0"
         width={1621}
         height={556}
       />
       <Image
-        src={"/images/shape/shape-09.svg"}
+        src={'/images/shape/shape-09.svg'}
         alt="Shape"
-        className="absolute left-[10%] top-1/2 -z-1 animate-rotating"
+        className="animate-rotating absolute top-1/2 left-[10%] -z-1"
         width={47}
         height={54}
       />
       <Image
-        src={"/images/shape/shape-10.svg"}
+        src={'/images/shape/shape-10.svg'}
         alt="Shape"
-        className="absolute left-[20%] top-[5%] -z-1"
+        className="absolute top-[5%] left-[20%] -z-1"
         width={54}
         height={54}
       />
       <Image
-        src={"/images/shape/shape-11.svg"}
+        src={'/images/shape/shape-11.svg'}
         alt="Shape"
-        className="absolute right-[15%] top-[15%] -z-1 animate-rotating"
+        className="animate-rotating absolute top-[15%] right-[15%] -z-1"
         width={80}
         height={69}
       />

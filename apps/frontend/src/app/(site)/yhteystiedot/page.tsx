@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
-import Contact from "@/features/contact";
+import type { Metadata } from 'next';
+import Contact from '@/features/contact';
 
 export const metadata: Metadata = {
-  title: "Yhteystiedot – Muuttokone.fi",
-  description: "Ota yhteyttä – autamme mielellämme. Soita, lähetä sähköpostia tai täytä lomake.",
+  title: 'Yhteystiedot – Muuttokone.fi',
+  description: 'Ota yhteyttä – autamme mielellämme. Soita, lähetä sähköpostia tai täytä lomake.',
 };
 
 export default function Page() {

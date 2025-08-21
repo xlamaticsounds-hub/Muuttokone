@@ -1,15 +1,12 @@
-import Graphics from "@/components/Team/Graphics";
-import SectionTitle from "@/components/SectionTitle";
-import teamData from "@/components/Team/teamData";
-import TeamItem from "@/components/Team/TeamItem";
+import Graphics from '@/components/Team/Graphics';
+import SectionTitle from '@/components/SectionTitle';
+import teamData from '@/components/Team/teamData';
+import TeamItem from '@/components/Team/TeamItem';
 
 export default function Team() {
   return (
     <>
-      <section
-        id="team"
-        className="relative z-1 overflow-hidden py-20 lg:py-25 xl:py-30"
-      >
+      <section id="team" className="relative z-1 overflow-hidden py-20 lg:py-25 xl:py-30">
         <Graphics />
 
         <SectionTitle
