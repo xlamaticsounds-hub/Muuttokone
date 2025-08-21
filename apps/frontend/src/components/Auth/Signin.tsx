@@ -3,28 +3,15 @@ import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
-import validateEmail from '@/app/libs/validate';
 import Graphics from '@/components/Auth/Graphics';
 import SlideOnReveal from '@/components/SlideOnReveal';
-import z from 'zod';
-import { integrations, messages } from '../../../integrations.config';
+import { validateFormData } from '@/lib/form-helpers';
+import { z } from 'zod';
 
-const schema = z.object({
+// Simple auth schema - keep minimal for auth flow
+const authSchema = z.object({
   email: z.string().email('Please enter a valid email address.'),
-  password: z
-    .string()
-    .min(8)
-    .refine(
-      (val) =>
-        /[A-Z]/.test(val) && // At least one uppercase letter
-        /[a-z]/.test(val) && // At least one lowercase letter
-        /\d/.test(val) && // At least one number
-        /[@$!%*?&]/.test(val), // At least one special character
-      {
-        message:
-          'Password must be at least 8 characters long and contain uppercase and lowercase letters, a number, and a special character.',
-      },
-    ),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
 });
 
 const Signin = () => {
@@ -36,44 +23,60 @@ const Signin = () => {
   });
 
   const validateForm = (isEmail: boolean) => {
-    const result = schema.safeParse(data);
+    const result = validateFormData(authSchema, data);
 
     if (!result.success) {
       if (isEmail) {
-        toast.error(result.error.errors[0].message);
+        toast.error(result.error || 'Invalid email');
         return false;
       } else {
-        result.error.errors.forEach((error) => {
-          toast.error(error.message);
-        });
+        if (result.fieldErrors) {
+          Object.values(result.fieldErrors).forEach((error: string) => {
+            toast.error(error);
+          });
+        } else {
+          toast.error(result.error || 'Validation failed');
+        }
         return false;
       }
     }
     return true;
   };
 
-  const loginUser = async (e: any) => {
-    e.preventDefault();
+    const handleKeyPress = async (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      await handleSubmit();
+    }
+  };
 
-    if (!integrations.isAuthEnabled) {
-      toast.error(messages.auth);
+  const handleSubmit = async () => {
+    const result = validateFormData(authSchema, { email: data.email, password: data.password });
+    
+    if (!result.success) {
+      if (result.fieldErrors?.email) {
+        toast.error(result.fieldErrors.email);
+        return;
+      }
+      if (result.fieldErrors?.password) {
+        toast.error(result.fieldErrors.password);
+        return;
+      }
+      toast.error(result.error || 'Validation failed');
       return;
     }
 
-    if (!validateForm(false)) {
-      return;
-    }
-
-    signIn('credentials', { ...data, redirect: false }).then((callback) => {
-      if (callback?.error) {
-        toast.error(callback.error);
-      }
-
-      if (callback?.ok && !callback?.error) {
-        toast.success('Logged in successfully');
-        setData({ email: '', password: '', remember: false });
-      }
+    const signInResult = await signIn('credentials', {
+      email: data.email,
+      password: data.password,
+      redirect: false,
     });
+
+    if (signInResult?.error) {
+      toast.error('Invalid credentials');
+    } else {
+      toast.success('Signed in successfully');
+      window.location.href = '/';
+    }
   };
 
   const signinWithMail = () => {

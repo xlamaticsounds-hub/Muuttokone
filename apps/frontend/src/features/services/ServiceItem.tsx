@@ -9,12 +9,12 @@ interface ServiceItemProps {
 export default function ServiceItem({ service, index = 0 }: ServiceItemProps) {
   // Fallback to available local icons if service.icon is missing
   const fallbackIcons = [
-    '/images/muuttokone/webp/boxguy.webp',
-    '/images/muuttokone/webp/truck.webp',
-    '/images/muuttokone/webp/turva.webp',
-    '/images/muuttokone/webp/kello.webp',
-    '/images/muuttokone/webp/tape.webp',
-    '/images/muuttokone/webp/logo3.webp',
+    '/icons/boxguy.webp',
+    '/icons/truck.webp',
+    '/icons/turva.webp',
+    '/icons/kello.webp',
+    '/icons/tape.webp',
+    '/icons/logo3.webp',
   ];
   const iconSrc = service.icon || fallbackIcons[index % fallbackIcons.length];
 

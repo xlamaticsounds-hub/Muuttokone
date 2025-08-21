@@ -4,13 +4,14 @@ import { directusFetch, invalidateCollection } from '@/lib/directus';
 import { checkRateLimit } from './rate-limit';
 import { logger } from './logger';
 import { safeFormAction, createSuccessResult, createErrorResult } from '@/lib/form-helpers';
-import { quoteSchema, type QuoteFormData } from '@/features/quote/schemas';
 import {
+  quoteSchema,
+  type QuoteFormData,
   contactSchema,
   newsletterSchema,
   type ContactFormData,
   type NewsletterData,
-} from '@/features/contact/schemas';
+} from '@/lib/schemas';
 
 export async function submitQuote(formData: FormData) {
   return safeFormAction(
@@ -74,25 +75,33 @@ export async function submitContact(formData: FormData) {
 
       try {
         // Submit to Directus using unified client
-        await directusFetch('/items/contacts', {
+        // Map contact submissions into the existing `leads` collection so we don't
+        // require a separate `contacts` collection in Directus.
+        const [first_name, ...rest] = (data.name || '').trim().split(' ');
+        const last_name = rest.join(' ');
+
+        await directusFetch('/items/leads', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            name: data.name,
+            type: 'contact',
+            first_name: first_name || null,
+            last_name: last_name || null,
             email: data.email,
             phone: data.phone,
-            subject: data.subject,
+            // Use subject as a lightweight service_type marker, and message for details
+            service_type: data.subject || null,
             message: data.message,
-            company: data.company,
-            preferred_contact_method: data.preferredContactMethod,
-            marketing_consent: data.marketingConsent,
+            company: data.company || null,
+            preferred_contact_method: data.preferredContactMethod || null,
+            marketing_consent: data.marketingConsent ?? null,
             status: 'new',
             created_at: new Date().toISOString(),
           }),
         });
 
-        // Invalidate contacts cache
-        await invalidateCollection('contacts');
+        // Invalidate leads cache (we store contacts inside leads now)
+        await invalidateCollection('leads');
 
         logger('info', 'Contact form submitted successfully', {
           email: data.email,

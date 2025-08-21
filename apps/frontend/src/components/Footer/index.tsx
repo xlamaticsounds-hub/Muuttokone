@@ -16,14 +16,14 @@ export default function Footer() {
               <div className="animate_top w-1/2 lg:w-1/4">
                 <Link href="/">
                   <Image
-                    src="/images/logo/logo.png"
+                    src="/icons/logo.webp"
                     alt="Logo"
                     className="dark:hidden"
                     width={130}
                     height={44}
                   />
                   <Image
-                    src="/images/logo/logo-white.svg"
+                    src="/images/logo/logo.webp"
                     alt="Logo"
                     className="hidden dark:block"
                     width={130}

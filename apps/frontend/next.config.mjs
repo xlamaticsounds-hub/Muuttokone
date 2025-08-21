@@ -18,6 +18,8 @@ const nextConfig = {
     ];
   },
   images: {
+  // Allowed image quality values used by next/image. Next.js 16 will require explicit config for qualities.
+  qualities: [75, 85, 99],
     remotePatterns: [
       {
         protocol: "https",

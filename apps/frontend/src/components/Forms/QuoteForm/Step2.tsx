@@ -19,11 +19,27 @@ export default function Step2({ data, setData, onBack }: Props) {
   const submit = async () => {
     try {
       const formData = new FormData();
-      formData.set('payload', JSON.stringify(data));
-      files.forEach((f) => formData.append('images', f));
-      const res = await axios.post('/api/quote', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+
+  // Send as a quote submission: create lead (name,email,phone) and a separate quote JSON
+  formData.append('type', 'quote');
+
+  // Contact fields (leads are minimal: name, email, phone)
+  if (data.name) formData.append('name', data.name);
+  if (data.email) formData.append('email', data.email);
+  if (data.phone) formData.append('phone', data.phone);
+
+  // Quote payload: submit the full quote info as JSON string
+  formData.append('quote', JSON.stringify(data));
+
+  // Meta information
+  formData.append('source', 'website');
+  if (typeof navigator !== 'undefined') formData.append('user_agent', navigator.userAgent);
+
+  // Append files (these will be uploaded and file ids stored on the quote)
+  files.forEach((f) => formData.append('files', f));
+
+  // Let axios set the Content-Type with boundary
+  const res = await axios.post('/api/submit', formData);
       if (res.status === 200) {
         toast.success('Kiitos! Järjestelmämme laskee parasta tarjousta ja palaamme sähköpostitse.');
       } else {

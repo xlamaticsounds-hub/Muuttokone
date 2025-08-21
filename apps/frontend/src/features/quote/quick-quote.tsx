@@ -16,9 +16,26 @@ export default function QuickQuote() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Store data and redirect to full form
-    localStorage.setItem('quickQuoteData', JSON.stringify(formData));
-    window.location.href = '/tarjouspyynto';
+    // Send a minimal lead record (name, phone) immediately, then store quick data
+    (async () => {
+      try {
+        await fetch('/api/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'lead', data: { name: formData.name, phone: formData.phone, source: 'quick-hero' } }),
+        });
+      } catch (err) {
+        // Ignore network errors — we'll still proceed to the full form
+        console.error('Quick lead post failed', err);
+      } finally {
+        // Store data for prefill in the full form and navigate
+        try { localStorage.setItem('quickQuoteData', JSON.stringify(formData)); } catch (err) {
+          console.error('Failed to store quick quote data', err);
+        }
+        window.location.href = '/tarjouspyynto';
+      }
+    })();
+    
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -48,6 +65,7 @@ export default function QuickQuote() {
                 <input
                   type="text"
                   name="name"
+                  autoComplete="name"
                   value={formData.name}
                   onChange={handleChange}
                   required
@@ -61,6 +79,7 @@ export default function QuickQuote() {
                 <input
                   type="tel"
                   name="phone"
+                  autoComplete="tel"
                   value={formData.phone}
                   onChange={handleChange}
                   required
@@ -77,6 +96,7 @@ export default function QuickQuote() {
                 <input
                   type="text"
                   name="fromLocation"
+                  autoComplete="address-level2"
                   value={formData.fromLocation}
                   onChange={handleChange}
                   required
@@ -91,6 +111,7 @@ export default function QuickQuote() {
                 <input
                   type="text"
                   name="toLocation"
+                  autoComplete="address-level2"
                   value={formData.toLocation}
                   onChange={handleChange}
                   required

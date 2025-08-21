@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import formData from '@/features/contact/formData';
 import toast from 'react-hot-toast';
-import { contactSchema } from '@/features/contact/schemas';
+import { contactSchema } from '@/lib/schemas';
 import { submitContact } from '@/server/actions';
 
 export default function ContactFormBox() {

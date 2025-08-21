@@ -5,8 +5,8 @@ import { unstable_cache } from 'next/cache';
 import { revalidateTag } from 'next/cache';
 
 // Server API URL (used by server-side fetches). In Docker this should point to the directus container (http://directus:8055).
-export const DIRECTUS_URL = process.env.DIRECTUS_URL || 'http://localhost:8055';
-const DIRECTUS_TOKEN = process.env.DIRECTUS_TOKEN || process.env.DIRECTUS_STATIC_TOKEN;
+export const DIRECTUS_URL = 'http://localhost:8055';
+const DIRECTUS_STATIC_TOKEN = "vqkAGSPnacsu9ozlqQ3pUDidigJ3-b22";
 
 // Public URL used for browser asset requests. Prefer NEXT_PUBLIC_DIRECTUS_URL, then DIRECTUS_PUBLIC_URL, otherwise fall back to DIRECTUS_URL.
 export const DIRECTUS_PUBLIC_URL =
@@ -15,7 +15,7 @@ export const DIRECTUS_PUBLIC_URL =
 // Initialize Directus SDK client
 export const directus = createDirectus(DIRECTUS_URL)
   .with(rest())
-  .with(staticToken(DIRECTUS_TOKEN || ''));
+  .with(staticToken("vqkAGSPnacsu9ozlqQ3pUDidigJ3-b22"));
 
 // Legacy fetch function for backwards compatibility
 type FetchOpts = {
@@ -27,7 +27,7 @@ type FetchOpts = {
 };
 
 export async function directusFetch<T = any>(path: string, opts: FetchOpts = {}): Promise<T> {
-  if (!DIRECTUS_TOKEN) {
+  if (!DIRECTUS_STATIC_TOKEN) {
     throw new Error('DIRECTUS_TOKEN is required for server-side operations');
   }
   
@@ -36,7 +36,7 @@ export async function directusFetch<T = any>(path: string, opts: FetchOpts = {})
     'Content-Type': 'application/json',
     ...(opts.headers || {}),
   };
-  if (DIRECTUS_TOKEN) headers['Authorization'] = `Bearer ${DIRECTUS_TOKEN}`;
+  if (DIRECTUS_STATIC_TOKEN) headers['Authorization'] = `Bearer ${DIRECTUS_STATIC_TOKEN}`;
 
   const res = await fetch(url, {
     method: opts.method || 'GET',
@@ -176,10 +176,13 @@ export type NewsletterSubmission = {
 };
 
 export type LeadSubmission = {
-  email: string;
+  // Minimal lead fields
+  name?: string;
+  email?: string;
+  phone?: string;
+  // legacy/optional fields kept for compatibility
   first_name?: string;
   last_name?: string;
-  phone?: string;
   message?: string;
   service_type?: string;
   moving_date?: string;
@@ -203,8 +206,30 @@ export async function submitNewsletter(data: NewsletterSubmission): Promise<void
 
 export async function submitLead(data: LeadSubmission): Promise<void> {
   await createDirectusItem('leads', {
-    ...data,
+    // Support minimal lead shape: prefer explicit name/email/phone
+    name: data.name || `${data.first_name || ''} ${data.last_name || ''}`.trim() || null,
+    email: data.email || null,
+    phone: data.phone || null,
+    // keep other fields if present
+    message: data.message || null,
+    service_type: data.service_type || null,
+    moving_date: data.moving_date || null,
+    from_location: data.from_location || null,
+    to_location: data.to_location || null,
+    apartment_size: data.apartment_size || null,
+    source: data.source || null,
+    files: data.files || null,
     date_created: new Date().toISOString(),
-    status: 'new'
+    status: 'new',
+  });
+}
+
+export async function createQuote(payload: { lead_id?: string | number; quote: string; files?: string[]; source?: string; }) {
+  return createDirectusItem('quotes', {
+    lead_id: payload.lead_id || null,
+    quote: payload.quote,
+    files: payload.files || null,
+    source: payload.source || null,
+    created_at: new Date().toISOString(),
   });
 }

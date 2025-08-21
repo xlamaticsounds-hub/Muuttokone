@@ -3,8 +3,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 export const metadata: Metadata = {
-  title: '404 Error | Base Next.js App Landing Template',
-  description: 'This is Error page for Base Pro',
+  title: '404 - Sivua ei löydy | Muuttokone.fi',
+  description: 'Etsimääsi sivua ei löytynyt',
   // other metadata
 };
 

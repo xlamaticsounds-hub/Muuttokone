@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { signOut, useSession } from 'next-auth/react';
 import { onScroll } from '@/lib/utils';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -20,8 +19,6 @@ const Header = () => {
       window.removeEventListener('scroll', onScroll);
     };
   }, []);
-
-  const { data: session } = useSession();
 
   const pathUrl = usePathname();
   // Navbar toggle
@@ -179,34 +176,21 @@ const Header = () => {
             <div className="mr-[60px] flex items-center justify-end lg:mr-0">
               {/* Dark mode switch removed by request */}
 
-              {session ? (
-                <div className="hidden items-center sm:flex">
-                  <p className="mx-3 text-black dark:text-white">{session?.user?.name}</p>
-                  <button
-                    aria-label="SignOut"
-                    onClick={() => signOut()}
-                    className="bg-primary hover:shadow-1 flex items-center justify-center rounded-full px-7.5 py-3 text-base text-white"
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              ) : (
-                <div className="hidden items-center sm:flex">
-                  <a
-                    href={`tel:${siteConfig.contact.phone.tel}`}
-                    className="hover:text-primary mr-4 font-semibold text-black/80 dark:text-white"
-                  >
-                    📞 {siteConfig.contact.phone.display}
-                  </a>
+              <div className="hidden items-center sm:flex">
+                <a
+                  href={`tel:${siteConfig.contact.phone.tel}`}
+                  className="hover:text-primary mr-4 font-semibold text-black/80 dark:text-white"
+                >
+                  📞 {siteConfig.contact.phone.display}
+                </a>
 
-                  <Link
-                    href="/tarjouspyynto"
+                <Link
+                  href="/tarjouspyynto"
                     className="bg-primary hover:shadow-1 flex items-center justify-center rounded-full px-7.5 py-3 text-base text-white"
                   >
                     Pyydä tarjous
                   </Link>
                 </div>
-              )}
             </div>
           </div>
         </div>

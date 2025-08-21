@@ -1,16 +1,11 @@
-import { getServerSession } from 'next-auth/next';
 import { NextResponse } from 'next/server';
-import { authOptions } from '@/lib/authOptions';
 
 export async function GET() {
-	const session = await getServerSession(authOptions);
-
-	if (!session) {
-		return new NextResponse(JSON.stringify({ error: 'unauthorized' }), {
-			status: 401,
-		});
-	}
-
-	return NextResponse.json({ authenticated: !!session });
+	// Auth removed - return basic API status
+	return NextResponse.json({ 
+		status: 'ok',
+		message: 'API is running',
+		timestamp: new Date().toISOString() 
+	});
 }
 

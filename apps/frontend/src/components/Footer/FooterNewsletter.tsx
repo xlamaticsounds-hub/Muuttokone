@@ -1,46 +1,33 @@
 'use client';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import axios from 'axios';
-import z from 'zod';
-import { integrations, messages } from '../../../integrations.config';
-
-const schema = z.object({
-  email: z.string().email('Anna kelvollinen sähköpostiosoite.'),
-});
+import { newsletterSchema, validateFormData } from '@/lib/schemas';
 
 export default function FooterNewsletter() {
   const [email, setEmail] = useState('');
 
-  const result = schema.safeParse({ email });
-
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
-    if (!integrations.isAuthEnabled) {
-      toast.error(messages.auth);
-      return;
-    }
-
+    const result = validateFormData(newsletterSchema, { email });
+    
     if (!result.success) {
-      result.error.errors.forEach((error) => {
-        toast.error(error.message);
-      });
+      toast.error(result.error || 'Invalid email address');
       return;
     }
 
     try {
-      const res = await axios.post('/api/newsletter', { email });
-
-      if (res.data.status == 400) {
-        toast.error(res.data?.detail);
-        setEmail('');
-      } else {
-        toast.success('Thanks for signing up!');
-        setEmail('');
-      }
+      const res = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'newsletter', data: { email, source: 'website' } }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json?.success) throw new Error(json?.error || 'Subscribe failed');
+      toast.success('Tilattu! Kiitos.');
+      setEmail('');
     } catch (error: any) {
-      toast.error(error.response.data);
+      toast.error(error?.message || 'Virhe tilauksessa');
     }
   };
 

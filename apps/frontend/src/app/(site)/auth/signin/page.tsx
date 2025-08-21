@@ -3,8 +3,8 @@ import { Metadata } from 'next';
 import React from 'react';
 
 export const metadata: Metadata = {
-  title: 'Sign In Page | Base - Next.js Template',
-  description: 'This is Sign In page for Base Next.js Template',
+  title: 'Kirjaudu sisään | Muuttokone.fi',
+  description: 'Kirjaudu sisään Muuttokone.fi palveluun',
   // other metadata
 };
 

@@ -14,7 +14,8 @@ export const contactSchema = z.object({
   email: z
     .string()
     .email('Anna kelvollinen sähköpostiosoite')
-    .max(255, 'Sähköpostiosoite on liian pitkä'),
+    .max(255, 'Sähköpostiosoite on liian pitkä')
+    .optional(),
 
   phone: z
     .string()

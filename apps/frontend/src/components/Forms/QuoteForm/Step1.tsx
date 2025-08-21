@@ -11,6 +11,7 @@ type Props = {
 export default function Step1({ data, setData, onNext }: Props) {
   return (
     <form
+      autoComplete="on"
       onSubmit={(e) => {
         e.preventDefault();
         if (!data.phone || !data.date) return;
@@ -20,8 +21,11 @@ export default function Step1({ data, setData, onNext }: Props) {
     >
       <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
         <div>
-          <label className="mb-2 block">Nimi</label>
+          <label htmlFor="fullName" className="mb-2 block">Nimi</label>
           <input
+            id="fullName"
+            name="fullName"
+            autoComplete="name"
             className="border-strokedark focus:border-primary dark:border-stroke w-full rounded-lg border bg-transparent px-4 py-3 focus:outline-hidden"
             value={data.name || ''}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -31,9 +35,12 @@ export default function Step1({ data, setData, onNext }: Props) {
           />
         </div>
         <div>
-          <label className="mb-2 block">Sähköposti</label>
+          <label htmlFor="email" className="mb-2 block">Sähköposti</label>
           <input
+            id="email"
+            name="email"
             type="email"
+            autoComplete="email"
             className="border-strokedark focus:border-primary dark:border-stroke w-full rounded-lg border bg-transparent px-4 py-3 focus:outline-hidden"
             value={data.email || ''}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -42,10 +49,14 @@ export default function Step1({ data, setData, onNext }: Props) {
           />
         </div>
         <div>
-          <label className="mb-2 block">
+          <label htmlFor="tel" className="mb-2 block">
             Puhelin <span className="text-red-500">*</span>
           </label>
           <input
+            id="tel"
+            name="phone"
+            type="tel"
+            autoComplete="tel"
             className="border-strokedark focus:border-primary dark:border-stroke w-full rounded-lg border bg-transparent px-4 py-3 focus:outline-hidden"
             value={data.phone || ''}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -55,8 +66,11 @@ export default function Step1({ data, setData, onNext }: Props) {
           />
         </div>
         <div>
-          <label className="mb-2 block">Mistä (postinumero)</label>
+          <label htmlFor="fromPostal" className="mb-2 block">Mistä (postinumero)</label>
           <input
+            id="fromPostal"
+            name="fromPostal"
+            autoComplete="postal-code"
             placeholder="00100"
             className="border-strokedark focus:border-primary dark:border-stroke w-full rounded-lg border bg-transparent px-4 py-3 focus:outline-hidden"
             value={data.from || ''}
@@ -67,8 +81,11 @@ export default function Step1({ data, setData, onNext }: Props) {
           />
         </div>
         <div>
-          <label className="mb-2 block">Minne (postinumero)</label>
+          <label htmlFor="toPostal" className="mb-2 block">Minne (postinumero)</label>
           <input
+            id="toPostal"
+            name="toPostal"
+            autoComplete="postal-code"
             placeholder="20100"
             className="border-strokedark focus:border-primary dark:border-stroke w-full rounded-lg border bg-transparent px-4 py-3 focus:outline-hidden"
             value={data.to || ''}
@@ -81,6 +98,8 @@ export default function Step1({ data, setData, onNext }: Props) {
         <div>
           <label className="mb-2 block">Kohteen koko</label>
           <select
+            id="size"
+            name="size"
             className="border-strokedark focus:border-primary dark:border-stroke w-full rounded-lg border bg-transparent px-4 py-3 focus:outline-hidden"
             value={data.size || ''}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
@@ -101,6 +120,8 @@ export default function Step1({ data, setData, onNext }: Props) {
             Muuttopäivä <span className="text-red-500">*</span>
           </label>
           <input
+            id="moveDate"
+            name="moveDate"
             type="date"
             min={new Date().toISOString().split('T')[0]}
             className="border-strokedark focus:border-primary dark:border-stroke w-full rounded-lg border bg-transparent px-4 py-3 focus:outline-hidden"
@@ -139,9 +160,12 @@ export default function Step1({ data, setData, onNext }: Props) {
             <label htmlFor="isBusiness">Olen yritysasiakas</label>
           </div>
           {data.isBusiness && (
-            <div className="mt-3">
-              <label className="mb-2 block">Y-tunnus</label>
+              <div className="mt-3">
+              <label htmlFor="businessId" className="mb-2 block">Y-tunnus</label>
               <input
+                id="businessId"
+                name="businessId"
+                autoComplete="organization"
                 className="border-strokedark focus:border-primary dark:border-stroke w-full rounded-lg border bg-transparent px-4 py-3 focus:outline-hidden"
                 value={data.businessId || ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -156,6 +180,9 @@ export default function Step1({ data, setData, onNext }: Props) {
         <div>
           <label className="mb-2 block">Lisätietoja lähtöosoitteesta (valinnainen)</label>
           <input
+            id="fromExtra"
+            name="fromExtra"
+            autoComplete="address-line2"
             className="border-strokedark focus:border-primary dark:border-stroke w-full rounded-lg border bg-transparent px-4 py-3 focus:outline-hidden"
             value={data.fromExtra || ''}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -167,6 +194,9 @@ export default function Step1({ data, setData, onNext }: Props) {
         <div>
           <label className="mb-2 block">Lisätietoja kohdeosoitteesta (valinnainen)</label>
           <input
+            id="toExtra"
+            name="toExtra"
+            autoComplete="address-line2"
             className="border-strokedark focus:border-primary dark:border-stroke w-full rounded-lg border bg-transparent px-4 py-3 focus:outline-hidden"
             value={data.toExtra || ''}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
