@@ -26,26 +26,28 @@ export function truncate(text: string, length: number): string {
 
 // Scroll active utility for navigation highlighting
 export function onScroll(): void {
-  const sections = document.querySelectorAll('[id]');
-  const navLinks = document.querySelectorAll('.ud-menu-scroll');
+  // Use IntersectionObserver to detect active section without reading layout synchronously.
+  const sections = document.querySelectorAll<HTMLElement>('[id]');
+  const navLinks = document.querySelectorAll<HTMLElement>('.ud-menu-scroll');
 
-  let current = '';
+  if (!('IntersectionObserver' in window)) return;
 
-  sections.forEach((section) => {
-    const sectionTop = (section as HTMLElement).offsetTop;
-    // const sectionHeight = (section as HTMLElement).offsetHeight; // Not used currently
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        const id = entry.target.getAttribute('id') || '';
+        const matching = Array.from(navLinks).find((link) =>
+          (link as HTMLAnchorElement).getAttribute('href')?.includes(`#${id}`)
+        );
+        if (entry.isIntersecting && matching) {
+          matching.classList.add('text-primary');
+        } else if (matching) {
+          matching.classList.remove('text-primary');
+        }
+      });
+    },
+    { root: null, rootMargin: '-40% 0px -55% 0px', threshold: 0 }
+  );
 
-    if (window.pageYOffset >= sectionTop - 200) {
-      current = section.getAttribute('id') || '';
-    }
-  });
-
-  navLinks.forEach((link) => {
-    const href = (link as HTMLAnchorElement).getAttribute('href');
-    if (href?.includes(current) && current !== '') {
-      link.classList.add('text-primary');
-    } else {
-      link.classList.remove('text-primary');
-    }
-  });
+  sections.forEach((s) => observer.observe(s));
 }

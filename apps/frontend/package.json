@@ -63,9 +63,12 @@
     "sharp": "^0.32.0"
   },
   "browserslist": [
-    "last 1 version",
-    ">1%",
-    "maintained node versions",
-    "not dead"
+    "chrome >= 114",
+    "edge >= 114",
+    "firefox >= 115",
+    "safari >= 16",
+    "ios_saf >= 16",
+    "not IE 11",
+    "not op_mini all"
   ]
 }

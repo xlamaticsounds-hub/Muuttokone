@@ -23,6 +23,12 @@ export default async function RootLayout({
   const siteConfig = await getSiteConfig();
   return (
     <html lang="fi" suppressHydrationWarning className="h-full overflow-x-clip">
+      <head>
+        {/* Preconnect and preload critical resources */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="preload" as="image" href="/images/webp/hero/hero.webp" />
+      </head>
       <body
         className={`dark:bg-black ${inter.variable} ${outfit.variable} h-full overflow-x-hidden`}
       >

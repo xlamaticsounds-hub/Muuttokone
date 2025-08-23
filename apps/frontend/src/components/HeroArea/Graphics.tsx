@@ -17,6 +17,7 @@ const Graphics = () => {
             width={448}
             height={720}
             priority
+            fetchPriority="high"
             className="h-auto w-[78%] max-w-[420px] min-w-[260px] md:w-auto md:max-w-none"
           />
         </div>
