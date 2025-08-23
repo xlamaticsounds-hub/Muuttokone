@@ -68,7 +68,9 @@ export default async function RootLayout({
                 gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', { page_path: window.location.pathname });
               `}
             </Script>
-            <GA />
+            <React.Suspense fallback={null}>
+              <GA />
+            </React.Suspense>
           </>
         ) : null}
       </body>
