@@ -10,6 +10,7 @@
     "lint:fix": "eslint --fix .",
     "format": "prettier --write \"**/*.{js,ts,tsx,json,css,md}\"",
     "images:convert": "node ./scripts/convert-png-to-webp.mjs",
+  "images:avif": "node ./scripts/convert-webp-to-avif.mjs",
     "stripe:listen": "stripe listen --forward-to http://localhost:3000/api/stripe/webhook",
     "setup:directus": "node ../scripts/setup-directus.mjs",
     "setup:first-run": "npm run setup:directus"

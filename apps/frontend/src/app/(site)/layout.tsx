@@ -27,7 +27,10 @@ export default async function RootLayout({
         {/* Preconnect and preload critical resources */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="preload" as="image" href="/images/webp/hero/hero.webp" />
+        <link rel="preconnect" href="https://www.googletagmanager.com" />
+        {/* Prefer AVIF when available, fallback to webp */}
+        <link rel="preload" as="image" href="/images/webp/hero/hero.avif" type="image/avif" />
+        <link rel="preload" as="image" href="/images/webp/hero/hero.webp" type="image/webp" />
       </head>
       <body
         className={`dark:bg-black ${inter.variable} ${outfit.variable} h-full overflow-x-hidden`}
