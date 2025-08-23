@@ -12,7 +12,7 @@ const Graphics = () => {
         {/* Portrait hero image with smart sizing */}
         <div className="relative z-10 flex items-end justify-center md:justify-end">
           <Image
-            src="/images/webp/hero/hero.webp"
+            src="/images/webp/hero/hero.avif"
             alt="Hero"
             width={448}
             height={720}

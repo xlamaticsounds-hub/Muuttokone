@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 const cwd = process.cwd();
-const src = path.join(cwd, 'public', 'images', 'webp', 'hero', 'hero.webp');
+const src = path.join(cwd, 'public', 'images', 'webp', 'hero', 'hero.avif');
 const dest = path.join(cwd, 'public', 'images', 'webp', 'hero', 'hero.avif');
 
 async function run() {

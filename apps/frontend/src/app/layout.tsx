@@ -55,7 +55,7 @@ export const metadata: Metadata = {
       'Nopea, turvallinen ja läpinäkyvä muutto. Koti- ja yritysmuutot, pakkaus, varastointi ja siivous.',
     images: [
       {
-        url: '/images/og-image.jpg',
+        url: '/images/webp/hero/hero.avif',
         width: 1200,
         height: 630,
         alt: 'Muuttokone.fi - Luotettava muuttopalvelu',
