@@ -11,17 +11,17 @@ export default function FooterBottom() {
         <div className="animate_top">
           <ul className="flex items-center gap-8">
             <li>
-              <Link href="/language" className="hover:text-primary">
+              <Link href="" className="hover:text-primary">
                 English
               </Link>
             </li>
             <li>
-              <Link href="/privacy-policy" className="hover:text-primary">
+              <Link href="" className="hover:text-primary">
                 Privacy Policy
               </Link>
             </li>
             <li>
-              <Link href="/support" className="hover:text-primary">
+              <Link href="" className="hover:text-primary">
                 Support
               </Link>
             </li>

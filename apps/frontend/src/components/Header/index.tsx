@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { onScroll } from '@/lib/utils';
-import { usePathname } from 'next/navigation';
+// ...existing code...
 import Link from 'next/link';
 import Image from 'next/image';
 import { useSiteConfig } from '@/app/context/SiteConfigContext';
@@ -20,24 +20,11 @@ const Header = () => {
     };
   }, []);
 
-  const pathUrl = usePathname();
+
   // Navbar toggle
   const [navbarOpen, setNavbarOpen] = useState(false);
   const navbarToggleHandler = () => {
     setNavbarOpen(!navbarOpen);
-  };
-
-  // Sticky Navbar (always sticky across site) - removed sticky state since it's always true
-  // const [sticky] = useState(true);
-
-  // submenu handler
-  const [openIndex, setOpenIndex] = useState(-1);
-  const handleSubmenu = (index: number) => {
-    if (openIndex === index) {
-      setOpenIndex(-1);
-    } else {
-      setOpenIndex(index);
-    }
   };
 
   // const [searchModalOpen, setSearchModalOpen] = useState(false);
@@ -105,54 +92,17 @@ const Header = () => {
 
               <nav className="fixed top-0 left-0 z-999 flex h-screen w-full items-center justify-center bg-white/95 text-center backdrop-blur-xs lg:static lg:h-auto lg:w-max lg:bg-transparent lg:backdrop-blur-none dark:bg-black/95 lg:dark:bg-transparent">
                 <ul className="items-center space-y-3 lg:flex lg:space-y-0 lg:space-x-8 xl:space-x-10">
-                  {updatedMenuData.map((item, index) =>
-                    item.children ? (
-                      <li key={index} className="submenu-item menu-item group relative">
-                        <Link
-                          onClick={() => handleSubmenu(index)}
-                          href={item.route}
-                          className={`lg:py-[21px] ${item.children.some((child) => pathUrl === child.route) ? 'text-primary' : 'text-black/90 dark:text-white'} hover:text-primary group-hover:text-primary inline-flex items-center font-medium`}
-                        >
-                          {item.label}
-                          <span className="pl-3">
-                            <svg
-                              className={`h-3 w-3 fill-current ${openIndex === index ? 'rotate-180 lg:rotate-0' : ''}`}
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 512 512"
-                            >
-                              <path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z" />
-                            </svg>
-                          </span>
-                        </Link>
-
-                        <ul
-                          className={`${openIndex === index ? '' : 'hidden'} submenu lg:dark:shadow-card-dark dark:lg:bg-blacksection space-y-5 pt-5 duration-300 lg:invisible lg:absolute lg:top-[120%] lg:block lg:w-[250px] lg:rounded-lg lg:bg-white lg:px-8 lg:pb-5 lg:text-left lg:opacity-0 lg:shadow-lg lg:group-hover:visible lg:group-hover:top-full lg:group-hover:opacity-100 dark:lg:border-transparent`}
-                        >
-                          {item.children.map((childItem, childIndex) => (
-                            <li key={childIndex}>
-                              <Link
-                                href={childItem.route}
-                                onClick={closeMenu}
-                                className={`${pathUrl === childItem.route && 'text-primary'} hover:text-primary inline-flex items-center justify-center text-center`}
-                              >
-                                {childItem.label}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      </li>
-                    ) : (
-                      <li key={index} className="menu-item">
-                        <Link
-                          href={item.route}
-                          onClick={closeMenu}
-                          className={`ud-menu-scroll hover:text-primary inline-flex items-center font-medium text-black/90 lg:py-[21px] dark:text-white`}
-                        >
-                          {item.label}
-                        </Link>
-                      </li>
-                    ),
-                  )}
+                  {updatedMenuData.map((item, index) => (
+                    <li key={index} className="menu-item">
+                      <Link
+                        href={item.route}
+                        onClick={closeMenu}
+                        className={`ud-menu-scroll hover:text-primary inline-flex items-center font-medium text-black/90 lg:py-[21px] dark:text-white`}
+                      >
+                        {item.label}
+                      </Link>
+                    </li>
+                  ))}
                   {/* Mobile CTAs */}
                   <li className="mt-8 block lg:hidden">
                     <Link

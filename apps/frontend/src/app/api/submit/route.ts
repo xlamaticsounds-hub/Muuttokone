@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { submitNewsletter, submitLead, uploadFile } from '@/lib/directus';
 import { revalidateTag } from 'next/cache';
 import { newsletterSchema } from '@/lib/schemas';
 
@@ -25,6 +24,33 @@ const SubmissionSchema = z.object({
   type: z.enum(['newsletter', 'lead']),
   data: z.any(), // Allow any data structure, validate based on type later
 });
+
+const uploadFile = async (file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch('/api/upload', {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error('File upload failed');
+  }
+
+  const result = await response.json();
+  return result;
+};
+
+const submitLead = async () => {
+  // setup with prisma
+  return;
+};
+
+const submitNewsletter = async () => {
+  // setup with prisma
+  return;
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -84,8 +110,8 @@ export async function POST(request: NextRequest) {
     
     // Handle based on type
     if (validatedData.type === 'newsletter') {
-      const newsletterData = newsletterSchema.parse(validatedData.data);
-      await submitNewsletter(newsletterData);
+  newsletterSchema.parse(validatedData.data);
+  await submitNewsletter();
       
       // Revalidate newsletter-related caches
       revalidateTag('collection:newsletter_email_addresses');
@@ -97,8 +123,8 @@ export async function POST(request: NextRequest) {
       
     } else if (validatedData.type === 'lead') {
       // Validate lead data with more flexible schema
-      const leadData = LeadSchema.parse(validatedData.data);
-      await submitLead(leadData);
+  LeadSchema.parse(validatedData.data);
+  await submitLead();
 
       // Revalidate lead-related caches
       revalidateTag('collection:leads');

@@ -1,6 +1,5 @@
 'use server';
 
-import { directusFetch, invalidateCollection } from '@/lib/directus';
 import { checkRateLimit } from './rate-limit';
 import { logger } from './logger';
 import { safeFormAction, createSuccessResult, createErrorResult } from '@/lib/form-helpers';
@@ -67,8 +66,8 @@ export async function subscribeNewsletter(formData: FormData) {
       }
 
       try {
-        // Submit to Directus using unified client
-        await directusFetch('/items/newsletter_email_addresses', {
+        // TODO /API/SUBSCRIBE
+        await fetch('/api/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -79,9 +78,6 @@ export async function subscribeNewsletter(formData: FormData) {
             subscribed_at: new Date().toISOString(),
           }),
         });
-
-        // Invalidate newsletter subscribers cache
-        await invalidateCollection('newsletter_email_addresses');
 
         logger('info', 'Newsletter subscription successful', { email: data.email });
         return createSuccessResult(undefined, 'Uutiskirje tilattu onnistuneesti!');
