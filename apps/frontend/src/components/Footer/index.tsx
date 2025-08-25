@@ -3,7 +3,6 @@ import Image from 'next/image';
 import FooterBottom from '@/components/Footer/FooterBottom';
 import footerNavData from '@/components/Footer/footerNavData';
 import FooterSocialLinks from '@/components/Footer/FooterSocialLinks';
-import FooterNewsletter from '@/components/Footer/FooterNewsletter';
 import SlideOnReveal from '@/components/SlideOnReveal';
 
 export default function Footer() {
@@ -43,7 +42,6 @@ export default function Footer() {
                 {/* Newsletter in the center column (relative to the whole footer) */}
                 <SlideOnReveal delay={0.15}>
                   <div className="mt-8 md:mt-12 md:ml-4 md:max-w-md md:flex-1 lg:ml-6">
-                    <FooterNewsletter />
                   </div>
                 </SlideOnReveal>
 

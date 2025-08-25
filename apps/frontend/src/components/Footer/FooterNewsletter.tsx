@@ -1,7 +1,6 @@
 'use client';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { newsletterSchema, validateFormData } from '@/lib/schemas';
 
 export default function FooterNewsletter() {
   const [email, setEmail] = useState('');
@@ -9,18 +8,13 @@ export default function FooterNewsletter() {
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
-    const result = validateFormData(newsletterSchema, { email });
-    
-    if (!result.success) {
-      toast.error(result.error || 'Invalid email address');
-      return;
-    }
+  // Newsletter form removed. You can repoint to contact form here if needed.
 
     try {
       const res = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'newsletter', data: { email, source: 'website' } }),
+    // Newsletter submission removed. You can repoint to contact form here if needed.
       });
       const json = await res.json();
       if (!res.ok || !json?.success) throw new Error(json?.error || 'Subscribe failed');

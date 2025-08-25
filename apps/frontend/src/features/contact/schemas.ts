@@ -37,20 +37,9 @@ export const quickContactSchema = z.object({
   message: z.string().min(10, 'Viesti on pakollinen'),
 });
 
-// Newsletter subscription schema
-export const newsletterSchema = z.object({
-  email: z
-    .string()
-    .email('Anna kelvollinen sähköpostiosoite')
-    .max(255, 'Sähköpostiosoite on liian pitkä'),
-
-  // GDPR consent (required for newsletter)
-  gdprConsent: z.boolean().refine((val) => val === true, 'Tietosuojasuostumus on pakollinen'),
-});
 
 export type ContactFormData = z.infer<typeof contactSchema>;
 export type QuickContactData = z.infer<typeof quickContactSchema>;
-export type NewsletterData = z.infer<typeof newsletterSchema>;
 
 // Field validation helpers
 export const contactFieldValidators = {
