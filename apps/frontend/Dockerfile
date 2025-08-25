@@ -27,6 +27,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/package.json ./package.json
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
+# Ensure the Next.js image cache dir is writable by the unprivileged user
+# Create the cache images dir and set ownership to nextjs:nodejs
+RUN mkdir -p .next/cache/images && chown -R nextjs:nodejs .next || true
 EXPOSE 3000
 USER nextjs
 CMD ["npm", "start"]
