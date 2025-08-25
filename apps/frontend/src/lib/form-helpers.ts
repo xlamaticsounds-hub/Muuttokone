@@ -4,6 +4,45 @@
 
 import { z } from 'zod';
 
+// Small helper to convert FormData -> plain object without using Object.fromEntries
+function formDataToObject(fd: FormData): Record<string, any> {
+  const out: Record<string, any> = {};
+
+  for (const [rawKey, rawValue] of fd.entries()) {
+    const value = typeof rawValue === 'string' ? rawValue : rawValue;
+
+    if (rawKey.endsWith('[]')) {
+      const baseKey = rawKey.slice(0, -2);
+      if (!Array.isArray(out[baseKey])) out[baseKey] = [];
+      out[baseKey].push(value);
+      continue;
+    }
+
+    if (rawKey.includes('.')) {
+      const parts = rawKey.split('.');
+      let current: Record<string, any> = out;
+      for (let i = 0; i < parts.length - 1; i++) {
+        const p = parts[i];
+        if (!current[p] || typeof current[p] !== 'object') current[p] = {};
+        current = current[p];
+      }
+      current[parts[parts.length - 1]] = value;
+      continue;
+    }
+
+    // boolean handling
+    if (value === 'on' || value === 'true') {
+      out[rawKey] = true;
+    } else if (value === 'false') {
+      out[rawKey] = false;
+    } else {
+      out[rawKey] = value;
+    }
+  }
+
+  return out;
+}
+
 // Generic form result type
 export type FormResult<T = void> = {
   success: boolean;
@@ -85,39 +124,9 @@ export async function safeFormAction<TInput, TOutput>(
     // Convert FormData to object if needed
     let data: unknown;
     if (formData instanceof FormData) {
-      data = Object.fromEntries(formData.entries());
-
-      // Handle checkboxes and multi-select fields
-      const processedData: Record<string, any> = {};
-      for (const [key, value] of formData.entries()) {
-        if (key.endsWith('[]')) {
-          // Multi-select field
-          const baseKey = key.slice(0, -2);
-          if (!processedData[baseKey]) {
-            processedData[baseKey] = [];
-          }
-          processedData[baseKey].push(value);
-        } else if (key.includes('.')) {
-          // Nested field (e.g., "address.street")
-          const parts = key.split('.');
-          let current = processedData;
-          for (let i = 0; i < parts.length - 1; i++) {
-            if (!current[parts[i]]) current[parts[i]] = {};
-            current = current[parts[i]];
-          }
-          current[parts[parts.length - 1]] = value;
-        } else {
-          // Handle boolean fields
-          if (value === 'on' || value === 'true') {
-            processedData[key] = true;
-          } else if (value === 'false') {
-            processedData[key] = false;
-          } else {
-            processedData[key] = value;
-          }
-        }
-      }
-      data = processedData;
+  // Convert FormData into a plain object with support for
+  // nested fields (dot notation), array fields (key[]), and booleans.
+  data = formDataToObject(formData);
     } else {
       data = formData;
     }

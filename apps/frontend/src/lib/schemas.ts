@@ -7,10 +7,8 @@
 export {
   contactSchema,
   quickContactSchema,
-  newsletterSchema,
   type ContactFormData,
   type QuickContactData,
-  type NewsletterData,
 } from '@/features/contact/schemas';
 
 // Also export shared helpers if needed in future

@@ -7,7 +7,7 @@ import ScrollToTop from '@/components/ScrollToTop';
 import React from 'react';
 import { Providers } from './providers';
 import { Inter, Outfit } from 'next/font/google';
-import { getSiteConfig } from '@/server/site-config';
+import { siteConfig } from '@/config/site';
 import Script from 'next/script';
 import GA from '@/components/Analytics/GA';
 import StructuredData from '@/components/SEO/StructuredData';
@@ -20,7 +20,6 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const siteConfig = await getSiteConfig();
   return (
     <html lang="fi" suppressHydrationWarning className="h-full overflow-x-clip">
       <head>

@@ -1,4 +1,4 @@
-import { getSiteConfig } from '@/server/site-config';
+import { siteConfig } from "@/config/site";
 
 interface StructuredDataProps {
   type: 'LocalBusiness' | 'Organization' | 'Service' | 'MovingCompany';
@@ -6,7 +6,6 @@ interface StructuredDataProps {
 }
 
 export default async function StructuredData({ type, data }: StructuredDataProps) {
-  const siteConfig = await getSiteConfig();
   const siteUrl = process.env.SITE_URL ?? 'https://muuttokone.fi';
 
   const getStructuredData = () => {

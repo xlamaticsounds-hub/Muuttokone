@@ -4,14 +4,12 @@
 
 import {
   contactSchema as contactFormSchema,
-  newsletterSchema,
   type ContactFormData,
-  type NewsletterData,
 } from '@/lib/schemas';
 
 // Re-export for backward compatibility
-export { contactFormSchema, newsletterSchema };
-export type { ContactFormData, NewsletterData };
+export { contactFormSchema };
+export type { ContactFormData };
 
 // Form submission states
 export type FormSubmissionState =

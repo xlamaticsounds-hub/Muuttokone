@@ -11,19 +11,19 @@ export default function FooterBottom() {
         <div className="animate_top">
           <ul className="flex items-center gap-8">
             <li>
-              <Link href="/language" className="hover:text-primary">
+              <button type="button" className="hover:text-primary bg-transparent border-none p-0 m-0 cursor-pointer underline">
                 English
-              </Link>
+              </button>
             </li>
             <li>
-              <Link href="/privacy-policy" className="hover:text-primary">
+              <Link href="/privacy" className="hover:text-primary">
                 Privacy Policy
               </Link>
             </li>
             <li>
-              <Link href="/support" className="hover:text-primary">
+              <a href="mailto:info@muuttokone.fi" className="hover:text-primary">
                 Support
-              </Link>
+              </a>
             </li>
           </ul>
         </div>
