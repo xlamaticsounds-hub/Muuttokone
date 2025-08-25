@@ -71,11 +71,6 @@ export default async function StructuredData({ type, data }: StructuredDataProps
         siteConfig.contact.social.linkedin,
         siteConfig.contact.social.twitter,
       ],
-      memberOf: {
-        '@type': 'Organization',
-        name: 'SMPY - Suomen Muuttomiehet Ry',
-        url: 'https://smpy.fi',
-      },
       hasCredential: {
         '@type': 'EducationalOccupationalCredential',
         name: 'SMPY Certified Moving Company',

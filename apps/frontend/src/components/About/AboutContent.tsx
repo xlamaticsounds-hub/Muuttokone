@@ -9,8 +9,7 @@ export default function AboutContent() {
         <p className="lg:w-[95%]">
           Me hoidamme muuton niin, että sinä voit keskittyä olennaiseen. Kokeneet muuttajamme,
           selkeä hinnoittelu ilman piilokuluja sekä kattava vakuutusturva varmistavat sujuvan
-          kokemuksen koti- ja yritysasiakkaille. SMPY-jäsenyytemme on lupaus laadusta ja
-          turvallisuudesta.
+          kokemuksen koti- ja yritysasiakkaille.
         </p>
 
         <div className="mt-7.5">
