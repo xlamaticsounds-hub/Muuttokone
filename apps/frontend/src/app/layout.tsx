@@ -35,7 +35,6 @@ export const metadata: Metadata = {
     'Tampere',
     'Turku',
     'Suomi',
-    'SMPY',
   ],
   authors: [{ name: 'Muuttokone.fi' }],
   creator: 'Muuttokone.fi',
