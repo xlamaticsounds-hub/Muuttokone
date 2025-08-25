@@ -5,17 +5,6 @@ networks:
     driver: bridge
 
 services:
-  nginx: 
-    image: nginx:latest
-    ports:
-      - "80:80"
-    volumes:
-      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:rw
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    depends_on:
-      - directus
-    networks: [network]
 
   database:
     image: postgres:16.9
@@ -32,31 +21,4 @@ services:
       POSTGRES_PASSWORD: "kakskasi"
       # POSTGRES_HOST_AUTH_METHOD: "trust"  # not needed if using a password
 
-  directus:
-    image: directus/directus:11.10.2
-    networks: [network]
-    container_name: directus
-    restart: always
-    ports:
-      - "8055:8055"
-    volumes:
-      - ./apps/admin/uploads:/directus/uploads:Z
-      - ./apps/admin/extensions:/directus/extensions:Z
-    depends_on:
-      - database
-    environment:
-      SECRET: "titty"
-      DB_CLIENT: "pg"
-      DB_HOST: "database"
-      DB_PORT: "5432"
-      DB_DATABASE: "postgres"
-      DB_USER: "axu"           # <-- was "postgres", must match POSTGRES_USER
-      DB_PASSWORD: "kakskasi"
-
-      ADMIN_EMAIL: "alex@muuttokone.fi"
-      ADMIN_PASSWORD: "titty"
-
-      PUBLIC_URL: "http://localhost:8055"
-      DIRECTUS_PUBLIC_URL: "http://localhost:8055"
-      DIRECTUS_ADMIN_EMAIL: "alex@muuttokone.fi"
-      DIRECTUS_ADMIN_PASSWORD: "titty"
+ 
