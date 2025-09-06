@@ -49,19 +49,23 @@ const Header = () => {
           <div className="flex items-center justify-between">
             <div className="block py-4 lg:py-0">
               <Link href="/" className="block max-w-[145px] sm:max-w-[180px]">
+                {/* Use webp (likely has transparent background) for light mode to avoid mismatched image bg */}
                 <Image
                   width={130}
                   height={44}
-                  src={'/images/logo/logo.png'}
+                  src={'/images/logo/logo.webp'}
                   alt="Logo"
                   className="block dark:hidden"
+                  priority
                 />
+                {/* Keep white logo for dark mode (SVG or PNG) */}
                 <Image
                   width={130}
                   height={44}
-                  src={'/images/logo/logo-white.svg'}
+                  src={'/images/logo/logo-white.png'}
                   alt="Logo"
                   className="hidden dark:block"
+                  priority
                 />
               </Link>
             </div>
