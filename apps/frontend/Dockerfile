@@ -9,7 +9,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Install dependencies
-COPY package.json pnpm-lock.yaml* ./
+COPY apps/frontend/package.json apps/frontend/pnpm-lock.yaml* ./
 RUN pnpm i --frozen-lockfile
 
 # Builder stage
@@ -18,7 +18,7 @@ WORKDIR /app
 RUN corepack enable pnpm
 
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+COPY apps/frontend/. .
 
 # Build arguments for NEXT_PUBLIC environment variables (baked into bundle)
 ARG NEXT_PUBLIC_GA_ID
