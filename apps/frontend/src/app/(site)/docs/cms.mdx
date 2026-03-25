@@ -1,0 +1,27 @@
+# CMS & Dynaaminen sisältö
+
+Muuttokone.fi on suunniteltu joustavaksi CMS-alustaksi, jossa sisältö on irrotettu koodista.
+
+## LEGO-lähestymistapa
+
+Sivut rakentuvat osioista (Sections), joita voidaan hallita hallintapaneelin kautta. 
+
+### PageContent-malli
+
+Tietokannassa jokainen sivu tallennetaan `PageContent` -tauluun:
+- `slug`: Sivun tunniste (esim. "home").
+- `sections`: JSON-kenttä, joka sisältää listan osioista ja niiden ominaisuuksista (tekstit, kuvat, AI-asetukset).
+
+## Sisällön muokkaaminen
+
+1.  Kirjaudu hallintapaneeliin osoitteessa `/hallinta`.
+2.  Siirry **Asetukset**-välilehdelle.
+3.  Päivitä etusivun otsikot ja kuvaukset.
+4.  Tallenna muutokset, ja ne näkyvät välittömästi sivustolla ilman uutta buildia.
+
+## Hyödyt konsultille
+
+Tämä rakenne mahdollistaa uuden asiakassivuston käynnistämisen minuuteissa:
+- Kopioi pohja.
+- Vaihda logot ja värit.
+- Syötä asiakkaan sisältö hallintapaneeliin.

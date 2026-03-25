@@ -17,7 +17,7 @@ const formData = [
     label: 'Puhelinnumero',
     type: 'tel',
     name: 'phone',
-    placeholder: '+358 40 123 4567',
+    placeholder: '+358 46 592 4108',
     autocomplete: 'tel',
   },
   {

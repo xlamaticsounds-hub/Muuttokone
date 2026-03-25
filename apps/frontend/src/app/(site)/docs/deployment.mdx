@@ -1,0 +1,27 @@
+# Käyttöönotto (CI/CD)
+
+Muuttokone.fi käyttää täysin automatisoitua CI/CD-putkea, joka on optimoitu nopeutta ja luotettavuutta varten.
+
+## Paikallinen kehitys
+
+1.  Asenna riippuvuudet: `pnpm install`
+2.  Käynnistä tietokanta ja aja migraatiot: `pnpm prisma db push`
+3.  Käynnistä kehityspalvelin: `pnpm dev`
+
+## Deployment GCP:hen
+
+Käyttöönotto tapahtuu `./deploy.sh` -skriptin avulla. Se suorittaa seuraavat vaiheet:
+
+1.  **Cloud Build**: Rakentaa Docker-imagen hyödyntäen **Kaniko**-välimuistia. Tämä pudottaa build-ajan noin yhteen minuuttiin.
+2.  **Artifact Registry**: Tallentaa optimoidun imagen Google Cloudiin.
+3.  **Cloud Run**: Päivittää palvelun uuteen versioon.
+
+### Optimoinnit
+
+- **Standalone Build**: Docker-image sisältää vain tarvittavat tiedostot, mikä tekee siitä pienen ja nopean käynnistää.
+- **Välimuisti**: Käytämme Kanikoa Docker-layerien tallentamiseen, jolloin `node_modules` -asennusta ei tarvitse toistaa joka kerta.
+- **Build-time Mocks**: Tietokantayhteys on korvattu build-vaiheessa, joten deployment ei riipu tietokannan saatavuudesta.
+
+## Ympäristömuuttujat
+
+Kaikki salaisuudet hallitaan GCP Cloud Runin **Secrets**-osiossa. Build-vaiheessa tarvittavat julkiset avaimet (kuten Google Maps API) välitetään automaattisesti `deploy.sh` -skriptin kautta.

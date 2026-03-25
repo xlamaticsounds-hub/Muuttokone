@@ -7,8 +7,8 @@ const Contact = () => {
   return (
     <>
       <section
-        id="support"
-        className="bg-whiter dark:bg-blacksection relative overflow-hidden py-20 lg:py-25 xl:py-30"
+        id="yhteystiedot"
+        className="bg-gradient-to-t from-whiter to-[#F3F5F8] dark:from-blacksection dark:to-black relative overflow-hidden py-20 lg:py-25 xl:py-30"
       >
         <Graphics />
 

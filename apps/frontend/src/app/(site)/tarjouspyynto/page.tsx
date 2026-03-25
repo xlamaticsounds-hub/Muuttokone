@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import QuoteForm from '@/components/Forms/QuoteForm';
 import { generateSEOMetadata, SEOConfigs } from '@/components/SEO/SEOHelpers';
@@ -22,7 +23,9 @@ export default function Page() {
         <p className="mb-8 text-gray-600 dark:text-gray-300">
           Täytä alla olevat tiedot. Vähintään puhelinnumero ja muuttopäivä vaaditaan.
         </p>
-        <QuoteForm />
+        <Suspense fallback={<div>Ladataan lomaketta...</div>}>
+          <QuoteForm />
+        </Suspense>
       </div>
     </main>
   );

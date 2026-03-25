@@ -1,22 +1,38 @@
 'use client';
 import React, { useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Step1 from './Step1';
 import Step2 from './Step2';
 import Progress from './Progress';
 
 export type QuoteData = {
+  id?: string;
   name: string;
+  email?: string;
   phone?: string;
   from_location?: string;
   to_location?: string;
   apartment_size?: string;
   moving_date?: string;
   message?: string;
+  floor?: string;
+  has_elevator?: string;
+  square_meters?: string;
+  box_count?: string;
 };
 
 export default function QuoteForm() {
+  const searchParams = useSearchParams();
   const [step, setStep] = useState(1);
   const [data, setData] = useState<QuoteData>({ name: '' });
+
+  // On mount, check URL for leadId
+  React.useEffect(() => {
+    const leadId = searchParams.get('leadId');
+    if (leadId) {
+      setData((d) => ({ ...d, id: leadId }));
+    }
+  }, [searchParams]);
 
   // On mount, load quick quote data from localStorage if present
   React.useEffect(() => {
@@ -29,6 +45,7 @@ export default function QuoteForm() {
             ...d,
             name: parsed.name || d.name,
             phone: parsed.phone || d.phone,
+            email: parsed.email || d.email,
             from_location: parsed.fromLocation || d.from_location,
             to_location: parsed.toLocation || d.to_location,
             apartment_size: parsed.homeSize || d.apartment_size,

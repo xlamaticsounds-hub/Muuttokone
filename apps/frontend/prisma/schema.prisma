@@ -1,14 +1,16 @@
 // prisma/schema.prisma
+
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 generator client {
   provider = "prisma-client-js"
 }
 
-/* ===== Enums ===== */
+/**
+ * ===== Enums =====
+ */
 
 enum LeadStatus {
   NEW
@@ -32,98 +34,67 @@ enum LeadSource {
   OTHER
 }
 
-enum ProjectStatus {
-  DRAFT
-  SCHEDULED
-  IN_PROGRESS
-  ON_HOLD
-  COMPLETED
-  CANCELED
-}
-
-enum Priority {
-  LOW
-  MEDIUM
-  HIGH
-  URGENT
-}
-
-/* ===== Auth (use your existing NextAuth models).
-   If you already have User/Account/Session/VerificationToken, keep those and delete this User. */
-
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  image     String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-/* ===== Core ===== */
+/**
+ * ===== Core =====
+ */
 
 model Contact {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   // Person/company
   firstName   String?
   lastName    String?
   companyName String?
-  email       String?  // keep non-unique to allow multiple leads per same email (adjust to @unique if you prefer upsert-only)
+  email       String? // keep non-unique to allow multiple leads per same email (adjust to @unique if you prefer upsert-only)
   phone       String?
   notes       String?
 
   // Address (flat for easy forms)
-  street      String?
-  postalCode  String?
-  city        String?
-  region      String?
-  country     String?  @default("FI")
+  street     String?
+  postalCode String?
+  city       String?
+  region     String?
+  country    String? @default("FI")
 
   // Consent
   gdprConsentAt DateTime?
 
   // Tags
-  tags       String[]
+  tags String[]
 
   // Audit
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  deletedAt  DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   // Relations
-  leads      Lead[]
-  customers  Customer[]
+  leads Lead[]
 }
 
 model Lead {
-  id            String      @id @default(cuid())
-  contact       Contact     @relation(fields: [contactId], references: [id], onDelete: Restrict)
-  contactId     String
+  id        String  @id @default(cuid())
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Restrict)
+  contactId String
 
-  status        LeadStatus  @default(NEW)
-  source        LeadSource  @default(WEBSITE)
-  priority      Priority?
+  status LeadStatus @default(NEW)
+  source LeadSource @default(WEBSITE)
 
-  estimatedValue Int?
-  currency       String?    @default("EUR")
+  // Move details
   formData      Json?
   requestedDate DateTime?
   fromAddress   String?
   toAddress     String?
   volumeM3      Float?
-  floorsFrom    Int?
-  floorsTo      Int?
-  elevatorFrom  Boolean?
-  elevatorTo    Boolean?
-  packingNeeded Boolean?
-  heavyItems    String?
   notes         String?
+  
+  // New structured fields
+  floor         Int?
+  hasElevator   Boolean?
+  squareMeters  Float?
+  boxCount      Int?
 
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  deletedAt     DateTime?
-
-  projects      Project[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   // ✅ indexes
   @@index([contactId])
@@ -131,83 +102,94 @@ model Lead {
   @@index([source])
 }
 
-model Project {
-  id           String        @id @default(cuid())
-  lead         Lead?         @relation(fields: [leadId], references: [id])
-  leadId       String?       @unique
-  customer     Customer      @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  customerId   String
-
-  title        String
-  status       ProjectStatus @default(DRAFT)
-  startAt      DateTime?
-  endAt        DateTime?
-  priceCents   Int?
-  currency     String?       @default("EUR")
-  crewSize     Int?
-  vehicleNotes String?
-  instructions String?
-  fromAddress  String?
-  toAddress    String?
-
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  deletedAt    DateTime?
-
-  tasks        Task[]
-
-  // ✅ indexes
-  @@index([customerId])
-  @@index([status])
-}
-
-model Task {
-  id          String   @id @default(cuid())
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  projectId   String
-
-  title       String
-  description String?
-  dueAt       DateTime?
-  completedAt DateTime?
-  priority    Priority? @default(MEDIUM)
-  assigneeId  String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // ✅ index
-  @@index([projectId])
-}
-
-
-model Customer {
-  id          String   @id @default(cuid())
-  contact     Contact  @relation(fields: [contactId], references: [id], onDelete: Restrict)
-  contactId   String   @unique
-
-  customerCode String? @unique
-  billingNotes String?
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  deletedAt   DateTime?
-
-  projects    Project[]
-}
-
 model Log {
-  id          String   @id @default(cuid())
+  id         String  @id @default(cuid())
   // polymorphic pointer
-  entityType  String   // "Lead" | "Contact" | "Customer" | "Project" | "Task"
-  entityId    String
-  action      String   // "lead.create", "lead.update", "project.schedule", etc.
-  message     String?
-  data        Json?
-  ip          String?
+  entityType String // "Lead" | "Contact" | "Customer" | "Project" | "Task"
+  entityId   String
+  action     String // "lead.create", "lead.update", "project.schedule", etc.
+  message    String?
+  data       Json?
+  ip         String?
 
-  actorId     String?  // User.id if available
-  createdAt   DateTime @default(now())
+  actorId   String? // User.id if available
+  createdAt DateTime @default(now())
 
   @@index([entityType, entityId])
   @@index([createdAt])
+}
+
+/**
+ * ===== Blog =====
+ */
+
+model Post {
+  id              String    @id @default(cuid())
+  title           String
+  slug            String    @unique
+  excerpt         String?
+  content         String?   @db.Text
+  published       Boolean   @default(false)
+  featuredImage   String?
+  
+  // SEO
+  metaTitle       String?
+  metaDescription String?
+  
+  // Basic author info (since no User model is in DB yet)
+  authorName      String?   @default("Muuttokone-tiimi")
+
+  // Relations
+  categoryId      String?
+  category        Category? @relation(fields: [categoryId], references: [id])
+  tags            Tag[]
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  publishedAt     DateTime?
+
+  @@index([slug])
+}
+
+model Category {
+  id    String @id @default(cuid())
+  name  String @unique
+  slug  String @unique
+  posts Post[]
+}
+
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique
+  slug  String @unique
+  posts Post[]
+}
+
+model PageContent {
+  id        String   @id @default(cuid())
+  slug      String   @unique // e.g., "home", "palvelut"
+  title     String
+  metadata  Json?    // For page-specific SEO
+  sections  Json     // The "Lego" blocks: Array of { id, type, props: { text, images, etc } }
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+}
+
+model Image {
+  id        String   @id @default(cuid())
+  url       String   @unique // Public GCS URL
+  name      String   // Original filename
+  bucket    String   // GCS bucket name
+  path      String   // Path within bucket
+  type      String   // mime type
+  size      Int      // bytes
+  alt       String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([url])
 }

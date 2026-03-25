@@ -2,10 +2,7 @@
  * Form types - now imports from central schemas to avoid duplication
  */
 
-import {
-  contactSchema as contactFormSchema,
-  type ContactFormData,
-} from '@/lib/schemas';
+import { contactSchema as contactFormSchema, type ContactFormData } from '@/lib/schemas';
 
 // Re-export for backward compatibility
 export { contactFormSchema };

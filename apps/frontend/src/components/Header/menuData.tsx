@@ -6,21 +6,20 @@ const menuData: Menu[] = [
     route: '/',
   },
   {
+    label: 'Muuttolaskuri',
+    route: '/muuttolaskuri',
+  },
+  {
     label: 'Palvelut',
-    route: '/#palvelut',
-  },
-  // Removed Yritys, Blogi per request
-  {
-    label: "Kotimuutto",
-    route: "/kotimuutto",
+    route: '/palvelut',
   },
   {
-    label: "Miksi me?",
-    route: "/#about",
+    label: 'Blogi',
+    route: '/blog',
   },
   {
     label: 'Yhteystiedot',
-    route: '/#yhteystiedot',
+    route: '/yhteystiedot',
   },
 ];
 

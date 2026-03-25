@@ -22,13 +22,16 @@ const footerNavData: FooterMenu[] = [
     title: 'Asiakaspalvelu',
     navItems: [
       {
-        label: 'Yhteystiedot',
-        route: '/yhteystiedot',
-      },
-      // UKK and Blogi pages removed
-      {
         label: 'Ota yhteyttä',
         route: '/yhteystiedot',
+      },
+      {
+        label: 'Tietosuojaseloste',
+        route: '/tietosuoja',
+      },
+      {
+        label: 'Käyttöehdot',
+        route: '/kayttoehdot',
       },
     ],
   },

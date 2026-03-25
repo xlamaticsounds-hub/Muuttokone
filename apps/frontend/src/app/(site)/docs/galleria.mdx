@@ -1,0 +1,22 @@
+# Galleria & Kuvankäsittely
+
+Galleria-osio mahdollistaa sivuston mediasisällön helpon hallinnan ja optimoinnin.
+
+## Google Cloud Storage (GCS)
+
+Kaikki kuvat tallennetaan suoraan GCP:n Bucket-palveluun. Tämä tarjoaa:
+- **Nopeuden**: Kuvat ladataan suoraan Googlen reitittimien kautta.
+- **Varmuuden**: Kuvat eivät poistu vaikka app-container käynnistyisi uudelleen.
+- **Kustannustehokkuuden**: Maksat vain tallennetusta tilasta (noin 0.02€/GB).
+
+## Kuva-työkalut
+
+Jokaiselle kuvalle on käytössä oma työkaluvalikko:
+
+1.  **Optimointi**: Muuntaa minkä tahansa kuvan moderniin **WebP**-muotoon säilyttäen laadun mutta pienentäen tiedostokokoa jopa 80%.
+2.  **Laadun parannus (Upscale)**: Käyttää korkealaatuista resampleria suurentamaan kuvaa ilman merkittävää sumenemista.
+3.  **URL-kopiointi**: Voit kopioida kuvan julkisen osoitteen ja liittää sen CMS-kenttiin.
+
+## Toteutus
+
+Kuvankäsittely tapahtuu palvelimella käyttäen **Sharp**-kirjastoa. Tämä on täysin ilmaista ja nopeaa verrattuna AI-pohjaisiin API-kutsuihin.

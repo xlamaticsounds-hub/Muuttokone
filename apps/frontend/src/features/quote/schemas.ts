@@ -46,9 +46,9 @@ export const quoteSchema = z.object({
 
   // Service options
   serviceType: z.enum(
-    ['kotimuutto', 'yritysmuutto', 'pakkauspalvelu', 'varastointi', 'kansainvalinen', 'muu'],
+    ['kotimuutto', 'yritysmuutto', 'pakkauspalvelu', 'varastointi', 'kansainvalinen', 'muu'] as const,
     {
-      errorMap: () => ({ message: 'Valitse palvelun tyyppi' }),
+      message: 'Valitse palvelun tyyppi',
     },
   ),
 
@@ -57,8 +57,42 @@ export const quoteSchema = z.object({
     .enum(['yksiö', '1h+k', '2h+k', '3h+k', '4h+k', 'talo', 'toimisto', 'varasto'])
     .optional(),
 
+  // Apartment specifications
+  squareMeters: z
+    .number()
+    .min(5, 'Pinta-ala tulee olla vähintään 5 m²')
+    .max(10000, 'Pinta-ala ei voi olla enemmän kuin 10000 m²')
+    .optional(),
+
   hasElevator: z.boolean().optional(),
-  packingService: z.boolean().optional(),
+
+  floor: z
+    .number()
+    .min(0, 'Kerros ei voi olla negatiivinen')
+    .max(100, 'Kerros ei voi olla enemmän kuin 100')
+    .optional(),
+
+  obstacles: z
+    .array(z.enum(['kapea-portaikko', 'ei-hissia', 'korkeat-portaat', 'ahtaat-huoneet', 'muu']))
+    .optional(),
+
+  otherObstacles: z.string().max(500, 'Muut esteet voivat olla enintään 500 merkkiä').optional(),
+
+  // Moving items specifications
+  boxesCount: z
+    .number()
+    .min(0, 'Laatikoiden määrä ei voi olla negatiivinen')
+    .max(10000, 'Laatikoiden määrä ei voi olla enemmän kuin 10000')
+    .optional(),
+
+  needsPackaging: z.boolean().optional(),
+
+  // Storage requirements
+  needsStorage: z.boolean().optional(),
+
+  storageDuration: z.enum(['paivat', 'viikot', 'kuukaudet', 'puoli-vuotta', 'vuosi']).optional(),
+
+  storageType: z.enum(['huone', 'varasto', 'vintilla']).optional(),
 
   description: z.string().max(1000, 'Kuvaus voi olla enintään 1000 merkkiä').optional(),
 

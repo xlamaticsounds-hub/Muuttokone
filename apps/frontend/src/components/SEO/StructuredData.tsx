@@ -1,4 +1,4 @@
-import { siteConfig } from "@/config/site";
+import { siteConfig } from '@/config/site';
 
 interface StructuredDataProps {
   type: 'LocalBusiness' | 'Organization' | 'Service' | 'MovingCompany';
@@ -51,7 +51,12 @@ export default async function StructuredData({ type, data }: StructuredDataProps
           name: 'Turku',
         },
       ],
-      serviceType: ['Residential Moving', 'Commercial Moving', 'Packing Services', 'Storage Services'],
+      serviceType: [
+        'Residential Moving',
+        'Commercial Moving',
+        'Packing Services',
+        'Storage Services',
+      ],
       openingHoursSpecification: [
         {
           '@type': 'OpeningHoursSpecification',

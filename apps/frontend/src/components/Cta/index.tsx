@@ -20,13 +20,13 @@ export default function Cta() {
                 Valmis muuttoon? Aloita tänään!
               </h2>
               <p className="text-regular text-white">
-                Saat meiltä maksuton kartoituksen ja tarjouksen 24 tunnin sisällä. Liity satojen
+                Saat meiltä maksuttoman kartoituksen ja tarjouksen 24 tunnin sisällä. Liity satojen
                 tyytyväisten asiakkaiden joukkoon ja koe stressitön muutto.
               </p>
             </div>
             <div className="animate_right shrink-0">
               <Link
-                href="/tarjouspyynto"
+                href="/muuttolaskuri"
                 className="hover:shadow-1 inline-flex rounded-full bg-white px-7.5 py-3 font-medium text-black duration-300 ease-out"
               >
                 Pyydä tarjous

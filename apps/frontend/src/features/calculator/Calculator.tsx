@@ -1,0 +1,693 @@
+'use client';
+
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Script from 'next/script';
+import { motion, AnimatePresence } from 'framer-motion';
+import { calculateMovingPrice, CalculatorData, PriceBreakdown } from './pricing';
+import toast from 'react-hot-toast';
+import { Loader2, ArrowRight, ArrowLeft, Calculator as CalcIcon, Calendar, CheckCircle2 } from 'lucide-react';
+
+const STEPS = [
+  { id: 'locations', title: 'Sijainti' },
+  { id: 'details', title: 'Asunnon tiedot' },
+  { id: 'inventory', title: 'Muutettava tavara' },
+  { id: 'quote', title: 'Hinta-arvio' },
+  { id: 'booking', title: 'Varaus' },
+];
+
+export default function Calculator() {
+  const [currentStep, setCurrentStep] = useState(0);
+  const [formData, setFormData] = useState<CalculatorData>({
+    addressFrom: '',
+    addressTo: '',
+    distanceKm: 5,
+    apartmentSize: '1h',
+    floorFrom: 0,
+    elevatorFrom: true,
+    floorTo: 0,
+    elevatorTo: true,
+    boxCount: 20,
+    heavyItems: [],
+    needsPacking: false,
+    needsCleaning: false,
+    services: [],
+    contactName: '',
+    contactEmail: '',
+    contactPhone: '',
+  });
+
+  const searchParams = useSearchParams();
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isBooked, setIsBooked] = useState(false);
+  
+  // Autocomplete Refs
+  const fromRef = useRef<HTMLInputElement>(null);
+  const toRef = useRef<HTMLInputElement>(null);
+  const scriptLoaded = useRef(false);
+
+  const priceResult = useMemo(() => calculateMovingPrice(formData), [formData]);
+
+  // Prefill contact info from quick quote data stored in localStorage
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const stored = localStorage.getItem('quickQuoteData');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        setFormData((prev) => ({
+          ...prev,
+          contactName: parsed.name || prev.contactName,
+          contactEmail: parsed.email || prev.contactEmail,
+          contactPhone: parsed.phone || prev.contactPhone,
+        }));
+      } catch (err) {
+        console.warn('Failed to parse quickQuoteData', err);
+      }
+    }
+  }, [searchParams]);
+
+  const initAutocomplete = () => {
+    if (typeof window === 'undefined') return;
+    const google = (window as any).google;
+    if (!google || !google.maps || !google.maps.places) {
+      console.warn('Google Maps Places library not available');
+      return;
+    }
+    
+    // Initialize From Address
+    if (fromRef.current) {
+      const fromAutocomplete = new google.maps.places.Autocomplete(fromRef.current, {
+        types: ['address'],
+        componentRestrictions: { country: 'fi' },
+        fields: ['formatted_address', 'geometry']
+      });
+      fromAutocomplete.addListener('place_changed', () => {
+        const place = fromAutocomplete.getPlace();
+        if (place.formatted_address) {
+          updateField('addressFrom', place.formatted_address);
+        }
+      });
+    }
+
+    // Initialize To Address
+    if (toRef.current) {
+      const toAutocomplete = new google.maps.places.Autocomplete(toRef.current, {
+        types: ['address'],
+        componentRestrictions: { country: 'fi' },
+        fields: ['formatted_address', 'geometry']
+      });
+      toAutocomplete.addListener('place_changed', () => {
+        const place = toAutocomplete.getPlace();
+        if (place.formatted_address) {
+          updateField('addressTo', place.formatted_address);
+        }
+      });
+    }
+  };
+
+  // Re-initialize if the component mounts and google is already loaded
+  useEffect(() => {
+    if ((window as any).google && (window as any).google.maps && (window as any).google.maps.places) {
+      initAutocomplete();
+    }
+  }, [currentStep]); // Also re-init if we return to step 0
+
+  const handleNext = () => {
+    if (currentStep === 0 && (!formData.addressFrom || !formData.addressTo)) {
+      toast.error('Täytä molemmat osoitteet');
+      return;
+    }
+    setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1));
+  };
+
+  const handleBack = () => {
+    setCurrentStep((prev) => Math.max(prev - 1, 0));
+  };
+
+  const updateField = (field: keyof CalculatorData, value: any) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const toggleService = (service: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      services: prev.services.includes(service)
+        ? prev.services.filter((s) => s !== service)
+        : [...prev.services, service],
+    }));
+  };
+
+  const handleBooking = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      const response = await fetch('/api/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'booking',
+          data: {
+            ...formData,
+            price: priceResult.total,
+            contactName: formData.contactName,
+            contactEmail: formData.contactEmail,
+            contactPhone: formData.contactPhone,
+            services: formData.services,
+            status: 'NEW_BOOKING'
+          }
+        })
+      });
+
+      if (response.ok) {
+        setIsBooked(true);
+        toast.success('Varaus vastaanotettu! Olemme sinuun yhteydessä pian.');
+      } else {
+        throw new Error('Varaus epäonnistui');
+      }
+    } catch (err) {
+      toast.error('Jotain meni pieleen. Yritä uudelleen tai soita meille.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isBooked) {
+    return (
+      <div className="text-center py-20 px-4 bg-white dark:bg-black shadow-xl rounded-2xl max-w-2xl mx-auto border border-gray-100 dark:border-gray-800">
+        <div className="flex justify-center mb-6">
+          <div className="bg-green-100 dark:bg-green-900/30 p-4 rounded-full">
+            <CheckCircle2 className="w-16 h-16 text-green-600 dark:text-green-400" />
+          </div>
+        </div>
+        <h2 className="text-3xl font-bold mb-4">Kiitos varauksestasi!</h2>
+        <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg">
+          Olemme vastaanottaneet muuttovarauksesi. <br /> 
+          Saat vahvistuksen sähköpostiisi pian ja olemme sinuun yhteydessä puhelimitse.
+        </p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-full font-semibold transition-all"
+        >
+          Palaa etusivulle
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto bg-white dark:bg-gray-900 shadow-2xl rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-800">
+      {/* Progress Bar */}
+      <div className="bg-gray-50 dark:bg-gray-800/50 px-8 py-6 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex justify-between items-center mb-4">
+          {STEPS.map((step, idx) => (
+            <div key={step.id} className="flex flex-col items-center flex-1">
+              <div 
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition-all ${
+                  idx <= currentStep 
+                    ? 'bg-primary text-white shadow-lg shadow-primary/30' 
+                    : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
+                }`}
+              >
+                {idx < currentStep ? '✓' : idx + 1}
+              </div>
+              <span className={`text-xs font-medium hidden md:block ${idx <= currentStep ? 'text-primary' : 'text-gray-400'}`}>
+                {step.title}
+              </span>
+            </div>
+          ))}
+        </div>
+        <div className="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full overflow-hidden">
+          <motion.div 
+            className="bg-primary h-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${(currentStep / (STEPS.length - 1)) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      <div className="p-8 md:p-12">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentStep}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            className="min-h-[400px]"
+          >
+            {/* Step 1: Locations */}
+            {currentStep === 0 && (
+              <div className="space-y-6">
+                <div className="text-center mb-10">
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Mistä ja mihin muutetaan?</h2>
+                  <p className="text-gray-500">Anna muuttokohteiden osoitteet hinnan laskemiseksi.</p>
+                </div>
+                <div className="grid gap-6">
+                  {(!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY === '') && (
+                    <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm mb-4 border border-red-100">
+                      ⚠️ Google Maps API avain puuttuu. Osoitteiden automaattinen täyttö ei ole käytössä.
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Lähtöosoite</label>
+                    <input 
+                      ref={fromRef}
+                      type="text"
+                      className="w-full px-5 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all"
+                      placeholder="Esim. Mannerheimintie 1, Helsinki"
+                      value={formData.addressFrom}
+                      onChange={(e) => updateField('addressFrom', e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-semibold mb-2">Määränpää</label>
+                    <input 
+                      ref={toRef}
+                      type="text"
+                      className="w-full px-5 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all"
+                      placeholder="Esim. Hämeentie 10, Helsinki"
+                      value={formData.addressTo}
+                      onChange={(e) => updateField('addressTo', e.target.value)}
+                    />
+                  </div>
+                  <div className="pt-4">
+                    <label className="block text-sm font-semibold mb-2">Arvioitu etäisyys (km)</label>
+                    <div className="flex items-center gap-4">
+                      <input 
+                        type="range"
+                        min="1"
+                        max="500"
+                        className="flex-1 accent-primary"
+                        value={formData.distanceKm}
+                        onChange={(e) => updateField('distanceKm', parseInt(e.target.value))}
+                      />
+                      <span className="font-bold text-lg min-w-[60px]">{formData.distanceKm} km</span>
+                    </div>
+                  </div>
+                </div>
+                {/* Load Google Maps Script for Autocomplete */}
+                {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && (
+                  <Script
+                    src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
+                    onReady={() => {
+                      scriptLoaded.current = true;
+                      initAutocomplete();
+                    }}
+                    onError={() => {
+                      console.error('Google Maps script failed to load');
+                      toast.error('Google Maps lataus epäonnistui');
+                    }}
+                    strategy="lazyOnload"
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Step 2: Apartment Details */}
+            {currentStep === 1 && (
+              <div className="space-y-8">
+                <div className="text-center mb-8">
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Asunnon koko ja kerrokset</h2>
+                  <p className="text-gray-500">Nämä vaikuttavat tarvittavaan aikaan ja miehitykseen.</p>
+                </div>
+                
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  {(['1h', '2h', '3h', '4h+', 'office'] as const).map((size) => (
+                    <button
+                      key={size}
+                      onClick={() => updateField('apartmentSize', size)}
+                      className={`py-4 rounded-xl border-2 transition-all font-bold ${
+                        formData.apartmentSize === size 
+                          ? 'border-primary bg-primary/5 text-primary' 
+                          : 'border-gray-100 dark:border-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-8 pt-4">
+                  <div className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-800/50">
+                    <h3 className="font-bold mb-4 flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm">1</span>
+                      Lähtökohde
+                    </h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-xs font-bold uppercase text-gray-400">Kerros</label>
+                        <select 
+                          className="w-full bg-transparent border-b border-gray-300 dark:border-gray-600 py-2 outline-none"
+                          value={formData.floorFrom}
+                          onChange={(e) => updateField('floorFrom', parseInt(e.target.value))}
+                        >
+                          {[0,1,2,3,4,5,6,7,8,9,10].map(f => <option key={f} value={f}>{f === 0 ? 'Katutaso' : `${f}. kerros`}</option>)}
+                        </select>
+                      </div>
+                      <label className="flex items-center gap-3 cursor-pointer group">
+                        <div className={`w-12 h-6 rounded-full transition-all relative ${formData.elevatorFrom ? 'bg-primary' : 'bg-gray-300'}`}>
+                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.elevatorFrom ? 'left-7' : 'left-1'}`} />
+                        </div>
+                        <span className="font-medium">Hissi käytössä</span>
+                        <input 
+                          type="checkbox" 
+                          className="hidden" 
+                          checked={formData.elevatorFrom}
+                          onChange={(e) => updateField('elevatorFrom', e.target.checked)}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-800/50">
+                    <h3 className="font-bold mb-4 flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm">2</span>
+                      Uusi koti
+                    </h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-xs font-bold uppercase text-gray-400">Kerros</label>
+                        <select 
+                          className="w-full bg-transparent border-b border-gray-300 dark:border-gray-600 py-2 outline-none"
+                          value={formData.floorTo}
+                          onChange={(e) => updateField('floorTo', parseInt(e.target.value))}
+                        >
+                          {[0,1,2,3,4,5,6,7,8,9,10].map(f => <option key={f} value={f}>{f === 0 ? 'Katutaso' : `${f}. kerros`}</option>)}
+                        </select>
+                      </div>
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <div className={`w-12 h-6 rounded-full transition-all relative ${formData.elevatorTo ? 'bg-primary' : 'bg-gray-300'}`}>
+                          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.elevatorTo ? 'left-7' : 'left-1'}`} />
+                        </div>
+                        <span className="font-medium">Hissi käytössä</span>
+                        <input 
+                          type="checkbox" 
+                          className="hidden" 
+                          checked={formData.elevatorTo}
+                          onChange={(e) => updateField('elevatorTo', e.target.checked)}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Inventory */}
+            {currentStep === 2 && (
+              <div className="space-y-8">
+                <div className="text-center mb-8">
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Tavaramäärä ja lisäpalvelut</h2>
+                  <p className="text-gray-500">Tarkempi arvio auttaa meitä varaamaan oikean kokoisen auton.</p>
+                </div>
+
+                <div className="bg-gray-50 dark:bg-gray-800/50 p-8 rounded-3xl">
+                  <label className="block font-bold mb-6 text-center">Muuttolaatikoiden arvioitu määrä</label>
+                  <div className="flex items-center gap-8 justify-center">
+                    <button 
+                      onClick={() => updateField('boxCount', Math.max(0, formData.boxCount - 5))}
+                      className="w-12 h-12 rounded-full border-2 border-primary text-primary flex items-center justify-center text-2xl font-bold hover:bg-primary hover:text-white transition-all"
+                    >
+                      -
+                    </button>
+                    <div className="text-center">
+                      <span className="text-5xl font-black text-primary">{formData.boxCount}</span>
+                      <p className="text-xs font-bold uppercase text-gray-400 mt-2">Kpl</p>
+                    </div>
+                    <button 
+                      onClick={() => updateField('boxCount', formData.boxCount + 5)}
+                      className="w-12 h-12 rounded-full border-2 border-primary text-primary flex items-center justify-center text-2xl font-bold hover:bg-primary hover:text-white transition-all"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div
+                    onClick={() => toggleService('Muuttolaatikot')}
+                    className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex items-center gap-4 ${
+                      formData.services.includes('Muuttolaatikot') ? 'border-primary bg-primary/5' : 'border-gray-100 dark:border-gray-800'
+                    }`}
+                  >
+                    <div
+                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                        formData.services.includes('Muuttolaatikot') ? 'border-primary bg-primary' : 'border-gray-300'
+                      }`}
+                    >
+                      {formData.services.includes('Muuttolaatikot') && (
+                        <span className="text-white text-xs">✓</span>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-bold">Muuttolaatikot</h4>
+                      <p className="text-xs text-gray-500">Laatikoiden toimitus ja nouto</p>
+                    </div>
+                  </div>
+
+                  <div
+                    onClick={() => toggleService('Purkupalvelu')}
+                    className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex items-center gap-4 ${
+                      formData.services.includes('Purkupalvelu') ? 'border-primary bg-primary/5' : 'border-gray-100 dark:border-gray-800'
+                    }`}
+                  >
+                    <div
+                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                        formData.services.includes('Purkupalvelu') ? 'border-primary bg-primary' : 'border-gray-300'
+                      }`}
+                    >
+                      {formData.services.includes('Purkupalvelu') && (
+                        <span className="text-white text-xs">✓</span>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-bold">Purkupalvelu</h4>
+                      <p className="text-xs text-gray-500">Huonekalujen purku ja kasaus</p>
+                    </div>
+                  </div>
+
+                  <div
+                    onClick={() => toggleService('Kierrätys')}
+                    className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex items-center gap-4 ${
+                      formData.services.includes('Kierrätys') ? 'border-primary bg-primary/5' : 'border-gray-100 dark:border-gray-800'
+                    }`}
+                  >
+                    <div
+                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                        formData.services.includes('Kierrätys') ? 'border-primary bg-primary' : 'border-gray-300'
+                      }`}
+                    >
+                      {formData.services.includes('Kierrätys') && (
+                        <span className="text-white text-xs">✓</span>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-bold">Kierrätys & jäte</h4>
+                      <p className="text-xs text-gray-500">Poistettavien tavaroiden kierrätys</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div 
+                    onClick={() => updateField('needsPacking', !formData.needsPacking)}
+                    className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex items-center gap-4 ${
+                      formData.needsPacking ? 'border-primary bg-primary/5' : 'border-gray-100 dark:border-gray-800'
+                    }`}
+                  >
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${formData.needsPacking ? 'border-primary bg-primary' : 'border-gray-300'}`}>
+                      {formData.needsPacking && <span className="text-white text-xs">✓</span>}
+                    </div>
+                    <div>
+                      <h4 className="font-bold">Pakkauspalvelu</h4>
+                      <p className="text-xs text-gray-500">Me pakkaamme tavarat puolestasi</p>
+                    </div>
+                  </div>
+                  <div 
+                    onClick={() => updateField('needsCleaning', !formData.needsCleaning)}
+                    className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex items-center gap-4 ${
+                      formData.needsCleaning ? 'border-primary bg-primary/5' : 'border-gray-100 dark:border-gray-800'
+                    }`}
+                  >
+                    <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${formData.needsCleaning ? 'border-primary bg-primary' : 'border-gray-300'}`}>
+                      {formData.needsCleaning && <span className="text-white text-xs">✓</span>}
+                    </div>
+                    <div>
+                      <h4 className="font-bold">Muuttosiivous</h4>
+                      <p className="text-xs text-gray-500">Vanhan asunnon loppusiivous</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 4: Quote */}
+            {currentStep === 3 && (
+              <div className="space-y-8">
+                <div className="text-center mb-8">
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Hinta-arviosi</h2>
+                  <p className="text-gray-500">Laskettu annettujen tietojen perusteella.</p>
+                </div>
+
+                <div className="bg-primary text-white p-10 rounded-3xl shadow-xl shadow-primary/20 relative overflow-hidden">
+                   <div className="relative z-10">
+                      <p className="text-primary-foreground/80 font-medium mb-1">Arvioitu loppusumma</p>
+                      <div className="flex items-end gap-2">
+                        <span className="text-6xl font-black">
+                          {Math.round(priceResult.total)}€
+                        </span>
+                        <span className="text-xl font-bold mb-2">sis. ALV</span>
+                      </div>
+                      <div className="mt-8 grid grid-cols-2 gap-4 border-t border-white/20 pt-8">
+                        <div>
+                          <p className="text-xs uppercase font-bold text-white/60 mb-1">Arvioitu kesto</p>
+                          <p className="text-xl font-bold">{priceResult.estimatedDurationHours} tuntia</p>
+                        </div>
+                        <div>
+                          <p className="text-xs uppercase font-bold text-white/60 mb-1">Tiimi</p>
+                          <p className="text-xl font-bold">Kuorma-auto + 2 miestä</p>
+                        </div>
+                      </div>
+                   </div>
+                   <CalcIcon className="absolute -bottom-10 -right-10 w-64 h-64 text-white/10 rotate-12" />
+                </div>
+
+                <div className="grid gap-3">
+                  <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                    <span className="text-gray-500">Työkustannukset ({priceResult.details.laborHours}h)</span>
+                    <span className="font-bold">{Math.round(priceResult.laborCost)}€</span>
+                  </div>
+                  <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                    <span className="text-gray-500">Kilometrikorvaukset ({Math.round(priceResult.details.distanceKm)}km)</span>
+                    <span className="font-bold">{Math.round(priceResult.distanceCost)}€</span>
+                  </div>
+                </div>
+
+                <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-100 dark:border-yellow-900/30 flex gap-4">
+                  <span className="text-2xl">💡</span>
+                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                    Tämä on automaattinen arvio. Lopullinen hinta vahvistetaan kun asiantuntijamme on käynyt tiedot läpi.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Step 5: Booking */}
+            {currentStep === 4 && (
+              <form onSubmit={handleBooking} className="space-y-6">
+                <div className="text-center mb-8">
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Viimeistele varaus</h2>
+                  <p className="text-gray-500">Valitse muuttopäivä ja jätä yhteystietosi.</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold mb-2 flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-primary" /> Toivottu muuttopäivä
+                      </label>
+                      <input 
+                        type="date"
+                        required
+                        className="w-full px-5 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none"
+                        onChange={(e) => updateField('date', new Date(e.target.value))}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">Nimi</label>
+                      <input 
+                        type="text"
+                        required
+                        className="w-full px-5 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none"
+                        placeholder="Etunimi Sukunimi"
+                        value={formData.contactName || ''}
+                        onChange={(e) => updateField('contactName', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">Sähköposti</label>
+                      <input 
+                        type="email"
+                        required
+                        className="w-full px-5 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none"
+                        placeholder="posti@esimerkki.fi"
+                        value={formData.contactEmail || ''}
+                        onChange={(e) => updateField('contactEmail', e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-semibold mb-2">Puhelinnumero</label>
+                      <input 
+                        type="tel"
+                        required
+                        className="w-full px-5 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none"
+                        placeholder="040 123 4567"
+                        value={formData.contactPhone || ''}
+                        onChange={(e) => updateField('contactPhone', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
+                  <p className="text-sm text-gray-500 mb-4">
+                    Varaamalla hyväksyt palveluehtomme. Emme veloita tässä vaiheessa vielä mitään.
+                  </p>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full bg-primary hover:bg-primary/90 text-white py-5 rounded-2xl font-bold text-xl transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-6 h-6 animate-spin" />
+                        Käsitellään varausta...
+                      </>
+                    ) : (
+                      <>
+                        Vahvista muuttovaraus
+                        <ArrowRight className="w-6 h-6" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Navigation Buttons */}
+        {currentStep < 4 && (
+          <div className="mt-12 flex items-center justify-between">
+            <button
+              onClick={handleBack}
+              disabled={currentStep === 0}
+              className={`flex items-center gap-2 px-8 py-4 rounded-xl font-bold transition-all ${
+                currentStep === 0 
+                  ? 'opacity-0 pointer-events-none' 
+                  : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+              }`}
+            >
+              <ArrowLeft className="w-5 h-5" />
+              Takaisin
+            </button>
+            <button
+              onClick={handleNext}
+              className="bg-black dark:bg-white dark:text-black text-white px-12 py-4 rounded-xl font-bold hover:scale-105 transition-all flex items-center gap-2 shadow-xl"
+            >
+              {currentStep === 3 ? 'Siirry varaukseen' : 'Seuraava'}
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

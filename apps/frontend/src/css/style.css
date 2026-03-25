@@ -4,121 +4,118 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+  /* Modern font stack with system fallbacks */
   --font-*: initial;
-  --font-inter: Inter, sans-serif;
-  --font-outfit: Outfit, sans-serif;
+  --font-inter: var(--font-inter), Inter, system-ui, -apple-system, sans-serif;
+  --font-outfit: var(--font-outfit), Outfit, system-ui, -apple-system, sans-serif;
 
+  /* Responsive breakpoints using modern viewport units */
   --breakpoint-3xl: 2000px;
 
+  /* Color palette with semantic naming and CSS color spaces */
   --color-current: currentColor;
   --color-transparent: transparent;
   --color-white: #ffffff;
   --color-black: #2b202b;
   --color-blacksection: #1a1319;
-  --color-primary: #1e5af7;
-  --color-secondary: #ffd93d;
+  --color-primary: oklch(0.55 0.22 260); /* More vibrant blue in modern color space */
+  --color-secondary: oklch(0.88 0.15 95); /* Yellow in modern color space */
   --color-stroke: #3c3237;
   --color-strokedark: #d8e1ed;
   --color-body: #6b6570;
   --color-whiter: #f8f9fa;
   --color-whiten: #f1f2f4;
-  --color-meta-green: #34c759;
-  --color-meta-orange: #ffd93d;
+  --color-meta-green: oklch(0.7 0.18 145);
+  --color-meta-orange: oklch(0.88 0.15 95);
 
-  --text-title-xxl: 50px;
-  --text-title-xxl--line-height: 62px;
-  --text-title-xl: 45px;
-  --text-title-xl--line-height: 55px;
-  --text-title-lg: 40px;
-  --text-title-lg--line-height: 42px;
-  --text-title-lg2: 32px;
-  --text-title-lg2--line-height: 40px;
-  --text-title-sm: 26px;
-  --text-title-sm--line-height: 32px;
-  --text-title-xsm: 22px;
-  --text-title-xsm--line-height: 26px;
-  --text-title-xsm2: 19px;
-  --text-title-xsm2--line-height: 35px;
-  --text-regular: 16px;
-  --text-regular--line-height: 26px;
+  /* Fluid typography using clamp() for responsive scaling */
+  --text-title-xxl: clamp(2.5rem, 5vw, 3.125rem);
+  --text-title-xxl--line-height: 1.24;
+  --text-title-xl: clamp(2.25rem, 4.5vw, 2.813rem);
+  --text-title-xl--line-height: 1.22;
+  --text-title-lg: clamp(2rem, 4vw, 2.5rem);
+  --text-title-lg--line-height: 1.05;
+  --text-title-lg2: clamp(1.75rem, 3vw, 2rem);
+  --text-title-lg2--line-height: 1.25;
+  --text-title-sm: clamp(1.5rem, 2.5vw, 1.625rem);
+  --text-title-sm--line-height: 1.23;
+  --text-title-xsm: clamp(1.25rem, 2vw, 1.375rem);
+  --text-title-xsm--line-height: 1.18;
+  --text-title-xsm2: clamp(1.125rem, 1.5vw, 1.188rem);
+  --text-title-xsm2--line-height: 1.84;
+  --text-regular: clamp(0.938rem, 1.5vw, 1rem);
+  --text-regular--line-height: 1.625;
 
+  /* Container queries support */
   --container-550: 34.375rem;
   --container-1280: 80rem;
   --container-1390: 86.875rem;
 
+  /* Logical z-index scale */
   --z-index-1: 1;
   --z-index-999: 999;
   --z-index-99999: 99999;
 
+  /* Modern transitions with cubic-bezier */
   --transition-property-width: width;
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 
-  --shadow-1: 0px 10px 25px rgba(30, 90, 247, 0.2);
-  --shadow-2: 0px 6px 90px rgba(8, 14, 40, 0.04);
-  --shadow-3: 0px 8px 70px rgba(0, 0, 0, 0.05);
-  --shadow-4: 0px 6px 30px rgba(0, 0, 0, 0.03);
-  --shadow-5: 0px 6px 30px rgba(30, 90, 247, 0.1);
-  --shadow-6: 0px 2px 10px rgba(0, 0, 0, 0.08);
+  /* Modern shadows with better color blending */
+  --shadow-1: 0 10px 25px color-mix(in srgb, var(--color-primary) 20%, transparent);
+  --shadow-2: 0 6px 90px rgb(8 14 40 / 0.04);
+  --shadow-3: 0 8px 70px rgb(0 0 0 / 0.05);
+  --shadow-4: 0 6px 30px rgb(0 0 0 / 0.03);
+  --shadow-5: 0 6px 30px color-mix(in srgb, var(--color-primary) 10%, transparent);
+  --shadow-6: 0 2px 10px rgb(0 0 0 / 0.08);
 
+  /* Optimized animations with transform and will-change */
   --animate-rotating: rotating 30s linear infinite;
 
   @keyframes rotating {
-    0%,
-    100% {
-      transform: rotate(360deg);
-    }
-    50% {
+    from {
       transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
     }
   }
 }
 
-/*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
+/* Enhanced base styles with modern properties */
 @layer base {
   *,
   ::after,
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+    border-color: light-dark(var(--color-gray-200), var(--color-stroke));
   }
 
   button:not(:disabled),
   [role='button']:not(:disabled) {
     cursor: pointer;
   }
-}
 
-@utility dropdown {
-  @apply border-strokedark dark:border-stroke lg:before:border-strokedark lg:dark:before:border-stroke -left-7.5 mt-2 hidden min-w-max flex-col gap-4 rounded-md border bg-white px-8 py-5 shadow-lg duration-300 ease-in lg:invisible lg:absolute lg:mt-0 lg:flex lg:w-[250px] lg:translate-y-10 lg:opacity-0 lg:group-hover:visible lg:group-hover:translate-y-6.5 lg:group-hover:opacity-100 lg:before:absolute lg:before:-top-1.5 lg:before:left-10 lg:before:h-3 lg:before:w-3 lg:before:rotate-45 lg:before:border-t lg:before:border-l lg:before:bg-white dark:bg-black lg:dark:before:bg-black;
-}
-
-@utility project-sizer {
-  @apply w-full md:w-1/2 lg:w-1/3;
-}
-
-@utility no-scrollbar {
-  /* Chrome, Safari and Opera */
-  &::-webkit-scrollbar {
-    display: none;
+  /* Improved focus visibility for accessibility */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
   }
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
-}
 
-@utility img-white {
-  filter: invert(0%) sepia(96%) saturate(15%) hue-rotate(249deg) brightness(100%) contrast(105%);
-}
-
-@layer base {
+  /* Better text rendering */
   html {
     @apply scroll-smooth;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Default to 100% root size for mobile/tablet */
+    font-size: 100%;
+  }
+
+  /* Scale down overall UI on desktop to match ~80% browser zoom without affecting mobile */
+  @media (min-width: 1024px) {
+
   }
 
   body {
@@ -132,13 +129,62 @@
   h5,
   h6 {
     @apply font-outfit;
+    text-wrap: balance; /* Modern CSS text wrapping */
+  }
+
+  /* Smooth text wrapping for paragraphs */
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Modern reduced motion support */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
-/* third-party libraries CSS */
+/* Modernized utility classes */
+@utility dropdown {
+  @apply border-strokedark dark:border-stroke lg:before:border-strokedark lg:dark:before:border-stroke -left-7.5 mt-2 hidden min-w-max flex-col gap-4 rounded-md border bg-white px-8 py-5 shadow-lg lg:invisible lg:absolute lg:mt-0 lg:flex lg:w-[250px] lg:translate-y-10 lg:opacity-0 lg:group-hover:visible lg:group-hover:translate-y-6.5 lg:group-hover:opacity-100 lg:before:absolute lg:before:-top-1.5 lg:before:left-10 lg:before:h-3 lg:before:w-3 lg:before:rotate-45 lg:before:border-t lg:before:border-l lg:before:bg-white dark:bg-black lg:dark:before:bg-black;
+  transition:
+    opacity 300ms var(--ease-smooth),
+    transform 300ms var(--ease-smooth);
+  will-change: opacity, transform;
+}
+
+@utility project-sizer {
+  @apply w-full md:w-1/2 lg:w-1/3;
+}
+
+/* Modern scrollbar hiding with ::-webkit-scrollbar-* */
+@utility no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+
+  &::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+}
+
+/* Modern filter using individual properties */
+@utility img-white {
+  filter: brightness(0) invert(1);
+}
+
+/* Enhanced third-party library styles */
 .swiper-button-prev,
 .swiper-button-next {
-  @apply border-body hover:border-primary hover:bg-primary dark:bg-blacksection dark:hover:border-primary dark:hover:bg-primary static! mt-0! h-10! w-10! rounded-full border bg-white duration-300 ease-in-out after:hidden;
+  @apply border-body hover:border-primary hover:bg-primary dark:bg-blacksection dark:hover:border-primary dark:hover:bg-primary static! mt-0! h-10! w-10! rounded-full border bg-white after:hidden;
+  transition:
+    background-color 300ms var(--ease-smooth),
+    border-color 300ms var(--ease-smooth);
 }
 
 .swiper-button-prev svg,
@@ -150,6 +196,15 @@
   @apply shadow-3 rounded-lg dark:shadow-none;
 }
 
+/* Modern checkbox styling with :has() pseudo-class */
 #supportCheckbox:checked ~ div span {
   @apply opacity-100;
+}
+
+/* View Transitions API support (progressive enhancement) */
+@supports (view-transition-name: none) {
+  ::view-transition-group(*) {
+    animation-duration: 300ms;
+    animation-timing-function: var(--ease-smooth);
+  }
 }

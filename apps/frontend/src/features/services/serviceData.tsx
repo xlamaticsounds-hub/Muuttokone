@@ -5,42 +5,42 @@ const serviceData: Service[] = [
     icon: '/icons/truck.webp',
     title: 'Kotimuutto',
     description:
-      'Ammattitaitoinen ja luotettava kotimuuttopalvelu. Hoidamme kaiken pakkauksesta purkuun ja huonekalujen asennukseen. Stressitön muutto kotoa kotiin.',
+      'Ovelta ovelle -palvelu, jossa huolehdimme kaikesta kantamisesta ja kuljetuksesta. Selkeä hinnoittelu ilman piilokuluja – tiedät etukäteen mitä maksat.',
     bgClass: 'hover:bg-primary/5',
   },
   {
     icon: '/icons/boxguy.webp',
     title: 'Yritysmuutto',
     description:
-      'Sujuva toimistomuutto minimaalisella häiriöllä liiketoimintaasi. Erikoisosaamista IT-laitteista, arkistoista ja toimistokalusteista.',
+      'Minimoi liiketoiminnan keskeytykset: IT-laitteet, kalusteet ja arkistot siirtyvät aikataulun mukaan. Iltaisin ja viikonloppuisin tarvittaessa.',
     bgClass: 'hover:bg-primary/5',
   },
   {
     icon: '/icons/tape.webp',
-    title: 'Pakkauspalvelut',
+    title: 'Pakkauspalvelu',
     description:
-      'Huolellinen ja turvallinen pakkaus ammattilaismateriaalein. Huonekalujen purku ja kokoaminen sekä kuljetus uuteen kotiin.',
+      'Säästä tunteja ja vältä vahingot: ammattilaiset pakkaavat keittiöt, lasit ja hauraat esineet huolella. Materiaali ja merkinnät sisältyvät.',
     bgClass: 'hover:bg-primary/5',
   },
   {
     icon: '/icons/logo3.webp',
-    title: 'Varastointipalvelut',
+    title: 'Varastointi',
     description:
-      'Turvallisia ja kuivia varastotiloja lyhyt- ja pitkäaikaiseen säilytykseen. Joustavia ratkaisuja väliaikaistoimistolle.',
+      'Lämmin, valvottu varastotila muuton tai remontin ajaksi. Lyhyt- ja pitkäaikainen varastointi – maksa vain käyttämäsi aika.',
     bgClass: 'hover:bg-primary/5',
   },
   {
     icon: '/icons/kello.webp',
     title: 'Muuttosiivous',
     description:
-      'Perusteellinen loppu- ja alkusiivous ammattilaisilta. Säästä aikaa ja vaivaa - keskity muuttoon, me hoidamme siivouksen.',
+      'Asunnon luovutussiivous takuulla: vanhan kodin jättäminen putipuhtaaksi vuokranantajalle tai ostajalle. Yksi paketti, valmis kerralla.',
     bgClass: 'hover:bg-primary/5',
   },
   {
     icon: '/icons/turva.webp',
     title: 'Erikoiskuljetukset',
     description:
-      'Pianot, taideteokset, antiikkia ja muut arvokkaat esineet ammattitaitoisesti. Kokeneet kuljetusasiantuntijat ja erikoisvälineet.',
+      'Pianot, taideteokset, antiikit ja raskaat esineet vaativat erityisosaamista. Meillä on välineet ja kokemus haastaviin siirtoihin.',
     bgClass: 'hover:bg-primary/5',
   },
 ];

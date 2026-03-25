@@ -8,13 +8,13 @@ export default function FooterNewsletter() {
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
-  // Newsletter form removed. You can repoint to contact form here if needed.
+    // Newsletter form removed. You can repoint to contact form here if needed.
 
     try {
       const res = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-    // Newsletter submission removed. You can repoint to contact form here if needed.
+        // Newsletter submission removed. You can repoint to contact form here if needed.
       });
       const json = await res.json();
       if (!res.ok || !json?.success) throw new Error(json?.error || 'Subscribe failed');

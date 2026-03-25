@@ -1,19 +1,19 @@
 // src/server/repo/contacts.ts
-import { prisma } from '@/server/db'
+import { prisma } from '@/server/db';
 
 export async function upsertContactByEmail(input: {
-  email?: string | null
-  phone?: string | null
-  firstName?: string | null
-  lastName?: string | null
-  companyName?: string | null
-  city?: string | null
-  street?: string | null
-  postalCode?: string | null
-  gdprConsent?: boolean
-  notes?: string | null
+  email?: string | null;
+  phone?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  companyName?: string | null;
+  city?: string | null;
+  street?: string | null;
+  postalCode?: string | null;
+  gdprConsent?: boolean;
+  notes?: string | null;
 }) {
-  const { email, ...rest } = input
+  const { email, ...rest } = input;
   if (email) {
     const existing = await prisma.contact.findFirst({ where: { email } });
     if (existing) {
@@ -47,5 +47,5 @@ export async function upsertContactByEmail(input: {
       gdprConsentAt: input.gdprConsent ? new Date() : null,
       notes: input.notes ?? null,
     },
-  })
+  });
 }

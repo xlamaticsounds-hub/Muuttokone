@@ -20,34 +20,30 @@ export default function ServiceItem({ service, index = 0 }: ServiceItemProps) {
 
   return (
     <div
-      className={`group border-stroke/10 dark:border-stroke/10 relative overflow-hidden rounded-2xl border bg-white p-8 text-center shadow-sm ring-1 ring-black/5 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl dark:bg-[#0f1115] dark:ring-white/5 ${
+      className={`group relative overflow-hidden rounded-2xl border border-black/5 bg-white/90 p-7 shadow-sm ring-1 ring-black/5 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:ring-primary/30 dark:border-white/10 dark:bg-slate-900/80 dark:ring-white/5 ${
         service.bgClass || ''
       }`}
     >
-      <div className="relative z-10 flex flex-col items-center">
-        <div className="bg-primary/10 mb-6 flex h-16 w-16 items-center justify-center overflow-hidden rounded-2xl lg:h-20 lg:w-20">
+      <div className="relative z-10">
+        <div className="mb-5 flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl bg-primary/10">
           <Image
             src={iconSrc}
             alt={service.title}
-            width={56}
-            height={56}
-            className="h-12 w-12 object-contain lg:h-16 lg:w-16"
+            width={48}
+            height={48}
+            className="h-11 w-11 object-contain"
           />
         </div>
 
-        <h3 className="mb-3 text-xl font-semibold text-black dark:text-white">{service.title}</h3>
+        <h3 className="mb-3 text-xl font-bold text-black/90 dark:text-white">{service.title}</h3>
 
-        <p className="text-body leading-relaxed">{service.description}</p>
+        <p className="text-sm leading-relaxed text-black/70 dark:text-white/70">{service.description}</p>
       </div>
 
-      {/* Subtle background accents */}
+      {/* Gradient accent */}
       <div
         aria-hidden
-        className="bg-primary/5 group-hover:bg-primary/10 absolute -top-6 -right-4 h-24 w-24 rounded-full blur-md transition-all duration-300"
-      />
-      <div
-        aria-hidden
-        className="absolute bottom-[-30px] left-[-30px] h-24 w-24 rounded-full bg-blue-500/5 blur-md transition-all duration-300 group-hover:bg-blue-500/10"
+        className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/5 blur-2xl transition-all duration-300 group-hover:bg-primary/10"
       />
     </div>
   );

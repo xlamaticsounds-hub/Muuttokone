@@ -4,8 +4,8 @@ export const siteConfig = {
   },
   contact: {
     phone: {
-      display: '+358 40 819 5982',
-      tel: '+358408195982',
+      display: '+358 46 592 4108',
+      tel: '+358465924108',
     },
     email: 'info@muuttokone.fi',
     openingHours:
@@ -14,8 +14,7 @@ export const siteConfig = {
       facebook: '#',
       twitter: '#',
       linkedin: '#',
-      behance: '#',
-    },
+      instagram: '#',},
   },
 } as const;
 

@@ -1,24 +1,22 @@
 import { Feature } from '@/types/feature';
 
-// Use Muuttokone brand icons for a consistent look
-// All images live under public/images/muuttokone/webp
 const featuresData: Feature[] = [
   {
     icon: '/icons/turva.webp',
-    title: 'Luotettava ja rehellinen',
-    description: 'Avoin toimintatapa ja turvallinen käsittely tavaroillesi.',
+    title: 'Luotettava ja turvallinen',
+    description: 'Käsittelemme tavaroitasi huolellisesti ja vakuutuksemme kattavat mahdolliset vahingot.',
     bgClass: 'bg-primary/10',
   },
   {
     icon: '/icons/kello.webp',
     title: 'Täsmällinen ja nopea',
-    description: 'Saavumme silloin kun on sovittu ja hoidamme työn tehokkaasti.',
+    description: 'Pysymme sovitussa aikataulussa ja työskentelemme tehokkaasti ilman turhaa odottelua.',
     bgClass: 'bg-secondary/20',
   },
   {
     icon: '/icons/tape.webp',
     title: 'Ei piilokuluja',
-    description: 'Rehellinen hinnoittelu – näet kulut etukäteen ilman yllätyksiä.',
+    description: 'Kiinteä hinnoittelu tai selkeä tuntiveloitus. Tiedät kustannukset etukäteen.',
     bgClass: 'bg-primary/10',
   },
 ];

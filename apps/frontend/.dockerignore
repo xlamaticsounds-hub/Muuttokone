@@ -1,9 +1,14 @@
-node_modules
-.next/cache
-.git
-.gitignore
 Dockerfile
+.dockerignore
+node_modules
+npm-debug.log
 README.md
-.vscode
-.env*
-**/*.log
+.next
+.git
+.env
+.env.local
+.env.keys
+.DS_Store
+
+# Explicitly allow the vault
+!.env.vault

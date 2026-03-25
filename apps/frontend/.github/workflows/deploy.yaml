@@ -1,0 +1,37 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: europe-north1
+  REPO_NAME: muuttokone-repo
+  SERVICE_NAME: muuttokone-app
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write' # Required for Workload Identity Federation (optional but recommended) or just standard auth
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Authentication via Service Account Key
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Submit Build & Deploy
+        run: |
+          gcloud builds submit --config=cloudbuild.yaml \
+            --substitutions=_REGION=$REGION,_REPO_NAME=$REPO_NAME,_SERVICE_NAME=$SERVICE_NAME,_CLOUD_SQL_CONNECTION_NAME="${{ secrets.CLOUD_SQL_CONNECTION_NAME }}",_DATABASE_URL="${{ secrets.DATABASE_URL }}",_DISCORD_WEBHOOK_URL="${{ secrets.DISCORD_WEBHOOK_URL }}"

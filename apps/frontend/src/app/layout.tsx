@@ -1,5 +1,10 @@
 import type { Metadata, Viewport } from 'next';
 import React from 'react';
+import { Inter, Outfit } from 'next/font/google';
+import '../css/style.css';
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
+const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' });
 
 const siteUrl = process.env.SITE_URL ?? 'https://muuttokone.fi';
 
@@ -26,11 +31,6 @@ export const metadata: Metadata = {
     'muutto',
     'muuttofirma',
     'muuttopalvelu',
-    'kotimuutto',
-    'yritysmuutto',
-    'pakkaus',
-    'varastointi',
-    'siivous',
     'Helsinki',
     'Tampere',
     'Turku',
@@ -93,10 +93,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return children;
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="fi" suppressHydrationWarning className="h-full overflow-x-clip">
+      <body
+        className={`dark:bg-black ${inter.variable} ${outfit.variable} h-full overflow-x-hidden`}
+      >
+        {children}
+      </body>
+    </html>
+  );
 }

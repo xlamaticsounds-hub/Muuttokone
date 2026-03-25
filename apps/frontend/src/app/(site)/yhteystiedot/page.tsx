@@ -13,5 +13,9 @@ export const metadata: Metadata = generateSEOMetadata({
 });
 
 export default function Page() {
-  return <Contact />;
+  return (
+    <>
+      <Contact />
+    </>
+  );
 }

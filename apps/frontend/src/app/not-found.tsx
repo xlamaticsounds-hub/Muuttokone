@@ -28,24 +28,16 @@ export default function NotFound() {
         width={85}
         height={46}
       />
-      
+
       <div className="relative z-10 mx-auto max-w-[530px] text-center">
-        <Image
-          src="/images/404.png"
-          alt="404"
-          width={400}
-          height={300}
-          className="mx-auto mb-10"
-        />
-        
-        <h1 className="mb-5 text-4xl font-bold text-black dark:text-white">
-          Sivua ei löydy
-        </h1>
-        
-        <p className="mb-10 text-body">
+        <Image src="/images/404.png" alt="404" width={400} height={300} className="mx-auto mb-10" />
+
+        <h1 className="mb-5 text-4xl font-bold text-black dark:text-white">Sivua ei löydy</h1>
+
+        <p className="text-body mb-10">
           Etsimääsi sivua ei löytynyt. Se on ehkä siirretty tai poistettu.
         </p>
-        
+
         <div className="flex flex-wrap items-center justify-center gap-5">
           <Link
             href="/"
@@ -53,7 +45,7 @@ export default function NotFound() {
           >
             Takaisin etusivulle
           </Link>
-          
+
           <Link
             href="/yhteystiedot"
             className="border-primary text-primary hover:bg-primary inline-flex items-center rounded-full border px-8 py-3 duration-300 ease-in-out hover:text-white"

@@ -51,17 +51,17 @@ export default function ErrorPage() {
           />
 
           <h2 className="mb-5 text-2xl font-medium text-black md:text-4xl dark:text-white">
-            Sorry, the page can’t be found
+            Pahoittelut, sivua ei löytynyt
           </h2>
           <p className="mb-8.5">
-            The page you were looking for appears to have been moved, deleted or does not exist.
+            Etsimääsi sivua ei löytynyt. Se on ehkä siirretty, poistettu tai sitä ei ole olemassa.
           </p>
 
           <Link
             href="/"
             className="bg-primary hover:shadow-1 inline-flex rounded-full px-7.5 py-3 font-medium text-white duration-300 ease-in-out"
           >
-            Back to Home
+            Takaisin etusivulle
           </Link>
         </div>
       </section>

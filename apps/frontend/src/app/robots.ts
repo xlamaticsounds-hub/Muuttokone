@@ -2,7 +2,13 @@ import type { MetadataRoute } from 'next';
 export default function robots(): MetadataRoute.Robots {
   const base = process.env.SITE_URL ?? 'https://muuttokone.fi';
   return {
-    rules: { userAgent: '*', allow: '/' },
+    rules: [
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: ['/hallinta', '/auth'],
+      },
+    ],
     sitemap: `${base}/sitemap.xml`,
   };
 }

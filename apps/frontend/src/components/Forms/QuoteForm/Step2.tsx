@@ -15,7 +15,7 @@ export default function Step2({ data, setData, onBack }: Props) {
 
   const submit = async () => {
     if (isSubmitting) return;
-    
+
     if (!data.name.trim()) {
       toast.error('Nimi on pakollinen');
       return;
@@ -31,17 +31,25 @@ export default function Step2({ data, setData, onBack }: Props) {
         body: JSON.stringify({
           type: 'lead',
           data: {
+            id: data.id || undefined,
             name: data.name,
+            email: data.email || null,
             phone: data.phone || null,
             from_location: data.from_location || null,
             to_location: data.to_location || null,
             apartment_size: data.apartment_size || null,
             moving_date: data.moving_date || null,
             message: data.message || null,
+            // New fields
+            square_meters: data.square_meters || null,
+            floor: data.floor || null,
+            has_elevator: data.has_elevator || null,
+            box_count: data.box_count || null,
+            
             service_type: 'quote_request',
             source: 'website',
-          }
-        })
+          },
+        }),
       });
 
       const result = await response.json();
@@ -77,7 +85,7 @@ export default function Step2({ data, setData, onBack }: Props) {
 
       <div className="flex justify-between">
         <button
-          className="border-strokedark rounded-full border px-7.5 py-3"
+          className="border-strokedark rounded-full border px-7.5 py-3 transition-all duration-300 hover:border-primary hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-50"
           type="button"
           onClick={onBack}
           disabled={isSubmitting}
@@ -85,7 +93,7 @@ export default function Step2({ data, setData, onBack }: Props) {
           Takaisin
         </button>
         <button
-          className="bg-primary rounded-full px-7.5 py-3 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-primary rounded-full px-7.5 py-3 text-white transition-all duration-300 hover:bg-primary/90 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
           type="button"
           onClick={submit}
           disabled={isSubmitting}

@@ -37,7 +37,6 @@ export const quickContactSchema = z.object({
   message: z.string().min(10, 'Viesti on pakollinen'),
 });
 
-
 export type ContactFormData = z.infer<typeof contactSchema>;
 export type QuickContactData = z.infer<typeof quickContactSchema>;
 

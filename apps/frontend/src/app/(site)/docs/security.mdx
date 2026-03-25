@@ -1,0 +1,20 @@
+# Tietoturva
+
+Tietoturva on integroitu syvälle Muuttokone.fi -arkkitehtuuriin.
+
+## Autentikointi & Auktorisointi
+
+- **NextAuth.js**: Käytämme Google OAuth -kirjautumista ylläpitäjille.
+- **Email Allowlist**: Hallintapaneeliin pääsevät vain `ALLOWED_EMAILS` -muuttujassa listatut sähköpostiosoitteet.
+- **Middleware-suojaus**: Kaikki `/hallinta` ja `/api/ai` route-polut on suojattu palvelintasolla `proxy.ts` (aiemmin middleware) kautta.
+
+## API-suojaus
+
+- **Rate Limiting**: Kaikissa julkisissa API-rajapinnoissa (kuten tarjouspyynnöt ja AI-chat) on IP-pohjainen nopeusrajoitus.
+- **Input Validation**: Käytämme **Zod**-kirjasto tarkistamaan kaikki sisäänpäin tuleva data ennen sen tallentamista tietokantaan.
+- **CSRF-suojaus**: NextAuth hoitaa automaattisesti suojauksen Cross-Site Request Forgery -hyökkäyksiä vastaan.
+
+## Tietokanta
+
+- **Prisma ORM**: Suojaa SQL-injektioilta käyttämällä parametrisoituja kyselyitä.
+- **Singleton Pattern**: Estää yhteysvuodot ja pitää tietokannan resurssien käytön optimoituna serverless-ympäristössä.

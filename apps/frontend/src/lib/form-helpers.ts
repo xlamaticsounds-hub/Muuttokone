@@ -90,12 +90,12 @@ export function validateFormData<T>(schema: z.ZodSchema<T>, data: unknown): Form
 
   // Extract field-specific errors from Zod
   const fieldErrors: Record<string, string> = {};
-  result.error.errors.forEach((error) => {
-    const fieldName = error.path.join('.');
-    if (fieldName && !fieldErrors[fieldName]) {
-      fieldErrors[fieldName] = error.message;
+  for (const issue of result.error.issues) {
+    if (issue.path.length > 0) {
+      const fieldName = issue.path.join('.');
+      fieldErrors[fieldName] = issue.message;
     }
-  });
+  }
 
   return createErrorResult<T>('Lomakkeessa on virheitä. Tarkista syötetyt tiedot.', fieldErrors);
 }
@@ -124,9 +124,9 @@ export async function safeFormAction<TInput, TOutput>(
     // Convert FormData to object if needed
     let data: unknown;
     if (formData instanceof FormData) {
-  // Convert FormData into a plain object with support for
-  // nested fields (dot notation), array fields (key[]), and booleans.
-  data = formDataToObject(formData);
+      // Convert FormData into a plain object with support for
+      // nested fields (dot notation), array fields (key[]), and booleans.
+      data = formDataToObject(formData);
     } else {
       data = formData;
     }

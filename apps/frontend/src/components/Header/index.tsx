@@ -20,7 +20,6 @@ const Header = () => {
     };
   }, []);
 
-
   // Navbar toggle
   const [navbarOpen, setNavbarOpen] = useState(false);
   const navbarToggleHandler = () => {
@@ -48,7 +47,7 @@ const Header = () => {
         <div className="relative mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
           <div className="flex items-center justify-between">
             <div className="block py-4 lg:py-0">
-              <Link href="/" className="block max-w-[145px] sm:max-w-[180px]">
+              <Link href="/" className="block h-[44px] w-[130px] max-w-[145px] sm:max-w-[180px]">
                 {/* Use webp (likely has transparent background) for light mode to avoid mismatched image bg */}
                 <Image
                   width={130}
@@ -57,6 +56,7 @@ const Header = () => {
                   alt="Logo"
                   className="block dark:hidden"
                   priority
+                  sizes="130px"
                 />
                 {/* Keep white logo for dark mode (SVG or PNG) */}
                 <Image
@@ -66,6 +66,7 @@ const Header = () => {
                   alt="Logo"
                   className="hidden dark:block"
                   priority
+                  sizes="130px"
                 />
               </Link>
             </div>
@@ -110,15 +111,15 @@ const Header = () => {
                   {/* Mobile CTAs */}
                   <li className="mt-8 block lg:hidden">
                     <Link
-                      href="/tarjouspyynto"
+                      href="/muuttolaskuri"
                       onClick={closeMenu}
-                      className="bg-primary mb-3 block w-full rounded-full px-7.5 py-3 text-center text-white"
+                      className="bg-primary mb-3 block w-full rounded-full px-7.5 py-3 text-center text-white transition-all duration-300 hover:bg-primary/90 hover:shadow-lg font-bold font-outfit"
                     >
-                      Pyydä tarjous
+                      Laske hinta
                     </Link>
                     <a
                       href={`tel:${siteConfig.contact.phone.tel}`}
-                      className="border-primary text-primary block w-full rounded-full border px-7.5 py-3 text-center"
+                      className="border-primary text-primary block w-full rounded-full border px-7.5 py-3 text-center transition-all duration-300 hover:bg-primary hover:text-white"
                     >
                       Soita
                     </a>
@@ -133,18 +134,18 @@ const Header = () => {
               <div className="hidden items-center sm:flex">
                 <a
                   href={`tel:${siteConfig.contact.phone.tel}`}
-                  className="hover:text-primary mr-4 font-semibold text-black/80 dark:text-white"
+                  className="hover:text-primary mr-4 font-semibold text-black/80 dark:text-white whitespace-nowrap"
                 >
                   📞 {siteConfig.contact.phone.display}
                 </a>
 
                 <Link
-                  href="/tarjouspyynto"
-                    className="bg-primary hover:shadow-1 flex items-center justify-center rounded-full px-7.5 py-3 text-base text-white"
-                  >
-                    Pyydä tarjous
-                  </Link>
-                </div>
+                  href="/muuttolaskuri"
+                  className="bg-primary hover:shadow-1 flex items-center justify-center rounded-full px-7.5 py-3 text-base font-bold text-white whitespace-nowrap font-outfit"
+                >
+                  Laske hinta
+                </Link>
+              </div>
             </div>
           </div>
         </div>

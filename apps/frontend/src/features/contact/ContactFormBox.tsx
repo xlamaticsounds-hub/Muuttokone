@@ -17,7 +17,7 @@ export default function ContactFormBox() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!data.name.trim() || !data.message.trim()) {
       toast.error('Nimi ja viesti ovat pakollisia');
       return;
@@ -26,21 +26,20 @@ export default function ContactFormBox() {
     setIsSubmitting(true);
 
     try {
-      // Submit directly to leads collection
+      // Submit as inbox message (not lead)
       const response = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          type: 'lead',
+          type: 'message',
           data: {
             name: data.name,
             email: data.email || null,
             phone: data.phone || null,
             message: data.message,
-            service_type: 'contact',
-            source: 'website',
-          }
-        })
+            source: 'website_contact',
+          },
+        }),
       });
 
       const result = await response.json();
@@ -66,85 +65,100 @@ export default function ContactFormBox() {
   };
 
   return (
-    <>
-    <div className="animate_top shadow-3 w-full rounded-lg bg-white p-7.5 md:w-3/5 lg:w-2/3 xl:p-14 dark:bg-black">
-      <form onSubmit={handleSubmit} className="space-y-7.5">
-        <div>
-          <label htmlFor="name" className="mb-4 block">
-            Nimi <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="text"
-            id="name"
-            name="name"
-            placeholder="Nimesi"
-            autoComplete="name"
-            value={data.name}
-            onChange={handleChange}
-            required
-            className="border-strokedark shadow-4 placeholder:text-body/50 focus:border-primary focus:shadow-5 dark:border-stroke dark:focus:border-primary w-full rounded-lg border bg-transparent px-6 py-3.5 focus-visible:outline-hidden dark:shadow-none"
-          />
+    <div className="animate_top w-full rounded-2xl bg-white p-7.5 shadow-solid-8 md:w-[58%] lg:w-[64%] xl:p-14 dark:bg-blacksection dark:border dark:border-strokedark">
+      <form onSubmit={handleSubmit}>
+        <div className="mb-7.5 flex flex-col gap-7.5 lg:flex-row lg:justify-between lg:gap-14">
+          <div className="w-full">
+            <label htmlFor="name" className="mb-3 block text-sm font-medium text-black dark:text-white">
+              Nimi <span className="text-meta-1">*</span>
+            </label>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              placeholder="Nimesi"
+              autoComplete="name"
+              value={data.name}
+              onChange={handleChange}
+              required
+              className="w-full border-b border-stroke bg-transparent pb-3.5 focus:border-primary focus:placeholder:opacity-50 focus-visible:outline-none dark:border-strokedark dark:focus:border-primary dark:focus:placeholder:opacity-50"
+            />
+          </div>
+
+          <div className="w-full">
+            <label htmlFor="phone" className="mb-3 block text-sm font-medium text-black dark:text-white">
+              Puhelinnumero
+            </label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              placeholder="+358 40 123 4567"
+              autoComplete="tel"
+              value={data.phone}
+              onChange={handleChange}
+              className="w-full border-b border-stroke bg-transparent pb-3.5 focus:border-primary focus:placeholder:opacity-50 focus-visible:outline-none dark:border-strokedark dark:focus:border-primary dark:focus:placeholder:opacity-50"
+            />
+          </div>
         </div>
 
-        <div>
-          <label htmlFor="email" className="mb-4 block">
-            Sähköposti
-          </label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            placeholder="sähköposti@esimerkki.fi"
-            autoComplete="email"
-            value={data.email}
-            onChange={handleChange}
-            className="border-strokedark shadow-4 placeholder:text-body/50 focus:border-primary focus:shadow-5 dark:border-stroke dark:focus:border-primary w-full rounded-lg border bg-transparent px-6 py-3.5 focus-visible:outline-hidden dark:shadow-none"
-          />
+        <div className="mb-7.5 flex flex-col gap-7.5 lg:flex-row lg:justify-between lg:gap-14">
+          <div className="w-full">
+            <label htmlFor="email" className="mb-3 block text-sm font-medium text-black dark:text-white">
+              Sähköposti
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="sahkoposti@esimerkki.fi"
+              autoComplete="email"
+              value={data.email}
+              onChange={handleChange}
+              className="w-full border-b border-stroke bg-transparent pb-3.5 focus:border-primary focus:placeholder:opacity-50 focus-visible:outline-none dark:border-strokedark dark:focus:border-primary dark:focus:placeholder:opacity-50"
+            />
+          </div>
         </div>
 
-        <div>
-          <label htmlFor="phone" className="mb-4 block">
-            Puhelinnumero
-          </label>
-          <input
-            type="tel"
-            id="phone"
-            name="phone"
-            placeholder="+358 40 123 4567"
-            autoComplete="tel"
-            value={data.phone}
-            onChange={handleChange}
-            className="border-strokedark shadow-4 placeholder:text-body/50 focus:border-primary focus:shadow-5 dark:border-stroke dark:focus:border-primary w-full rounded-lg border bg-transparent px-6 py-3.5 focus-visible:outline-hidden dark:shadow-none"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="message" className="mb-4 block">
-            Viesti <span className="text-red-500">*</span>
+        <div className="mb-12.5">
+          <label htmlFor="message" className="mb-3 block text-sm font-medium text-black dark:text-white">
+            Viesti <span className="text-meta-1">*</span>
           </label>
           <textarea
-            rows={6}
+            rows={5}
             id="message"
             name="message"
             placeholder="Kerro meille kuinka voimme auttaa..."
             value={data.message}
             onChange={handleChange}
             required
-            className="border-strokedark shadow-4 placeholder:text-body/50 focus:border-primary focus:shadow-5 dark:border-stroke dark:focus:border-primary w-full rounded-lg border bg-transparent p-6 focus-visible:outline-hidden dark:shadow-none"
+            className="w-full border-b border-stroke bg-transparent pb-3.5 focus:border-primary focus:placeholder:opacity-50 focus-visible:outline-none dark:border-strokedark dark:focus:border-primary dark:focus:placeholder:opacity-50 resize-none"
           />
         </div>
 
-        <div className="flex justify-center">
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="bg-primary hover:shadow-1 inline-flex rounded-full px-7.5 py-3 text-white duration-300 ease-in-out disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isSubmitting ? 'Lähetetään...' : 'Lähetä viesti'}
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex w-full items-center justify-center gap-2.5 rounded-full bg-primary px-8 py-4 font-medium text-white shadow-1 duration-300 ease-in-out hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
+        >
+          {isSubmitting ? 'Lähetetään...' : 'Lähetä viesti'}
+          {!isSubmitting && (
+            <svg
+              className="fill-current"
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M10.4767 6.16664L6.00668 1.69664L7.18501 0.518311L13.6667 6.99998L7.18501 13.4816L6.00668 12.3033L10.4767 7.83331H0.333344V6.16664H10.4767Z"
+                fill=""
+              />
+            </svg>
+          )}
+        </button>
       </form>
     </div>
-    </>
   );
 }

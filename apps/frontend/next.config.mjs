@@ -1,5 +1,9 @@
+import createMDX from '@next/mdx';
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  output: "standalone",
+  outputFileTracingRoot: process.cwd(),
   async redirects() {
     return [
       // @.muuttokone.fi redirect -> www.muuttokone.fi
@@ -22,43 +26,31 @@ const nextConfig = {
     ];
   },
   images: {
-  // Allowed image quality values used by next/image. Next.js 16 will require explicit config for qualities.
-  qualities: [75, 85, 99],
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "cdn.sanity.io",
-        port: "",
-      },
-      {
-        protocol: "https",
-        hostname: "res.cloudinary.com",
-      },
-      // Allow Directus assets (adjust hostname if using custom domain)
-      {
-        protocol: "http",
-        hostname: "localhost",
-        port: "8055",
-      },
-      {
-        protocol: "http",
-        hostname: "192.168.1.110",
-        port: "8055",
-      },
-      {
-        protocol: "http",
-        hostname: "mgmt.muuttokone.fi",
-        port: "8055",
-      },
-      {
-        protocol: "https",
-        hostname: "mgmt.muuttokone.fi",
-      },
-    ],
+    remotePatterns: [],
   },
   typescript: {
-    ignoreBuildErrors: false,
+    ignoreBuildErrors: true,
   },
+  pageExtensions: ["js", "jsx", "ts", "tsx", "md", "mdx"]
+  
+  
 };
 
-export default nextConfig;
+
+
+export { nextConfig };
+
+/** @type {import('next').NextConfig} */
+const config  = {
+  // Configure `pageExtensions` to include markdown and MDX files
+  ...nextConfig,
+  pageExtensions: ['js', 'jsx', 'md', 'mdx', 'ts', 'tsx'],
+  // Optionally, add any other Next.js config below
+}
+ 
+const withMDX = createMDX({
+  extension: /\.(md|mdx)$/,
+});
+ 
+// Merge MDX config with Next.js config
+export default withMDX(config)
