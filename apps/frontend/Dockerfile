@@ -48,7 +48,6 @@ COPY --from=builder /app/.next/static ./.next/static
 
 USER nextjs
 EXPOSE 3000
-ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
-CMD ["node_modules/.bin/next", "start", "-p", "3000", "-H", "0.0.0.0"]
+CMD ["sh", "-c", "node_modules/.bin/next start -p ${PORT:-3000} -H 0.0.0.0"]
