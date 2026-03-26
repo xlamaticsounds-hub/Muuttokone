@@ -82,7 +82,7 @@ export default function HeroContent({ content }: { content?: any }) {
               </span>
             </h1>
             <p className="text-regular text-black/70 sm:text-lg dark:text-white/80">
-              {content?.description || "Nopea, turvallinen ja läpinäkyvä muutto koko Suomessa. Ammattitaitoiset ja tehokkaat muuttopalvelut yksityis- ja yritysasiakkaille. Ei piilokuluja, vain rehellinen hinnoittelu."}
+              {content?.description || "Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Ammattitaitoiset ja tehokkaat muuttopalvelut yksityis- ja yritysasiakkaille. Ei piilokuluja, vain rehellinen hinnoittelu."}
             </p>
 
             <div className="mt-8 flex flex-col-reverse gap-5 sm:flex-row">

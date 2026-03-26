@@ -59,18 +59,18 @@ export function generateSEOMetadata({
 // Predefined SEO configurations for common pages
 export const SEOConfigs = {
   home: {
-    title: 'Muuttokone.fi - Luotettava muuttopalvelu koko Suomessa',
+    title: 'Muuttokone.fi - Luotettava muuttopalvelu Helsingissä ja Uudellamaalla',
     description:
-      'Nopea, turvallinen ja läpinäkyvä muutto. Koti- ja yritysmuutot, pakkaus, varastointi ja siivous. Tehokkaat ja ammattitaitoiset tekijät. Pyydä maksuton tarjous!',
-    keywords: ['muutto', 'muuttofirma', 'muuttopalvelu', 'Helsinki', 'Tampere', 'Turku', 'Suomi'],
+      'Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Koti- ja yritysmuutot, pakkaus, varastointi ja siivous. Tehokkaat ja ammattitaitoiset tekijät. Pyydä maksuton tarjous!',
+    keywords: ['muutto', 'muuttofirma', 'muuttopalvelu', 'Helsinki', 'Uusimaa', 'Espoo', 'Vantaa'],
     canonical: '/',
   },
 
   services: {
     title: 'Palvelut - Muuttopalvelumme',
     description:
-      'Kattavat muuttopalvelut: kotimuutto, yritysmuutto, pakkauspalvelut, varastointi ja siivous. Tehokkaat ja ammattitaitoiset tekijät.',
-    keywords: ['muuttopalvelut', 'kotimuutto', 'yritysmuutto', 'pakkaus', 'varastointi', 'siivous'],
+      'Kattavat muuttopalvelut Helsingissä ja Uudellamaalla: kotimuutto, yritysmuutto, pakkauspalvelut, varastointi ja siivous.',
+    keywords: ['muuttopalvelut', 'kotimuutto', 'yritysmuutto', 'pakkaus', 'varastointi', 'siivous', 'Helsinki', 'Uusimaa'],
     canonical: '/palvelut',
   },
 

@@ -23,18 +23,18 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     template: '%s | Muuttokone.fi',
-    default: 'Muuttokone.fi - Luotettava muuttopalvelu koko Suomessa',
+    default: 'Muuttokone.fi - Luotettava muuttopalvelu Helsingissä ja Uudellamaalla',
   },
   description:
-    'Nopea, turvallinen ja läpinäkyvä muutto. Koti- ja yritysmuutot, pakkaus, varastointi ja siivous. Pyydä maksuton tarjous!',
+    'Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Koti- ja yritysmuutot, pakkaus, varastointi ja siivous. Pyydä maksuton tarjous!',
   keywords: [
     'muutto',
     'muuttofirma',
     'muuttopalvelu',
     'Helsinki',
-    'Tampere',
-    'Turku',
-    'Suomi',
+    'Uusimaa',
+    'Espoo',
+    'Vantaa',
   ],
   authors: [{ name: 'Muuttokone.fi' }],
   creator: 'Muuttokone.fi',
@@ -49,9 +49,9 @@ export const metadata: Metadata = {
     locale: 'fi_FI',
     url: siteUrl,
     siteName: 'Muuttokone.fi',
-    title: 'Muuttokone.fi - Luotettava muuttopalvelu koko Suomessa',
+    title: 'Muuttokone.fi - Luotettava muuttopalvelu Helsingissä ja Uudellamaalla',
     description:
-      'Nopea, turvallinen ja läpinäkyvä muutto. Koti- ja yritysmuutot, pakkaus, varastointi ja siivous.',
+      'Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Koti- ja yritysmuutot, pakkaus, varastointi ja siivous.',
     images: [
       {
         url: '/images/webp/hero/hero.avif',
@@ -65,7 +65,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Muuttokone.fi - Luotettava muuttopalvelu',
     description:
-      'Nopea, turvallinen ja läpinäkyvä muutto. Koti- ja yritysmuutot, pakkaus, varastointi ja siivous.',
+      'Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Koti- ja yritysmuutot, pakkaus, varastointi ja siivous.',
     images: ['/images/twitter-image.jpg'],
     creator: '@muuttokone',
   },

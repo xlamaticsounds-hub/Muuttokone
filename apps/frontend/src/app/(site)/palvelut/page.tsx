@@ -32,7 +32,7 @@ export default async function Page() {
     <>
       <Services
         title="Palvelumme"
-        subtitle="Luotettavat ja monipuoliset muuttopalvelut koteihin ja yrityksille – kaikki sujuvaan muuttoon yhdestä paikasta."
+        subtitle="Luotettavat ja monipuoliset muuttopalvelut koteihin ja yrityksille Helsingissä ja Uudellamaalla."
         items={items}
       />
       <section className="bg-gray-50 dark:bg-black/20 py-16 lg:py-24">

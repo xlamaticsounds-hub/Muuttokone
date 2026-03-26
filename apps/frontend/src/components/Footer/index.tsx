@@ -33,8 +33,8 @@ export default function Footer() {
                 </Link>
 
                 <p className="mt-5 mb-8 text-base">
-                  Luotettava muuttopalveluyritys Helsingissä. Tarjoamme ammattitaitoisia koti- ja
-                  yritysmuuttoja, pakkausta ja varastointia.
+                  Luotettava muuttopalveluyritys Helsingissä ja Uudellamaalla. Tarjoamme
+                  ammattitaitoisia koti- ja yritysmuuttoja, pakkausta ja varastointia.
                 </p>
 
                 <FooterSocialLinks />

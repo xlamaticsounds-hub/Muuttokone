@@ -51,7 +51,7 @@ export default async function Home() {
       <ServicesDivider />
       <Services
         title={pageData?.sections?.[1]?.props?.title || "Palvelumme"}
-        subtitle={pageData?.sections?.[1]?.props?.subtitle || "Tarjoamme kattavat muuttopalvelut kotitalouksille ja yrityksille koko Suomessa."}
+        subtitle={pageData?.sections?.[1]?.props?.subtitle || "Tarjoamme kattavat muuttopalvelut kotitalouksille ja yrityksille Helsingissä ja Uudellamaalla."}
         items={services}
       />
       <About />

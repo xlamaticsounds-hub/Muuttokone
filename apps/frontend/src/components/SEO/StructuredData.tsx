@@ -18,7 +18,7 @@ export default async function StructuredData({ type, data }: StructuredDataProps
       logo: `${siteUrl}/images/logo.png`,
       image: `${siteUrl}/images/og-image.jpg`,
       description:
-        'Luotettava muuttopalvelu koko Suomessa. Koti- ja yritysmuutot, pakkaus, varastointi ja siivous.',
+        'Luotettava muuttopalvelu Helsingissä ja Uudellamaalla. Koti- ja yritysmuutot, pakkaus, varastointi ja siivous.',
       telephone: siteConfig.contact.phone.tel,
       email: siteConfig.contact.email,
       address: {
@@ -41,6 +41,10 @@ export default async function StructuredData({ type, data }: StructuredDataProps
         {
           '@type': 'City',
           name: 'Helsinki',
+        },
+        {
+          '@type': 'AdministrativeArea',
+          name: 'Uusimaa',
         },
         {
           '@type': 'City',
@@ -108,7 +112,7 @@ export default async function StructuredData({ type, data }: StructuredDataProps
           '@context': 'https://schema.org',
           '@type': 'Service',
           name: data?.name || 'Muuttopalvelut',
-          description: data?.description || 'Luotettava muuttopalvelu koko Suomessa',
+          description: data?.description || 'Luotettava muuttopalvelu Helsingissä ja Uudellamaalla',
           provider: {
             '@type': 'Organization',
             name: 'Muuttokone.fi',
