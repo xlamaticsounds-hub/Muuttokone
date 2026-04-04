@@ -3,6 +3,10 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Tietosuojaseloste | Muuttokone.fi',
   description: 'Muuttokone.fi tietosuojaseloste. Lue miten käsittelemme henkilötietojasi.',
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function PrivacyPolicy() {
@@ -16,7 +20,7 @@ export default function PrivacyPolicy() {
           <div className="prose dark:prose-invert max-w-none">
             <h2 className="text-xl font-semibold text-black dark:text-white mt-6 mb-4">1. Rekisterinpitäjä</h2>
             <p>
-              Muuttokone.fi / Amper Consulting<br />
+              Muuttokone.fi<br />
               Helsinki, Suomi<br />
               Sähköposti: info@muuttokone.fi
             </p>

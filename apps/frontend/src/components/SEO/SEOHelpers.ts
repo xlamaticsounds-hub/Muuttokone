@@ -59,7 +59,7 @@ export function generateSEOMetadata({
 // Predefined SEO configurations for common pages
 export const SEOConfigs = {
   home: {
-    title: 'Muuttokone.fi - Luotettava muuttopalvelu Helsingissä ja Uudellamaalla',
+    title: 'Etusivu | Muuttokone.fi – Luotettava muuttopalvelu Helsingissä',
     description:
       'Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Koti- ja yritysmuutot, pakkaus, varastointi ja siivous. Tehokkaat ja ammattitaitoiset tekijät. Pyydä maksuton tarjous!',
     keywords: ['muutto', 'muuttofirma', 'muuttopalvelu', 'Helsinki', 'Uusimaa', 'Espoo', 'Vantaa'],

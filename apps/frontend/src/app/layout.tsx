@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     template: '%s | Muuttokone.fi',
-    default: 'Muuttokone.fi - Luotettava muuttopalvelu Helsingissä ja Uudellamaalla',
+    default: 'Etusivu | Muuttokone.fi – Luotettava muuttopalvelu Helsingissä',
   },
   description:
     'Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Koti- ja yritysmuutot, pakkaus, varastointi ja siivous. Pyydä maksuton tarjous!',

@@ -8,7 +8,7 @@ const stats = [
 
 export default function StatsBand() {
   return (
-    <section className="relative z-20 -mt-[70px] px-4 md:-mt-[86px] lg:-mt-[102px]">
+    <section className="relative z-20 -mt-[50px] px-4 md:-mt-[66px] lg:-mt-[82px]">
       <div className="mx-auto max-w-1390">
         <div className="grid min-h-[180px] gap-4 rounded-3xl bg-white/80 p-6 shadow-lg ring-1 ring-black/5 backdrop-blur dark:bg-slate-900/80 dark:ring-white/5 sm:grid-cols-3 md:p-8">
           {stats.map((item) => (
