@@ -24,9 +24,9 @@ const serviceData: Service[] = [
   },
   {
     icon: '/icons/logo3.webp',
-    title: 'Varastointi',
+    title: 'Kuolinpesätyhjennnykset',
     description:
-      'Lämmin, valvottu varastotila muuton tai remontin ajaksi. Lyhyt- ja pitkäaikainen varastointi – maksa vain käyttämäsi aika.',
+      'Hoidamme kuolinpesän tyhjennyksen ammattitaidolla ja hienovaraisesti. Kierrätetään, lahjoitetaan tai viedään kierrätyskeskukseen – kaikki sovitun mukaan. Helpotamme läheisen taakkaa vaikeana hetkenä.',
     bgClass: 'hover:bg-primary/5',
   },
   {
@@ -38,9 +38,9 @@ const serviceData: Service[] = [
   },
   {
     icon: '/icons/turva.webp',
-    title: 'Erikoiskuljetukset',
+    title: 'Kuljetukset',
     description:
-      'Pianot, taideteokset, antiikit ja raskaat esineet vaativat erityisosaamista. Meillä on välineet ja kokemus haastaviin siirtoihin.',
+      'Kuljetus A:sta B:hen ilman stressiä – kaatopaikka-ajot, vanhan tavaran haku, huonekalujen siirrot tai muut yksittäiset kuljetustarpeet. Nopea, edullinen ja luotettava. Soita ja sovitaan.',
     bgClass: 'hover:bg-primary/5',
   },
 ];

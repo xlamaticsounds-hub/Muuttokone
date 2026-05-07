@@ -46,7 +46,7 @@ export const quoteSchema = z.object({
 
   // Service options
   serviceType: z.enum(
-    ['kotimuutto', 'yritysmuutto', 'pakkauspalvelu', 'varastointi', 'kansainvalinen', 'muu'] as const,
+    ['kotimuutto', 'yritysmuutto', 'pakkauspalvelu', 'kuljetus', 'kuolinpesatyhjennnys', 'muu'] as const,
     {
       message: 'Valitse palvelun tyyppi',
     },

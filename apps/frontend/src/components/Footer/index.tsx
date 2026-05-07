@@ -34,7 +34,7 @@ export default function Footer() {
 
                 <p className="mt-5 mb-8 text-base">
                   Luotettava muuttopalveluyritys Helsingissä ja Uudellamaalla. Tarjoamme
-                  ammattitaitoisia koti- ja yritysmuuttoja, pakkausta ja varastointia.
+                  ammattitaitoisia koti- ja yritysmuuttoja, pakkausta, kuljetuksia ja kuolinpesätyhjennyksiä.
                 </p>
 
                 <FooterSocialLinks />

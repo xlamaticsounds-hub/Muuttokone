@@ -18,7 +18,7 @@ export default async function StructuredData({ type, data }: StructuredDataProps
       logo: `${siteUrl}/images/logo.png`,
       image: `${siteUrl}/images/og-image.jpg`,
       description:
-        'Luotettava muuttopalvelu Helsingissä ja Uudellamaalla. Koti- ja yritysmuutot, pakkaus, varastointi ja siivous.',
+        'Luotettava muuttopalvelu Helsingissä ja Uudellamaalla. Koti- ja yritysmuutot, pakkaus, kuljetukset, kuolinpesätyhjennnykset ja siivous.',
       telephone: siteConfig.contact.phone.tel,
       email: siteConfig.contact.email,
       address: {

@@ -4,7 +4,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 import { motion, AnimatePresence } from 'framer-motion';
-import { calculateMovingPrice, CalculatorData, PriceBreakdown } from './pricing';
+import { calculateMovingPrice, CalculatorData, PriceBreakdown, FURNITURE_CATALOG } from './pricing';
 import toast from 'react-hot-toast';
 import { Loader2, ArrowRight, ArrowLeft, Calculator as CalcIcon, Calendar, CheckCircle2 } from 'lucide-react';
 
@@ -29,6 +29,7 @@ export default function Calculator() {
     elevatorTo: true,
     boxCount: 20,
     heavyItems: [],
+    furnitureItems: {},
     needsPacking: false,
     needsCleaning: false,
     services: [],
@@ -138,6 +139,20 @@ export default function Calculator() {
         : [...prev.services, service],
     }));
   };
+
+  const updateFurniture = (id: string, delta: number) => {
+    setFormData((prev) => {
+      const current = prev.furnitureItems[id] ?? 0;
+      const next = Math.max(0, current + delta);
+      const updated = { ...prev.furnitureItems };
+      if (next === 0) delete updated[id];
+      else updated[id] = next;
+      return { ...prev, furnitureItems: updated };
+    });
+  };
+
+  const furnitureCategories = [...new Set(FURNITURE_CATALOG.map((f) => f.category))];
+  const totalFurniturePieces = Object.values(formData.furnitureItems).reduce((s, n) => s + n, 0);
 
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -426,6 +441,56 @@ export default function Calculator() {
                       +
                     </button>
                   </div>
+                </div>
+
+                {/* Furniture List */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-lg">Huonekalut</h3>
+                    {totalFurniturePieces > 0 && (
+                      <span className="text-sm font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">
+                        {totalFurniturePieces} kpl valittu
+                      </span>
+                    )}
+                  </div>
+                  {furnitureCategories.map((category) => (
+                    <div key={category} className="rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
+                      <div className="bg-gray-50 dark:bg-gray-800/60 px-5 py-3">
+                        <span className="text-xs font-bold uppercase tracking-widest text-gray-400">{category}</span>
+                      </div>
+                      <div className="divide-y divide-gray-50 dark:divide-gray-800">
+                        {FURNITURE_CATALOG.filter((f) => f.category === category).map((item) => {
+                          const qty = formData.furnitureItems[item.id] ?? 0;
+                          return (
+                            <div key={item.id} className="flex items-center justify-between px-5 py-3">
+                              <span className="flex items-center gap-3">
+                                <span className="text-xl">{item.icon}</span>
+                                <span className="font-medium text-sm">{item.label}</span>
+                              </span>
+                              <div className="flex items-center gap-3">
+                                <button
+                                  onClick={() => updateFurniture(item.id, -1)}
+                                  disabled={qty === 0}
+                                  className="w-8 h-8 rounded-full border-2 border-gray-200 dark:border-gray-700 flex items-center justify-center text-lg font-bold disabled:opacity-30 hover:border-primary hover:text-primary transition-all"
+                                >
+                                  -
+                                </button>
+                                <span className={`w-6 text-center font-bold text-sm ${qty > 0 ? 'text-primary' : 'text-gray-300'}`}>
+                                  {qty}
+                                </span>
+                                <button
+                                  onClick={() => updateFurniture(item.id, 1)}
+                                  className="w-8 h-8 rounded-full border-2 border-gray-200 dark:border-gray-700 flex items-center justify-center text-lg font-bold hover:border-primary hover:text-primary transition-all"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">

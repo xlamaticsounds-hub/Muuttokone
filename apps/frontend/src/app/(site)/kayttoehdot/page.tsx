@@ -21,7 +21,7 @@ export default function TermsOfService() {
 
             <h2 className="text-xl font-semibold text-black dark:text-white mt-6 mb-4">2. Palvelun sisältö</h2>
             <p>
-              Palvelu sisältää sovitun mukaisesti muuton, kuljetuksen, kantamisen ja muut erikseen sovitut lisäpalvelut (kuten pakkaus tai varastointi). Tarkka sisältö määritellään tilausvahvistuksessa tai tarjouksessa.
+              Palvelu sisältää sovitun mukaisesti muuton, kuljetuksen, kantamisen ja muut erikseen sovitut lisäpalvelut (kuten pakkaus tai kuolinpesätyhjennnys). Tarkka sisältö määritellään tilausvahvistuksessa tai tarjouksessa.
             </p>
 
             <h2 className="text-xl font-semibold text-black dark:text-white mt-6 mb-4">3. Hinnoittelu ja maksuehdot</h2>

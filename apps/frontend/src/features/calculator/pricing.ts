@@ -1,5 +1,33 @@
 import { z } from 'zod';
 
+export const FURNITURE_CATALOG = [
+  // Olohuone
+  { id: 'sofa_2', label: 'Sohva 2-istuttava', icon: '🛋️', category: 'Olohuone', minutesEach: 15 },
+  { id: 'sofa_3', label: 'Sohva 3-istuttava', icon: '🛋️', category: 'Olohuone', minutesEach: 22 },
+  { id: 'armchair', label: 'Nojatuoli', icon: '🪑', category: 'Olohuone', minutesEach: 10 },
+  { id: 'bookshelf', label: 'Kirjahylly', icon: '📚', category: 'Olohuone', minutesEach: 15 },
+  { id: 'coffee_table', label: 'Sohvapöytä', icon: '☕', category: 'Olohuone', minutesEach: 8 },
+  { id: 'tv_stand', label: 'TV-taso', icon: '📺', category: 'Olohuone', minutesEach: 10 },
+  // Makuuhuone
+  { id: 'bed_double', label: 'Parisänky', icon: '🛏️', category: 'Makuuhuone', minutesEach: 22 },
+  { id: 'bed_single', label: 'Yksittäissänky', icon: '🛏️', category: 'Makuuhuone', minutesEach: 15 },
+  { id: 'wardrobe', label: 'Vaatekaappi', icon: '🚪', category: 'Makuuhuone', minutesEach: 25 },
+  { id: 'dresser', label: 'Lipasto', icon: '🗄️', category: 'Makuuhuone', minutesEach: 15 },
+  { id: 'nightstand', label: 'Yöpöytä', icon: '🌙', category: 'Makuuhuone', minutesEach: 5 },
+  // Keittiö & Kodinkoneet
+  { id: 'dining_table', label: 'Ruokapöytä', icon: '🍽️', category: 'Keittiö & Kodinkoneet', minutesEach: 15 },
+  { id: 'fridge', label: 'Jääkaappi', icon: '🧊', category: 'Keittiö & Kodinkoneet', minutesEach: 20 },
+  { id: 'washing_machine', label: 'Pesukone', icon: '🫧', category: 'Keittiö & Kodinkoneet', minutesEach: 20 },
+  { id: 'dryer', label: 'Kuivausrumpu', icon: '🌀', category: 'Keittiö & Kodinkoneet', minutesEach: 15 },
+  { id: 'dishwasher', label: 'Astianpesukone', icon: '🍳', category: 'Keittiö & Kodinkoneet', minutesEach: 15 },
+  // Toimisto & Muut
+  { id: 'desk', label: 'Kirjoituspöytä', icon: '💻', category: 'Toimisto & Muut', minutesEach: 15 },
+  { id: 'piano', label: 'Piano / Flyygeli', icon: '🎹', category: 'Toimisto & Muut', minutesEach: 60 },
+  { id: 'safe', label: 'Tallelokero / Kassakaappi', icon: '🔒', category: 'Toimisto & Muut', minutesEach: 30 },
+] as const;
+
+export type FurnitureId = typeof FURNITURE_CATALOG[number]['id'];
+
 export const CalculatorSchema = z.object({
   // Locations
   addressFrom: z.string().min(1, 'Lähtöosoite vaaditaan'),
@@ -18,7 +46,8 @@ export const CalculatorSchema = z.object({
   
   // Inventory
   boxCount: z.number().default(0),
-  heavyItems: z.array(z.string()).default([]), // e.g., 'piano', 'safe'
+  heavyItems: z.array(z.string()).default([]),
+  furnitureItems: z.record(z.string(), z.number()).default({}),
   
   // Service level
   needsPacking: z.boolean().default(false),
@@ -74,6 +103,7 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
     floorTo,
     heavyItems,
     needsPacking,
+    furnitureItems = {},
   } = data;
 
   // 1. Distance Cost
@@ -130,6 +160,16 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
   if (heavyItems.length > 0) {
     totalLaborHours += heavyItems.length * 0.5;
   }
+
+  // Furniture items - add time based on catalog
+  let furnitureMinutes = 0;
+  for (const [id, qty] of Object.entries(furnitureItems)) {
+    const item = FURNITURE_CATALOG.find((f) => f.id === id);
+    if (item && qty > 0) {
+      furnitureMinutes += item.minutesEach * qty;
+    }
+  }
+  totalLaborHours += furnitureMinutes / 60;
 
   // Round up to nearest 0.5 hour
   totalLaborHours = Math.ceil(totalLaborHours * 2) / 2;

@@ -14,12 +14,12 @@ const cases = [
   {
     title: 'Arkistosiirto 1200 laatikkoa',
     body: 'Reititys ja kantoluvat etukäteen, nosto-ovien aikataulutus. Toteutus kahdessa yössä ilman liiketoiminnan katkoa.',
-    badge: 'Erikoiskuljetus',
+    badge: 'Kuljetus',
   },
   {
-    title: 'Varastointi muuton ajaksi',
-    body: 'Purkamis- ja pakkauspalvelu, kuivavarastointi ja vakuutus. Neljän viikon jälkeen toimitus uuteen osoitteeseen.',
-    badge: 'Varastointi',
+    title: 'Kuolinpesätyhjennnys Helsingissä',
+    body: 'Kokonainen asunto tyhjennetty hienotunteisesti. Tavarat lajiteltu – kierrätys, lahjoitus ja kaatopaikka-ajo hoidettu saman päivän aikana.',
+    badge: 'Kuolinpesä',
   },
 ];
 

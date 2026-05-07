@@ -199,7 +199,7 @@ export default function PricingGuide() {
                 <p className="text-sm text-gray-700 dark:text-gray-300">
                   <span className="font-semibold">Huomio:</span> Nämä ovat suuntaa-antavia hintoja.
                   Lopullinen tarjous määritellään ilmaisen kartoituksen jälkeen, johon vaikuttavat
-                  mm. kulkuesteet, lisäpalvelut (pakkaus, varastointi) ja kohteen erityispiirteet.
+                  mm. kulkuesteet, lisäpalvelut (pakkaus, kuljetukset) ja kohteen erityispiirteet.
                 </p>
               </div>
             </div>
