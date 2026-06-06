@@ -75,13 +75,5 @@
     "ios_saf >= 16",
     "not IE 11",
     "not op_mini all"
-  ],
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@prisma/engines",
-      "prisma",
-      "sharp",
-      "unrs-resolver"
-    ]
-  }
+  ]
 }
