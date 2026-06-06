@@ -1,0 +1,50 @@
+{
+  "timestamp": "2026-06-05T15:36:23.353125",
+  "analysis": {
+    "current_avg_price": 1317.4125,
+    "optimized_avg_price": 1911.5,
+    "current_avg_profit": 12.019499999999965,
+    "optimized_avg_profit": 558.5799999999999,
+    "annual_profit_current": 3125.069999999991,
+    "annual_profit_optimized": 145230.8,
+    "annual_improvement": 142105.73,
+    "scenarios": [
+      {
+        "name": "Pieni muutto",
+        "revenue_current": 428.85,
+        "revenue_optimized": 699,
+        "profit_current": -40.45799999999997,
+        "profit_optimized": 208.07999999999998,
+        "margin_current": -9.434067855893662,
+        "margin_optimized": 29.768240343347635
+      },
+      {
+        "name": "Keskikokoinen muutto",
+        "revenue_current": 1000.65,
+        "revenue_optimized": 1299,
+        "profit_current": 65.59799999999996,
+        "profit_optimized": 340.08000000000004,
+        "margin_current": 6.555538899715181,
+        "margin_optimized": 26.180138568129337
+      },
+      {
+        "name": "Suuri muutto",
+        "revenue_current": 1652.45,
+        "revenue_optimized": 2399,
+        "profit_current": -114.74599999999987,
+        "profit_optimized": 572.0799999999999,
+        "margin_current": -6.94399225392598,
+        "margin_optimized": 23.84660275114631
+      },
+      {
+        "name": "Yritysmuutto",
+        "revenue_current": 2187.7,
+        "revenue_optimized": 3249,
+        "profit_current": 137.68399999999974,
+        "profit_optimized": 1114.08,
+        "margin_current": 6.2935503039721965,
+        "margin_optimized": 34.28993536472761
+      }
+    ]
+  }
+}

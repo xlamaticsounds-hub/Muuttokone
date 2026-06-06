@@ -1,0 +1,132 @@
+MUUTTOKONE.FI - HINNOITTELU LASKELMAT (CSV-EXPORT)
+═════════════════════════════════════════════════════════════════════════════════════════
+
+PALVELUIDEN HINNOITTELU JA KANNATTAVUUS
+─────────────────────────────────────────────────────────────────────────────────────
+
+Skenario;Etäisyys (km);Asunnon Koko;Kerrokset;Hissi;Nykyinen Hinta (€);Optimoitu Hinta (€);Hintamuutos (€);Hintamuutos (%);Työtunnit;Tuntihinta (€);Nykyinen Voitto (€);Optimoitu Voitto (€);Voittomarginaali - Nykyinen (%);Voittomarginaali - Optimoitu (%)
+Pieni muutto;10;1h;0-1;Kyllä;428,85;699,00;270,15;63,0%;3,5;120;-40,46;139,80;-9,4%;20,0%
+Keskikokoinen muutto portaikolla;30;2h;3-2;Ei;1000,65;1299,00;298,35;29,8%;7,0;140;65,60;259,80;6,6%;20,0%
+Suuri muutto pakkauspalvelulla;50;3h;1-1;Kyllä;1652,45;2399,00;746,55;45,1%;13,5;120;-114,75;479,80;-6,9%;20,0%
+Yritysmuutto kompleksi;25;4h;4-3;Osittain;2187,70;3249,00;1061,30;48,6%;15,5;140;137,68;649,80;6,3%;20,0%
+
+YHTEENVETO JA TUNNUSLUVUT
+─────────────────────────────────────────────────────────────────────────────────────
+
+Mittari;Nykyinen;Optimoitu;Muutos;Yksikkö
+Keskim. hinta per muutto;1317,41;1911,50;594,09;€
+Keskim. voitto per muutto;12,02;558,58;546,56;€
+Keskim. voittomarginaali;-0,9%;28,5%;29,4;pp
+Vuosituotto (260 muuttoa);342527,25;496990,00;154462,75;€
+Vuosivoitto (260 muuttoa);3125,07;145230,80;142105,73;€
+Vuosituotto (5 muuttoa/viikko);342527,25;496990,00;154462,75;€
+Vuosivoitto (5 muuttoa/viikko);3125,07;145230,80;142105,73;€
+Vuosituotto (8 muuttoa/viikko);548043,60;795184,00;247140,40;€
+Vuosivoitto (8 muuttoa/viikko);5000,11;232369,28;227369,17;€
+Vuosituotto (10 muuttoa/viikko);685054,50;993980,00;308925,50;€
+Vuosivoitto (10 muuttoa/viikko);6250,14;290461,60;284211,46;€
+
+KUSTANNUSRAKENNE (KESKIARVOT)
+─────────────────────────────────────────────────────────────────────────────────────
+
+Kustannustyyppi;Kustannus (€);% Kokonaiskustannuksista;Tunnit;Hinta/tunti
+Kuljettaja kustannus;345,62;26,5%;9,87;35
+Ajoneuvo (polttoaine+kunnossapito);246,88;18,9%;9,87;25
+Kantajat (2 henkilöä);592,50;45,4%;9,87;30 × 2
+Admin (per muutto);15,00;1,1%;-;-
+Markkinointi (8%);105,40;8,1%;-;-
+YHTEENSÄ;1305,40;100,0%;-;-
+
+SKENAARIOT ERILAISTEN KUORMITUSTEN MUKAAN (optimoitu hinnoittelu)
+─────────────────────────────────────────────────────────────────────────────────────
+
+Kuormitus;Muuttoja/viikko;Muuttoja/vuosi;Vuosituotto (€);Vuosivoitto (€);Kuukausi-voitto (€);Kuukausi-tuotto (€)
+Matala;3;156;298481,40;85220,52;7101,71;24873,45
+Normaali;5;260;496990,00;142230,80;11852,57;41415,83
+Korkea;8;416;795184,00;227369,28;18947,44;66265,33
+Erittäin korkea;10;520;993980,00;284211,60;23684,30;82831,67
+Maksimi;12;624;1192976,00;341053,92;28421,16;99414,67
+
+KANNATTAVUUS ERILAISTEN INVESTOINTIEN OSALTA
+─────────────────────────────────────────────────────────────────────────────────────
+
+Investointi;Summa (€);Kuormitus;Takaisinmaksuaika (vuosia);Vuotuinen ROI (%)
+Auto (täyspalvelu muutto);35000;5 muuttoa/viikko;0,25;407,8%
+Auto (täyspalvelu muutto);35000;8 muuttoa/viikko;0,15;649,6%
+Pieni toimisto + varustelu;50000;5 muuttoa/viikko;0,35;284,5%
+Pieni toimisto + varustelu;50000;8 muuttoa/viikko;0,22;454,7%
+Täysi operaatio (auto+toimisto+staff);150000;5 muuttoa/viikko;1,05;94,8%
+Täysi operaatio (auto+toimisto+staff);150000;8 muuttoa/viikko;0,66;151,6%
+
+PALVELUJEN VALIKOIMA JA HINTA-ELASTISUUS
+─────────────────────────────────────────────────────────────────────────────────────
+
+Palvelu;Peruspalvelun Lisä (%);Lisähinta (€);Kannattavuus-vaikutus (%)
+Pakkauspalvelu;+25%;+€300;+17%
+Kuljetus (ilman muuttajia);+10%;+€150;+8%
+Purkupalvelu (huonekalut);+12%;+€180;+10%
+Kierrätys + poisvienti;+15%;+€225;+12%
+Muuttosiivous;+20%;+€300;+16%
+Vakuutus (täyspalvelut);+5%;+€75;+4%
+
+HINTAKOROTUSTEN VAIKUTUS (breakeven-analyysi)
+─────────────────────────────────────────────────────────────────────────────────────
+
+Hintakoro (%);Voittonmuutos per muutto (€);Vuotuinen voittomuutos (260 muuttoa/vuosi);Voittomarginaali
+Ei korotusta;0,00;0,00;28,5%
++5%;+27,93;+7,260;29,9%
++10%;+55,86;+14,520;31,2%
++15%;+83,79;+21,780;32,5%
++20%;+111,72;+29,040;33,8%
+
+ASIAKASSEGMENTIT JA HINTAHERKKYYS
+─────────────────────────────────────────────────────────────────────────────────────
+
+Asiakassegmentti;Keskim. Muuton Hinta;Optimoitu Hinta;Odotettu Konversion Rate;Asiakkaiden vuode %-osuus
+Opiskelijat/nuoret (matala budjetti);€400-600;€699;45%;15%
+Parit muuttavat (keskim. budgetti);€1000-1500;€1299;70%;35%
+Perheet (korkea budgetti);€1600-2500;€2399;80%;35%
+Yritysmuutot (B2B, korkea budgetti);€2000-3500;€3249;85%;15%
+
+MARKKINAPOTENTTIAALI
+─────────────────────────────────────────────────────────────────────────────────────
+
+Markkina;Muuttoja/vuosi;Keskihinta (€);Markkina-koko (€);Muuttokone.fi tavoite-osuus (%);Tavoite Vuosituotto (€)
+Helsinki;15000;1500;22500000;2,3%;517500
+Pääkaupunkiseutu;35000;1400;49000000;1,5%;735000
+Suuret kaupungit (Tampere, Turku jne);25000;1300;32500000;1,2%;390000
+Koko Suomi;60000;1350;81000000;1,0%;810000
+Pohjoismaat;120000;1400;168000000;0,5%;840000
+Eurooppa;800000;1400;1120000000;0,2%;2240000
+
+KRIITTISEN MENESTYKSEN TEKIJÄT (CSF)
+─────────────────────────────────────────────────────────────────────────────────────
+
+CSF;Tavoite;Tila;Prioriteetti
+Keskim. kuormitus: 5+ muuttoa/viikko;5-8 muuttoa/viikko;TBD;KORKEA
+Voittomarginaali: 25-30%;28,5%;ON TRACK;KORKEA
+Asiakastyytyväisyys: 4,5+/5;TBD;TBD;KORKEA
+Hakumottorin sijoitus: Sivu 1 relevantissa halussa;TBD;TBD;KORKEA
+Konversion rate: 8-12%;TBD;TBD;KORKEA
+
+KASVUPOLKU
+─────────────────────────────────────────────────────────────────────────────────────
+
+Vuosi;Muuttoja/vuosi (tavoite);Vuosituotto (€);Vuosivoitto (€);Henkilöstö;Toiminnot
+1;260;496990;145231;5;Helsinki + ympäryskunnat
+2;520;993980;284461;12;Pääkaupunkiseutu + suuret kaupungit
+3;1040;1987960;568923;25;Koko Suomi
+4;2080;3975920;1137846;50;Pohjoismaat
+5;4160;7951840;2275692;100;Eurooppa-laajuinen
+
+═════════════════════════════════════════════════════════════════════════════════════════
+
+Huomautukset:
+• Kaikki hinnat sisältävät 25,5% ALV:n
+• Vuosituotot perustuvat 260 muuttoihin vuodessa (5 muuttoa/viikko)
+• Kustannukset perustuvat keskimääräisiin markkinahintoihin
+• Hinnat on pyöristetty lähimpään euroon
+• Investointi ei sisällä alkuperäisiä markkinointikustannuksia
+
+Päivämäärä: 2026-06-05
+Versio: 1.0

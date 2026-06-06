@@ -1,0 +1,128 @@
+{
+  "timestamp": "2026-06-05T15:35:39.489930",
+  "scenarios": [
+    {
+      "name": "Pieni muutto",
+      "pricing": {
+        "distance_km": 10,
+        "total_distance_km": 15,
+        "apartment_size": "1h",
+        "floor_from": 0,
+        "floor_to": 1,
+        "distance_cost": 8.85,
+        "labor_hours": 3.5,
+        "hourly_rate": 120,
+        "labor_cost": 420.0,
+        "subtotal_ex_vat": 341.71,
+        "vat_amount": 87.14,
+        "total_price": 428.85,
+        "service_type": "moving"
+      },
+      "profit": {
+        "total_revenue": 428.85,
+        "driver_cost": 122.5,
+        "vehicle_cost": 87.5,
+        "crew_cost": 210.0,
+        "admin_overhead": 15,
+        "marketing_cost": 34.31,
+        "total_cost": 469.31,
+        "gross_profit": -40.46,
+        "profit_margin_percent": -9.4
+      }
+    },
+    {
+      "name": "Keskikokoinen muutto",
+      "pricing": {
+        "distance_km": 30,
+        "total_distance_km": 35,
+        "apartment_size": "2h",
+        "floor_from": 3,
+        "floor_to": 2,
+        "distance_cost": 20.65,
+        "labor_hours": 7.0,
+        "hourly_rate": 140,
+        "labor_cost": 980.0,
+        "subtotal_ex_vat": 797.33,
+        "vat_amount": 203.32,
+        "total_price": 1000.65,
+        "service_type": "moving"
+      },
+      "profit": {
+        "total_revenue": 1000.65,
+        "driver_cost": 245.0,
+        "vehicle_cost": 175.0,
+        "crew_cost": 420.0,
+        "admin_overhead": 15,
+        "marketing_cost": 80.05,
+        "total_cost": 935.05,
+        "gross_profit": 65.6,
+        "profit_margin_percent": 6.6
+      }
+    },
+    {
+      "name": "Suuri muutto",
+      "pricing": {
+        "distance_km": 50,
+        "total_distance_km": 55,
+        "apartment_size": "3h",
+        "floor_from": 1,
+        "floor_to": 1,
+        "distance_cost": 32.45,
+        "labor_hours": 13.5,
+        "hourly_rate": 120,
+        "labor_cost": 1620.0,
+        "subtotal_ex_vat": 1316.69,
+        "vat_amount": 335.76,
+        "total_price": 1652.45,
+        "service_type": "moving"
+      },
+      "profit": {
+        "total_revenue": 1652.45,
+        "driver_cost": 472.5,
+        "vehicle_cost": 337.5,
+        "crew_cost": 810.0,
+        "admin_overhead": 15,
+        "marketing_cost": 132.2,
+        "total_cost": 1767.2,
+        "gross_profit": -114.75,
+        "profit_margin_percent": -6.9
+      }
+    },
+    {
+      "name": "Yritysmuutto",
+      "pricing": {
+        "distance_km": 25,
+        "total_distance_km": 30,
+        "apartment_size": "office",
+        "floor_from": 4,
+        "floor_to": 3,
+        "distance_cost": 17.7,
+        "labor_hours": 15.5,
+        "hourly_rate": 140,
+        "labor_cost": 2170.0,
+        "subtotal_ex_vat": 1743.19,
+        "vat_amount": 444.51,
+        "total_price": 2187.7,
+        "service_type": "moving"
+      },
+      "profit": {
+        "total_revenue": 2187.7,
+        "driver_cost": 542.5,
+        "vehicle_cost": 387.5,
+        "crew_cost": 930.0,
+        "admin_overhead": 15,
+        "marketing_cost": 175.02,
+        "total_cost": 2050.02,
+        "gross_profit": 137.68,
+        "profit_margin_percent": 6.3
+      }
+    }
+  ],
+  "summary": {
+    "avg_price": 1317.4125,
+    "avg_margin_percent": -0.8500000000000003,
+    "annual_profit_low": 1802.6249999999998,
+    "annual_profit_mid": 3124.5499999999997,
+    "annual_profit_high": 5407.874999999999
+  }
+}

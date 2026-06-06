@@ -9,9 +9,10 @@ import toast from 'react-hot-toast';
 import { Loader2, ArrowRight, ArrowLeft, Calculator as CalcIcon, Calendar, CheckCircle2 } from 'lucide-react';
 
 const STEPS = [
+  { id: 'service', title: 'Palvelu' },
   { id: 'locations', title: 'Sijainti' },
   { id: 'details', title: 'Asunnon tiedot' },
-  { id: 'inventory', title: 'Muutettava tavara' },
+  { id: 'inventory', title: 'Tavarat' },
   { id: 'quote', title: 'Hinta-arvio' },
   { id: 'booking', title: 'Varaus' },
 ];
@@ -19,6 +20,8 @@ const STEPS = [
 export default function Calculator() {
   const [currentStep, setCurrentStep] = useState(0);
   const [formData, setFormData] = useState<CalculatorData>({
+    serviceType: 'moving',
+    movingPackage: 'full_service',
     addressFrom: '',
     addressTo: '',
     distanceKm: 5,
@@ -49,6 +52,13 @@ export default function Calculator() {
   const scriptLoaded = useRef(false);
 
   const priceResult = useMemo(() => calculateMovingPrice(formData), [formData]);
+
+  // Helper function to get inventory step label based on service type
+  const getInventoryLabel = () => {
+    if (formData.serviceType === 'recycling') return 'Poistettavat tavarat';
+    if (formData.serviceType === 'transport') return 'Kuljetettavat tavarat';
+    return 'Muutettava tavara';
+  };
 
   // Prefill contact info from quick quote data stored in localStorage
   useEffect(() => {
@@ -115,8 +125,51 @@ export default function Calculator() {
     }
   }, [currentStep]); // Also re-init if we return to step 0
 
+  // Calculate distance automatically using Google Maps Distance Matrix API
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const google = (window as any).google;
+    if (!google || !google.maps || !formData.addressFrom || !formData.addressTo) return;
+
+    const service = new google.maps.DistanceMatrixService();
+    
+    service.getDistanceMatrix({
+      origins: [formData.addressFrom],
+      destinations: [formData.addressTo],
+      travelMode: google.maps.TravelMode.DRIVING,
+      unitSystem: google.maps.UnitSystem.METRIC,
+    }, (response: any, status: any) => {
+      if (status === google.maps.DistanceMatrixStatus.OK && response.rows[0].elements[0].status === google.maps.DistanceMatrixElementStatus.OK) {
+        const distanceInMeters = response.rows[0].elements[0].distance.value;
+        const distanceInKm = Math.round(distanceInMeters / 1000);
+        // Only update if distance is reasonable (between 1km and 500km)
+        if (distanceInKm >= 1 && distanceInKm <= 500) {
+          updateField('distanceKm', distanceInKm);
+        }
+      } else if (status !== google.maps.DistanceMatrixStatus.OK) {
+        console.warn('Distance Matrix API error:', status);
+      }
+    });
+  }, [formData.addressFrom, formData.addressTo]);
+
   const handleNext = () => {
-    if (currentStep === 0 && (!formData.addressFrom || !formData.addressTo)) {
+    // Validate service step
+    if (currentStep === 0 && !formData.serviceType) {
+      toast.error('Valitse palvelu');
+      return;
+    }
+    // Validate moving package step
+    if (currentStep === 1 && formData.serviceType === 'moving' && !formData.movingPackage) {
+      toast.error('Valitse muuttopaketti');
+      return;
+    }
+    // Skip moving package step if not moving
+    if (currentStep === 1 && formData.serviceType !== 'moving') {
+      setCurrentStep(2);
+      return;
+    }
+    // Validate locations step
+    if (currentStep === 2 && (!formData.addressFrom || !formData.addressTo)) {
       toast.error('Täytä molemmat osoitteet');
       return;
     }
@@ -124,6 +177,11 @@ export default function Calculator() {
   };
 
   const handleBack = () => {
+    // If we're at a step after moving package and service is not moving, skip back one more
+    if (currentStep === 2 && formData.serviceType !== 'moving') {
+      setCurrentStep(0);
+      return;
+    }
     setCurrentStep((prev) => Math.max(prev - 1, 0));
   };
 
@@ -220,28 +278,48 @@ export default function Calculator() {
       {/* Progress Bar */}
       <div className="bg-gray-50 dark:bg-gray-800/50 px-8 py-6 border-b border-gray-100 dark:border-gray-800">
         <div className="flex justify-between items-center mb-4">
-          {STEPS.map((step, idx) => (
-            <div key={step.id} className="flex flex-col items-center flex-1">
-              <div 
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition-all ${
-                  idx <= currentStep 
-                    ? 'bg-primary text-white shadow-lg shadow-primary/30' 
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
-                }`}
-              >
-                {idx < currentStep ? '✓' : idx + 1}
+          {STEPS.map((step, idx) => {
+            // Skip moving package step if not moving
+            if (idx === 1 && formData.serviceType !== 'moving') {
+              return null;
+            }
+            
+            // Adjust display index for steps after moving package
+            const displayIdx = idx > 1 && formData.serviceType !== 'moving' ? idx - 1 : idx;
+            const isCompleted = formData.serviceType === 'moving' 
+              ? idx < currentStep 
+              : (idx === 0 ? currentStep >= 0 : currentStep >= idx - 1);
+            const isCurrent = formData.serviceType === 'moving'
+              ? idx === currentStep
+              : (idx === 0 ? currentStep === 0 : currentStep === idx - 1);
+
+            return (
+              <div key={step.id} className="flex flex-col items-center flex-1">
+                <div 
+                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition-all ${
+                    isCompleted || isCurrent
+                      ? 'bg-primary text-white shadow-lg shadow-primary/30' 
+                      : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
+                  }`}
+                >
+                  {isCompleted && idx > 0 ? '✓' : displayIdx + 1}
+                </div>
+                <span className={`text-xs font-medium hidden md:block ${isCompleted || isCurrent ? 'text-primary' : 'text-gray-400'}`}>
+                  {step.title}
+                </span>
               </div>
-              <span className={`text-xs font-medium hidden md:block ${idx <= currentStep ? 'text-primary' : 'text-gray-400'}`}>
-                {step.title}
-              </span>
-            </div>
-          ))}
+            );
+          })}
         </div>
         <div className="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full overflow-hidden">
           <motion.div 
             className="bg-primary h-full"
             initial={{ width: 0 }}
-            animate={{ width: `${(currentStep / (STEPS.length - 1)) * 100}%` }}
+            animate={{ width: `${
+              formData.serviceType === 'moving'
+                ? (currentStep / (STEPS.length - 1)) * 100
+                : (currentStep / (STEPS.length - 2)) * 100
+            }%` }}
           />
         </div>
       </div>
@@ -255,8 +333,174 @@ export default function Calculator() {
             exit={{ opacity: 0, x: -20 }}
             className="min-h-[400px]"
           >
-            {/* Step 1: Locations */}
+            {/* Step 0: Service Selection */}
             {currentStep === 0 && (
+              <div className="space-y-8">
+                <div className="text-center mb-10">
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Valitse palvelu</h2>
+                  <p className="text-gray-500">Mitä palvelua tarvitset?</p>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-6">
+                  {/* Muutto */}
+                  <div
+                    onClick={() => updateField('serviceType', 'moving')}
+                    className={`p-8 rounded-2xl border-2 cursor-pointer transition-all ${
+                      formData.serviceType === 'moving'
+                        ? 'border-primary bg-primary/5 shadow-lg shadow-primary/20'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="text-4xl mb-4">📦</div>
+                    <h3 className="font-bold text-lg mb-2">Muutto</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Kodin tai toimiston muutto uuteen osoitteeseen.
+                    </p>
+                  </div>
+
+                  {/* Kuljetus */}
+                  <div
+                    onClick={() => updateField('serviceType', 'transport')}
+                    className={`p-8 rounded-2xl border-2 cursor-pointer transition-all ${
+                      formData.serviceType === 'transport'
+                        ? 'border-primary bg-primary/5 shadow-lg shadow-primary/20'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="text-4xl mb-4">🚚</div>
+                    <h3 className="font-bold text-lg mb-2">Kuljetus</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Yksittäisten tavaroiden, huonekalujen tai ostosten kuljetus.
+                    </p>
+                  </div>
+
+                  {/* Kierrätys */}
+                  <div
+                    onClick={() => updateField('serviceType', 'recycling')}
+                    className={`p-8 rounded-2xl border-2 cursor-pointer transition-all ${
+                      formData.serviceType === 'recycling'
+                        ? 'border-primary bg-primary/5 shadow-lg shadow-primary/20'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="text-4xl mb-4">♻️</div>
+                    <h3 className="font-bold text-lg mb-2">Kierrätys</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Vanhojen huonekalujen, roskien ja ylimääräisten tavaroiden poisvienti.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 1: Moving Package (only visible if service is moving) */}
+            {currentStep === 1 && formData.serviceType === 'moving' && (
+              <div className="space-y-8">
+                <div className="text-center mb-10">
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Olet valinnut muuttopalvelun</h2>
+                  <p className="text-gray-500 mb-8">Valitse muuttopaketti</p>
+                </div>
+
+                <div className="space-y-4">
+                  {/* Täyspalvelu */}
+                  <div
+                    onClick={() => updateField('movingPackage', 'full_service')}
+                    className={`p-8 rounded-2xl border-2 cursor-pointer transition-all ${
+                      formData.movingPackage === 'full_service'
+                        ? 'border-primary bg-primary/5 shadow-lg shadow-primary/20'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-lg mb-1">Täyspalvelu</h3>
+                        <span className="inline-block text-xs font-bold bg-primary/10 text-primary px-3 py-1 rounded-full mb-3">
+                          Suositeltu
+                        </span>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Kantajat, sopiva kuljetusauto ja vähintään herkimpien tavaroiden suojaus.
+                        </p>
+                      </div>
+                      <div
+                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ml-4 flex-shrink-0 ${
+                          formData.movingPackage === 'full_service'
+                            ? 'border-primary bg-primary'
+                            : 'border-gray-300'
+                        }`}
+                      >
+                        {formData.movingPackage === 'full_service' && (
+                          <span className="text-white text-xs">✓</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Vain kuljettaja ajoneuvolla */}
+                  <div
+                    onClick={() => updateField('movingPackage', 'driver_with_vehicle')}
+                    className={`p-8 rounded-2xl border-2 cursor-pointer transition-all ${
+                      formData.movingPackage === 'driver_with_vehicle'
+                        ? 'border-primary bg-primary/5 shadow-lg shadow-primary/20'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-lg mb-3">Vain kuljettaja ajoneuvolla</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Pääsen itse auttamaan kantamisessa.
+                        </p>
+                      </div>
+                      <div
+                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ml-4 flex-shrink-0 ${
+                          formData.movingPackage === 'driver_with_vehicle'
+                            ? 'border-primary bg-primary'
+                            : 'border-gray-300'
+                        }`}
+                      >
+                        {formData.movingPackage === 'driver_with_vehicle' && (
+                          <span className="text-white text-xs">✓</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Vain kantoapu */}
+                  <div
+                    onClick={() => updateField('movingPackage', 'carrying_help')}
+                    className={`p-8 rounded-2xl border-2 cursor-pointer transition-all ${
+                      formData.movingPackage === 'carrying_help'
+                        ? 'border-primary bg-primary/5 shadow-lg shadow-primary/20'
+                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-lg mb-3">Vain kantoapu</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          Tarvitsen vain kantajat.
+                        </p>
+                        <p className="text-xs text-gray-500 mt-2">89,90 €/h, min. 2 h</p>
+                      </div>
+                      <div
+                        className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ml-4 flex-shrink-0 ${
+                          formData.movingPackage === 'carrying_help'
+                            ? 'border-primary bg-primary'
+                            : 'border-gray-300'
+                        }`}
+                      >
+                        {formData.movingPackage === 'carrying_help' && (
+                          <span className="text-white text-xs">✓</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Locations */}
+            {currentStep === (formData.serviceType === 'moving' ? 2 : 1) && (
               <div className="space-y-6">
                 <div className="text-center mb-10">
                   <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Mistä ja mihin muutetaan?</h2>
@@ -323,8 +567,8 @@ export default function Calculator() {
               </div>
             )}
 
-            {/* Step 2: Apartment Details */}
-            {currentStep === 1 && (
+            {/* Step 3: Apartment Details */}
+            {currentStep === (formData.serviceType === 'moving' ? 3 : 2) && (
               <div className="space-y-8">
                 <div className="text-center mb-8">
                   <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Asunnon koko ja kerrokset</h2>
@@ -413,11 +657,11 @@ export default function Calculator() {
               </div>
             )}
 
-            {/* Step 3: Inventory */}
-            {currentStep === 2 && (
+            {/* Step 4: Inventory */}
+            {currentStep === (formData.serviceType === 'moving' ? 4 : 3) && (
               <div className="space-y-8">
                 <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Tavaramäärä ja lisäpalvelut</h2>
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{getInventoryLabel()}</h2>
                   <p className="text-gray-500">Tarkempi arvio auttaa meitä varaamaan oikean kokoisen auton.</p>
                 </div>
 
@@ -591,11 +835,13 @@ export default function Calculator() {
               </div>
             )}
 
-            {/* Step 4: Quote */}
-            {currentStep === 3 && (
+            {/* Step 5: Quote */}
+            {currentStep === (formData.serviceType === 'moving' ? 5 : 4) && (
               <div className="space-y-8">
                 <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Hinta-arviosi</h2>
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                    {formData.serviceType === 'transport' ? 'Kuljetuksen hinta-arvio' : 'Hinta-arviosi'}
+                  </h2>
                   <p className="text-gray-500">Laskettu annettujen tietojen perusteella.</p>
                 </div>
 
@@ -615,7 +861,9 @@ export default function Calculator() {
                         </div>
                         <div>
                           <p className="text-xs uppercase font-bold text-white/60 mb-1">Tiimi</p>
-                          <p className="text-xl font-bold">Kuorma-auto + 2 miestä</p>
+                          <p className="text-xl font-bold">
+                            {formData.serviceType === 'transport' ? 'Kuljettaja + Kuorma-auto' : 'Kuorma-auto + 2 miestä'}
+                          </p>
                         </div>
                       </div>
                    </div>
@@ -642,12 +890,14 @@ export default function Calculator() {
               </div>
             )}
 
-            {/* Step 5: Booking */}
-            {currentStep === 4 && (
+            {/* Step 6: Booking */}
+            {currentStep === (formData.serviceType === 'moving' ? 6 : 5) && (
               <form onSubmit={handleBooking} className="space-y-6">
                 <div className="text-center mb-8">
                   <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Viimeistele varaus</h2>
-                  <p className="text-gray-500">Valitse muuttopäivä ja jätä yhteystietosi.</p>
+                  <p className="text-gray-500">
+                    {formData.serviceType === 'transport' ? 'Valitse kuljetuspäivä' : 'Valitse muuttopäivä'} ja jätä yhteystietosi.
+                  </p>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-6">
@@ -717,7 +967,7 @@ export default function Calculator() {
                       </>
                     ) : (
                       <>
-                        Vahvista muuttovaraus
+                        {formData.serviceType === 'transport' ? 'Vahvista kuljetusvaraus' : 'Vahvista muuttovaraus'}
                         <ArrowRight className="w-6 h-6" />
                       </>
                     )}
@@ -729,7 +979,7 @@ export default function Calculator() {
         </AnimatePresence>
 
         {/* Navigation Buttons */}
-        {currentStep < 4 && (
+        {currentStep < (formData.serviceType === 'moving' ? 6 : 5) && (
           <div className="mt-12 flex items-center justify-between">
             <button
               onClick={handleBack}
@@ -747,7 +997,7 @@ export default function Calculator() {
               onClick={handleNext}
               className="bg-black dark:bg-white dark:text-black text-white px-12 py-4 rounded-xl font-bold hover:scale-105 transition-all flex items-center gap-2 shadow-xl"
             >
-              {currentStep === 3 ? 'Siirry varaukseen' : 'Seuraava'}
+              {currentStep === (formData.serviceType === 'moving' ? 5 : 4) ? 'Siirry varaukseen' : 'Seuraava'}
               <ArrowRight className="w-5 h-5" />
             </button>
           </div>
