@@ -8,6 +8,6 @@
     "healthcheckPath": "/api/health",
     "restartPolicyType": "ON_FAILURE",
     "sleepApplication": false,
-    "preDeployCommand": "node_modules/.bin/prisma migrate deploy"
+    "preDeployCommand": "node_modules/.bin/prisma migrate resolve --rolled-back 20251225121541_first && node_modules/.bin/prisma migrate deploy"
   }
 }
