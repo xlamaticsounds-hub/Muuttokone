@@ -1,6 +1,11 @@
 import { withAuth } from "next-auth/middleware";
 
 export default withAuth({
+  cookies: {
+    sessionToken: {
+      name: "next-auth.session-token",
+    },
+  },
   callbacks: {
     authorized: ({ token, req }) => {
       // Only allowed emails can access admin or AI generation tools
