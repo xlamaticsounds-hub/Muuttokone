@@ -4,9 +4,22 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 import { motion, AnimatePresence } from 'framer-motion';
-import { calculateMovingPrice, CalculatorData, PriceBreakdown, FURNITURE_CATALOG } from './pricing';
+import { calculateMovingPrice, CalculatorData, PriceBreakdown, FURNITURE_CATALOG, INCLUDED_DISTANCE_KM } from './pricing';
 import toast from 'react-hot-toast';
 import { Loader2, ArrowRight, ArrowLeft, Calculator as CalcIcon, Calendar, CheckCircle2 } from 'lucide-react';
+
+const DIFFICULTY_BADGES: Record<PriceBreakdown['difficultyLevel'], { emoji: string; label: string }> = {
+  easy: { emoji: '🟢', label: 'Helppo muutto' },
+  medium: { emoji: '🟡', label: 'Keskivaikea muutto' },
+  hard: { emoji: '🔴', label: 'Vaativa muutto' },
+};
+
+const CARRY_DISTANCE_OPTIONS: { value: CalculatorData['carryDistanceFrom']; label: string }[] = [
+  { value: '<10', label: 'Alle 10 m' },
+  { value: '10-30', label: '10–30 m' },
+  { value: '30-50', label: '30–50 m' },
+  { value: '50+', label: 'Yli 50 m' },
+];
 
 const STEPS = [
   { id: 'service', title: 'Palvelu' },
@@ -30,7 +43,9 @@ export default function Calculator() {
     elevatorFrom: true,
     floorTo: 0,
     elevatorTo: true,
-    boxCount: 20,
+    carryDistanceFrom: '<10',
+    carryDistanceTo: '<10',
+    boxCount: 0,
     heavyItems: [],
     furnitureItems: {},
     needsPacking: false,
@@ -45,7 +60,7 @@ export default function Calculator() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
-  
+
   // Autocomplete Refs
   const fromRef = useRef<HTMLInputElement>(null);
   const toRef = useRef<HTMLInputElement>(null);
@@ -59,6 +74,33 @@ export default function Calculator() {
     if (formData.serviceType === 'transport') return 'Kuljetettavat tavarat';
     return 'Muutettava tavara';
   };
+
+  // Hinta-arvioon aina sisältyvät hyödyt (ei lisäpalveluita) — vaihtelee palvelupaketin mukaan
+  const getIncludedServices = () => {
+    if (formData.serviceType === 'transport' || formData.movingPackage === 'driver_with_vehicle') {
+      return ['Kuljettaja + kuorma-auto', 'Muuttovakuutus', `Ensimmäiset ${INCLUDED_DISTANCE_KM} km sisältyvät hintaan`, 'ALV sisältyy hintaan'];
+    }
+    if (formData.movingPackage === 'carrying_help') {
+      return ['2 kantajaa', 'Muuttovakuutus', 'ALV sisältyy hintaan'];
+    }
+    return [
+      '2 muuttajaa',
+      'Muuttoauto',
+      'Muuttovakuutus',
+      'Suojamateriaalit',
+      `Ensimmäiset ${INCLUDED_DISTANCE_KM} km sisältyvät hintaan`,
+      'ALV sisältyy hintaan',
+    ];
+  };
+
+  const formatDateInput = (date?: Date) => (date ? new Date(date).toISOString().slice(0, 10) : '');
+
+  const selectedInventoryItems = Object.entries(formData.furnitureItems)
+    .filter(([, qty]) => qty > 0)
+    .flatMap(([id, qty]) => {
+      const item = FURNITURE_CATALOG.find((f) => f.id === id);
+      return item ? [{ id, label: item.label, icon: item.icon, qty }] : [];
+    });
 
   // Prefill contact info from quick quote data stored in localStorage
   useEffect(() => {
@@ -86,7 +128,7 @@ export default function Calculator() {
       console.warn('Google Maps Places library not available');
       return;
     }
-    
+
     // Initialize From Address
     if (fromRef.current) {
       const fromAutocomplete = new google.maps.places.Autocomplete(fromRef.current, {
@@ -132,7 +174,7 @@ export default function Calculator() {
     if (!google || !google.maps || !formData.addressFrom || !formData.addressTo) return;
 
     const service = new google.maps.DistanceMatrixService();
-    
+
     service.getDistanceMatrix({
       origins: [formData.addressFrom],
       destinations: [formData.addressTo],
@@ -173,7 +215,8 @@ export default function Calculator() {
       toast.error('Täytä molemmat osoitteet');
       return;
     }
-    setCurrentStep((prev) => Math.min(prev + 1, STEPS.length - 1));
+    const maxStep = formData.serviceType === 'moving' ? 6 : 5;
+    setCurrentStep((prev) => Math.min(prev + 1, maxStep));
   };
 
   const handleBack = () => {
@@ -212,14 +255,21 @@ export default function Calculator() {
   const furnitureCategories = [...new Set(FURNITURE_CATALOG.map((f) => f.category))];
   const totalFurniturePieces = Object.values(formData.furnitureItems).reduce((s, n) => s + n, 0);
 
+  // Laatikkomäärä luetaan suoraan tavaralistasta (ei erillistä liukusäädintä) jotta
+  // työmäärä ei lasketa tuplana.
+  const derivedBoxCount = Object.entries(formData.furnitureItems).reduce((sum, [id, qty]) => {
+    const item = FURNITURE_CATALOG.find((f) => f.id === id);
+    return item?.category === 'Laatikot ja pakkaukset' ? sum + qty : sum;
+  }, 0);
+
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
-      
+
       const response = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -227,7 +277,10 @@ export default function Calculator() {
           type: 'booking',
           data: {
             ...formData,
+            boxCount: derivedBoxCount,
             price: priceResult.total,
+            priceRangeLow: priceResult.priceRangeLow,
+            priceRangeHigh: priceResult.priceRangeHigh,
             contactName: formData.contactName,
             contactEmail: formData.contactEmail,
             contactPhone: formData.contactPhone,
@@ -260,10 +313,10 @@ export default function Calculator() {
         </div>
         <h2 className="text-3xl font-bold mb-4">Kiitos varauksestasi!</h2>
         <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg">
-          Olemme vastaanottaneet muuttovarauksesi. <br /> 
+          Olemme vastaanottaneet muuttovarauksesi. <br />
           Saat vahvistuksen sähköpostiisi pian ja olemme sinuun yhteydessä puhelimitse.
         </p>
-        <button 
+        <button
           onClick={() => window.location.reload()}
           className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-full font-semibold transition-all"
         >
@@ -283,11 +336,11 @@ export default function Calculator() {
             if (idx === 1 && formData.serviceType !== 'moving') {
               return null;
             }
-            
+
             // Adjust display index for steps after moving package
             const displayIdx = idx > 1 && formData.serviceType !== 'moving' ? idx - 1 : idx;
-            const isCompleted = formData.serviceType === 'moving' 
-              ? idx < currentStep 
+            const isCompleted = formData.serviceType === 'moving'
+              ? idx < currentStep
               : (idx === 0 ? currentStep >= 0 : currentStep >= idx - 1);
             const isCurrent = formData.serviceType === 'moving'
               ? idx === currentStep
@@ -295,10 +348,10 @@ export default function Calculator() {
 
             return (
               <div key={step.id} className="flex flex-col items-center flex-1">
-                <div 
+                <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition-all ${
                     isCompleted || isCurrent
-                      ? 'bg-primary text-white shadow-lg shadow-primary/30' 
+                      ? 'bg-primary text-white shadow-lg shadow-primary/30'
                       : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
                   }`}
                 >
@@ -312,7 +365,7 @@ export default function Calculator() {
           })}
         </div>
         <div className="w-full bg-gray-200 dark:bg-gray-700 h-1.5 rounded-full overflow-hidden">
-          <motion.div 
+          <motion.div
             className="bg-primary h-full"
             initial={{ width: 0 }}
             animate={{ width: `${
@@ -480,7 +533,7 @@ export default function Calculator() {
                         <p className="text-sm text-gray-600 dark:text-gray-400">
                           Tarvitsen vain kantajat.
                         </p>
-                        <p className="text-xs text-gray-500 mt-2">89,90 €/h, min. 2 h</p>
+                        <p className="text-xs text-gray-500 mt-2">89,90 €/h, min. 180 €</p>
                       </div>
                       <div
                         className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ml-4 flex-shrink-0 ${
@@ -514,7 +567,7 @@ export default function Calculator() {
                   )}
                   <div>
                     <label className="block text-sm font-semibold mb-2">Lähtöosoite</label>
-                    <input 
+                    <input
                       ref={fromRef}
                       type="text"
                       className="w-full px-5 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all"
@@ -525,7 +578,7 @@ export default function Calculator() {
                   </div>
                   <div>
                     <label className="block text-sm font-semibold mb-2">Määränpää</label>
-                    <input 
+                    <input
                       ref={toRef}
                       type="text"
                       className="w-full px-5 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all"
@@ -537,7 +590,7 @@ export default function Calculator() {
                   <div className="pt-4">
                     <label className="block text-sm font-semibold mb-2">Arvioitu etäisyys (km)</label>
                     <div className="flex items-center gap-4">
-                      <input 
+                      <input
                         type="range"
                         min="1"
                         max="500"
@@ -574,15 +627,15 @@ export default function Calculator() {
                   <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Asunnon koko ja kerrokset</h2>
                   <p className="text-gray-500">Nämä vaikuttavat tarvittavaan aikaan ja miehitykseen.</p>
                 </div>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                   {(['1h', '2h', '3h', '4h+', 'office'] as const).map((size) => (
                     <button
                       key={size}
                       onClick={() => updateField('apartmentSize', size)}
                       className={`py-4 rounded-xl border-2 transition-all font-bold ${
-                        formData.apartmentSize === size 
-                          ? 'border-primary bg-primary/5 text-primary' 
+                        formData.apartmentSize === size
+                          ? 'border-primary bg-primary/5 text-primary'
                           : 'border-gray-100 dark:border-gray-700 hover:border-gray-300'
                       }`}
                     >
@@ -600,7 +653,7 @@ export default function Calculator() {
                     <div className="space-y-4">
                       <div>
                         <label className="text-xs font-bold uppercase text-gray-400">Kerros</label>
-                        <select 
+                        <select
                           className="w-full bg-transparent border-b border-gray-300 dark:border-gray-600 py-2 outline-none"
                           value={formData.floorFrom}
                           onChange={(e) => updateField('floorFrom', parseInt(e.target.value))}
@@ -613,13 +666,23 @@ export default function Calculator() {
                           <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.elevatorFrom ? 'left-7' : 'left-1'}`} />
                         </div>
                         <span className="font-medium">Hissi käytössä</span>
-                        <input 
-                          type="checkbox" 
-                          className="hidden" 
+                        <input
+                          type="checkbox"
+                          className="hidden"
                           checked={formData.elevatorFrom}
                           onChange={(e) => updateField('elevatorFrom', e.target.checked)}
                         />
                       </label>
+                      <div>
+                        <label className="text-xs font-bold uppercase text-gray-400">Kantomatka ovelta autoon</label>
+                        <select
+                          className="w-full bg-transparent border-b border-gray-300 dark:border-gray-600 py-2 outline-none"
+                          value={formData.carryDistanceFrom}
+                          onChange={(e) => updateField('carryDistanceFrom', e.target.value)}
+                        >
+                          {CARRY_DISTANCE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                        </select>
+                      </div>
                     </div>
                   </div>
 
@@ -631,7 +694,7 @@ export default function Calculator() {
                     <div className="space-y-4">
                       <div>
                         <label className="text-xs font-bold uppercase text-gray-400">Kerros</label>
-                        <select 
+                        <select
                           className="w-full bg-transparent border-b border-gray-300 dark:border-gray-600 py-2 outline-none"
                           value={formData.floorTo}
                           onChange={(e) => updateField('floorTo', parseInt(e.target.value))}
@@ -644,13 +707,23 @@ export default function Calculator() {
                           <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.elevatorTo ? 'left-7' : 'left-1'}`} />
                         </div>
                         <span className="font-medium">Hissi käytössä</span>
-                        <input 
-                          type="checkbox" 
-                          className="hidden" 
+                        <input
+                          type="checkbox"
+                          className="hidden"
                           checked={formData.elevatorTo}
                           onChange={(e) => updateField('elevatorTo', e.target.checked)}
                         />
                       </label>
+                      <div>
+                        <label className="text-xs font-bold uppercase text-gray-400">Kantomatka autolta ovelle</label>
+                        <select
+                          className="w-full bg-transparent border-b border-gray-300 dark:border-gray-600 py-2 outline-none"
+                          value={formData.carryDistanceTo}
+                          onChange={(e) => updateField('carryDistanceTo', e.target.value)}
+                        >
+                          {CARRY_DISTANCE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                        </select>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -662,38 +735,16 @@ export default function Calculator() {
               <div className="space-y-8">
                 <div className="text-center mb-8">
                   <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{getInventoryLabel()}</h2>
-                  <p className="text-gray-500">Tarkempi arvio auttaa meitä varaamaan oikean kokoisen auton.</p>
-                </div>
-
-                <div className="bg-gray-50 dark:bg-gray-800/50 p-8 rounded-3xl">
-                  <label className="block font-bold mb-6 text-center">Muuttolaatikoiden arvioitu määrä</label>
-                  <div className="flex items-center gap-8 justify-center">
-                    <button 
-                      onClick={() => updateField('boxCount', Math.max(0, formData.boxCount - 5))}
-                      className="w-12 h-12 rounded-full border-2 border-primary text-primary flex items-center justify-center text-2xl font-bold hover:bg-primary hover:text-white transition-all"
-                    >
-                      -
-                    </button>
-                    <div className="text-center">
-                      <span className="text-5xl font-black text-primary">{formData.boxCount}</span>
-                      <p className="text-xs font-bold uppercase text-gray-400 mt-2">Kpl</p>
-                    </div>
-                    <button 
-                      onClick={() => updateField('boxCount', formData.boxCount + 5)}
-                      className="w-12 h-12 rounded-full border-2 border-primary text-primary flex items-center justify-center text-2xl font-bold hover:bg-primary hover:text-white transition-all"
-                    >
-                      +
-                    </button>
-                  </div>
+                  <p className="text-gray-500">Tavaralista on tärkein tekijä hinta-arviossa — mitä tarkempi lista, sitä tarkempi hinta.</p>
                 </div>
 
                 {/* Furniture List */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-lg">Huonekalut</h3>
+                    <h3 className="font-bold text-lg">Huonekalut ja laatikot</h3>
                     {totalFurniturePieces > 0 && (
                       <span className="text-sm font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">
-                        {totalFurniturePieces} kpl valittu
+                        {totalFurniturePieces} kpl valittu ({derivedBoxCount} laatikkoa)
                       </span>
                     )}
                   </div>
@@ -803,7 +854,7 @@ export default function Calculator() {
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div 
+                  <div
                     onClick={() => updateField('needsPacking', !formData.needsPacking)}
                     className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex items-center gap-4 ${
                       formData.needsPacking ? 'border-primary bg-primary/5' : 'border-gray-100 dark:border-gray-800'
@@ -817,7 +868,7 @@ export default function Calculator() {
                       <p className="text-xs text-gray-500">Me pakkaamme tavarat puolestasi</p>
                     </div>
                   </div>
-                  <div 
+                  <div
                     onClick={() => updateField('needsCleaning', !formData.needsCleaning)}
                     className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex items-center gap-4 ${
                       formData.needsCleaning ? 'border-primary bg-primary/5' : 'border-gray-100 dark:border-gray-800'
@@ -845,12 +896,40 @@ export default function Calculator() {
                   <p className="text-gray-500">Laskettu annettujen tietojen perusteella.</p>
                 </div>
 
+                <div className="max-w-xs mx-auto">
+                  <label className="block text-xs font-bold uppercase text-gray-400 mb-2 text-center">
+                    Muuttopäivä (vaikuttaa hintaan)
+                  </label>
+                  <input
+                    type="date"
+                    className="w-full px-5 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none text-center"
+                    value={formatDateInput(formData.date)}
+                    onChange={(e) => updateField('date', e.target.value ? new Date(e.target.value) : undefined)}
+                  />
+                  {!formData.date && (
+                    <p className="text-xs text-gray-400 text-center mt-2">Valitse päivä nähdäksesi voiko ajankohta tuoda alennusta.</p>
+                  )}
+                </div>
+
+                <div className="flex justify-center gap-3 flex-wrap">
+                  {formData.serviceType === 'moving' && (
+                    <span className="inline-flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800">
+                      <span>{DIFFICULTY_BADGES[priceResult.difficultyLevel].emoji}</span>
+                      {DIFFICULTY_BADGES[priceResult.difficultyLevel].label}
+                    </span>
+                  )}
+                  <span className="inline-flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800">
+                    <span>{priceResult.dateDiscountEmoji}</span>
+                    {priceResult.dateDiscountLabel}
+                  </span>
+                </div>
+
                 <div className="bg-primary text-white p-10 rounded-3xl shadow-xl shadow-primary/20 relative overflow-hidden">
                    <div className="relative z-10">
-                      <p className="text-primary-foreground/80 font-medium mb-1">Arvioitu loppusumma</p>
+                      <p className="text-primary-foreground/80 font-medium mb-1">Arvioitu muuttosi</p>
                       <div className="flex items-end gap-2">
-                        <span className="text-6xl font-black">
-                          {Math.round(priceResult.total)}€
+                        <span className="text-5xl md:text-6xl font-black">
+                          {priceResult.priceRangeLow}–{priceResult.priceRangeHigh}€
                         </span>
                         <span className="text-xl font-bold mb-2">sis. ALV</span>
                       </div>
@@ -862,24 +941,212 @@ export default function Calculator() {
                         <div>
                           <p className="text-xs uppercase font-bold text-white/60 mb-1">Tiimi</p>
                           <p className="text-xl font-bold">
-                            {formData.serviceType === 'transport' ? 'Kuljettaja + Kuorma-auto' : 'Kuorma-auto + 2 miestä'}
+                            {formData.serviceType === 'transport' || formData.movingPackage === 'driver_with_vehicle'
+                              ? 'Kuljettaja + Kuorma-auto'
+                              : formData.movingPackage === 'carrying_help'
+                                ? '2 kantajaa'
+                                : 'Kuorma-auto + 2 miestä'}
                           </p>
+                        </div>
+                        <div>
+                          <p className="text-xs uppercase font-bold text-white/60 mb-1">Muuttoauto</p>
+                          <p className="text-xl font-bold">Sopiva kuorma-auto</p>
+                        </div>
+                        <div>
+                          <p className="text-xs uppercase font-bold text-white/60 mb-1">Vakuutus</p>
+                          <p className="text-xl font-bold">Sisältyy</p>
                         </div>
                       </div>
                    </div>
                    <CalcIcon className="absolute -bottom-10 -right-10 w-64 h-64 text-white/10 rotate-12" />
                 </div>
 
-                <div className="grid gap-3">
-                  <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                    <span className="text-gray-500">Työkustannukset ({priceResult.details.laborHours}h)</span>
-                    <span className="font-bold">{Math.round(priceResult.laborCost)}€</span>
+                {priceResult.dateDiscountAmount > 0 && (
+                  <div className="grid gap-3">
+                    <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                      <span className="text-gray-500">Normaalihinta</span>
+                      <span className="font-bold">{Math.round(priceResult.normalPriceTotal)}€</span>
+                    </div>
+                    <div className="flex justify-between p-4 rounded-xl bg-green-50 dark:bg-green-900/20">
+                      <span className="text-green-700 dark:text-green-300">
+                        Hiljaisen päivän alennus ({Math.round(priceResult.dateDiscountFraction * 100)}%)
+                      </span>
+                      <span className="font-bold text-green-700 dark:text-green-300">-{Math.round(priceResult.dateDiscountAmount)}€</span>
+                    </div>
+                    <div className="flex justify-between p-4 rounded-xl bg-primary/5">
+                      <span className="font-semibold">Lopullinen arvio</span>
+                      <span className="font-bold">{priceResult.priceRangeLow}–{priceResult.priceRangeHigh}€</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                    <span className="text-gray-500">Kilometrikorvaukset ({Math.round(priceResult.details.distanceKm)}km)</span>
-                    <span className="font-bold">{Math.round(priceResult.distanceCost)}€</span>
+                )}
+
+                <div className="grid gap-2">
+                  <h3 className="font-bold text-sm uppercase tracking-wide text-gray-400">Sisältää</h3>
+                  <div className="grid sm:grid-cols-2 gap-2">
+                    {getIncludedServices().map((service) => (
+                      <div key={service} className="flex items-center gap-2 text-sm">
+                        <span className="text-green-600">✓</span>
+                        <span className="text-gray-600 dark:text-gray-300">{service}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
+
+                {formData.serviceType === 'moving' && (
+                  <div className="grid gap-3">
+                    <h3 className="font-bold text-sm uppercase tracking-wide text-gray-400">Mistä hinta muodostuu</h3>
+                    <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                      <span className="text-gray-500">Tavaramäärän vaikutus</span>
+                      <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.items)}€</span>
+                    </div>
+                    <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                      <span className="text-gray-500">Kerrosten ja hissin vaikutus</span>
+                      <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.floors)}€</span>
+                    </div>
+                    <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                      <span className="text-gray-500">Kantomatkan vaikutus</span>
+                      <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.carryDistance)}€</span>
+                    </div>
+                    <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                      <span className="text-gray-500">Muuttomatkan vaikutus</span>
+                      <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.distance)}€</span>
+                    </div>
+                    {priceResult.details.impactBreakdown.extras > 0 && (
+                      <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                        <span className="text-gray-500">Lisäpalveluiden vaikutus</span>
+                        <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.extras)}€</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                      <span className="text-gray-500">Koordinointiaika (kiinteä, auton valmistelu ja paperityöt)</span>
+                      <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.base)}€</span>
+                    </div>
+                    <div className="flex justify-between p-4 rounded-xl bg-primary/5 font-semibold">
+                      <span>Yhteensä (ennen muuttopäivän alennusta)</span>
+                      <span>{Math.round(priceResult.normalPriceTotal)}€</span>
+                    </div>
+                  </div>
+                )}
+
+                {formData.serviceType !== 'moving' && (
+                  <div className="grid gap-3">
+                    <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                      <span className="text-gray-500">Työkustannukset ({priceResult.details.laborHours}h)</span>
+                      <span className="font-bold">{Math.round(priceResult.laborCost)}€</span>
+                    </div>
+                    <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                      <span className="text-gray-500">
+                        {priceResult.details.distanceKm > 0
+                          ? `Kilometrikorvaukset (${Math.round(priceResult.details.distanceKm)} km)`
+                          : `Kilometrit sisältyvät hintaan (${INCLUDED_DISTANCE_KM} km asti)`}
+                      </span>
+                      <span className="font-bold">{Math.round(priceResult.distanceCost)}€</span>
+                    </div>
+                  </div>
+                )}
+
+                {formData.serviceType === 'moving' && selectedInventoryItems.length > 0 && (
+                  <div className="grid gap-3">
+                    <h3 className="font-bold text-sm uppercase tracking-wide text-gray-400">Lisätyt tavarat</h3>
+                    <div className="rounded-2xl border border-gray-100 dark:border-gray-800 divide-y divide-gray-50 dark:divide-gray-800 overflow-hidden">
+                      {selectedInventoryItems.map((item) => (
+                        <div key={item.id} className="flex items-center justify-between px-5 py-3">
+                          <span className="flex items-center gap-3 text-sm font-medium">
+                            <span className="text-xl">{item.icon}</span>
+                            {item.label}
+                          </span>
+                          <span className="font-bold text-sm">× {item.qty}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-3 gap-3 text-center">
+                      <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                        <p className="text-2xl font-black text-primary">{priceResult.details.totalItemCount}</p>
+                        <p className="text-xs text-gray-400">tavaraa yhteensä</p>
+                      </div>
+                      <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                        <p className="text-2xl font-black text-primary">{priceResult.details.totalVolumeM3.toFixed(1)}</p>
+                        <p className="text-xs text-gray-400">m³ arvioitu tilavuus</p>
+                      </div>
+                      <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                        <p className="text-2xl font-black text-primary">{priceResult.estimatedDurationHours}</p>
+                        <p className="text-xs text-gray-400">h arvioitu työaika</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {priceResult.inventoryWarning && (
+                  <div className="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-xl border border-orange-100 dark:border-orange-900/30 flex gap-4">
+                    <span className="text-2xl">⚠️</span>
+                    <p className="text-sm text-orange-800 dark:text-orange-200">{priceResult.inventoryWarning}</p>
+                  </div>
+                )}
+
+                {formData.serviceType === 'moving' && priceResult.details.itemBreakdown.length > 0 && (
+                  <details className="rounded-2xl border border-gray-100 dark:border-gray-800 p-4 text-sm">
+                    <summary className="cursor-pointer font-bold text-gray-500">Yhteenveto — mistä hinta perustuu</summary>
+                    <div className="mt-4 space-y-3">
+                      <p className="text-xs text-gray-400">
+                        Tässä näet jokaisen lisäämäsi tavaran vaikutuksen työaikaan minuutteina, sekä koko
+                        työajan koostumuksen kohta kohdalta — täysin läpinäkyvästi.
+                      </p>
+                      <div className="rounded-xl border border-gray-100 dark:border-gray-800 divide-y divide-gray-50 dark:divide-gray-800 overflow-hidden">
+                        {priceResult.details.itemBreakdown.map((item) => (
+                          <div key={item.id} className="flex items-center justify-between px-4 py-2">
+                            <span>{item.label} × {item.qty}</span>
+                            <span className="font-bold">{item.minutes.toFixed(1)} min</span>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex justify-between px-1">
+                        <span className="text-gray-500">Käsittelyminuutit yhteensä (raaka)</span>
+                        <span className="font-bold">{priceResult.details.rawHandlingMinutes.toFixed(1)} min</span>
+                      </div>
+                      {priceResult.details.crewEfficiencyApplied && (
+                        <p className="text-xs text-gray-400">
+                          Tavaramäärä ylittää tämän asunnon koon tyypillisen tason, joten ylimenevä osa käsittelyajasta on
+                          hinnoiteltu tehokkuuskertoimella (kuorma-auto käsittelee suuren tavaramäärän tehokkaammin kuin
+                          suora minuuttisumma antaisi ymmärtää). Tämä ei koskaan nosta hintaa, vain hillitsee sitä.
+                        </p>
+                      )}
+
+                      <div className="border-t border-gray-100 dark:border-gray-800 pt-3 space-y-2">
+                        <h4 className="font-bold text-xs uppercase text-gray-400">
+                          Koko työajan erittely (tämä summa = "Arvioitu työaika" yllä)
+                        </h4>
+                        <div className="flex justify-between px-1">
+                          <span className="text-gray-500">Käsittelyaika (tehokkuuskertoimen jälkeen)</span>
+                          <span className="font-bold">{priceResult.details.timeBreakdown.handlingMinutes.toFixed(1)} min</span>
+                        </div>
+                        <div className="flex justify-between px-1">
+                          <span className="text-gray-500">Kerrosten/hissin/kantomatkan lisäaika</span>
+                          <span className="font-bold">{priceResult.details.timeBreakdown.carryExtraMinutes.toFixed(1)} min</span>
+                        </div>
+                        <div className="flex justify-between px-1">
+                          <span className="text-gray-500">Purku/kasauspalvelu</span>
+                          <span className="font-bold">{priceResult.details.timeBreakdown.assemblyMinutes.toFixed(1)} min</span>
+                        </div>
+                        <div className="flex justify-between px-1">
+                          <span className="text-gray-500">Pakkauspalvelu</span>
+                          <span className="font-bold">{priceResult.details.timeBreakdown.packingMinutes.toFixed(1)} min</span>
+                        </div>
+                        <div className="flex justify-between px-1">
+                          <span className="text-gray-500">Ajomatka-aika</span>
+                          <span className="font-bold">{(priceResult.details.timeBreakdown.driveTimeHours * 60).toFixed(1)} min</span>
+                        </div>
+                        <div className="flex justify-between px-1">
+                          <span className="text-gray-500">Koordinointiaika (kiinteä)</span>
+                          <span className="font-bold">{(priceResult.details.timeBreakdown.baseTimeHours * 60).toFixed(1)} min</span>
+                        </div>
+                        <div className="flex justify-between px-1 pt-2 border-t border-gray-100 dark:border-gray-800">
+                          <span className="font-semibold">Yhteensä (pyöristetty 15 min tarkkuudella)</span>
+                          <span className="font-bold">{priceResult.estimatedDurationHours} h</span>
+                        </div>
+                      </div>
+                    </div>
+                  </details>
+                )}
 
                 <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-100 dark:border-yellow-900/30 flex gap-4">
                   <span className="text-2xl">💡</span>
@@ -906,16 +1173,17 @@ export default function Calculator() {
                       <label className="block text-sm font-semibold mb-2 flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-primary" /> Toivottu muuttopäivä
                       </label>
-                      <input 
+                      <input
                         type="date"
                         required
                         className="w-full px-5 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none"
-                        onChange={(e) => updateField('date', new Date(e.target.value))}
+                        value={formatDateInput(formData.date)}
+                        onChange={(e) => updateField('date', e.target.value ? new Date(e.target.value) : undefined)}
                       />
                     </div>
                     <div>
                       <label className="block text-sm font-semibold mb-2">Nimi</label>
-                      <input 
+                      <input
                         type="text"
                         required
                         className="w-full px-5 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none"
@@ -928,7 +1196,7 @@ export default function Calculator() {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-semibold mb-2">Sähköposti</label>
-                      <input 
+                      <input
                         type="email"
                         required
                         className="w-full px-5 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none"
@@ -939,7 +1207,7 @@ export default function Calculator() {
                     </div>
                     <div>
                       <label className="block text-sm font-semibold mb-2">Puhelinnumero</label>
-                      <input 
+                      <input
                         type="tel"
                         required
                         className="w-full px-5 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none"
@@ -985,8 +1253,8 @@ export default function Calculator() {
               onClick={handleBack}
               disabled={currentStep === 0}
               className={`flex items-center gap-2 px-8 py-4 rounded-xl font-bold transition-all ${
-                currentStep === 0 
-                  ? 'opacity-0 pointer-events-none' 
+                currentStep === 0
+                  ? 'opacity-0 pointer-events-none'
                   : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
               }`}
             >

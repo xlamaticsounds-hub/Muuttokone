@@ -1,132 +1,141 @@
 import { z } from 'zod';
 
+// v2.1-kalibrointi: minuutit kuvaavat tavaran OSUUTTA koko muuton kestoon, ei sen
+// yksittäistä siirtoaikaa. Ammattimuuttaja kantaa useita tavaroita per kierros, käyttää
+// nokkakärryjä ja tekee työvaiheita rinnakkain — siksi arvot ovat huomattavasti pienempiä
+// kuin "yhden tavaran yksin kantaminen" antaisi olettaa.
 export const FURNITURE_CATALOG = [
   // Olohuone
-  { id: 'plant_small', label: 'Huonekasvi', icon: '🪴', category: 'Olohuone', minutesEach: 3 },
-  { id: 'plant_large', label: 'Huonekasvi iso', icon: '🌿', category: 'Olohuone', minutesEach: 8 },
-  { id: 'bookshelf', label: 'Kirjahylly', icon: '📚', category: 'Olohuone', minutesEach: 15 },
-  { id: 'shoe_cabinet', label: 'Kenkäkaappi', icon: '👞', category: 'Olohuone', minutesEach: 12 },
-  { id: 'shoe_rack', label: 'Kenkäteline', icon: '👟', category: 'Olohuone', minutesEach: 5 },
-  { id: 'sofa_2', label: 'Sohva 2-istuttava', icon: '🛋️', category: 'Olohuone', minutesEach: 15 },
-  { id: 'sofa_3', label: 'Sohva 3-istuttava', icon: '🛋️', category: 'Olohuone', minutesEach: 22 },
-  { id: 'sofa_4', label: 'Sohva 4-istuttava', icon: '🛋️', category: 'Olohuone', minutesEach: 30 },
-  { id: 'sofa_divan', label: 'Divaanisohva', icon: '🛏️', category: 'Olohuone', minutesEach: 25 },
-  { id: 'corner_sofa_small', label: 'Kulmasohva pieni', icon: '🛋️', category: 'Olohuone', minutesEach: 28 },
-  { id: 'corner_sofa_large', label: 'Kulmasohva iso', icon: '🛋️', category: 'Olohuone', minutesEach: 40 },
-  { id: 'armchair', label: 'Nojatuoli', icon: '💺', category: 'Olohuone', minutesEach: 10 },
-  { id: 'ottoman_small', label: 'Rahi / jakkara', icon: '🪑', category: 'Olohuone', minutesEach: 5 },
-  { id: 'ottoman_large', label: 'Rahi / jakkara iso', icon: '🎁', category: 'Olohuone', minutesEach: 10 },
-  { id: 'tv_stand_small', label: 'TV-taso pieni', icon: '📺', category: 'Olohuone', minutesEach: 8 },
-  { id: 'tv_stand_large', label: 'TV-taso iso', icon: '🎬', category: 'Olohuone', minutesEach: 15 },
-  { id: 'display_cabinet', label: 'Vitriinikaappi', icon: '🪟', category: 'Olohuone', minutesEach: 15 },
-  { id: 'entrance_bench', label: 'Eteispenkki', icon: '🛖', category: 'Olohuone', minutesEach: 10 },
-  { id: 'side_table', label: 'Sivupöytä', icon: '🪣', category: 'Olohuone', minutesEach: 5 },
-  { id: 'wall_cabinet', label: 'Seinäkaappi', icon: '🗄️', category: 'Olohuone', minutesEach: 12 },
-  { id: 'floor_lamp', label: 'Lattiavalaisin', icon: '💡', category: 'Olohuone', minutesEach: 3 },
-  { id: 'coffee_table', label: 'Sohvapöytä', icon: '☕', category: 'Olohuone', minutesEach: 8 },
-  { id: 'tv_small', label: 'Televisio pieni (32–43")', icon: '📺', category: 'Olohuone', minutesEach: 8 },
-  { id: 'tv_55', label: 'Televisio 55"', icon: '🖥️', category: 'Olohuone', minutesEach: 12 },
-  { id: 'tv_65', label: 'Televisio 65"', icon: '🎥', category: 'Olohuone', minutesEach: 15 },
-  { id: 'tv_75', label: 'Televisio 75"', icon: '📹', category: 'Olohuone', minutesEach: 20 },
-  { id: 'tv_85plus', label: 'Televisio 85"+', icon: '🎞️', category: 'Olohuone', minutesEach: 25 },
-  { id: 'painting_large', label: 'Taulu (iso)', icon: '🖼️', category: 'Olohuone', minutesEach: 5 },
-  { id: 'speaker', label: 'Kaiutin', icon: '🔊', category: 'Olohuone', minutesEach: 3 },
-  
+  { id: 'plant_small', label: 'Huonekasvi', icon: '🪴', category: 'Olohuone', minutesEach: 0.5 },
+  { id: 'plant_large', label: 'Huonekasvi iso', icon: '🌿', category: 'Olohuone', minutesEach: 2 },
+  { id: 'bookshelf', label: 'Kirjahylly', icon: '📚', category: 'Olohuone', minutesEach: 5 },
+  { id: 'shoe_cabinet', label: 'Kenkäkaappi', icon: '👞', category: 'Olohuone', minutesEach: 3 },
+  { id: 'shoe_rack', label: 'Kenkäteline', icon: '👟', category: 'Olohuone', minutesEach: 1 },
+  { id: 'sofa_2', label: 'Sohva 2-istuttava', icon: '🛋️', category: 'Olohuone', minutesEach: 10 },
+  { id: 'sofa_3', label: 'Sohva 3-istuttava', icon: '🛋️', category: 'Olohuone', minutesEach: 14 },
+  { id: 'sofa_4', label: 'Sohva 4-istuttava', icon: '🛋️', category: 'Olohuone', minutesEach: 18 },
+  { id: 'sofa_divan', label: 'Divaanisohva', icon: '🛏️', category: 'Olohuone', minutesEach: 14 },
+  { id: 'corner_sofa_small', label: 'Kulmasohva pieni', icon: '🛋️', category: 'Olohuone', minutesEach: 15 },
+  { id: 'corner_sofa_large', label: 'Kulmasohva iso', icon: '🛋️', category: 'Olohuone', minutesEach: 20 },
+  { id: 'armchair', label: 'Nojatuoli', icon: '💺', category: 'Olohuone', minutesEach: 4 },
+  { id: 'ottoman_small', label: 'Rahi / jakkara', icon: '🪑', category: 'Olohuone', minutesEach: 1 },
+  { id: 'ottoman_large', label: 'Rahi / jakkara iso', icon: '🎁', category: 'Olohuone', minutesEach: 4 },
+  { id: 'tv_stand_small', label: 'TV-taso pieni', icon: '📺', category: 'Olohuone', minutesEach: 3 },
+  { id: 'tv_stand_large', label: 'TV-taso iso', icon: '🎬', category: 'Olohuone', minutesEach: 8 },
+  { id: 'display_cabinet', label: 'Vitriinikaappi', icon: '🪟', category: 'Olohuone', minutesEach: 10 },
+  { id: 'entrance_bench', label: 'Eteispenkki', icon: '🛖', category: 'Olohuone', minutesEach: 4 },
+  { id: 'side_table', label: 'Sivupöytä', icon: '🪣', category: 'Olohuone', minutesEach: 2 },
+  { id: 'wall_cabinet', label: 'Seinäkaappi', icon: '🗄️', category: 'Olohuone', minutesEach: 6 },
+  { id: 'floor_lamp', label: 'Lattiavalaisin', icon: '💡', category: 'Olohuone', minutesEach: 1 },
+  { id: 'coffee_table', label: 'Sohvapöytä', icon: '☕', category: 'Olohuone', minutesEach: 3 },
+  { id: 'tv_small', label: 'Televisio pieni (32–43")', icon: '📺', category: 'Olohuone', minutesEach: 2 },
+  { id: 'tv_55', label: 'Televisio 55"', icon: '🖥️', category: 'Olohuone', minutesEach: 4 },
+  { id: 'tv_65', label: 'Televisio 65"', icon: '🎥', category: 'Olohuone', minutesEach: 5 },
+  { id: 'tv_75', label: 'Televisio 75"', icon: '📹', category: 'Olohuone', minutesEach: 6 },
+  { id: 'tv_85plus', label: 'Televisio 85"+', icon: '🎞️', category: 'Olohuone', minutesEach: 8 },
+  { id: 'painting_large', label: 'Taulu (iso)', icon: '🖼️', category: 'Olohuone', minutesEach: 1 },
+  { id: 'speaker', label: 'Kaiutin', icon: '🔊', category: 'Olohuone', minutesEach: 1 },
+
   // Makuuhuone
-  { id: 'wardrobe_assembled', label: 'Vaatekaappi koottu', icon: '🚪', category: 'Makuuhuone', minutesEach: 30 },
-  { id: 'wardrobe_disassembled', label: 'Vaatekaappi purettu', icon: '🪟', category: 'Makuuhuone', minutesEach: 25 },
-  { id: 'mirror_full', label: 'Peili (kokovartalo)', icon: '🪞', category: 'Makuuhuone', minutesEach: 8 },
-  { id: 'nightstand', label: 'Yöpöytä', icon: '🌙', category: 'Makuuhuone', minutesEach: 5 },
-  { id: 'dresser_small', label: 'Lipasto pieni', icon: '🗄️', category: 'Makuuhuone', minutesEach: 10 },
-  { id: 'dresser_large', label: 'Lipasto iso', icon: '💼', category: 'Makuuhuone', minutesEach: 18 },
-  { id: 'bean_bag', label: 'Säkkituoli', icon: '💺', category: 'Makuuhuone', minutesEach: 8 },
-  { id: 'bed_headboard', label: 'Sängynpääty', icon: '🎨', category: 'Makuuhuone', minutesEach: 10 },
-  { id: 'bed_80', label: 'Sänky 80 cm', icon: '🛏️', category: 'Makuuhuone', minutesEach: 12 },
-  { id: 'bed_120', label: 'Sänky 120 cm', icon: '🛏️', category: 'Makuuhuone', minutesEach: 15 },
-  { id: 'bed_140', label: 'Sänky 140 cm', icon: '🛏️', category: 'Makuuhuone', minutesEach: 18 },
-  { id: 'bed_160', label: 'Sänky 160 cm', icon: '🛏️', category: 'Makuuhuone', minutesEach: 20 },
-  { id: 'bed_180', label: 'Sänky 180 cm', icon: '🛏️', category: 'Makuuhuone', minutesEach: 22 },
-  { id: 'mattress_80', label: 'Patja 80–90 cm', icon: '🧵', category: 'Makuuhuone', minutesEach: 10 },
-  { id: 'mattress_120', label: 'Patja 120–160 cm', icon: '🧵', category: 'Makuuhuone', minutesEach: 15 },
-  { id: 'mattress_180', label: 'Patja 180 cm', icon: '🧵', category: 'Makuuhuone', minutesEach: 18 },
-  { id: 'desk_bedroom', label: 'Kirjoitus/Työpöytä', icon: '📚', category: 'Makuuhuone', minutesEach: 12 },
+  { id: 'wardrobe_assembled', label: 'Vaatekaappi koottu', icon: '🚪', category: 'Makuuhuone', minutesEach: 18 },
+  { id: 'wardrobe_disassembled', label: 'Vaatekaappi purettu', icon: '🪟', category: 'Makuuhuone', minutesEach: 12 },
+  { id: 'mirror_full', label: 'Peili (kokovartalo)', icon: '🪞', category: 'Makuuhuone', minutesEach: 2 },
+  { id: 'nightstand', label: 'Yöpöytä', icon: '🌙', category: 'Makuuhuone', minutesEach: 1 },
+  { id: 'dresser_small', label: 'Lipasto pieni', icon: '🗄️', category: 'Makuuhuone', minutesEach: 4 },
+  { id: 'dresser_large', label: 'Lipasto iso', icon: '💼', category: 'Makuuhuone', minutesEach: 8 },
+  { id: 'bean_bag', label: 'Säkkituoli', icon: '💺', category: 'Makuuhuone', minutesEach: 2 },
+  { id: 'bed_headboard', label: 'Sängynpääty', icon: '🎨', category: 'Makuuhuone', minutesEach: 3 },
+  { id: 'bed_80', label: 'Sänky 80 cm', icon: '🛏️', category: 'Makuuhuone', minutesEach: 6 },
+  { id: 'bed_120', label: 'Sänky 120 cm', icon: '🛏️', category: 'Makuuhuone', minutesEach: 8 },
+  { id: 'bed_140', label: 'Sänky 140 cm', icon: '🛏️', category: 'Makuuhuone', minutesEach: 10 },
+  { id: 'bed_160', label: 'Sänky 160 cm', icon: '🛏️', category: 'Makuuhuone', minutesEach: 11 },
+  { id: 'bed_180', label: 'Sänky 180 cm', icon: '🛏️', category: 'Makuuhuone', minutesEach: 12 },
+  { id: 'mattress_80', label: 'Patja 80–90 cm', icon: '🧵', category: 'Makuuhuone', minutesEach: 3 },
+  { id: 'mattress_120', label: 'Patja 120–160 cm', icon: '🧵', category: 'Makuuhuone', minutesEach: 5 },
+  { id: 'mattress_180', label: 'Patja 180 cm', icon: '🧵', category: 'Makuuhuone', minutesEach: 6 },
+  { id: 'desk_bedroom', label: 'Kirjoitus/Työpöytä', icon: '📚', category: 'Makuuhuone', minutesEach: 7 },
 
   // Laatikot ja pakkaukset
-  { id: 'box_standard', label: 'Muuttolaatikko (vakio)', icon: '📦', category: 'Laatikot ja pakkaukset', minutesEach: 2 },
-  { id: 'box_clothes', label: 'Vaatelaatikko', icon: '👕', category: 'Laatikot ja pakkaukset', minutesEach: 2 },
-  { id: 'storage_box_small', label: 'Säilytyslaatikko pieni', icon: '🟦', category: 'Laatikot ja pakkaukset', minutesEach: 2 },
-  { id: 'storage_box_medium', label: 'Säilytyslaatikko keskikokoinen', icon: '🟪', category: 'Laatikot ja pakkaukset', minutesEach: 3 },
-  { id: 'storage_box_large', label: 'Säilytyslaatikko iso', icon: '🟩', category: 'Laatikot ja pakkaukset', minutesEach: 4 },
-  { id: 'suitcase', label: 'Matkalaukku', icon: '🧳', category: 'Laatikot ja pakkaukset', minutesEach: 3 },
-  { id: 'plastic_bag', label: 'Muovisäkki', icon: '🛍️', category: 'Laatikot ja pakkaukset', minutesEach: 1 },
-  { id: 'chest', label: 'Arkku', icon: '⚱️', category: 'Laatikot ja pakkaukset', minutesEach: 8 },
+  // Laatikoita ei kanneta yksitellen — ammattimuuttaja siirtää useita laatikoita kerralla
+  // nokkakärryllä (n. 4 laatikkoa/kuorma), joten minuuttiarvo on laatikon OSUUS
+  // kärryllisen kokonaisajasta, ei yhden laatikon erillinen kantomatka.
+  { id: 'box_standard', label: 'Muuttolaatikko (vakio)', icon: '📦', category: 'Laatikot ja pakkaukset', minutesEach: 0.7 },
+  { id: 'box_clothes', label: 'Vaatelaatikko', icon: '👕', category: 'Laatikot ja pakkaukset', minutesEach: 0.7 },
+  { id: 'storage_box_small', label: 'Säilytyslaatikko pieni', icon: '🟦', category: 'Laatikot ja pakkaukset', minutesEach: 0.5 },
+  { id: 'storage_box_medium', label: 'Säilytyslaatikko keskikokoinen', icon: '🟪', category: 'Laatikot ja pakkaukset', minutesEach: 0.6 },
+  { id: 'storage_box_large', label: 'Säilytyslaatikko iso', icon: '🟩', category: 'Laatikot ja pakkaukset', minutesEach: 0.8 },
+  { id: 'suitcase', label: 'Matkalaukku', icon: '🧳', category: 'Laatikot ja pakkaukset', minutesEach: 0.8 },
+  { id: 'plastic_bag', label: 'Muovisäkki', icon: '🛍️', category: 'Laatikot ja pakkaukset', minutesEach: 0.3 },
+  { id: 'chest', label: 'Arkku', icon: '⚱️', category: 'Laatikot ja pakkaukset', minutesEach: 4 },
 
   // Keittiö
-  { id: 'kitchen_cabinet', label: 'Astiakaappi', icon: '🍳', category: 'Keittiö', minutesEach: 15 },
-  { id: 'microwave', label: 'Mikroaaltouuni', icon: '🔥', category: 'Keittiö', minutesEach: 8 },
-  { id: 'glass_table', label: 'Lasipöytä', icon: '🥃', category: 'Keittiö', minutesEach: 10 },
-  { id: 'coffee_maker', label: 'Kahvikone', icon: '☕', category: 'Keittiö', minutesEach: 3 },
-  { id: 'sink', label: 'Senkki', icon: '🚰', category: 'Keittiö', minutesEach: 20 },
-  { id: 'dining_table_small', label: 'Ruokapöytä pieni', icon: '🍽️', category: 'Keittiö', minutesEach: 12 },
-  { id: 'dining_table_large', label: 'Ruokapöytä iso', icon: '🍴', category: 'Keittiö', minutesEach: 18 },
-  { id: 'dining_table_extendable', label: 'Jatkettava ruokapöytä', icon: '🔧', category: 'Keittiö', minutesEach: 20 },
-  { id: 'bar_stool', label: 'Baarituoli', icon: '🍹', category: 'Keittiö', minutesEach: 5 },
-  { id: 'kitchen_chair', label: 'Tuoli', icon: '🪑', category: 'Keittiö', minutesEach: 5 },
-  { id: 'table_top', label: 'Pöytälevy', icon: '🪨', category: 'Keittiö', minutesEach: 8 },
+  { id: 'kitchen_cabinet', label: 'Astiakaappi', icon: '🍳', category: 'Keittiö', minutesEach: 10 },
+  { id: 'microwave', label: 'Mikroaaltouuni', icon: '🔥', category: 'Keittiö', minutesEach: 2 },
+  { id: 'glass_table', label: 'Lasipöytä', icon: '🥃', category: 'Keittiö', minutesEach: 6 },
+  { id: 'coffee_maker', label: 'Kahvikone', icon: '☕', category: 'Keittiö', minutesEach: 0.5 },
+  { id: 'sink', label: 'Senkki', icon: '🚰', category: 'Keittiö', minutesEach: 10 },
+  { id: 'dining_table_small', label: 'Ruokapöytä pieni', icon: '🍽️', category: 'Keittiö', minutesEach: 6 },
+  { id: 'dining_table_large', label: 'Ruokapöytä iso', icon: '🍴', category: 'Keittiö', minutesEach: 8 },
+  { id: 'dining_table_extendable', label: 'Jatkettava ruokapöytä', icon: '🔧', category: 'Keittiö', minutesEach: 10 },
+  { id: 'bar_stool', label: 'Baarituoli', icon: '🍹', category: 'Keittiö', minutesEach: 1 },
+  { id: 'kitchen_chair', label: 'Tuoli', icon: '🪑', category: 'Keittiö', minutesEach: 1 },
+  { id: 'table_top', label: 'Pöytälevy', icon: '🪨', category: 'Keittiö', minutesEach: 3 },
 
   // Kodinkoneet
-  { id: 'washing_machine', label: 'Pesukone', icon: '🫧', category: 'Kodinkoneet', minutesEach: 20 },
-  { id: 'dryer', label: 'Kuivausrumpu', icon: '🌀', category: 'Kodinkoneet', minutesEach: 15 },
-  { id: 'dishwasher', label: 'Astianpesukone', icon: '🍽️', category: 'Kodinkoneet', minutesEach: 15 },
-  { id: 'stove', label: 'Liesi', icon: '🔥', category: 'Kodinkoneet', minutesEach: 18 },
-  { id: 'oven', label: 'Uuni', icon: '🌡️', category: 'Kodinkoneet', minutesEach: 15 },
-  { id: 'fridge', label: 'Jääkaappi', icon: '🧊', category: 'Kodinkoneet', minutesEach: 20 },
-  { id: 'freezer', label: 'Pakastin', icon: '❄️', category: 'Kodinkoneet', minutesEach: 20 },
-  { id: 'fridge_freezer', label: 'Jääkaappi–pakastin', icon: '🧊', category: 'Kodinkoneet', minutesEach: 25 },
-  { id: 'wine_cooler', label: 'Viinikaappi', icon: '🍷', category: 'Kodinkoneet', minutesEach: 12 },
-  { id: 'laundry_basket', label: 'Pyykkikori', icon: '🧺', category: 'Kodinkoneet', minutesEach: 3 },
-  { id: 'laundry_rack', label: 'Pyykkiteline', icon: '👕', category: 'Kodinkoneet', minutesEach: 5 },
+  { id: 'washing_machine', label: 'Pesukone', icon: '🫧', category: 'Kodinkoneet', minutesEach: 10 },
+  { id: 'dryer', label: 'Kuivausrumpu', icon: '🌀', category: 'Kodinkoneet', minutesEach: 8 },
+  { id: 'washer_dryer_tower', label: 'Pesutorni (pesukone + kuivausrumpu)', icon: '🌀', category: 'Kodinkoneet', minutesEach: 16 },
+  { id: 'dishwasher', label: 'Astianpesukone', icon: '🍽️', category: 'Kodinkoneet', minutesEach: 6 },
+  { id: 'stove', label: 'Liesi', icon: '🔥', category: 'Kodinkoneet', minutesEach: 8 },
+  { id: 'oven', label: 'Uuni', icon: '🌡️', category: 'Kodinkoneet', minutesEach: 5 },
+  { id: 'fridge', label: 'Jääkaappi', icon: '🧊', category: 'Kodinkoneet', minutesEach: 10 },
+  { id: 'freezer', label: 'Pakastin', icon: '❄️', category: 'Kodinkoneet', minutesEach: 10 },
+  { id: 'fridge_freezer', label: 'Jääkaappi–pakastin', icon: '🧊', category: 'Kodinkoneet', minutesEach: 14 },
+  { id: 'fridge_us', label: 'Jenkkikaappi (amerikkalainen jääkaappi-pakastin)', icon: '🧊', category: 'Kodinkoneet', minutesEach: 20 },
+  { id: 'wine_cooler', label: 'Viinikaappi', icon: '🍷', category: 'Kodinkoneet', minutesEach: 5 },
+  { id: 'laundry_basket', label: 'Pyykkikori', icon: '🧺', category: 'Kodinkoneet', minutesEach: 0.5 },
+  { id: 'laundry_rack', label: 'Pyykkiteline', icon: '👕', category: 'Kodinkoneet', minutesEach: 1 },
 
   // Toimisto
-  { id: 'electric_desk', label: 'Sähköpöytä', icon: '⚡', category: 'Toimisto', minutesEach: 15 },
-  { id: 'work_desk', label: 'Työpöytä', icon: '💼', category: 'Toimisto', minutesEach: 12 },
-  { id: 'office_chair', label: 'Toimistotuoli', icon: '🪑', category: 'Toimisto', minutesEach: 8 },
-  { id: 'printer', label: 'Tulostin', icon: '🖨️', category: 'Toimisto', minutesEach: 5 },
-  { id: 'monitor', label: 'Tietokonenäyttö', icon: '🖥️', category: 'Toimisto', minutesEach: 5 },
-  { id: 'filing_cabinet_small', label: 'Arkistokaappi pieni', icon: '🗂️', category: 'Toimisto', minutesEach: 12 },
-  { id: 'filing_cabinet_large', label: 'Arkistokaappi iso', icon: '🗃️', category: 'Toimisto', minutesEach: 20 },
+  { id: 'electric_desk', label: 'Sähköpöytä', icon: '⚡', category: 'Toimisto', minutesEach: 10 },
+  { id: 'work_desk', label: 'Työpöytä', icon: '💼', category: 'Toimisto', minutesEach: 6 },
+  { id: 'office_chair', label: 'Toimistotuoli', icon: '🪑', category: 'Toimisto', minutesEach: 2 },
+  { id: 'printer', label: 'Tulostin', icon: '🖨️', category: 'Toimisto', minutesEach: 1 },
+  { id: 'monitor', label: 'Tietokonenäyttö', icon: '🖥️', category: 'Toimisto', minutesEach: 1 },
+  { id: 'filing_cabinet_small', label: 'Arkistokaappi pieni', icon: '🗂️', category: 'Toimisto', minutesEach: 6 },
+  { id: 'filing_cabinet_large', label: 'Arkistokaappi iso', icon: '🗃️', category: 'Toimisto', minutesEach: 10 },
 
   // Lasten tavarat
-  { id: 'crib', label: 'Lastensänky', icon: '👶', category: 'Lasten tavarat', minutesEach: 10 },
-  { id: 'bunk_bed', label: 'Pinnasänky', icon: '🛏️', category: 'Lasten tavarat', minutesEach: 18 },
-  { id: 'high_chair', label: 'Syöttötuoli', icon: '🍼', category: 'Lasten tavarat', minutesEach: 8 },
-  { id: 'stroller', label: 'Lastenvaunut / rattaat', icon: '🚼', category: 'Lasten tavarat', minutesEach: 5 },
-  { id: 'toy_box', label: 'Lelulaatikko', icon: '🧸', category: 'Lasten tavarat', minutesEach: 5 },
-  { id: 'small_bath', label: 'Pieni amme', icon: '🛁', category: 'Lasten tavarat', minutesEach: 5 },
+  { id: 'crib', label: 'Lastensänky', icon: '👶', category: 'Lasten tavarat', minutesEach: 5 },
+  { id: 'bunk_bed', label: 'Pinnasänky', icon: '🛏️', category: 'Lasten tavarat', minutesEach: 8 },
+  { id: 'high_chair', label: 'Syöttötuoli', icon: '🍼', category: 'Lasten tavarat', minutesEach: 2 },
+  { id: 'stroller', label: 'Lastenvaunut / rattaat', icon: '🚼', category: 'Lasten tavarat', minutesEach: 3 },
+  { id: 'toy_box', label: 'Lelulaatikko', icon: '🧸', category: 'Lasten tavarat', minutesEach: 2 },
+  { id: 'small_bath', label: 'Pieni amme', icon: '🛁', category: 'Lasten tavarat', minutesEach: 1 },
 
   // Erikoistavarat
-  { id: 'speaker_large', label: 'Kaiutin iso', icon: '🎵', category: 'Erikoistavarat', minutesEach: 8 },
-  { id: 'rug_rolled', label: 'Matto rullattuna', icon: '🧵', category: 'Erikoistavarat', minutesEach: 12 },
-  { id: 'aquarium_empty', label: 'Akvaario (tyhjä)', icon: '🐠', category: 'Erikoistavarat', minutesEach: 10 },
-  { id: 'coat_rack', label: 'Pystynaulakko', icon: '🧥', category: 'Erikoistavarat', minutesEach: 5 },
-  { id: 'curtains_packed', label: 'Verhot (pakattu)', icon: '🪟', category: 'Erikoistavarat', minutesEach: 5 },
-  { id: 'flower_pot', label: 'Kukkaruukku', icon: '🌺', category: 'Erikoistavarat', minutesEach: 2 },
-  { id: 'dog_cage', label: 'Koirahäkki', icon: '🐕', category: 'Erikoistavarat', minutesEach: 10 },
-  { id: 'cat_tree', label: 'Kissan kiipeilypuu', icon: '🐱', category: 'Erikoistavarat', minutesEach: 12 },
+  { id: 'speaker_large', label: 'Kaiutin iso', icon: '🎵', category: 'Erikoistavarat', minutesEach: 3 },
+  { id: 'rug_rolled', label: 'Matto rullattuna', icon: '🧵', category: 'Erikoistavarat', minutesEach: 2 },
+  { id: 'aquarium_empty', label: 'Akvaario (tyhjä)', icon: '🐠', category: 'Erikoistavarat', minutesEach: 6 },
+  { id: 'coat_rack', label: 'Pystynaulakko', icon: '🧥', category: 'Erikoistavarat', minutesEach: 1 },
+  { id: 'curtains_packed', label: 'Verhot (pakattu)', icon: '🪟', category: 'Erikoistavarat', minutesEach: 0.5 },
+  { id: 'flower_pot', label: 'Kukkaruukku', icon: '🌺', category: 'Erikoistavarat', minutesEach: 0.5 },
+  { id: 'dog_cage', label: 'Koirahäkki', icon: '🐕', category: 'Erikoistavarat', minutesEach: 2 },
+  { id: 'cat_tree', label: 'Kissan kiipeilypuu', icon: '🐱', category: 'Erikoistavarat', minutesEach: 6 },
 
   // Ulkokalusteet ja varasto
-  { id: 'grill', label: 'Grilli', icon: '🍖', category: 'Ulkokalusteet ja varasto', minutesEach: 15 },
-  { id: 'garden_chair', label: 'Puutarhatuoli', icon: '🌻', category: 'Ulkokalusteet ja varasto', minutesEach: 5 },
-  { id: 'garden_table', label: 'Puutarhapöytä', icon: '🌳', category: 'Ulkokalusteet ja varasto', minutesEach: 12 },
-  { id: 'bicycle', label: 'Polkupyörä', icon: '🚲', category: 'Ulkokalusteet ja varasto', minutesEach: 5 },
-  { id: 'scooter', label: 'Potkulauta', icon: '🛴', category: 'Ulkokalusteet ja varasto', minutesEach: 2 },
-  { id: 'tire_set', label: 'Rengassarja', icon: '🛞', category: 'Ulkokalusteet ja varasto', minutesEach: 8 },
-  { id: 'lawn_mower', label: 'Ruohonleikkuri', icon: '🌾', category: 'Ulkokalusteet ja varasto', minutesEach: 12 },
-  { id: 'snow_shovel', label: 'Lumilinko', icon: '❄️', category: 'Ulkokalusteet ja varasto', minutesEach: 2 },
-  { id: 'treadmill', label: 'Juoksumatta', icon: '🏃', category: 'Ulkokalusteet ja varasto', minutesEach: 30 },
-  { id: 'fitness_equipment', label: 'Kuntolaite', icon: '💪', category: 'Ulkokalusteet ja varasto', minutesEach: 20 },
-  { id: 'workbench', label: 'Työpöytä (verstas)', icon: '🔧', category: 'Ulkokalusteet ja varasto', minutesEach: 25 },
-  { id: 'metal_shelf', label: 'Metallinen hylly', icon: '⛓️', category: 'Ulkokalusteet ja varasto', minutesEach: 12 },
+  { id: 'grill', label: 'Grilli', icon: '🍖', category: 'Ulkokalusteet ja varasto', minutesEach: 6 },
+  { id: 'garden_chair', label: 'Puutarhatuoli', icon: '🌻', category: 'Ulkokalusteet ja varasto', minutesEach: 1 },
+  { id: 'garden_table', label: 'Puutarhapöytä', icon: '🌳', category: 'Ulkokalusteet ja varasto', minutesEach: 4 },
+  { id: 'bicycle', label: 'Polkupyörä', icon: '🚲', category: 'Ulkokalusteet ja varasto', minutesEach: 2 },
+  { id: 'scooter', label: 'Potkulauta', icon: '🛴', category: 'Ulkokalusteet ja varasto', minutesEach: 0.5 },
+  { id: 'tire_set', label: 'Rengassarja', icon: '🛞', category: 'Ulkokalusteet ja varasto', minutesEach: 2 },
+  { id: 'lawn_mower', label: 'Ruohonleikkuri', icon: '🌾', category: 'Ulkokalusteet ja varasto', minutesEach: 4 },
+  { id: 'snow_shovel', label: 'Lumilinko', icon: '❄️', category: 'Ulkokalusteet ja varasto', minutesEach: 6 },
+  { id: 'treadmill', label: 'Juoksumatta', icon: '🏃', category: 'Ulkokalusteet ja varasto', minutesEach: 16 },
+  { id: 'fitness_equipment', label: 'Kuntolaite', icon: '💪', category: 'Ulkokalusteet ja varasto', minutesEach: 12 },
+  { id: 'workbench', label: 'Työpöytä (verstas)', icon: '🔧', category: 'Ulkokalusteet ja varasto', minutesEach: 12 },
+  { id: 'metal_shelf', label: 'Metallinen hylly', icon: '⛓️', category: 'Ulkokalusteet ja varasto', minutesEach: 5 },
 
   // Raskaat tavarat
   { id: 'safe_large', label: 'Kassakaappi iso', icon: '🏋️', category: 'Raskaat tavarat', minutesEach: 45 },
@@ -136,11 +145,49 @@ export const FURNITURE_CATALOG = [
 
 export type FurnitureId = typeof FURNITURE_CATALOG[number]['id'];
 
+// Tavarat joiden kanto-osuuteen sovelletaan korotettua kerroskerrointa
+// (porraskäynti ilman hissiä rasittaa raskaiden tavaroiden kantoa enemmän kuin kevyiden).
+export const HEAVY_ITEM_IDS = new Set<FurnitureId>([
+  'piano_large',
+  'grand_piano',
+  'safe_large',
+  'treadmill',
+  'fitness_equipment',
+  'fridge_us',
+  'washer_dryer_tower',
+]);
+
+// Kategoriakohtaiset kertoimet joista johdetaan jokaisen tavaran kanto- ja tilavaikutus
+// käsittelyajasta (minutesEach). Kategoriatason kertoimet (ei käsin viritettyjä arvoja
+// jokaiselle ~100 tavaralle) pitävät katalogin ylläpidettävänä.
+//
+// HUOM volumeM3PerMin: tilavuus on tavaran FYYSINEN ominaisuus, ei riipu siitä kuinka
+// nopeasti se käsitellään — minutesEach-arvoja on leikattu useaan otteeseen (trolley-
+// batching laatikoille, v2.1-kalibrointi kauttaaltaan), eikä volumeM3PerMin saa enää
+// johtaa suoraan minutesEach:sta kertoimena vaan kalibroitu erikseen REALISTISIIN
+// m³-arvoihin per kategoria (esim. vakiolaatikko ~0.1 m³, ei minutesEach × vanha kerroin).
+const CATEGORY_FACTORS: Record<string, { carryRatio: number; volumeM3PerMin: number }> = {
+  'Olohuone': { carryRatio: 0.40, volumeM3PerMin: 0.10 },
+  'Makuuhuone': { carryRatio: 0.45, volumeM3PerMin: 0.10 },
+  'Laatikot ja pakkaukset': { carryRatio: 0.65, volumeM3PerMin: 0.14 },
+  'Keittiö': { carryRatio: 0.40, volumeM3PerMin: 0.10 },
+  'Kodinkoneet': { carryRatio: 0.40, volumeM3PerMin: 0.06 },
+  'Toimisto': { carryRatio: 0.40, volumeM3PerMin: 0.08 },
+  'Lasten tavarat': { carryRatio: 0.45, volumeM3PerMin: 0.08 },
+  'Erikoistavarat': { carryRatio: 0.40, volumeM3PerMin: 0.08 },
+  'Ulkokalusteet ja varasto': { carryRatio: 0.45, volumeM3PerMin: 0.08 },
+  'Raskaat tavarat': { carryRatio: 0.55, volumeM3PerMin: 0.02 }, // painavat tavarat ovat tiheitä, eivät tilavuudeltaan jättimäisiä
+};
+
+function categoryFactors(category: string) {
+  return CATEGORY_FACTORS[category] ?? { carryRatio: 0.40, volumeM3PerMin: 0.08 };
+}
+
 export const CalculatorSchema = z.object({
   // Service type
   serviceType: z.enum(['moving', 'transport', 'recycling']).default('moving'),
   movingPackage: z.enum(['full_service', 'driver_with_vehicle', 'carrying_help']).optional(),
-  
+
   // Locations
   addressFrom: z.string().min(1, 'Lähtöosoite vaaditaan'),
   addressTo: z.string().min(1, 'Kohdeosoite vaaditaan'),
@@ -149,23 +196,27 @@ export const CalculatorSchema = z.object({
   // Apartment details
   apartmentSize: z.enum(['1h', '2h', '3h', '4h+', 'office']),
   squareMeters: z.number().optional(),
-  
+
   // Access details
   floorFrom: z.number().default(0),
   elevatorFrom: z.boolean().default(false),
   floorTo: z.number().default(0),
   elevatorTo: z.boolean().default(false),
-  
+
+  // Carry distance (kantomatka) from the door to the moving vehicle, each end
+  carryDistanceFrom: z.enum(['<10', '10-30', '30-50', '50+']).default('<10'),
+  carryDistanceTo: z.enum(['<10', '10-30', '30-50', '50+']).default('<10'),
+
   // Inventory
   boxCount: z.number().default(0),
-  heavyItems: z.array(z.string()).default([]),
+  heavyItems: z.array(z.string()).default([]), // Legacy, kept for backward compatibility, no longer used in pricing
   furnitureItems: z.record(z.string(), z.number()).default({}),
-  
+
   // Service level
   needsPacking: z.boolean().default(false),
   needsCleaning: z.boolean().default(false),
   services: z.array(z.string()).default([]),
-  
+
   // Timing
   date: z.date().optional(),
 
@@ -176,6 +227,7 @@ export const CalculatorSchema = z.object({
 });
 
 export type CalculatorData = z.infer<typeof CalculatorSchema>;
+export type CarryDistance = CalculatorData['carryDistanceFrom'];
 
 export interface PriceBreakdown {
   distanceCost: number;
@@ -184,23 +236,192 @@ export interface PriceBreakdown {
   subtotal: number;
   vat: number;
   total: number;
+  normalPriceTotal: number; // Hinta ennen muuttopäivän alennusta
+  dateDiscountFraction: number; // 0-1
+  dateDiscountAmount: number; // €, normalPriceTotal - total
+  dateDiscountLabel: string; // "Edullinen päivä" / "Normaali päivä" / "Suosittu päivä"
+  dateDiscountEmoji: string;
+  priceRangeLow: number;
+  priceRangeHigh: number;
+  inventoryWarning?: string;
+  difficultyLevel: 'easy' | 'medium' | 'hard';
   estimatedDurationHours: number;
   details: {
     distanceKm: number;
     laborHours: number;
     laborRate: number;
     crewSize: number; // 2 movers + van usually
+    totalVolumeM3: number;
+    totalItemCount: number;
+    rawHandlingMinutes: number; // ennen suuren tavaramäärän tehokkuuskerrointa
+    crewEfficiencyApplied: boolean;
+    itemBreakdown: { id: string; label: string; qty: number; minutes: number; catalogMinutesEach: number }[]; // debug-erittely tavaroittain
+    // Täysi aikaerittely: nämä summattuna (minuutteina) ja pyöristettynä ylöspäin 15 min
+    // tarkkuudella = estimatedDurationHours. Debug-näkymän tulee näyttää KAIKKI nämä,
+    // ei vain käsittelyminuutteja, jotta "arvioitu työaika" on jäljitettävissä.
+    timeBreakdown: {
+      handlingMinutes: number; // tehokkuuskertoimen jälkeen (billed)
+      carryExtraMinutes: number;
+      assemblyMinutes: number;
+      packingMinutes: number;
+      driveTimeHours: number;
+      baseTimeHours: number; // COORDINATION_TIME_HOURS — kiinteä koordinointiaika
+    };
+    impactBreakdown: {
+      items: number; // Tavaramäärän (käsittelyajan) vaikutus, €
+      floors: number; // Kerrosten/hissin vaikutus, €
+      carryDistance: number; // Kantomatkan vaikutus, €
+      distance: number; // Muuttomatkan vaikutus, €
+      extras: number; // Purku/kasaus + pakkauspalvelun vaikutus, €
+      base: number; // Perustyöaika (auton lastaus/purku, koordinointi), €. Nämä 6 summattuna = normalPriceTotal.
+    };
   };
 }
 
+export const INCLUDED_DISTANCE_KM = 5;
+
 const PRICING_CONSTANTS = {
-  ratePerKm: 0.59,
-  finlandiaLoopKm: 5, // Rough estimate for Finlandia -> A -> B -> Finlandia base overhead
-  hourlyRateDefault: 120, // €/h
-  hourlyRateComplex: 140, // €/h
-  minimumCharge: 299, // €
+  ratePerKm: 0.79,
+  includedDistanceKm: INCLUDED_DISTANCE_KM,
+  hourlyRateDefault: 129, // €/h
+  hourlyRateComplex: 159, // €/h
+  driverWithVehicleRate: 89, // €/h
+  carryingHelpRate: 89.9, // €/h
+  driverWithVehicleMinimum: 184, // €
+  carryingHelpMinimum: 180, // €
   vatRate: 0.255, // 25.5% VAT
+  // Kerroskertoimet (sovelletaan vain kun hissiä ei ole) — ks. v2-speksi
+  floorFactorPerLevel: 0.12,
+  heavyFloorFactorPerLevel: 0.18,
+  carryDistanceFactors: {
+    '<10': 1.00,
+    '10-30': 1.10,
+    '30-50': 1.20,
+    '50+': 1.35,
+  } as Record<CarryDistance, number>,
+  assemblyRatio: 0.25, // "Purkupalvelu" lisää tämän verran käsittelyajasta
+  packingMinutesPerBox: 3,
+  packingMinutesPerOtherItem: 4,
+  priceRangeNormal: 0.05, // ±5%
+  priceRangeWarning: 0.10, // ±10% kun tavaralista vaikuttaa epätäydelliseltä
 };
+
+// Muuttopäivän alennus — ei koskaan korotusta, vain alennuksia hiljaisemmille päiville.
+// Helposti muokattava konfiguraatio (v2-speksin lisäys).
+type DateDiscountTier = { label: string; emoji: string; discount: number };
+const WEEKDAY_DISCOUNTS: Record<number, DateDiscountTier> = {
+  // JS Date.getDay(): 0 = sunnuntai ... 6 = lauantai
+  0: { label: 'Suosittu päivä', emoji: '🔴', discount: 0 }, // Sunnuntai
+  1: { label: 'Normaali päivä', emoji: '🟡', discount: 0.05 }, // Maanantai
+  2: { label: 'Edullinen päivä', emoji: '🟢', discount: 0.10 }, // Tiistai
+  3: { label: 'Edullinen päivä', emoji: '🟢', discount: 0.10 }, // Keskiviikko
+  4: { label: 'Normaali päivä', emoji: '🟡', discount: 0.05 }, // Torstai
+  5: { label: 'Suosittu päivä', emoji: '🔴', discount: 0 }, // Perjantai
+  6: { label: 'Suosittu päivä', emoji: '🔴', discount: 0 }, // Lauantai
+};
+const MID_MONTH_BONUS_DISCOUNT = 0.05;
+const MID_MONTH_RANGE: [number, number] = [8, 24];
+const DEFAULT_DATE_DISCOUNT: DateDiscountTier = { label: 'Suosittu päivä', emoji: '🔴', discount: 0 };
+
+function getDateDiscount(date: Date | undefined): DateDiscountTier {
+  if (!date) return DEFAULT_DATE_DISCOUNT;
+  const tier = WEEKDAY_DISCOUNTS[date.getDay()];
+  const dayOfMonth = date.getDate();
+  const midMonthBonus =
+    dayOfMonth >= MID_MONTH_RANGE[0] && dayOfMonth <= MID_MONTH_RANGE[1] ? MID_MONTH_BONUS_DISCOUNT : 0;
+  return { ...tier, discount: tier.discount + midMonthBonus };
+}
+
+// Odotettu tavaramäärän tilavuus (m³) asunnon koon mukaan — käytetään vain
+// laadunvarmistukseen (varoitustekstiin), ei koskaan hinnan automaattiseen korjaukseen.
+const EXPECTED_VOLUME_M3: Record<CalculatorData['apartmentSize'], [number, number]> = {
+  '1h': [10, 25],
+  '2h': [20, 40],
+  '3h': [35, 60],
+  '4h+': [55, 100],
+  office: [0, 999],
+};
+
+const INVENTORY_WARNING_MESSAGE =
+  'Tavaralista näyttää poikkeuksellisen pieneltä suhteessa ilmoitettuun asunnon kokoon. Tarkista, että kaikki suuret huonekalut ja laatikot on lisätty.';
+
+// Tyypillinen käsittelyaika (min) tämän kokoiselle asunnolle — kalibroitu tyypillisistä
+// tavaralistoista. Toimii vain kattona "normaalille" kuormalle: tämän ALLE oleva
+// tavaramäärä hinnoitellaan täysin lineaarisesti (kuten ennenkin), mutta tämän YLI
+// menevä osa hinnoitellaan tehokkuuskertoimella, koska kuljetusliike pystyy käytännössä
+// käsittelemään suuren tavaramäärän tehokkaammin kuin suoraviivainen minuuttisumma antaisi
+// ymmärtää (useita tavaroita kuljetetaan samalla kertaa, rutiini nopeutuu jne).
+// Asunnon koko pysyy silti vain tarkistusmuuttujana: pieni tavaralista isossa asunnossa
+// EI nosta hintaa, ja tämä mekanismi EI koskaan nosta hintaa — se vain estää tavaralistan
+// ylihinnoittelua kun tavaramäärä on poikkeuksellisen suuri suhteessa asunnon kokoon.
+// v2.1: katalogin minuuttiarvot puolittuivat suunnilleen edellisestä kalibroinnista,
+// joten "tyypillinen" käsittelyaika tälle koolle puolitettiin samassa suhteessa.
+const EXPECTED_HANDLING_MINUTES: Record<CalculatorData['apartmentSize'], number> = {
+  '1h': 45,
+  '2h': 105,
+  '3h': 170,
+  '4h+': 270,
+  office: 170,
+};
+const EXCESS_HANDLING_EFFICIENCY = 0.20; // ylimenevästä osasta laskutetaan vain tämä osuus
+
+function applyCrewEfficiency(rawHandlingMinutes: number, apartmentSize: CalculatorData['apartmentSize']): number {
+  const baseline = EXPECTED_HANDLING_MINUTES[apartmentSize];
+  if (rawHandlingMinutes <= baseline) return rawHandlingMinutes;
+  return baseline + (rawHandlingMinutes - baseline) * EXCESS_HANDLING_EFFICIENCY;
+}
+
+// Kiinteä koordinointiaika (h) — sama KAIKILLE muutoille koosta riippumatta (auton
+// positiointi, perusvalmistelut, paperityöt). Asunnon koko ei enää vaikuta tähän
+// mitenkään — kaikki kokoero tulee tavaralistasta (käsittely + kerros/hissi/kantomatka)
+// ja matkasta. Tämä toteuttaa puhtaasti alkuperäisen periaatteen: asunnon koko on
+// vain tarkistusmuuttuja, ei hinnoitteluperuste.
+const COORDINATION_TIME_HOURS = 0.25;
+
+function round5(value: number): number {
+  return Math.round(value / 5) * 5;
+}
+
+function floorFactor(floor: number, hasElevator: boolean): number {
+  return hasElevator ? 1 : 1 + floor * PRICING_CONSTANTS.floorFactorPerLevel;
+}
+
+function heavyFloorFactor(floor: number, hasElevator: boolean): number {
+  return hasElevator ? 1 : 1 + floor * PRICING_CONSTANTS.heavyFloorFactorPerLevel;
+}
+
+interface CarrySideExtra {
+  floorExtraMinutes: number;
+  distanceExtraMinutes: number;
+  totalExtraMinutes: number;
+}
+
+/**
+ * Kanto-osuuden EXTRA-aika (minuuttia) tietyn pään (lähtö tai kohde) yli sen
+ * baseline-tilanteen jossa on hissi ja kantomatka <10m (jolloin extra = 0,
+ * koska minutesEach-käsittelyaika jo sisältää normaalin kannon).
+ */
+function carrySideExtra(
+  normalCarryHalfMinutes: number,
+  heavyCarryHalfMinutes: number,
+  floor: number,
+  hasElevator: boolean,
+  carryDistance: CarryDistance,
+): CarrySideExtra {
+  const distanceFactor = PRICING_CONSTANTS.carryDistanceFactors[carryDistance];
+  const normalFactor = floorFactor(floor, hasElevator);
+  const heavyFactor = heavyFloorFactor(floor, hasElevator);
+
+  const baseline = normalCarryHalfMinutes + heavyCarryHalfMinutes;
+  const afterFloor = normalCarryHalfMinutes * normalFactor + heavyCarryHalfMinutes * heavyFactor;
+  const final = afterFloor * distanceFactor;
+
+  return {
+    floorExtraMinutes: afterFloor - baseline,
+    distanceExtraMinutes: final - afterFloor,
+    totalExtraMinutes: final - baseline,
+  };
+}
 
 /**
  * Calculates the moving price based on the provided data.
@@ -208,49 +429,107 @@ const PRICING_CONSTANTS = {
 export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
   const {
     serviceType = 'moving',
+    movingPackage = 'full_service',
     distanceKm,
     apartmentSize,
     elevatorFrom,
     elevatorTo,
     floorFrom,
     floorTo,
-    heavyItems,
+    carryDistanceFrom,
+    carryDistanceTo,
     needsPacking,
+    services,
     furnitureItems = {},
+    date,
   } = data;
 
   // 1. Distance Cost
-  // Route: Finlandia -> A -> B -> Finlandia
-  // We approximate this as: distance(A->B) + overhead
-  // In a real app, we'd sum the actual segments.
-  const totalDistance = distanceKm + PRICING_CONSTANTS.finlandiaLoopKm; // Adding base loop distance
-  const distanceCost = totalDistance * PRICING_CONSTANTS.ratePerKm;
+  // The first 5 km are included in the move price.
+  const billableDistanceKm = Math.max(0, distanceKm - PRICING_CONSTANTS.includedDistanceKm);
+  const distanceCost = billableDistanceKm * PRICING_CONSTANTS.ratePerKm;
+  const driveTime = (distanceKm / 40) + 0.25;
+
+  // Muuttopäivän alennus (ei koskaan korotus) — sovelletaan kaikkiin palvelutyyppeihin/paketteihin.
+  const dateDiscount = getDateDiscount(date);
+  const applyDateDiscount = (normalPriceTotal: number) => {
+    const dateDiscountAmount = normalPriceTotal * dateDiscount.discount;
+    return { total: normalPriceTotal - dateDiscountAmount, dateDiscountAmount };
+  };
+
+  // Tavaralistan yhteenveto (käsittelyaika, kanto-osuus, tilavuus, tavaramäärä) lasketaan kerran
+  // ja on käytettävissä kaikille palvelutyypeille/paketeille.
+  let handlingMinutes = 0;
+  let normalCarryMinutes = 0;
+  let heavyCarryMinutes = 0;
+  let totalVolumeM3 = 0;
+  let boxItemCount = 0;
+  let nonBoxItemCount = 0;
+  const itemBreakdown: { id: string; label: string; qty: number; minutes: number; catalogMinutesEach: number }[] = [];
+
+  for (const [id, qty] of Object.entries(furnitureItems)) {
+    if (!qty || qty <= 0) continue;
+    const item = FURNITURE_CATALOG.find((f) => f.id === id);
+    if (!item) continue;
+
+    const factors = categoryFactors(item.category);
+    const itemMinutes = item.minutesEach * qty;
+    handlingMinutes += itemMinutes;
+    totalVolumeM3 += item.minutesEach * factors.volumeM3PerMin * qty;
+    itemBreakdown.push({ id: item.id, label: item.label, qty, minutes: itemMinutes, catalogMinutesEach: item.minutesEach });
+
+    const carry = item.minutesEach * factors.carryRatio * qty;
+    if (HEAVY_ITEM_IDS.has(item.id)) {
+      heavyCarryMinutes += carry;
+    } else {
+      normalCarryMinutes += carry;
+    }
+
+    if (item.category === 'Laatikot ja pakkaukset') {
+      boxItemCount += qty;
+    } else {
+      nonBoxItemCount += qty;
+    }
+  }
+  const totalItemCount = boxItemCount + nonBoxItemCount;
+  itemBreakdown.sort((a, b) => b.minutes - a.minutes);
+
+  // Kuljetusliikkeen tehokkuus suurella tavaramäärällä: ylimenevä osa "tyypillisestä"
+  // tavaramäärästä tälle asunnon koolle hinnoitellaan tehokkuuskertoimella (ks. yllä).
+  const rawHandlingMinutes = handlingMinutes;
+  handlingMinutes = applyCrewEfficiency(rawHandlingMinutes, apartmentSize);
+  const crewEfficiencyApplied = handlingMinutes < rawHandlingMinutes;
+  if (rawHandlingMinutes > 0) {
+    const efficiencyRatio = handlingMinutes / rawHandlingMinutes;
+    normalCarryMinutes *= efficiencyRatio;
+    heavyCarryMinutes *= efficiencyRatio;
+  }
 
   // For transport (kuljetus) service: simplified pricing with minimal labor
   if (serviceType === 'transport') {
     // Transport = only driver + van, no movers
     // Minimal time: just drive time + loading/unloading by driver only
-    const driveTime = (distanceKm / 40) + 0.25;
     const driverLoadTime = 0.5; // Driver handles loading themselves
     const driverUnloadTime = 0.25; // Quick unload
-    
+
     let totalLaborHours = driveTime + driverLoadTime + driverUnloadTime;
     totalLaborHours = Math.ceil(totalLaborHours * 2) / 2;
-    
+
     const hourlyRate = PRICING_CONSTANTS.hourlyRateDefault; // Standard rate for transport
     const laborCost = totalLaborHours * hourlyRate;
-    
+
     let subtotal = distanceCost + laborCost;
-    
+
     // Minimum Charge for transport (lower than moving)
     const transportMinimum = 199; // €
     if (subtotal < transportMinimum) {
       subtotal = transportMinimum;
     }
-    
-    const total = subtotal;
+
+    const normalPriceTotal = subtotal;
+    const { total, dateDiscountAmount } = applyDateDiscount(normalPriceTotal);
     const vat = total - (total / (1 + PRICING_CONSTANTS.vatRate));
-    
+
     return {
       distanceCost,
       laborCost,
@@ -258,78 +537,179 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
       subtotal: total - vat,
       vat,
       total,
+      normalPriceTotal,
+      dateDiscountFraction: dateDiscount.discount,
+      dateDiscountAmount,
+      dateDiscountLabel: dateDiscount.label,
+      dateDiscountEmoji: dateDiscount.emoji,
+      priceRangeLow: round5(total * (1 - PRICING_CONSTANTS.priceRangeNormal)),
+      priceRangeHigh: round5(total * (1 + PRICING_CONSTANTS.priceRangeNormal)),
+      difficultyLevel: 'medium',
       estimatedDurationHours: totalLaborHours,
       details: {
-        distanceKm: totalDistance,
+        distanceKm: billableDistanceKm,
         laborHours: totalLaborHours,
         laborRate: hourlyRate,
         crewSize: 1, // Only driver
+        totalVolumeM3,
+        totalItemCount,
+        rawHandlingMinutes,
+        crewEfficiencyApplied,
+        itemBreakdown,
+        timeBreakdown: {
+          handlingMinutes: 0,
+          carryExtraMinutes: 0,
+          assemblyMinutes: 0,
+          packingMinutes: 0,
+          driveTimeHours: driveTime,
+          baseTimeHours: driverLoadTime + driverUnloadTime,
+        },
+        impactBreakdown: { items: 0, floors: 0, carryDistance: 0, distance: laborCost + distanceCost, extras: 0, base: 0 },
       },
     };
   }
 
-  // MOVING SERVICE (muutto) - standard pricing with 2 movers
+  // MOVING SERVICE (muutto) - tavaralistapohjainen laskenta (v2)
 
-  // 2. Labor Time Estimation
-  let baseLoadTime = 0;
-  let baseUnloadTime = 0;
+  const normalCarryHalf = normalCarryMinutes / 2;
+  const heavyCarryHalf = heavyCarryMinutes / 2;
 
-  // Base times based on apartment size
-  switch (apartmentSize) {
-    case '1h':
-      baseLoadTime = 1.0;
-      baseUnloadTime = 0.75;
-      break;
-    case '2h':
-      baseLoadTime = 1.5;
-      baseUnloadTime = 1.25;
-      break;
-    case '3h':
-      baseLoadTime = 2.5;
-      baseUnloadTime = 2.0;
-      break;
-    case '4h+':
-    case 'office':
-      baseLoadTime = 3.5;
-      baseUnloadTime = 3.0;
-      break;
-  }
+  const origin = carrySideExtra(normalCarryHalf, heavyCarryHalf, floorFrom, elevatorFrom, carryDistanceFrom);
+  const dest = carrySideExtra(normalCarryHalf, heavyCarryHalf, floorTo, elevatorTo, carryDistanceTo);
 
-  // Adjust for elevators/stairs
-  const loadStairFactor = !elevatorFrom && floorFrom > 0 ? floorFrom * 0.25 : 0;
-  const unloadStairFactor = !elevatorTo && floorTo > 0 ? floorTo * 0.25 : 0;
+  const floorsExtraMinutes = origin.floorExtraMinutes + dest.floorExtraMinutes;
+  const carryDistanceExtraMinutes = origin.distanceExtraMinutes + dest.distanceExtraMinutes;
+  const carryExtraMinutes = origin.totalExtraMinutes + dest.totalExtraMinutes;
 
-  // Packing service adds significant time
-  const packingTime = needsPacking ? (apartmentSize === '1h' ? 2 : 4) : 0;
+  // Purku- ja kasauspalvelu (olemassa oleva "Purkupalvelu"-toggle, nyt kytketty hintaan)
+  const assemblyMinutes = services.includes('Purkupalvelu') ? handlingMinutes * PRICING_CONSTANTS.assemblyRatio : 0;
 
-  // Drive time (assume 50km/h average in city + buffer)
-  const driveTime = (distanceKm / 40) + 0.25; 
+  // Pakkauspalvelu: skaalataan tavaramäärästä, ei asunnon koosta
+  const packingMinutes = needsPacking
+    ? boxItemCount * PRICING_CONSTANTS.packingMinutesPerBox + nonBoxItemCount * PRICING_CONSTANTS.packingMinutesPerOtherItem
+    : 0;
 
-  // Admin/Prep time
-  const adminTime = 0.5;
+  // Koordinointiaika — kiinteä kaikille, ei riipu asunnon koosta (ks. yllä).
+  const adminTime = COORDINATION_TIME_HOURS;
 
-  let totalLaborHours = 
-    baseLoadTime + loadStairFactor + 
-    baseUnloadTime + unloadStairFactor + 
-    driveTime + packingTime + adminTime;
+  const rawMinutes = handlingMinutes + carryExtraMinutes + assemblyMinutes + packingMinutes;
+  let totalLaborHours = rawMinutes / 60 + driveTime + adminTime;
 
-  // Heavy items add time and potential extra crew cost (simplified here as time)
-  if (heavyItems.length > 0) {
-    totalLaborHours += heavyItems.length * 0.5;
-  }
+  // Round up to nearest 15 minutes (finer billing granularity than the old 30-minute steps,
+  // so a single item more doesn't jump the price by a full half-hour of labor).
+  totalLaborHours = Math.ceil(totalLaborHours * 4) / 4;
 
-  // Furniture items - add time based on catalog
-  let furnitureMinutes = 0;
-  for (const [id, qty] of Object.entries(furnitureItems)) {
-    const item = FURNITURE_CATALOG.find((f) => f.id === id);
-    if (item && qty > 0) {
-      furnitureMinutes += item.minutesEach * qty;
+  if (movingPackage === 'driver_with_vehicle') {
+    const lightMoveHoursBySize: Record<CalculatorData['apartmentSize'], number> = {
+      '1h': 2,
+      '2h': 2.5,
+      '3h': 3.5,
+      '4h+': 4.5,
+      office: 4.5,
+    };
+    const totalDriverHours = Math.ceil((lightMoveHoursBySize[apartmentSize] + billableDistanceKm / 40) * 2) / 2;
+    const hourlyRate = PRICING_CONSTANTS.driverWithVehicleRate;
+    const laborCost = totalDriverHours * hourlyRate;
+    let subtotal = distanceCost + laborCost;
+
+    if (subtotal < PRICING_CONSTANTS.driverWithVehicleMinimum) {
+      subtotal = PRICING_CONSTANTS.driverWithVehicleMinimum;
     }
-  }
-  totalLaborHours += furnitureMinutes / 60;
 
-  // Round up to nearest 0.5 hour
-  totalLaborHours = Math.ceil(totalLaborHours * 2) / 2;
+    const normalPriceTotal = subtotal;
+    const { total, dateDiscountAmount } = applyDateDiscount(normalPriceTotal);
+    const vat = total - (total / (1 + PRICING_CONSTANTS.vatRate));
+
+    return {
+      distanceCost,
+      laborCost,
+      extrasCost: 0,
+      subtotal: total - vat,
+      vat,
+      total,
+      normalPriceTotal,
+      dateDiscountFraction: dateDiscount.discount,
+      dateDiscountAmount,
+      dateDiscountLabel: dateDiscount.label,
+      dateDiscountEmoji: dateDiscount.emoji,
+      priceRangeLow: round5(total * (1 - PRICING_CONSTANTS.priceRangeNormal)),
+      priceRangeHigh: round5(total * (1 + PRICING_CONSTANTS.priceRangeNormal)),
+      difficultyLevel: 'medium',
+      estimatedDurationHours: totalDriverHours,
+      details: {
+        distanceKm: billableDistanceKm,
+        laborHours: totalDriverHours,
+        laborRate: hourlyRate,
+        crewSize: 1,
+        totalVolumeM3,
+        totalItemCount,
+        rawHandlingMinutes,
+        crewEfficiencyApplied,
+        itemBreakdown,
+        timeBreakdown: {
+          handlingMinutes: 0,
+          carryExtraMinutes: 0,
+          assemblyMinutes: 0,
+          packingMinutes: 0,
+          driveTimeHours: billableDistanceKm / 40,
+          baseTimeHours: lightMoveHoursBySize[apartmentSize],
+        },
+        impactBreakdown: { items: 0, floors: 0, carryDistance: 0, distance: laborCost + distanceCost, extras: 0, base: 0 },
+      },
+    };
+  }
+
+  if (movingPackage === 'carrying_help') {
+    const hourlyRate = PRICING_CONSTANTS.carryingHelpRate;
+    const laborCost = totalLaborHours * hourlyRate;
+    let subtotal = laborCost;
+
+    if (subtotal < PRICING_CONSTANTS.carryingHelpMinimum) {
+      subtotal = PRICING_CONSTANTS.carryingHelpMinimum;
+    }
+
+    const normalPriceTotal = subtotal;
+    const { total, dateDiscountAmount } = applyDateDiscount(normalPriceTotal);
+    const vat = total - (total / (1 + PRICING_CONSTANTS.vatRate));
+
+    return {
+      distanceCost: 0,
+      laborCost,
+      extrasCost: 0,
+      subtotal: total - vat,
+      vat,
+      total,
+      normalPriceTotal,
+      dateDiscountFraction: dateDiscount.discount,
+      dateDiscountAmount,
+      dateDiscountLabel: dateDiscount.label,
+      dateDiscountEmoji: dateDiscount.emoji,
+      priceRangeLow: round5(total * (1 - PRICING_CONSTANTS.priceRangeNormal)),
+      priceRangeHigh: round5(total * (1 + PRICING_CONSTANTS.priceRangeNormal)),
+      difficultyLevel: 'medium',
+      estimatedDurationHours: totalLaborHours,
+      details: {
+        distanceKm: 0,
+        laborHours: totalLaborHours,
+        laborRate: hourlyRate,
+        crewSize: 2,
+        totalVolumeM3,
+        totalItemCount,
+        rawHandlingMinutes,
+        crewEfficiencyApplied,
+        itemBreakdown,
+        timeBreakdown: {
+          handlingMinutes,
+          carryExtraMinutes,
+          assemblyMinutes,
+          packingMinutes,
+          driveTimeHours: driveTime,
+          baseTimeHours: adminTime,
+        },
+        impactBreakdown: { items: laborCost, floors: 0, carryDistance: 0, distance: 0, extras: 0, base: 0 },
+      },
+    };
+  }
 
   // Determine Hourly Rate
   let hourlyRate = PRICING_CONSTANTS.hourlyRateDefault;
@@ -340,31 +720,51 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
 
   const laborCost = totalLaborHours * hourlyRate;
 
-  // 3. Extras
-  let extrasCost = 0;
-  // Example: if specific heavy item fee was separate, add here.
-  // For now, included in labor/complexity.
+  // 3. Extras (reserved for future separately-priced add-ons; currently folded into labor)
+  const extrasCost = 0;
 
-  // 4. Totals
-  let subtotal = distanceCost + laborCost + extrasCost;
+  // 4. Totals — ei minimihintaa tavaralistapohjaisessa hinnoittelussa (v2-speksi)
+  const subtotal = distanceCost + laborCost + extrasCost;
+  const normalPriceTotal = subtotal;
+  const { total, dateDiscountAmount } = applyDateDiscount(normalPriceTotal);
+  const vat = total - (total / (1 + PRICING_CONSTANTS.vatRate));
 
-  // Minimum Charge
-  if (subtotal < PRICING_CONSTANTS.minimumCharge) {
-    subtotal = PRICING_CONSTANTS.minimumCharge;
+  // 5. Laadunvarmistus: vertaa tavaramäärän tilavuutta asunnon kokoon (ei muuta hintaa)
+  const [expectedMinVolume] = EXPECTED_VOLUME_M3[apartmentSize];
+  const inventoryWarning = totalVolumeM3 < expectedMinVolume * 0.4 ? INVENTORY_WARNING_MESSAGE : undefined;
+
+  // 6. Hintahaarukka — leveys riippuu automaattisesta laadunvarmistuksesta, ei käyttäjän syötteestä
+  const rangeWidth = inventoryWarning ? PRICING_CONSTANTS.priceRangeWarning : PRICING_CONSTANTS.priceRangeNormal;
+  const priceRangeLow = round5(total * (1 - rangeWidth));
+  const priceRangeHigh = round5(total * (1 + rangeWidth));
+
+  // 7. Vaikeustaso — pelkkä UI-elementti, ei vaikuta hintaan
+  const noElevatorHighFloor = (!elevatorFrom && floorFrom >= 3) || (!elevatorTo && floorTo >= 3);
+  const hasHeavyItems = heavyCarryMinutes > 0;
+  const hasLongCarry = carryDistanceFrom === '50+' || carryDistanceTo === '50+';
+  const hasShortCarryBothEnds =
+    (carryDistanceFrom === '<10' || carryDistanceFrom === '10-30') &&
+    (carryDistanceTo === '<10' || carryDistanceTo === '10-30');
+
+  let difficultyLevel: PriceBreakdown['difficultyLevel'];
+  if (noElevatorHighFloor || hasHeavyItems || hasLongCarry) {
+    difficultyLevel = 'hard';
+  } else if (elevatorFrom && elevatorTo && !hasHeavyItems && hasShortCarryBothEnds) {
+    difficultyLevel = 'easy';
+  } else {
+    difficultyLevel = 'medium';
   }
 
-  // VAT
-  // Assuming the rates above are VAT 0% or VAT included? 
-  // Usually B2C prices include VAT.
-  // Let's assume the Calculated Subtotal is VAT Inclusive for B2C display simplicity, 
-  // or add VAT on top if rates are excl VAT.
-  // The prompt implies "€100-150 / hour", usually B2C prices in Finland are quoted with VAT.
-  // Let's assume the result should be the final price to customer.
-  
-  // If we treat the rates as VAT inclusive (common for consumers):
-  const total = subtotal; 
-  const vat = total - (total / (1 + PRICING_CONSTANTS.vatRate));
-  
+  // 8. Erittely UI:lle (€)
+  const itemsImpact = (handlingMinutes / 60) * hourlyRate;
+  const floorsImpact = (floorsExtraMinutes / 60) * hourlyRate;
+  const carryDistanceImpact = (carryDistanceExtraMinutes / 60) * hourlyRate;
+  const extrasImpact = ((assemblyMinutes + packingMinutes) / 60) * hourlyRate;
+  const distanceImpact = distanceCost + driveTime * hourlyRate;
+  // "Base" saa loput (perusaika + 15 min -pyöristyksen erotus), jotta erittely summautuu
+  // AINA tarkalleen samaksi kuin näytetty hinta — ei pelkkää adminTime*hourlyRate-arviota.
+  const baseImpact = laborCost - itemsImpact - floorsImpact - carryDistanceImpact - extrasImpact - driveTime * hourlyRate;
+
   return {
     distanceCost,
     laborCost,
@@ -372,12 +772,42 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
     subtotal: total - vat,
     vat,
     total,
+    normalPriceTotal,
+    dateDiscountFraction: dateDiscount.discount,
+    dateDiscountAmount,
+    dateDiscountLabel: dateDiscount.label,
+    dateDiscountEmoji: dateDiscount.emoji,
+    priceRangeLow,
+    priceRangeHigh,
+    inventoryWarning,
+    difficultyLevel,
     estimatedDurationHours: totalLaborHours,
     details: {
-      distanceKm: totalDistance,
+      distanceKm: billableDistanceKm,
       laborHours: totalLaborHours,
       laborRate: hourlyRate,
       crewSize: 3, // Van + 2 movers
+      totalVolumeM3,
+      totalItemCount,
+      rawHandlingMinutes,
+      crewEfficiencyApplied,
+      itemBreakdown,
+      timeBreakdown: {
+        handlingMinutes,
+        carryExtraMinutes,
+        assemblyMinutes,
+        packingMinutes,
+        driveTimeHours: driveTime,
+        baseTimeHours: adminTime,
+      },
+      impactBreakdown: {
+        items: itemsImpact,
+        floors: floorsImpact,
+        carryDistance: carryDistanceImpact,
+        distance: distanceImpact,
+        extras: extrasImpact,
+        base: baseImpact,
+      },
     },
   };
 }
