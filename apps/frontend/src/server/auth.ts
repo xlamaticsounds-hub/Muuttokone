@@ -1,3 +1,4 @@
+import NextAuth from "next-auth";
 import { type NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -105,8 +106,35 @@ export const authOptions: NextAuthOptions = {
     },
   },
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user, account }) {
+      // For credentials provider, authorize() already validated the user —
+      // we just need to confirm the email is on the allow-list.
+      if (account?.provider === "credentials") {
+        return isAllowedEmail(user.email);
+      }
+      // For OAuth providers (Google), check the allow-list.
       return isAllowedEmail(user.email);
+    },
+    async jwt({ token, user, account }) {
+      // On initial sign-in, persist user fields into the JWT.
+      if (user) {
+        token.id = user.id;
+        token.email = user.email;
+        token.name = user.name;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      // Expose token fields on the session object.
+      if (token && session.user) {
+        session.user.email = token.email as string;
+        session.user.name = token.name as string;
+      }
+      return session;
     },
   },
 };
+
+const handler = NextAuth(authOptions);
+
+export { handler as GET, handler as POST };
