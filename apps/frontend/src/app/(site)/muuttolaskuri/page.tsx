@@ -4,8 +4,8 @@ import { Metadata } from 'next';
 import SectionTitle from '@/components/SectionTitle';
 
 export const metadata: Metadata = {
-  title: 'Muuttolaskuri - Muuttokone.fi',
-  description: 'Laske muutosi hinta välittömästi ja varaa muutto verkossa.',
+  title: 'Muuttolaskuri – Saa tarkka hinta heti | Muuttokone.fi',
+  description: 'Laske muuttosi hinta heti – tarkka hinta-arvio sekunneissa, ei piilokuluja. Suomen tarkin muuttolaskuri perustuu oikeaan tavaramäärään, ei arvioihin.',
 };
 
 export default function MuuttolaskuriPage() {
@@ -15,7 +15,7 @@ export default function MuuttolaskuriPage() {
         <div className="max-w-3xl mx-auto mb-16 text-center">
           <SectionTitle
             title="Muuttolaskuri"
-            subtitle="Laske tarkka hinta-arvio muutollesi ja varaa vapaa slotti kalenterista. Nopeaa, helppoa ja läpinäkyvää."
+            subtitle="Laske ja saa hinta heti – tarkka hinta-arvio sekunneissa, ei piilokuluja. Suomen tarkin muuttolaskuri perustuu oikeaan tavaramäärään."
           />
         </div>
         
