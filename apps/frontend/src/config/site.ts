@@ -8,8 +8,7 @@ export const siteConfig = {
       tel: '+358453460072',
     },
     email: 'info@muuttokone.fi',
-    openingHours:
-      'Ma-Pe 8:00-18:00, La-Su 9:00-15:00. Kiireellisissä asioissa voit tavoittaa meidät kellon ympäri.',
+    openingHours: 'Joka päivä 8:00-22:00.',
     social: {
       facebook: '#',
       twitter: '#',
