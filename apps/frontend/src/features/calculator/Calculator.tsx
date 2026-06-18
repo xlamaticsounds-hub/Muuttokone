@@ -37,7 +37,9 @@ export default function Calculator() {
     movingPackage: 'full_service',
     addressFrom: '',
     addressTo: '',
+    additionalStops: [],
     distanceKm: 5,
+    driverCount: '1',
     apartmentSize: '1h',
     floorFrom: 0,
     elevatorFrom: true,
@@ -48,6 +50,7 @@ export default function Calculator() {
     boxCount: 0,
     heavyItems: [],
     furnitureItems: {},
+    customItems: [],
     needsPacking: false,
     needsCleaning: false,
     services: [],
@@ -77,7 +80,15 @@ export default function Calculator() {
 
   // Hinta-arvioon aina sisältyvät hyödyt (ei lisäpalveluita) — vaihtelee palvelupaketin mukaan
   const getIncludedServices = () => {
-    if (formData.serviceType === 'transport' || formData.movingPackage === 'driver_with_vehicle') {
+    if (formData.serviceType === 'transport') {
+      return [
+        `${formData.driverCount} kuljettaja${formData.driverCount === '2' ? 'a' : ''} + pakettiauto`,
+        'Kuljetusvakuutus',
+        `Ensimmäiset ${INCLUDED_DISTANCE_KM} km sisältyvät hintaan`,
+        'ALV sisältyy hintaan',
+      ];
+    }
+    if (formData.movingPackage === 'driver_with_vehicle') {
       return ['Kuljettaja + kuorma-auto', 'Muuttovakuutus', `Ensimmäiset ${INCLUDED_DISTANCE_KM} km sisältyvät hintaan`, 'ALV sisältyy hintaan'];
     }
     if (formData.movingPackage === 'carrying_help') {
@@ -250,6 +261,36 @@ export default function Calculator() {
       else updated[id] = next;
       return { ...prev, furnitureItems: updated };
     });
+  };
+
+  const addStop = () => {
+    setFormData((prev) => ({ ...prev, additionalStops: [...prev.additionalStops, ''] }));
+  };
+
+  const updateStop = (index: number, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      additionalStops: prev.additionalStops.map((stop, i) => (i === index ? value : stop)),
+    }));
+  };
+
+  const removeStop = (index: number) => {
+    setFormData((prev) => ({ ...prev, additionalStops: prev.additionalStops.filter((_, i) => i !== index) }));
+  };
+
+  const [customItemLabel, setCustomItemLabel] = useState('');
+  const [customItemQty, setCustomItemQty] = useState(1);
+
+  const addCustomItem = () => {
+    const label = customItemLabel.trim();
+    if (!label) return;
+    setFormData((prev) => ({ ...prev, customItems: [...prev.customItems, { label, qty: customItemQty }] }));
+    setCustomItemLabel('');
+    setCustomItemQty(1);
+  };
+
+  const removeCustomItem = (index: number) => {
+    setFormData((prev) => ({ ...prev, customItems: prev.customItems.filter((_, i) => i !== index) }));
   };
 
   const furnitureCategories = [...new Set(FURNITURE_CATALOG.map((f) => f.category))];
@@ -556,8 +597,10 @@ export default function Calculator() {
             {currentStep === (formData.serviceType === 'moving' ? 2 : 1) && (
               <div className="space-y-6">
                 <div className="text-center mb-10">
-                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Mistä ja mihin muutetaan?</h2>
-                  <p className="text-gray-500">Anna muuttokohteiden osoitteet hinnan laskemiseksi.</p>
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                    {formData.serviceType === 'transport' ? 'Mistä ja mihin kuljetetaan?' : 'Mistä ja mihin muutetaan?'}
+                  </h2>
+                  <p className="text-gray-500">Anna kohteiden osoitteet hinnan laskemiseksi.</p>
                 </div>
                 <div className="grid gap-6">
                   {(!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY === '') && (
@@ -587,6 +630,45 @@ export default function Calculator() {
                       onChange={(e) => updateField('addressTo', e.target.value)}
                     />
                   </div>
+
+                  {formData.serviceType === 'transport' && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-sm font-semibold">Välipysähdykset (valinnainen)</label>
+                        <button
+                          type="button"
+                          onClick={addStop}
+                          className="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full hover:bg-primary/20 transition-all"
+                        >
+                          + Lisää välipysähdys
+                        </button>
+                      </div>
+                      {formData.additionalStops.map((stop, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            className="flex-1 px-5 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all"
+                            placeholder={`Välipysähdys ${index + 1} osoite`}
+                            value={stop}
+                            onChange={(e) => updateStop(index, e.target.value)}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeStop(index)}
+                            className="w-10 h-10 flex-shrink-0 rounded-full border-2 border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-400 hover:border-red-300 hover:text-red-500 transition-all"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                      {formData.additionalStops.length > 0 && (
+                        <p className="text-xs text-gray-400">
+                          Muista huomioida välipysähdysten lisäämä matka alla olevassa etäisyysarviossa.
+                        </p>
+                      )}
+                    </div>
+                  )}
+
                   <div className="pt-4">
                     <label className="block text-sm font-semibold mb-2">Arvioitu etäisyys (km)</label>
                     <div className="flex items-center gap-4">
@@ -624,25 +706,48 @@ export default function Calculator() {
             {currentStep === (formData.serviceType === 'moving' ? 3 : 2) && (
               <div className="space-y-8">
                 <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Asunnon koko ja kerrokset</h2>
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                    {formData.serviceType === 'transport' ? 'Kuljettajat ja kohteet' : 'Asunnon koko ja kerrokset'}
+                  </h2>
                   <p className="text-gray-500">Nämä vaikuttavat tarvittavaan aikaan ja miehitykseen.</p>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                  {(['1h', '2h', '3h', '4h+', 'office'] as const).map((size) => (
-                    <button
-                      key={size}
-                      onClick={() => updateField('apartmentSize', size)}
-                      className={`py-4 rounded-xl border-2 transition-all font-bold ${
-                        formData.apartmentSize === size
-                          ? 'border-primary bg-primary/5 text-primary'
-                          : 'border-gray-100 dark:border-gray-700 hover:border-gray-300'
-                      }`}
-                    >
-                      {size}
-                    </button>
-                  ))}
-                </div>
+                {formData.serviceType === 'transport' ? (
+                  <div className="space-y-3">
+                    <label className="block text-sm font-semibold mb-2 text-center">Kuljettajien määrä</label>
+                    <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
+                      {(['1', '2'] as const).map((count) => (
+                        <button
+                          key={count}
+                          onClick={() => updateField('driverCount', count)}
+                          className={`py-4 rounded-xl border-2 transition-all font-bold ${
+                            formData.driverCount === count
+                              ? 'border-primary bg-primary/5 text-primary'
+                              : 'border-gray-100 dark:border-gray-700 hover:border-gray-300'
+                          }`}
+                        >
+                          {count} kuljettaja{count === '2' ? 'a' : ''}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    {(['1h', '2h', '3h', '4h+', 'office'] as const).map((size) => (
+                      <button
+                        key={size}
+                        onClick={() => updateField('apartmentSize', size)}
+                        className={`py-4 rounded-xl border-2 transition-all font-bold ${
+                          formData.apartmentSize === size
+                            ? 'border-primary bg-primary/5 text-primary'
+                            : 'border-gray-100 dark:border-gray-700 hover:border-gray-300'
+                        }`}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 <div className="grid md:grid-cols-2 gap-8 pt-4">
                   <div className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-800/50">
@@ -689,7 +794,7 @@ export default function Calculator() {
                   <div className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-800/50">
                     <h3 className="font-bold mb-4 flex items-center gap-2">
                       <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm">2</span>
-                      Uusi koti
+                      {formData.serviceType === 'transport' ? 'Toimitusosoite' : 'Uusi koti'}
                     </h3>
                     <div className="space-y-4">
                       <div>
@@ -786,6 +891,53 @@ export default function Calculator() {
                       </div>
                     </div>
                   ))}
+                </div>
+
+                {/* Mukautetut tavarat — jos tavaraa ei löydy katalogista */}
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+                    <h3 className="font-bold text-sm mb-1">Tavaraa ei löydy listalta?</h3>
+                    <p className="text-xs text-gray-500 mb-4">Kirjoita tavaran nimi ja määrä, ja lisäämme sen arvioon.</p>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all text-sm"
+                        placeholder="Esim. Akvaario, soutuvene, jääkellari..."
+                        value={customItemLabel}
+                        onChange={(e) => setCustomItemLabel(e.target.value)}
+                      />
+                      <input
+                        type="number"
+                        min={1}
+                        className="w-20 px-3 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none text-sm text-center"
+                        value={customItemQty}
+                        onChange={(e) => setCustomItemQty(Math.max(1, parseInt(e.target.value) || 1))}
+                      />
+                      <button
+                        type="button"
+                        onClick={addCustomItem}
+                        className="px-5 py-3 rounded-xl bg-primary text-white font-bold text-sm hover:bg-primary/90 transition-all"
+                      >
+                        Lisää
+                      </button>
+                    </div>
+                    {formData.customItems.length > 0 && (
+                      <div className="mt-4 divide-y divide-gray-50 dark:divide-gray-800 border-t border-gray-50 dark:border-gray-800">
+                        {formData.customItems.map((item, index) => (
+                          <div key={index} className="flex items-center justify-between py-2">
+                            <span className="text-sm font-medium">{item.label} × {item.qty}</span>
+                            <button
+                              type="button"
+                              onClick={() => removeCustomItem(index)}
+                              className="w-7 h-7 rounded-full border-2 border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-400 hover:border-red-300 hover:text-red-500 transition-all"
+                            >
+                              ×
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">
@@ -912,7 +1064,7 @@ export default function Calculator() {
                 </div>
 
                 <div className="flex justify-center gap-3 flex-wrap">
-                  {formData.serviceType === 'moving' && (
+                  {(formData.serviceType === 'moving' || formData.serviceType === 'transport') && (
                     <span className="inline-flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800">
                       <span>{DIFFICULTY_BADGES[priceResult.difficultyLevel].emoji}</span>
                       {DIFFICULTY_BADGES[priceResult.difficultyLevel].label}
@@ -941,11 +1093,13 @@ export default function Calculator() {
                         <div>
                           <p className="text-xs uppercase font-bold text-white/60 mb-1">Tiimi</p>
                           <p className="text-xl font-bold">
-                            {formData.serviceType === 'transport' || formData.movingPackage === 'driver_with_vehicle'
-                              ? 'Kuljettaja + Kuorma-auto'
-                              : formData.movingPackage === 'carrying_help'
-                                ? '2 kantajaa'
-                                : 'Kuorma-auto + 2 miestä'}
+                            {formData.serviceType === 'transport'
+                              ? `${formData.driverCount} kuljettaja${formData.driverCount === '2' ? 'a' : ''} + pakettiauto`
+                              : formData.movingPackage === 'driver_with_vehicle'
+                                ? 'Kuljettaja + Kuorma-auto'
+                                : formData.movingPackage === 'carrying_help'
+                                  ? '2 kantajaa'
+                                  : 'Kuorma-auto + 2 miestä'}
                           </p>
                         </div>
                         <div>
@@ -956,6 +1110,12 @@ export default function Calculator() {
                           <p className="text-xs uppercase font-bold text-white/60 mb-1">Vakuutus</p>
                           <p className="text-xl font-bold">Sisältyy</p>
                         </div>
+                        {formData.serviceType === 'transport' && formData.additionalStops.length > 0 && (
+                          <div>
+                            <p className="text-xs uppercase font-bold text-white/60 mb-1">Välipysähdykset</p>
+                            <p className="text-xl font-bold">+{formData.additionalStops.length}</p>
+                          </div>
+                        )}
                       </div>
                    </div>
                    <CalcIcon className="absolute -bottom-10 -right-10 w-64 h-64 text-white/10 rotate-12" />
@@ -992,7 +1152,7 @@ export default function Calculator() {
                   </div>
                 </div>
 
-                {formData.serviceType === 'moving' && (
+                {(formData.serviceType === 'moving' || formData.serviceType === 'transport') && (
                   <div className="grid gap-3">
                     <h3 className="font-bold text-sm uppercase tracking-wide text-gray-400">Mistä hinta muodostuu</h3>
                     <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
@@ -1008,12 +1168,14 @@ export default function Calculator() {
                       <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.carryDistance)}€</span>
                     </div>
                     <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                      <span className="text-gray-500">Muuttomatkan vaikutus</span>
+                      <span className="text-gray-500">{formData.serviceType === 'transport' ? 'Kuljetusmatkan vaikutus' : 'Muuttomatkan vaikutus'}</span>
                       <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.distance)}€</span>
                     </div>
                     {priceResult.details.impactBreakdown.extras > 0 && (
                       <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                        <span className="text-gray-500">Lisäpalveluiden vaikutus</span>
+                        <span className="text-gray-500">
+                          {formData.serviceType === 'transport' ? 'Välipysähdysten vaikutus' : 'Lisäpalveluiden vaikutus'}
+                        </span>
                         <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.extras)}€</span>
                       </div>
                     )}
@@ -1028,7 +1190,7 @@ export default function Calculator() {
                   </div>
                 )}
 
-                {formData.serviceType !== 'moving' && (
+                {formData.serviceType === 'recycling' && (
                   <div className="grid gap-3">
                     <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
                       <span className="text-gray-500">Työkustannukset ({priceResult.details.laborHours}h)</span>
@@ -1045,7 +1207,7 @@ export default function Calculator() {
                   </div>
                 )}
 
-                {formData.serviceType === 'moving' && selectedInventoryItems.length > 0 && (
+                {(formData.serviceType === 'moving' || formData.serviceType === 'transport') && selectedInventoryItems.length > 0 && (
                   <div className="grid gap-3">
                     <h3 className="font-bold text-sm uppercase tracking-wide text-gray-400">Lisätyt tavarat</h3>
                     <div className="rounded-2xl border border-gray-100 dark:border-gray-800 divide-y divide-gray-50 dark:divide-gray-800 overflow-hidden">
@@ -1083,7 +1245,7 @@ export default function Calculator() {
                   </div>
                 )}
 
-                {formData.serviceType === 'moving' && priceResult.details.itemBreakdown.length > 0 && (
+                {(formData.serviceType === 'moving' || formData.serviceType === 'transport') && priceResult.details.itemBreakdown.length > 0 && (
                   <details className="rounded-2xl border border-gray-100 dark:border-gray-800 p-4 text-sm">
                     <summary className="cursor-pointer font-bold text-gray-500">Yhteenveto — mistä hinta perustuu</summary>
                     <div className="mt-4 space-y-3">
@@ -1094,7 +1256,7 @@ export default function Calculator() {
                       <div className="rounded-xl border border-gray-100 dark:border-gray-800 divide-y divide-gray-50 dark:divide-gray-800 overflow-hidden">
                         {priceResult.details.itemBreakdown.map((item) => (
                           <div key={item.id} className="flex items-center justify-between px-4 py-2">
-                            <span>{item.label} × {item.qty}</span>
+                            <span>{item.label} × {item.qty}{item.isCustom && <span className="text-gray-400"> (mukautettu)</span>}</span>
                             <span className="font-bold">{item.minutes.toFixed(1)} min</span>
                           </div>
                         ))}

@@ -191,7 +191,11 @@ export const CalculatorSchema = z.object({
   // Locations
   addressFrom: z.string().min(1, 'Lähtöosoite vaaditaan'),
   addressTo: z.string().min(1, 'Kohdeosoite vaaditaan'),
+  additionalStops: z.array(z.string()).default([]), // Välipysähdysten osoitteet (kuljetus)
   distanceKm: z.number().min(0).default(0), // Calculated or input
+
+  // Kuljetus (transport) -spesifiset
+  driverCount: z.enum(['1', '2']).default('1'),
 
   // Apartment details
   apartmentSize: z.enum(['1h', '2h', '3h', '4h+', 'office']),
@@ -211,6 +215,7 @@ export const CalculatorSchema = z.object({
   boxCount: z.number().default(0),
   heavyItems: z.array(z.string()).default([]), // Legacy, kept for backward compatibility, no longer used in pricing
   furnitureItems: z.record(z.string(), z.number()).default({}),
+  customItems: z.array(z.object({ label: z.string(), qty: z.number() })).default([]), // Tavarat joita ei löydy katalogista
 
   // Service level
   needsPacking: z.boolean().default(false),
@@ -255,7 +260,7 @@ export interface PriceBreakdown {
     totalItemCount: number;
     rawHandlingMinutes: number; // ennen suuren tavaramäärän tehokkuuskerrointa
     crewEfficiencyApplied: boolean;
-    itemBreakdown: { id: string; label: string; qty: number; minutes: number; catalogMinutesEach: number }[]; // debug-erittely tavaroittain
+    itemBreakdown: { id: string; label: string; qty: number; minutes: number; catalogMinutesEach: number; isCustom?: boolean }[]; // debug-erittely tavaroittain
     // Täysi aikaerittely: nämä summattuna (minuutteina) ja pyöristettynä ylöspäin 15 min
     // tarkkuudella = estimatedDurationHours. Debug-näkymän tulee näyttää KAIKKI nämä,
     // ei vain käsittelyminuutteja, jotta "arvioitu työaika" on jäljitettävissä.
@@ -378,6 +383,17 @@ function applyCrewEfficiency(rawHandlingMinutes: number, apartmentSize: Calculat
 // vain tarkistusmuuttuja, ei hinnoitteluperuste.
 const COORDINATION_TIME_HOURS = 0.25;
 
+// Mukautetun (katalogin ulkopuolisen) tavaran oletuskäsittelyaika — keskikokoisen
+// tavaran arvio, koska tarkkaa kokoa ei tunneta. Kanto-/tilavaikutus käyttää
+// categoryFactors()-fallbackia (ei omaa kategoriaa).
+const CUSTOM_ITEM_MINUTES_EACH = 5;
+
+// Kuljetus (transport) -palvelun omat vakiot. Ei kilpailijadataa toistaiseksi —
+// nämä ovat lähtöarvoja samalla logiikalla kuin Muutto-kalibroinnissa.
+const EXTRA_STOP_MINUTES = 15; // ylimääräisen välipysähdyksen lastaus/purku-aika
+const DRIVER_COUNT_EFFICIENCY: Record<'1' | '2', number> = { '1': 1.0, '2': 0.65 };
+const SECOND_DRIVER_RATE_ADDON = 35; // €/h, 2. kuljettajan lisähinta
+
 function round5(value: number): number {
   return Math.round(value / 5) * 5;
 }
@@ -441,6 +457,9 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
     needsPacking,
     services,
     furnitureItems = {},
+    customItems = [],
+    driverCount = '1',
+    additionalStops = [],
     date,
   } = data;
 
@@ -465,7 +484,7 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
   let totalVolumeM3 = 0;
   let boxItemCount = 0;
   let nonBoxItemCount = 0;
-  const itemBreakdown: { id: string; label: string; qty: number; minutes: number; catalogMinutesEach: number }[] = [];
+  const itemBreakdown: { id: string; label: string; qty: number; minutes: number; catalogMinutesEach: number; isCustom?: boolean }[] = [];
 
   for (const [id, qty] of Object.entries(furnitureItems)) {
     if (!qty || qty <= 0) continue;
@@ -491,37 +510,90 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
       nonBoxItemCount += qty;
     }
   }
+
+  // Mukautetut tavarat (ei katalogissa) — vakio oletusaika per kappale, fallback-kerroin kanto/tilavaikutukseen.
+  const customFactors = categoryFactors('__custom__');
+  customItems.forEach((customItem, index) => {
+    if (!customItem.qty || customItem.qty <= 0) return;
+    const itemMinutes = CUSTOM_ITEM_MINUTES_EACH * customItem.qty;
+    handlingMinutes += itemMinutes;
+    totalVolumeM3 += CUSTOM_ITEM_MINUTES_EACH * customFactors.volumeM3PerMin * customItem.qty;
+    itemBreakdown.push({
+      id: `custom-${index}`,
+      label: customItem.label,
+      qty: customItem.qty,
+      minutes: itemMinutes,
+      catalogMinutesEach: CUSTOM_ITEM_MINUTES_EACH,
+      isCustom: true,
+    });
+    normalCarryMinutes += CUSTOM_ITEM_MINUTES_EACH * customFactors.carryRatio * customItem.qty;
+    nonBoxItemCount += customItem.qty;
+  });
+
   const totalItemCount = boxItemCount + nonBoxItemCount;
   itemBreakdown.sort((a, b) => b.minutes - a.minutes);
 
   // Kuljetusliikkeen tehokkuus suurella tavaramäärällä: ylimenevä osa "tyypillisestä"
   // tavaramäärästä tälle asunnon koolle hinnoitellaan tehokkuuskertoimella (ks. yllä).
+  // EI koske Kuljetusta — "asunnon koko" -käsite ei sovi yksittäisten tavaroiden kuljetukseen.
   const rawHandlingMinutes = handlingMinutes;
-  handlingMinutes = applyCrewEfficiency(rawHandlingMinutes, apartmentSize);
-  const crewEfficiencyApplied = handlingMinutes < rawHandlingMinutes;
-  if (rawHandlingMinutes > 0) {
-    const efficiencyRatio = handlingMinutes / rawHandlingMinutes;
-    normalCarryMinutes *= efficiencyRatio;
-    heavyCarryMinutes *= efficiencyRatio;
+  let crewEfficiencyApplied = false;
+  if (serviceType !== 'transport') {
+    handlingMinutes = applyCrewEfficiency(rawHandlingMinutes, apartmentSize);
+    crewEfficiencyApplied = handlingMinutes < rawHandlingMinutes;
+    if (rawHandlingMinutes > 0) {
+      const efficiencyRatio = handlingMinutes / rawHandlingMinutes;
+      normalCarryMinutes *= efficiencyRatio;
+      heavyCarryMinutes *= efficiencyRatio;
+    }
   }
 
-  // For transport (kuljetus) service: simplified pricing with minimal labor
+  // Kanto-osuuden extra-aika kerroksista/hississtä/kantomatkasta — käytössä Kuljetuksella JA Muutolla.
+  const normalCarryHalf = normalCarryMinutes / 2;
+  const heavyCarryHalf = heavyCarryMinutes / 2;
+
+  const origin = carrySideExtra(normalCarryHalf, heavyCarryHalf, floorFrom, elevatorFrom, carryDistanceFrom);
+  const dest = carrySideExtra(normalCarryHalf, heavyCarryHalf, floorTo, elevatorTo, carryDistanceTo);
+
+  const floorsExtraMinutes = origin.floorExtraMinutes + dest.floorExtraMinutes;
+  const carryDistanceExtraMinutes = origin.distanceExtraMinutes + dest.distanceExtraMinutes;
+  const carryExtraMinutes = origin.totalExtraMinutes + dest.totalExtraMinutes;
+
+  // Vaikeustaso — pelkkä UI-elementti, ei vaikuta hintaan. Käytössä Kuljetuksella JA Muutolla
+  // (raskas tavara tai pitkä kantomatka voi tehdä kuljetuksestakin "vaativan").
+  const noElevatorHighFloor = (!elevatorFrom && floorFrom >= 3) || (!elevatorTo && floorTo >= 3);
+  const hasHeavyItems = heavyCarryMinutes > 0;
+  const hasLongCarry = carryDistanceFrom === '50+' || carryDistanceTo === '50+';
+  const hasShortCarryBothEnds =
+    (carryDistanceFrom === '<10' || carryDistanceFrom === '10-30') &&
+    (carryDistanceTo === '<10' || carryDistanceTo === '10-30');
+
+  let difficultyLevel: PriceBreakdown['difficultyLevel'];
+  if (noElevatorHighFloor || hasHeavyItems || hasLongCarry) {
+    difficultyLevel = 'hard';
+  } else if (elevatorFrom && elevatorTo && !hasHeavyItems && hasShortCarryBothEnds) {
+    difficultyLevel = 'easy';
+  } else {
+    difficultyLevel = 'medium';
+  }
+
+  // For transport (kuljetus) service: tavaralistapohjainen, samalla periaatteella kuin Muutto,
+  // mutta omalla miehityksellä (1-2 kuljettajaa) ja välipysähdystuella.
   if (serviceType === 'transport') {
-    // Transport = only driver + van, no movers
-    // Minimal time: just drive time + loading/unloading by driver only
-    const driverLoadTime = 0.5; // Driver handles loading themselves
-    const driverUnloadTime = 0.25; // Quick unload
+    const additionalStopMinutes = additionalStops.length * EXTRA_STOP_MINUTES;
+    const driverEfficiency = DRIVER_COUNT_EFFICIENCY[driverCount];
 
-    let totalLaborHours = driveTime + driverLoadTime + driverUnloadTime;
-    totalLaborHours = Math.ceil(totalLaborHours * 2) / 2;
+    const rawTransportMinutes = (handlingMinutes + carryExtraMinutes + additionalStopMinutes) * driverEfficiency;
+    let totalLaborHours = rawTransportMinutes / 60 + driveTime + COORDINATION_TIME_HOURS;
+    totalLaborHours = Math.ceil(totalLaborHours * 4) / 4;
 
-    const hourlyRate = PRICING_CONSTANTS.hourlyRateDefault; // Standard rate for transport
+    const hourlyRate = PRICING_CONSTANTS.hourlyRateDefault + (driverCount === '2' ? SECOND_DRIVER_RATE_ADDON : 0);
     const laborCost = totalLaborHours * hourlyRate;
 
     let subtotal = distanceCost + laborCost;
 
-    // Minimum Charge for transport (lower than moving)
-    const transportMinimum = 199; // €
+    // Minimum Charge for transport (lower than moving), korkeampi 2 kuljettajalle
+    const transportMinimum = driverCount === '2' ? 229 : 199; // €
     if (subtotal < transportMinimum) {
       subtotal = transportMinimum;
     }
@@ -529,6 +601,16 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
     const normalPriceTotal = subtotal;
     const { total, dateDiscountAmount } = applyDateDiscount(normalPriceTotal);
     const vat = total - (total / (1 + PRICING_CONSTANTS.vatRate));
+
+    // Erittely UI:lle (€) — sama rakenne kuin Muutossa
+    const itemsImpact = (handlingMinutes * driverEfficiency / 60) * hourlyRate;
+    const floorsImpact = (floorsExtraMinutes * driverEfficiency / 60) * hourlyRate;
+    const carryDistanceImpact = (carryDistanceExtraMinutes * driverEfficiency / 60) * hourlyRate;
+    const extrasImpact = (additionalStopMinutes * driverEfficiency / 60) * hourlyRate;
+    const distanceImpact = distanceCost + driveTime * hourlyRate;
+    // Käytetään normalPriceTotal:ia (ei raakaa laborCost:ia), jotta minimihintakorotus
+    // (jos se laukesi) sisältyy "base"-erään ja erittely täsmää aina näytettyyn hintaan.
+    const baseImpact = (normalPriceTotal - distanceCost) - itemsImpact - floorsImpact - carryDistanceImpact - extrasImpact - driveTime * hourlyRate;
 
     return {
       distanceCost,
@@ -544,42 +626,39 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
       dateDiscountEmoji: dateDiscount.emoji,
       priceRangeLow: round5(total * (1 - PRICING_CONSTANTS.priceRangeNormal)),
       priceRangeHigh: round5(total * (1 + PRICING_CONSTANTS.priceRangeNormal)),
-      difficultyLevel: 'medium',
+      difficultyLevel,
       estimatedDurationHours: totalLaborHours,
       details: {
         distanceKm: billableDistanceKm,
         laborHours: totalLaborHours,
         laborRate: hourlyRate,
-        crewSize: 1, // Only driver
+        crewSize: driverCount === '2' ? 2 : 1,
         totalVolumeM3,
         totalItemCount,
         rawHandlingMinutes,
         crewEfficiencyApplied,
         itemBreakdown,
         timeBreakdown: {
-          handlingMinutes: 0,
-          carryExtraMinutes: 0,
+          handlingMinutes: handlingMinutes * driverEfficiency,
+          carryExtraMinutes: carryExtraMinutes * driverEfficiency,
           assemblyMinutes: 0,
-          packingMinutes: 0,
+          packingMinutes: additionalStopMinutes * driverEfficiency,
           driveTimeHours: driveTime,
-          baseTimeHours: driverLoadTime + driverUnloadTime,
+          baseTimeHours: COORDINATION_TIME_HOURS,
         },
-        impactBreakdown: { items: 0, floors: 0, carryDistance: 0, distance: laborCost + distanceCost, extras: 0, base: 0 },
+        impactBreakdown: {
+          items: itemsImpact,
+          floors: floorsImpact,
+          carryDistance: carryDistanceImpact,
+          distance: distanceImpact,
+          extras: extrasImpact,
+          base: baseImpact,
+        },
       },
     };
   }
 
   // MOVING SERVICE (muutto) - tavaralistapohjainen laskenta (v2)
-
-  const normalCarryHalf = normalCarryMinutes / 2;
-  const heavyCarryHalf = heavyCarryMinutes / 2;
-
-  const origin = carrySideExtra(normalCarryHalf, heavyCarryHalf, floorFrom, elevatorFrom, carryDistanceFrom);
-  const dest = carrySideExtra(normalCarryHalf, heavyCarryHalf, floorTo, elevatorTo, carryDistanceTo);
-
-  const floorsExtraMinutes = origin.floorExtraMinutes + dest.floorExtraMinutes;
-  const carryDistanceExtraMinutes = origin.distanceExtraMinutes + dest.distanceExtraMinutes;
-  const carryExtraMinutes = origin.totalExtraMinutes + dest.totalExtraMinutes;
 
   // Purku- ja kasauspalvelu (olemassa oleva "Purkupalvelu"-toggle, nyt kytketty hintaan)
   const assemblyMinutes = services.includes('Purkupalvelu') ? handlingMinutes * PRICING_CONSTANTS.assemblyRatio : 0;
@@ -738,22 +817,7 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
   const priceRangeLow = round5(total * (1 - rangeWidth));
   const priceRangeHigh = round5(total * (1 + rangeWidth));
 
-  // 7. Vaikeustaso — pelkkä UI-elementti, ei vaikuta hintaan
-  const noElevatorHighFloor = (!elevatorFrom && floorFrom >= 3) || (!elevatorTo && floorTo >= 3);
-  const hasHeavyItems = heavyCarryMinutes > 0;
-  const hasLongCarry = carryDistanceFrom === '50+' || carryDistanceTo === '50+';
-  const hasShortCarryBothEnds =
-    (carryDistanceFrom === '<10' || carryDistanceFrom === '10-30') &&
-    (carryDistanceTo === '<10' || carryDistanceTo === '10-30');
-
-  let difficultyLevel: PriceBreakdown['difficultyLevel'];
-  if (noElevatorHighFloor || hasHeavyItems || hasLongCarry) {
-    difficultyLevel = 'hard';
-  } else if (elevatorFrom && elevatorTo && !hasHeavyItems && hasShortCarryBothEnds) {
-    difficultyLevel = 'easy';
-  } else {
-    difficultyLevel = 'medium';
-  }
+  // 7. Vaikeustaso lasketaan jaetussa lohkossa ennen Kuljetus-haaraa (ks. yllä).
 
   // 8. Erittely UI:lle (€)
   const itemsImpact = (handlingMinutes / 60) * hourlyRate;
