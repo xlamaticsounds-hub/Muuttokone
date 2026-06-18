@@ -3,7 +3,6 @@ import Header from '@/components/Header';
 import ToasterContext from '@/app/context/ToastContext';
 import Footer from '@/components/Footer';
 import ScrollToTop from '@/components/ScrollToTop';
-import ChatButton from '@/components/Chat/ChatButton';
 import React from 'react';
 import { Providers } from './providers';
 import { siteConfig } from '@/config/site';
@@ -43,7 +42,6 @@ export default async function SiteLayout({
           <main className="pt-20 md:pt-20 lg:pt-16">{children}</main>
           <Footer />
           <ScrollToTop />
-          <ChatButton />
           <CookieConsent />
         </div>
       </Providers>

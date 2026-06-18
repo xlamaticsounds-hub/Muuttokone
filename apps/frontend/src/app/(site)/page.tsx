@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import HeroArea from '@/components/HeroArea';
 import About from '@/components/About';
 import Services from '@/features/services';
@@ -6,7 +7,7 @@ import ServicesDivider from '@/components/ServicesDivider';
 import SmallFeatures from '@/components/SmallFeatures';
 import Contact from '@/features/contact';
 import Cta from '@/components/Cta';
-import QuickQuote from '@/features/quote/quick-quote';
+import Calculator from '@/features/calculator/Calculator';
 import StatsBand from '@/components/StatsBand';
 import ProcessSteps from '@/components/ProcessSteps';
 import PricingPreview from '@/components/PricingPreview';
@@ -47,7 +48,21 @@ export default async function Home() {
       <ServicesDivider />
       <ProcessSteps />
       <Testimonials />
-      <QuickQuote />
+      <section className="bg-gray-1 dark:bg-bg-color-dark py-12.5 lg:py-17.5">
+        <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
+          <div className="mb-8 text-center">
+            <h2 className="text-2xl font-semibold text-black lg:text-3xl dark:text-white">
+              Aloita tästä – saat hinta-arvion nopeasti
+            </h2>
+            <p className="mt-4 text-gray-600 dark:text-gray-300">
+              Laske tarkka hinta-arvio muutollesi suoraan tästä. Tämä ei sido sinua mihinkään.
+            </p>
+          </div>
+          <Suspense>
+            <Calculator />
+          </Suspense>
+        </div>
+      </section>
       <ServicesDivider />
       <Services
         title={pageData?.sections?.[1]?.props?.title || "Palvelumme"}

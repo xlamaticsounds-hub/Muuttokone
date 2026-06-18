@@ -115,7 +115,7 @@ const Header = () => {
                       onClick={closeMenu}
                       className="bg-primary mb-3 block w-full rounded-full px-7.5 py-3 text-center text-white transition-all duration-300 hover:bg-primary/90 hover:shadow-lg font-bold font-outfit"
                     >
-                      Laske hinta
+                      Muuttolaskuri
                     </Link>
                     <a
                       href={`tel:${siteConfig.contact.phone.tel}`}
@@ -143,7 +143,7 @@ const Header = () => {
                   href="/muuttolaskuri"
                   className="bg-primary hover:shadow-1 flex items-center justify-center rounded-full px-7.5 py-3 text-base font-bold text-white whitespace-nowrap font-outfit"
                 >
-                  Laske hinta
+                  Muuttolaskuri
                 </Link>
               </div>
             </div>

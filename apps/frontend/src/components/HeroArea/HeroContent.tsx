@@ -84,13 +84,16 @@ export default function HeroContent({ content }: { content?: any }) {
             <p className="text-regular text-black/70 sm:text-lg dark:text-white/80">
               {content?.description || "Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Ammattitaitoiset ja tehokkaat muuttopalvelut yksityis- ja yritysasiakkaille. Ei piilokuluja, vain rehellinen hinnoittelu."}
             </p>
+            <p className="text-regular text-primary mt-3 font-semibold sm:text-lg">
+              Laske muuttolaskurilla ja saat kiinteän hinnan jo 3 minuutissa – ei arvailua, ei piilokuluja, vain tarkka hinta etukäteen.
+            </p>
 
             <div className="mt-8 flex flex-col-reverse gap-5 sm:flex-row">
               <Link
                 href="/muuttolaskuri"
                 className="bg-primary text-regular hover:shadow-1 inline-flex w-fit rounded-full px-7.5 py-3 leading-7 font-medium text-white transition-all duration-300 hover:bg-primary/90 hover:shadow-lg ease-in-out"
               >
-                Laske hinta
+                Muuttolaskuri
               </Link>
               {/*Below the button insert VASTAUS TULEE AUTOMAATTISESTI*/}
 

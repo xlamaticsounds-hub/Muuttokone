@@ -1,5 +1,7 @@
 allowBuilds:
+  '@prisma/client': set this to true or false
   "@prisma/engines": true
+  '@tailwindcss/oxide': set this to true or false
   prisma: true
   protobufjs: true
   sharp: true
