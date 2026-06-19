@@ -15,7 +15,7 @@ export async function POST(req: Request) {
 
   try {
     const { text } = await generateText({
-      model: google('gemini-2.0-flash-lite-preview-02-05'),
+      model: google('gemini-flash-lite-latest'),
       system: `You are a professional editor. Improve the following text based on the user's instruction.
       Maintain the original meaning and markdown formatting.
       Language: Finnish.`,

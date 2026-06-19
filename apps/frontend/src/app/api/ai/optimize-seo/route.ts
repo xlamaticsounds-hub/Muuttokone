@@ -16,7 +16,7 @@ export async function POST(req: Request) {
 
   try {
     const result = await generateObject({
-      model: google('gemini-2.0-flash-lite-preview-02-05'),
+      model: google('gemini-flash-lite-latest'),
       schema: z.object({
         metaTitle: z.string().describe('SEO optimized title, max 60 characters'),
         metaDescription: z.string().describe('SEO optimized description, max 160 characters'),

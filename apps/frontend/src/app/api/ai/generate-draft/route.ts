@@ -35,7 +35,7 @@ export async function POST(req: Request) {
 
   try {
     const { text } = await generateText({
-      model: google('gemini-2.0-flash-lite-preview-02-05'),
+      model: google('gemini-flash-lite-latest'),
       system: `You are a professional copywriter for Muuttokone.fi. You write clear, engaging, and SEO-friendly content in Finnish.`,
       prompt: prompt,
     });
