@@ -94,6 +94,10 @@ export default function BlogPostForm({ post, isNew, id }: BlogPostFormProps) {
   return (
     <form action={saveAction} className="space-y-8">
       {!isNew && <input type="hidden" name="wasPublished" value={post?.published ? 'true' : 'false'} />}
+      {/* Always present, independent of the edit/preview tab, so saving from the
+          Preview tab doesn't submit an empty content field (the visible editor
+          below is unmounted while previewing). */}
+      <input type="hidden" name="content" value={content} />
       
       {/* Top Meta Fields */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -204,9 +208,8 @@ export default function BlogPostForm({ post, isNew, id }: BlogPostFormProps) {
             )}
 
             {tab === 'edit' ? (
-                <textarea 
+                <textarea
                     ref={textareaRef}
-                    name="content" 
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
                     rows={25}
