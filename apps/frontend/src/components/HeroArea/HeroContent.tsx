@@ -74,7 +74,7 @@ export default function HeroContent({ content }: { content?: any }) {
       <SlideOnReveal delay={0.3}>
         <div className="flex lg:items-center">
           <div className="animate_left max-w-[720px] md:max-w-none lg:pr-8 xl:pr-12">
-            <h1 className="text-title-xl sm:text-title-xxl lg:text-title-xxl mb-4 leading-tight font-semibold text-black/90 drop-shadow-sm dark:text-white">
+            <h1 className="text-title-xl sm:text-title-xxl lg:text-title-xxl mb-4 leading-tight font-bold sm:font-semibold text-black/90 drop-shadow-sm dark:text-white">
               {content?.title || "Luotettava apusi"}
               <span className="text-primary mt-2 block">
                 {displayText}
