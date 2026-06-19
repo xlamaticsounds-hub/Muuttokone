@@ -102,6 +102,34 @@ const createPrismaMock = (): PrismaClient => {
     return store[model];
   };
 
+  // Mirrors the handful of relations the app actually `include`s, so findMany/findFirst/
+  // findUnique all expand them the same way instead of only findMany doing it (that gap
+  // is what let lead.contact come back undefined from findUnique and crash the lead
+  // detail page, even though list pages using findMany worked fine).
+  const expandInclude = (model: string, row: MockRecord, include?: Record<string, any>): MockRecord => {
+    if (!include || !row) return row;
+
+    if (model === 'lead' && include.contact) {
+      return { ...row, contact: getRows('contact').find((c) => c.id === row.contactId) ?? null };
+    }
+
+    if (model === 'contact' && (include._count || include.leads)) {
+      const contactLeads = getRows('lead').filter((lead) => lead.contactId === row.id);
+      const enriched: MockRecord = { ...row };
+      if (include._count?.select?.leads) {
+        enriched._count = { leads: contactLeads.length };
+      }
+      if (include.leads) {
+        let limited = applyOrderBy(contactLeads, include.leads.orderBy);
+        if (typeof include.leads.take === 'number') limited = limited.slice(0, include.leads.take);
+        enriched.leads = limited;
+      }
+      return enriched;
+    }
+
+    return row;
+  };
+
   const createModelProxy = (model: string) =>
     new Proxy(
       {},
@@ -115,42 +143,20 @@ const createPrismaMock = (): PrismaClient => {
               let result = applyWhere(rows, args?.where);
               result = applyOrderBy(result, args?.orderBy);
               if (typeof args?.take === 'number') result = result.slice(0, args.take);
-
-              if (model === 'lead' && args?.include?.contact) {
-                return result.map((lead) => ({
-                  ...lead,
-                  contact: getRows('contact').find((c) => c.id === lead.contactId) ?? null,
-                }));
-              }
-
-              if (model === 'contact' && (args?.include?._count || args?.include?.leads)) {
-                return result.map((contact) => {
-                  const contactLeads = getRows('lead').filter((lead) => lead.contactId === contact.id);
-                  const enriched: Record<string, unknown> = { ...contact };
-                  if (args?.include?._count?.select?.leads) {
-                    enriched._count = { leads: contactLeads.length };
-                  }
-                  if (args?.include?.leads) {
-                    let limited = applyOrderBy(contactLeads, args.include.leads.orderBy);
-                    if (typeof args.include.leads.take === 'number') limited = limited.slice(0, args.include.leads.take);
-                    enriched.leads = limited;
-                  }
-                  return enriched;
-                });
-              }
-
-              return result;
+              return result.map((row) => expandInclude(model, row, args?.include));
             }
 
             if (op === 'findFirst') {
               const result = applyWhere(rows, args?.where);
-              return result[0] ?? null;
+              const row = result[0] ?? null;
+              return row ? expandInclude(model, row, args?.include) : null;
             }
 
             if (op === 'findUnique') {
               if (!args?.where) return null;
               const [key, value] = Object.entries(args.where)[0] || [];
-              return rows.find((r) => r[key] === value) ?? null;
+              const row = rows.find((r) => r[key] === value) ?? null;
+              return row ? expandInclude(model, row, args?.include) : null;
             }
 
             if (op === 'create') {

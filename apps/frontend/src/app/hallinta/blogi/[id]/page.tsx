@@ -7,8 +7,12 @@ import BlogPostForm from './BlogPostForm';
 
 export const dynamic = 'force-dynamic';
 
-export default async function BlogPostPage(props: { params: Promise<{ id: string }> }) {
+export default async function BlogPostPage(props: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ error?: string }>;
+}) {
   const params = await props.params;
+  const searchParams = await props.searchParams;
   const { id } = params;
   const isNew = id === 'uusi';
 
@@ -53,6 +57,12 @@ export default async function BlogPostPage(props: { params: Promise<{ id: string
             </form>
         )}
       </div>
+
+      {searchParams.error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700 dark:border-red-900/30 dark:bg-red-900/20 dark:text-red-400">
+          {searchParams.error}
+        </div>
+      )}
 
       <div className="bg-white dark:bg-slate-800 shadow-sm rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <BlogPostForm post={post} isNew={isNew} id={id} />

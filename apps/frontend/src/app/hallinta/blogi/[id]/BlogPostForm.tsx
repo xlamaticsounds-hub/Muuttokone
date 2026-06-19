@@ -56,11 +56,12 @@ export default function BlogPostForm({ post, isNew, id }: BlogPostFormProps) {
         body: JSON.stringify({ content }),
       });
       const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'SEO-optimointi epäonnistui.');
       setMetaTitle(data.metaTitle);
       setMetaDescription(data.metaDescription);
     } catch (error) {
       console.error('SEO Optimization failed:', error);
-      alert('SEO-optimointi epäonnistui.');
+      alert(error instanceof Error ? error.message : 'SEO-optimointi epäonnistui.');
     } finally {
       setOptimizingSeo(false);
     }
@@ -78,10 +79,11 @@ export default function BlogPostForm({ post, isNew, id }: BlogPostFormProps) {
         body: JSON.stringify({ content, instruction: polishInstruction }),
       });
       const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Sisällön parannus epäonnistui.');
       setContent(data.content);
     } catch (error) {
       console.error('Polishing failed:', error);
-      alert('Sisällön parannus epäonnistui.');
+      alert(error instanceof Error ? error.message : 'Sisällön parannus epäonnistui.');
     } finally {
       setPolishing(false);
     }

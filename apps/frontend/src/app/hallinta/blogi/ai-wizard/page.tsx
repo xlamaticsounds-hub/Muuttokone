@@ -45,11 +45,12 @@ export default function AiWizardPage() {
         body: JSON.stringify({ topic, keywords, audience, tone }),
       });
       const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Jäsennyksen luonti epäonnistui.');
       setOutline(data);
       setStep('OUTLINE');
     } catch (error) {
       console.error('Failed to generate outline:', error);
-      alert('Failed to generate outline. Please try again.');
+      alert(error instanceof Error ? error.message : 'Jäsennyksen luonti epäonnistui.');
     } finally {
       setLoading(false);
     }
@@ -67,7 +68,9 @@ export default function AiWizardPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ outline, tone, audience }),
       });
-      const { content } = await res.json();
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || 'Sisällön luonti epäonnistui.');
+      const { content } = data;
 
       // 2. Save to DB via Server Action
       const result = await saveAiPost({
@@ -78,14 +81,14 @@ export default function AiWizardPage() {
         metaTitle: outline.title,
         metaDescription: `Read about ${topic} on Muuttokone.fi`, // Placeholder
       });
-      
+
       // 3. Client-side redirect
       if (result && result.id) {
           router.push(`/hallinta/blogi/${result.id}`);
       }
     } catch (error) {
       console.error('Failed to generate draft:', error);
-      alert('Failed to generate draft. Please try again.');
+      alert(error instanceof Error ? error.message : 'Sisällön luonti epäonnistui.');
       setLoading(false);
       setStep('OUTLINE');
     }

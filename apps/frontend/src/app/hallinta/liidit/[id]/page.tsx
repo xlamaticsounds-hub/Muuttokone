@@ -26,6 +26,20 @@ export default async function LeadDetailPage({
     notFound();
   }
 
+  // formData is stored as a JSON-stringified string by some submit paths (calculator,
+  // /api/submit) but as a raw object by others (submitContact/submitQuickQuote/submitQuote
+  // in server/actions.ts) — Prisma's Json column returns whichever shape was actually
+  // stored, so this has to handle both instead of always assuming a string.
+  let formDataDisplay = '{}';
+  if (lead.formData) {
+    try {
+      const parsed = typeof lead.formData === 'string' ? JSON.parse(lead.formData) : lead.formData;
+      formDataDisplay = JSON.stringify(parsed, null, 2);
+    } catch {
+      formDataDisplay = String(lead.formData);
+    }
+  }
+
   // Helper to format date
   const formatDate = (date: Date | null) => {
     if (!date) return '-';
@@ -196,7 +210,7 @@ export default async function LeadDetailPage({
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
             <h3 className="mb-4 font-semibold text-gray-900 dark:text-white">Raakadata (JSON)</h3>
             <pre className="max-h-60 overflow-y-auto rounded bg-gray-900 p-3 text-xs text-green-400 font-mono">
-              {lead.formData ? JSON.stringify(JSON.parse(lead.formData as string), null, 2) : '{}'}
+              {formDataDisplay}
             </pre>
           </div>
           
