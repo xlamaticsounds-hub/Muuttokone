@@ -47,9 +47,12 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
+COPY --from=builder /app/scripts/migrate-and-start.sh ./scripts/migrate-and-start.sh
+
+RUN chmod +x ./scripts/migrate-and-start.sh
 
 USER nextjs
 EXPOSE 3000
 ENV HOSTNAME="0.0.0.0"
 
-CMD ["sh", "-c", "node_modules/.bin/next start -p ${PORT:-3000} -H 0.0.0.0"]
+CMD ["sh", "scripts/migrate-and-start.sh"]

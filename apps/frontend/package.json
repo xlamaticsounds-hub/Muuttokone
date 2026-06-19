@@ -11,7 +11,7 @@
     "format": "prettier --write \"**/*.{js,ts,tsx,json,css,md}\""
   },
   "prisma": {
-    "seed": "npx ts-node prisma/seed.ts"
+    "seed": "node --experimental-strip-types prisma/seed.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.1",
