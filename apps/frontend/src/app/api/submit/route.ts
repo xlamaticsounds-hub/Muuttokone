@@ -330,11 +330,13 @@ async function submitNewsletter(data: any) {
 
 async function submitBooking(data: any) {
   // Map calculator data to Lead schema
-  const { firstName, lastName } = splitName(data.name || data.email?.split('@')[0]);
+  // NOTE: the calculator form fields are named contactName/contactEmail/contactPhone,
+  // not name/email/phone — using the wrong names here silently dropped all contact info.
+  const { firstName, lastName } = splitName(data.contactName || data.contactEmail?.split('@')[0]);
 
   const contact = await upsertContactLoose({
-    email: data.email || null,
-    phone: data.phone || null,
+    email: data.contactEmail || null,
+    phone: data.contactPhone || null,
     firstName,
     lastName,
     gdprConsent: true,
@@ -369,9 +371,9 @@ async function submitBooking(data: any) {
 
   // Discord Notification
   const discordFields = [
-    { name: 'Nimi', value: data.name || '-', inline: true },
-    { name: 'Puhelin', value: data.phone || '-', inline: true },
-    { name: 'Sähköposti', value: data.email || '-', inline: true },
+    { name: 'Nimi', value: data.contactName || '-', inline: true },
+    { name: 'Puhelin', value: data.contactPhone || '-', inline: true },
+    { name: 'Sähköposti', value: data.contactEmail || '-', inline: true },
     { name: 'Hinta', value: `${data.price}€`, inline: true },
     { name: 'Päivä', value: data.date ? new Date(data.date).toLocaleDateString('fi-FI') : '-', inline: true },
     { name: 'Asunto', value: data.apartmentSize, inline: true },

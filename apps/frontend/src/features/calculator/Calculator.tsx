@@ -21,8 +21,13 @@ const CARRY_DISTANCE_OPTIONS: { value: CalculatorData['carryDistanceFrom']; labe
   { value: '50+', label: 'Yli 50 m' },
 ];
 
+// One entry per real step of the "moving" flow (service -> package -> locations ->
+// details -> inventory -> quote -> booking). The "package" step (idx 1) doesn't apply
+// to transport/recycling, so it's the one skipped via the idx === 1 check below — every
+// other label lines up 1:1 with the step content for both flows.
 const STEPS = [
   { id: 'service', title: 'Palvelu' },
+  { id: 'package', title: 'Paketti' },
   { id: 'locations', title: 'Sijainti' },
   { id: 'details', title: 'Asunnon tiedot' },
   { id: 'inventory', title: 'Tavarat' },
@@ -32,6 +37,8 @@ const STEPS = [
 
 export default function Calculator() {
   const [currentStep, setCurrentStep] = useState(0);
+  const calculatorRef = useRef<HTMLDivElement>(null);
+  const isFirstStepRender = useRef(true);
   const [formData, setFormData] = useState<CalculatorData>({
     serviceType: 'moving',
     movingPackage: 'full_service',
@@ -70,6 +77,18 @@ export default function Calculator() {
   const scriptLoaded = useRef(false);
 
   const priceResult = useMemo(() => calculateMovingPrice(formData), [formData]);
+
+  // Step content height varies a lot (e.g. inventory step vs. quote step). Without this,
+  // the browser keeps the same absolute scroll position when switching steps, which can
+  // suddenly land the viewport near the bottom of a much shorter step ("page jumps down").
+  // Re-anchoring to the top of the calculator card on every step change keeps it in place.
+  useEffect(() => {
+    if (isFirstStepRender.current) {
+      isFirstStepRender.current = false;
+      return;
+    }
+    calculatorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [currentStep]);
 
   // Helper function to get inventory step label based on service type
   const getInventoryLabel = () => {
@@ -368,10 +387,13 @@ export default function Calculator() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto bg-white dark:bg-gray-900 shadow-2xl rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-800">
+    <div
+      ref={calculatorRef}
+      className="max-w-4xl mx-auto bg-white dark:bg-gray-900 shadow-2xl rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-800 scroll-mt-24"
+    >
       {/* Progress Bar */}
-      <div className="bg-gray-50 dark:bg-gray-800/50 px-8 py-6 border-b border-gray-100 dark:border-gray-800">
-        <div className="flex justify-between items-center mb-4">
+      <div className="bg-gray-50 dark:bg-gray-800/50 px-5 py-4 sm:px-8 sm:py-5 border-b border-gray-100 dark:border-gray-800">
+        <div className="flex justify-between items-center mb-3">
           {STEPS.map((step, idx) => {
             // Skip moving package step if not moving
             if (idx === 1 && formData.serviceType !== 'moving') {
@@ -390,7 +412,7 @@ export default function Calculator() {
             return (
               <div key={step.id} className="flex flex-col items-center flex-1">
                 <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold mb-2 transition-all ${
+                  className={`w-7 h-7 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm sm:text-base font-bold mb-1.5 transition-all ${
                     isCompleted || isCurrent
                       ? 'bg-primary text-white shadow-lg shadow-primary/30'
                       : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
@@ -418,34 +440,34 @@ export default function Calculator() {
         </div>
       </div>
 
-      <div className="p-8 md:p-12">
+      <div className="p-5 sm:p-6 md:p-10">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentStep}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
-            className="min-h-[400px]"
+            className="min-h-[260px] sm:min-h-[320px]"
           >
             {/* Step 0: Service Selection */}
             {currentStep === 0 && (
-              <div className="space-y-8">
-                <div className="text-center mb-10">
-                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Valitse palvelu</h2>
+              <div className="space-y-5">
+                <div className="text-center mb-6">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1.5">Valitse palvelu</h2>
                   <p className="text-gray-500">Mitä palvelua tarvitset?</p>
                 </div>
 
-                <div className="grid md:grid-cols-3 gap-6">
+                <div className="grid md:grid-cols-3 gap-4">
                   {/* Muutto */}
                   <div
                     onClick={() => updateField('serviceType', 'moving')}
-                    className={`p-8 rounded-2xl border-2 cursor-pointer transition-all ${
+                    className={`p-5 sm:p-6 rounded-2xl border-2 cursor-pointer transition-all ${
                       formData.serviceType === 'moving'
                         ? 'border-primary bg-primary/5 shadow-lg shadow-primary/20'
                         : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    <div className="text-4xl mb-4">📦</div>
+                    <div className="text-3xl mb-2">📦</div>
                     <h3 className="font-bold text-lg mb-2">Muutto</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Kodin tai toimiston muutto uuteen osoitteeseen.
@@ -455,13 +477,13 @@ export default function Calculator() {
                   {/* Kuljetus */}
                   <div
                     onClick={() => updateField('serviceType', 'transport')}
-                    className={`p-8 rounded-2xl border-2 cursor-pointer transition-all ${
+                    className={`p-5 sm:p-6 rounded-2xl border-2 cursor-pointer transition-all ${
                       formData.serviceType === 'transport'
                         ? 'border-primary bg-primary/5 shadow-lg shadow-primary/20'
                         : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    <div className="text-4xl mb-4">🚚</div>
+                    <div className="text-3xl mb-2">🚚</div>
                     <h3 className="font-bold text-lg mb-2">Kuljetus</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Yksittäisten tavaroiden, huonekalujen tai ostosten kuljetus.
@@ -471,13 +493,13 @@ export default function Calculator() {
                   {/* Kierrätys */}
                   <div
                     onClick={() => updateField('serviceType', 'recycling')}
-                    className={`p-8 rounded-2xl border-2 cursor-pointer transition-all ${
+                    className={`p-5 sm:p-6 rounded-2xl border-2 cursor-pointer transition-all ${
                       formData.serviceType === 'recycling'
                         ? 'border-primary bg-primary/5 shadow-lg shadow-primary/20'
                         : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    <div className="text-4xl mb-4">♻️</div>
+                    <div className="text-3xl mb-2">♻️</div>
                     <h3 className="font-bold text-lg mb-2">Kierrätys</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Vanhojen huonekalujen, roskien ja ylimääräisten tavaroiden poisvienti.
@@ -489,9 +511,9 @@ export default function Calculator() {
 
             {/* Step 1: Moving Package (only visible if service is moving) */}
             {currentStep === 1 && formData.serviceType === 'moving' && (
-              <div className="space-y-8">
-                <div className="text-center mb-10">
-                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Olet valinnut muuttopalvelun</h2>
+              <div className="space-y-5">
+                <div className="text-center mb-6">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1.5">Olet valinnut muuttopalvelun</h2>
                   <p className="text-gray-500 mb-8">Valitse muuttopaketti</p>
                 </div>
 
@@ -499,7 +521,7 @@ export default function Calculator() {
                   {/* Täyspalvelu */}
                   <div
                     onClick={() => updateField('movingPackage', 'full_service')}
-                    className={`p-8 rounded-2xl border-2 cursor-pointer transition-all ${
+                    className={`p-5 sm:p-6 rounded-2xl border-2 cursor-pointer transition-all ${
                       formData.movingPackage === 'full_service'
                         ? 'border-primary bg-primary/5 shadow-lg shadow-primary/20'
                         : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
@@ -532,7 +554,7 @@ export default function Calculator() {
                   {/* Vain kuljettaja ajoneuvolla */}
                   <div
                     onClick={() => updateField('movingPackage', 'driver_with_vehicle')}
-                    className={`p-8 rounded-2xl border-2 cursor-pointer transition-all ${
+                    className={`p-5 sm:p-6 rounded-2xl border-2 cursor-pointer transition-all ${
                       formData.movingPackage === 'driver_with_vehicle'
                         ? 'border-primary bg-primary/5 shadow-lg shadow-primary/20'
                         : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
@@ -562,7 +584,7 @@ export default function Calculator() {
                   {/* Vain kantoapu */}
                   <div
                     onClick={() => updateField('movingPackage', 'carrying_help')}
-                    className={`p-8 rounded-2xl border-2 cursor-pointer transition-all ${
+                    className={`p-5 sm:p-6 rounded-2xl border-2 cursor-pointer transition-all ${
                       formData.movingPackage === 'carrying_help'
                         ? 'border-primary bg-primary/5 shadow-lg shadow-primary/20'
                         : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
@@ -596,8 +618,8 @@ export default function Calculator() {
             {/* Step 2: Locations */}
             {currentStep === (formData.serviceType === 'moving' ? 2 : 1) && (
               <div className="space-y-6">
-                <div className="text-center mb-10">
-                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                <div className="text-center mb-6">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1.5">
                     {formData.serviceType === 'transport' ? 'Mistä ja mihin kuljetetaan?' : 'Mistä ja mihin muutetaan?'}
                   </h2>
                   <p className="text-gray-500">Anna kohteiden osoitteet hinnan laskemiseksi.</p>
@@ -704,9 +726,9 @@ export default function Calculator() {
 
             {/* Step 3: Apartment Details */}
             {currentStep === (formData.serviceType === 'moving' ? 3 : 2) && (
-              <div className="space-y-8">
-                <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              <div className="space-y-5">
+                <div className="text-center mb-5">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1.5">
                     {formData.serviceType === 'transport' ? 'Kuljettajat ja kohteet' : 'Asunnon koko ja kerrokset'}
                   </h2>
                   <p className="text-gray-500">Nämä vaikuttavat tarvittavaan aikaan ja miehitykseen.</p>
@@ -749,7 +771,7 @@ export default function Calculator() {
                   </div>
                 )}
 
-                <div className="grid md:grid-cols-2 gap-8 pt-4">
+                <div className="grid md:grid-cols-2 gap-5 pt-2">
                   <div className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-800/50">
                     <h3 className="font-bold mb-4 flex items-center gap-2">
                       <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm">1</span>
@@ -837,9 +859,9 @@ export default function Calculator() {
 
             {/* Step 4: Inventory */}
             {currentStep === (formData.serviceType === 'moving' ? 4 : 3) && (
-              <div className="space-y-8">
-                <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">{getInventoryLabel()}</h2>
+              <div className="space-y-5">
+                <div className="text-center mb-5">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1.5">{getInventoryLabel()}</h2>
                   <p className="text-gray-500">Tavaralista on tärkein tekijä hinta-arviossa — mitä tarkempi lista, sitä tarkempi hinta.</p>
                 </div>
 
@@ -1040,9 +1062,9 @@ export default function Calculator() {
 
             {/* Step 5: Quote */}
             {currentStep === (formData.serviceType === 'moving' ? 5 : 4) && (
-              <div className="space-y-8">
-                <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              <div className="space-y-5">
+                <div className="text-center mb-5">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1.5">
                     {formData.serviceType === 'transport' ? 'Kuljetuksen hinta-arvio' : 'Hinta-arviosi'}
                   </h2>
                   <p className="text-gray-500">Laskettu annettujen tietojen perusteella.</p>
@@ -1076,16 +1098,16 @@ export default function Calculator() {
                   </span>
                 </div>
 
-                <div className="bg-primary text-white p-10 rounded-3xl shadow-xl shadow-primary/20 relative overflow-hidden">
+                <div className="bg-primary text-white p-6 sm:p-8 rounded-3xl shadow-xl shadow-primary/20 relative overflow-hidden">
                    <div className="relative z-10">
                       <p className="text-primary-foreground/80 font-medium mb-1">Arvioitu muuttosi</p>
                       <div className="flex items-end gap-2">
-                        <span className="text-5xl md:text-6xl font-black">
+                        <span className="text-4xl sm:text-5xl font-black">
                           {priceResult.priceRangeLow}–{priceResult.priceRangeHigh}€
                         </span>
                         <span className="text-xl font-bold mb-2">sis. ALV</span>
                       </div>
-                      <div className="mt-8 grid grid-cols-2 gap-4 border-t border-white/20 pt-8">
+                      <div className="mt-6 grid grid-cols-2 gap-4 border-t border-white/20 pt-6">
                         <div>
                           <p className="text-xs uppercase font-bold text-white/60 mb-1">Arvioitu kesto</p>
                           <p className="text-xl font-bold">{priceResult.estimatedDurationHours} tuntia</p>
@@ -1123,17 +1145,17 @@ export default function Calculator() {
 
                 {priceResult.dateDiscountAmount > 0 && (
                   <div className="grid gap-3">
-                    <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                    <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
                       <span className="text-gray-500">Normaalihinta</span>
                       <span className="font-bold">{Math.round(priceResult.normalPriceTotal)}€</span>
                     </div>
-                    <div className="flex justify-between p-4 rounded-xl bg-green-50 dark:bg-green-900/20">
+                    <div className="flex justify-between p-3 rounded-xl bg-green-50 dark:bg-green-900/20">
                       <span className="text-green-700 dark:text-green-300">
                         Hiljaisen päivän alennus ({Math.round(priceResult.dateDiscountFraction * 100)}%)
                       </span>
                       <span className="font-bold text-green-700 dark:text-green-300">-{Math.round(priceResult.dateDiscountAmount)}€</span>
                     </div>
-                    <div className="flex justify-between p-4 rounded-xl bg-primary/5">
+                    <div className="flex justify-between p-3 rounded-xl bg-primary/5">
                       <span className="font-semibold">Lopullinen arvio</span>
                       <span className="font-bold">{priceResult.priceRangeLow}–{priceResult.priceRangeHigh}€</span>
                     </div>
@@ -1155,35 +1177,35 @@ export default function Calculator() {
                 {(formData.serviceType === 'moving' || formData.serviceType === 'transport') && (
                   <div className="grid gap-3">
                     <h3 className="font-bold text-sm uppercase tracking-wide text-gray-400">Mistä hinta muodostuu</h3>
-                    <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                    <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
                       <span className="text-gray-500">Tavaramäärän vaikutus</span>
                       <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.items)}€</span>
                     </div>
-                    <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                    <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
                       <span className="text-gray-500">Kerrosten ja hissin vaikutus</span>
                       <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.floors)}€</span>
                     </div>
-                    <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                    <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
                       <span className="text-gray-500">Kantomatkan vaikutus</span>
                       <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.carryDistance)}€</span>
                     </div>
-                    <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                    <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
                       <span className="text-gray-500">{formData.serviceType === 'transport' ? 'Kuljetusmatkan vaikutus' : 'Muuttomatkan vaikutus'}</span>
                       <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.distance)}€</span>
                     </div>
                     {priceResult.details.impactBreakdown.extras > 0 && (
-                      <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                      <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
                         <span className="text-gray-500">
                           {formData.serviceType === 'transport' ? 'Välipysähdysten vaikutus' : 'Lisäpalveluiden vaikutus'}
                         </span>
                         <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.extras)}€</span>
                       </div>
                     )}
-                    <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                    <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
                       <span className="text-gray-500">Koordinointiaika (kiinteä, auton valmistelu ja paperityöt)</span>
                       <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.base)}€</span>
                     </div>
-                    <div className="flex justify-between p-4 rounded-xl bg-primary/5 font-semibold">
+                    <div className="flex justify-between p-3 rounded-xl bg-primary/5 font-semibold">
                       <span>Yhteensä (ennen muuttopäivän alennusta)</span>
                       <span>{Math.round(priceResult.normalPriceTotal)}€</span>
                     </div>
@@ -1192,11 +1214,11 @@ export default function Calculator() {
 
                 {formData.serviceType === 'recycling' && (
                   <div className="grid gap-3">
-                    <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                    <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
                       <span className="text-gray-500">Työkustannukset ({priceResult.details.laborHours}h)</span>
                       <span className="font-bold">{Math.round(priceResult.laborCost)}€</span>
                     </div>
-                    <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                    <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
                       <span className="text-gray-500">
                         {priceResult.details.distanceKm > 0
                           ? `Kilometrikorvaukset (${Math.round(priceResult.details.distanceKm)} km)`
@@ -1322,8 +1344,8 @@ export default function Calculator() {
             {/* Step 6: Booking */}
             {currentStep === (formData.serviceType === 'moving' ? 6 : 5) && (
               <form onSubmit={handleBooking} className="space-y-6">
-                <div className="text-center mb-8">
-                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Viimeistele varaus</h2>
+                <div className="text-center mb-5">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1.5">Viimeistele varaus</h2>
                   <p className="text-gray-500">
                     {formData.serviceType === 'transport' ? 'Valitse kuljetuspäivä' : 'Valitse muuttopäivä'} ja jätä yhteystietosi.
                   </p>
@@ -1410,11 +1432,11 @@ export default function Calculator() {
 
         {/* Navigation Buttons */}
         {currentStep < (formData.serviceType === 'moving' ? 6 : 5) && (
-          <div className="mt-12 flex items-center justify-between">
+          <div className="mt-8 flex items-center justify-between">
             <button
               onClick={handleBack}
               disabled={currentStep === 0}
-              className={`flex items-center gap-2 px-8 py-4 rounded-xl font-bold transition-all ${
+              className={`flex items-center gap-2 px-6 sm:px-8 py-3.5 rounded-xl font-bold transition-all ${
                 currentStep === 0
                   ? 'opacity-0 pointer-events-none'
                   : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
@@ -1425,7 +1447,7 @@ export default function Calculator() {
             </button>
             <button
               onClick={handleNext}
-              className="bg-black dark:bg-white dark:text-black text-white px-12 py-4 rounded-xl font-bold hover:scale-105 transition-all flex items-center gap-2 shadow-xl"
+              className="bg-black dark:bg-white dark:text-black text-white px-8 sm:px-12 py-3.5 rounded-xl font-bold hover:scale-105 transition-all flex items-center gap-2 shadow-xl"
             >
               {currentStep === (formData.serviceType === 'moving' ? 5 : 4) ? 'Siirry varaukseen' : 'Seuraava'}
               <ArrowRight className="w-5 h-5" />

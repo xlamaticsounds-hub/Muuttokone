@@ -34,6 +34,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local mock-database store (used when DATABASE_URL is not set)
+.mock-prisma-store.json
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

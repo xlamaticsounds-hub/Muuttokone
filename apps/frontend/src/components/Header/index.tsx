@@ -71,16 +71,24 @@ const Header = () => {
               </Link>
             </div>
 
-            <button
-              onClick={navbarToggleHandler}
-              className="navbarOpen absolute top-1/2 right-4 z-50 flex h-10 w-10 -translate-y-1/2 flex-col items-center justify-center space-y-[6px] font-bold lg:hidden"
-              aria-label="navbarOpen"
-              name="navbarOpen"
-            >
-              <span className="block h-[2px] w-7 bg-black dark:bg-white"></span>
-              <span className="block h-[2px] w-7 bg-black dark:bg-white"></span>
-              <span className="block h-[2px] w-7 bg-black dark:bg-white"></span>
-            </button>
+            <div className="absolute top-1/2 right-4 z-50 flex -translate-y-1/2 items-center gap-2 lg:hidden">
+              <a
+                href={`tel:${siteConfig.contact.phone.tel}`}
+                className="border-primary text-primary flex h-9 items-center justify-center rounded-full border px-3.5 text-sm font-semibold sm:hidden"
+              >
+                Soita
+              </a>
+              <button
+                onClick={navbarToggleHandler}
+                className="navbarOpen flex h-10 w-10 flex-col items-center justify-center space-y-[6px] font-bold"
+                aria-label="navbarOpen"
+                name="navbarOpen"
+              >
+                <span className="block h-[2px] w-7 bg-black dark:bg-white"></span>
+                <span className="block h-[2px] w-7 bg-black dark:bg-white"></span>
+                <span className="block h-[2px] w-7 bg-black dark:bg-white"></span>
+              </button>
+            </div>
 
             <div
               className={`${navbarOpen ? '' : 'hidden'} menu-wrapper relative justify-between lg:flex`}
@@ -108,7 +116,7 @@ const Header = () => {
                       </Link>
                     </li>
                   ))}
-                  {/* Mobile CTAs */}
+                  {/* Mobile CTA */}
                   <li className="mt-8 block lg:hidden">
                     <Link
                       href="/muuttolaskuri"
@@ -117,12 +125,6 @@ const Header = () => {
                     >
                       Muuttolaskuri
                     </Link>
-                    <a
-                      href={`tel:${siteConfig.contact.phone.tel}`}
-                      className="border-primary text-primary block w-full rounded-full border px-7.5 py-3 text-center transition-all duration-300 hover:bg-primary hover:text-white"
-                    >
-                      Soita
-                    </a>
                   </li>
                 </ul>
               </nav>

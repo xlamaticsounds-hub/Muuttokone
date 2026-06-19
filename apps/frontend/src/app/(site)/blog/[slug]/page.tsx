@@ -14,8 +14,8 @@ export async function generateMetadata(props: BlogParams): Promise<Metadata> {
   let post: { title: string; metaTitle: string | null; metaDescription: string | null; excerpt: string | null } | null = null;
 
   try {
-    post = await prisma.post.findUnique({
-      where: { slug },
+    post = await prisma.post.findFirst({
+      where: { slug, published: true },
       select: { title: true, metaTitle: true, metaDescription: true, excerpt: true },
     });
   } catch (error) {
@@ -34,11 +34,11 @@ export default async function Page(props: BlogParams) {
   const params = await props.params;
   const { slug } = params;
 
-  let post: Awaited<ReturnType<typeof prisma.post.findUnique>> = null;
+  let post: Awaited<ReturnType<typeof prisma.post.findFirst>> = null;
 
   try {
-    post = await prisma.post.findUnique({
-      where: { slug },
+    post = await prisma.post.findFirst({
+      where: { slug, published: true },
       include: {
         category: true,
         tags: true,

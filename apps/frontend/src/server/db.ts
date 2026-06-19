@@ -13,15 +13,12 @@ const globalForPrisma = globalThis as unknown as {
 
 const createPrismaMock = (): PrismaClient => {
   type MockRecord = Record<string, unknown> & { id: string; createdAt: Date; updatedAt: Date };
-  type MockStore = {
-    contact: MockRecord[];
-    lead: MockRecord[];
-    log: MockRecord[];
-  };
+  // Keyed by lowercased Prisma model name (e.g. "post", "contact"). Any model
+  // works out of the box instead of only the few hardcoded here previously —
+  // that gap silently dropped every write for models like Post/PageContent/Image.
+  type MockStore = Record<string, MockRecord[]>;
 
   const storeFilePath = path.join(process.cwd(), '.mock-prisma-store.json');
-
-  const defaultStore: MockStore = { contact: [], lead: [], log: [] };
 
   const reviveDates = (rows: any[] = []): MockRecord[] => {
     return rows.map((row) => ({
@@ -33,16 +30,16 @@ const createPrismaMock = (): PrismaClient => {
 
   const loadStoreFromDisk = (): MockStore => {
     try {
-      if (!fs.existsSync(storeFilePath)) return defaultStore;
+      if (!fs.existsSync(storeFilePath)) return {};
       const raw = fs.readFileSync(storeFilePath, 'utf8');
-      const parsed = JSON.parse(raw) as Partial<MockStore>;
-      return {
-        contact: reviveDates(parsed.contact as any[]),
-        lead: reviveDates(parsed.lead as any[]),
-        log: reviveDates(parsed.log as any[]),
-      };
+      const parsed = JSON.parse(raw) as Record<string, any[]>;
+      const revived: MockStore = {};
+      for (const [model, rows] of Object.entries(parsed)) {
+        revived[model] = reviveDates(rows);
+      }
+      return revived;
     } catch {
-      return defaultStore;
+      return {};
     }
   };
 
@@ -101,10 +98,8 @@ const createPrismaMock = (): PrismaClient => {
   };
 
   const getRows = (model: string) => {
-    if (model === 'contact') return store.contact;
-    if (model === 'lead') return store.lead;
-    if (model === 'log') return store.log;
-    return [];
+    if (!store[model]) store[model] = [];
+    return store[model];
   };
 
   const createModelProxy = (model: string) =>
@@ -124,13 +119,13 @@ const createPrismaMock = (): PrismaClient => {
               if (model === 'lead' && args?.include?.contact) {
                 return result.map((lead) => ({
                   ...lead,
-                  contact: store.contact.find((c) => c.id === lead.contactId) ?? null,
+                  contact: getRows('contact').find((c) => c.id === lead.contactId) ?? null,
                 }));
               }
 
               if (model === 'contact' && (args?.include?._count || args?.include?.leads)) {
                 return result.map((contact) => {
-                  const contactLeads = store.lead.filter((lead) => lead.contactId === contact.id);
+                  const contactLeads = getRows('lead').filter((lead) => lead.contactId === contact.id);
                   const enriched: Record<string, unknown> = { ...contact };
                   if (args?.include?._count?.select?.leads) {
                     enriched._count = { leads: contactLeads.length };
@@ -164,7 +159,7 @@ const createPrismaMock = (): PrismaClient => {
               if (model === 'lead') {
                 const contactId = data.contact?.connect?.id ?? data.contactId ?? null;
                 const record = { ...base, ...data, contactId, contact: undefined } as MockRecord;
-                store.lead.unshift(record);
+                rows.unshift(record);
                 saveStoreToDisk();
                 return record;
               }
