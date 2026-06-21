@@ -44,19 +44,31 @@ export default function Faq() {
           />
         </div>
 
-        <div className="mx-auto max-w-3xl divide-y divide-black/5 rounded-2xl border border-black/5 bg-white/85 shadow-sm ring-1 ring-black/5 backdrop-blur dark:divide-white/10 dark:border-white/10 dark:bg-slate-900/80 dark:ring-white/5">
+        <div className="mx-auto max-w-3xl divide-y divide-black/5 overflow-hidden rounded-2xl border border-black/5 bg-white/85 shadow-sm ring-1 ring-black/5 backdrop-blur dark:divide-white/10 dark:border-white/10 dark:bg-slate-900/80 dark:ring-white/5">
           {faqData.map((item, index) => {
             const isOpen = openId === index;
             return (
-              <div key={item.q}>
+              <div
+                key={item.q}
+                className={`border-l-4 transition-colors duration-300 ${
+                  isOpen ? 'border-primary bg-primary/5 dark:bg-primary/10' : 'border-transparent'
+                }`}
+              >
                 <button
                   type="button"
                   onClick={() => toggle(index)}
                   aria-expanded={isOpen}
                   aria-controls={`faq-panel-${index}`}
-                  className="flex w-full items-center justify-between gap-4 p-5 text-left md:p-6"
+                  className="flex w-full items-center gap-4 p-5 text-left md:p-6"
                 >
-                  <span className="text-lg font-semibold text-black/90 dark:text-white">{item.q}</span>
+                  <span
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold transition-colors duration-300 ${
+                      isOpen ? 'bg-primary text-white' : 'bg-primary/10 text-primary'
+                    }`}
+                  >
+                    {index + 1}
+                  </span>
+                  <span className="flex-1 text-lg font-semibold text-black/90 dark:text-white">{item.q}</span>
                   <ChevronDown
                     aria-hidden="true"
                     className={`h-5 w-5 flex-shrink-0 text-black/60 transition-transform duration-300 dark:text-white/60 ${
@@ -70,7 +82,7 @@ export default function Faq() {
                     isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                   }`}
                 >
-                  <div className="min-h-0 px-5 pb-5 md:px-6 md:pb-6">
+                  <div className="min-h-0 pl-[68px] pr-5 pb-5 md:pl-[72px] md:pr-6 md:pb-6">
                     <p className="text-sm text-black/70 dark:text-white/70">{item.a}</p>
                   </div>
                 </div>
