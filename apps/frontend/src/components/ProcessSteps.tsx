@@ -52,11 +52,6 @@ export default function ProcessSteps() {
                     : 'border-black/5 bg-white/70 ring-black/5 hover:ring-primary/30 dark:border-white/10 dark:bg-slate-900/60 dark:ring-white/5'
                 } ${step.href ? 'cursor-pointer block' : ''}`}
               >
-                {step.highlight && (
-                  <span className="bg-primary mb-3 inline-block rounded-full px-3 py-1 text-xs font-semibold text-white shadow-sm sm:absolute sm:top-4 sm:right-4 sm:mb-0">
-                    Aloita tästä
-                  </span>
-                )}
                 <div className="absolute right-[-40px] top-[-40px] h-32 w-32 rounded-full bg-primary/5 blur-3xl group-hover:bg-primary/10" />
                 <div className="relative flex items-start gap-4">
                   <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
@@ -65,8 +60,15 @@ export default function ProcessSteps() {
                       {idx + 1}
                     </span>
                   </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-black/90 dark:text-white">{step.title}</h3>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <h3 className="text-lg font-semibold text-black/90 dark:text-white">{step.title}</h3>
+                      {step.highlight && (
+                        <span className="bg-primary shrink-0 rounded-full px-3 py-1 text-xs font-semibold text-white shadow-sm">
+                          Aloita tästä
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-black/70 dark:text-white/70">{step.desc}</p>
                   </div>
                 </div>
