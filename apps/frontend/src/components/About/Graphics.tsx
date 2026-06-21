@@ -1,5 +1,3 @@
-import Image from 'next/image';
-
 const steps = [
   {
     title: 'Alkukartoitus ja suunnitelma',
@@ -29,20 +27,6 @@ export default function Graphics() {
   return (
     <div className="animate_left flex w-full flex-col items-center justify-center md:w-1/2">
       <div className="relative w-full max-w-[520px] md:pl-16 lg:pl-20">
-        <div className="mb-10 flex justify-center md:hidden">
-          <div className="shadow-primary/10 overflow-hidden rounded-2xl shadow-2xl">
-            <Image
-              src="/images/webp/muuttokone/webp/voimamies.webp"
-              alt="Voimamies"
-              className="h-auto w-[240px]"
-              width={320}
-              height={420}
-              quality={75}
-              priority={false}
-            />
-          </div>
-        </div>
-
         <div className="shadow-primary/10 relative z-0 w-full rounded-3xl border border-black/10 bg-white/90 p-8 shadow-2xl backdrop-blur-sm dark:border-white/10 dark:bg-slate-900/85">
           <div className="text-primary mb-6 text-center text-base font-semibold tracking-[0.35em] uppercase">
             Miten muutto etenee?
