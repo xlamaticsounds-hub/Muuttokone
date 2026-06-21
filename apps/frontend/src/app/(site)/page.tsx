@@ -11,7 +11,7 @@ import Calculator from '@/features/calculator/Calculator';
 import StatsBand from '@/components/StatsBand';
 import ProcessSteps from '@/components/ProcessSteps';
 import PricingPreview from '@/components/PricingPreview';
-import Testimonials from '@/components/Testimonials';
+import Faq from '@/components/Faq';
 import type { Service } from '@/types/service';
 import staticServiceData from '@/features/services/serviceData';
 import { generateSEOMetadata, SEOConfigs } from '@/components/SEO/SEOHelpers';
@@ -46,7 +46,7 @@ export default async function Home() {
       <StatsBand />
       <ServicesDivider />
       <ProcessSteps />
-      <Testimonials />
+      <Faq />
       <section className="bg-gray-1 dark:bg-bg-color-dark py-8 lg:py-12">
         <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
           <div className="mb-5 text-center">
