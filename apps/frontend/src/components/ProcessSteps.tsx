@@ -2,20 +2,20 @@ import React from 'react';
 
 const steps = [
   {
-    title: '1) Pyydä tarjous verkossa tai puhelimitse',
-    desc: 'Täytä lomake minuutissa tai soita. Saat hinta-arvion nopeasti ilman sitoumuksia.',
+    title: '1) Laske tarkka hinta muuttolaskurilla',
+    desc: 'Täytä tietosi vain 3 minuutissa ja saat tarkan, sitoumuksettoman hinnan heti – ei arvailua, ei piilokuluja, ei odottelua.',
   },
   {
-    title: '2) Sovitaan aika & arvioidaan muutto',
-    desc: 'Käymme läpi muuton yksityiskohdat ja lyömme lukkoon sinulle sopivan ajankohdan.',
+    title: '2) Sovitaan sinulle sopiva ajankohta',
+    desc: 'Käymme yhdessä läpi muuton yksityiskohdat ja varmistamme aikataulun, joka sopii juuri sinulle.',
   },
   {
-    title: '3) Ammattimiehet hoitaa muuton',
-    desc: 'Kokenut tiimimme pakkaa, kantaa ja kuljettaa tavarasi turvallisesti uuteen kotiin.',
+    title: '3) Ammattilaiset hoitavat muuton puolestasi',
+    desc: 'Kokenut ja vakuutettu tiimimme pakkaa, kantaa ja kuljettaa tavarasi turvallisesti ja huolellisesti uuteen kotiin.',
   },
   {
-    title: '4) Tyytyväinen asiakas',
-    desc: 'Varmistamme, että kaikki on kunnossa. Maksat vasta kun työ on tehty sovitusti.',
+    title: '4) Rentoudu – muutto on hoidettu',
+    desc: 'Varmistamme, että kaikki on kunnossa viimeistä laatikkoa myöten. Maksat vasta kun työ on tehty sovitusti.',
   },
 ];
 
@@ -27,7 +27,7 @@ export default function ProcessSteps() {
           <p className="text-primary mb-2 text-sm font-semibold uppercase tracking-wide">Muutto selkokielellä</p>
           <h2 className="text-3xl font-bold text-black/90 dark:text-white sm:text-4xl">Näin etenemme</h2>
           <p className="text-black/70 dark:text-white/70">
-            Selkeä prosessi, jossa tiedät aina seuraavan askeleen. Ei piilokuluja, ei yllätyksiä.
+            Selkeä ja nopea prosessi alusta loppuun – tiedät aina hinnan ja seuraavan askeleen etukäteen. Ei piilokuluja, ei yllätyksiä.
           </p>
         </div>
 
