@@ -46,7 +46,6 @@ export default async function Home() {
       <StatsBand />
       <ServicesDivider />
       <ProcessSteps />
-      <Faq />
       <section className="bg-gray-1 dark:bg-bg-color-dark py-8 lg:py-12">
         <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
           <div className="mb-5 text-center">
@@ -62,6 +61,7 @@ export default async function Home() {
           </Suspense>
         </div>
       </section>
+      <Faq />
       <ServicesDivider />
       <Services
         title={pageData?.sections?.[1]?.props?.title || "Palvelumme"}
