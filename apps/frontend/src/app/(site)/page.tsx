@@ -46,7 +46,7 @@ export default async function Home() {
       <StatsBand />
       <ServicesDivider />
       <ProcessSteps />
-      <section className="bg-gray-1 dark:bg-bg-color-dark py-8 lg:py-12">
+      <section id="muuttolaskuri" className="bg-gray-1 dark:bg-bg-color-dark py-8 lg:py-12 scroll-mt-20">
         <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
           <div className="mb-5 text-center">
             <h2 className="text-xl font-semibold text-black lg:text-3xl dark:text-white">

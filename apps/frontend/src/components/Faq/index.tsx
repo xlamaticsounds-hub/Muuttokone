@@ -50,8 +50,8 @@ export default function Faq() {
             return (
               <div
                 key={item.q}
-                className={`border-l-4 transition-colors duration-300 ${
-                  isOpen ? 'border-primary bg-primary/5 dark:bg-primary/10' : 'border-transparent'
+                className={`transition-colors duration-300 ${
+                  isOpen ? 'ring-2 ring-inset ring-primary/30 bg-primary/5 dark:bg-primary/10' : ''
                 }`}
               >
                 <button

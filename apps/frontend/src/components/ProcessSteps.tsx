@@ -7,6 +7,7 @@ const steps = [
     desc: 'Täytä tietosi vain 3 minuutissa ja saat tarkan, sitoumuksettoman hinnan heti – ei arvailua, ei piilokuluja, ei odottelua.',
     icon: Calculator,
     highlight: true,
+    href: '#muuttolaskuri',
   },
   {
     title: 'Sovitaan sinulle sopiva ajankohta',
@@ -40,17 +41,19 @@ export default function ProcessSteps() {
         <div className="grid gap-6 md:grid-cols-2">
           {steps.map((step, idx) => {
             const Icon = step.icon;
+            const Wrapper = step.href ? 'a' : 'div';
             return (
-              <div
+              <Wrapper
                 key={step.title}
+                {...(step.href ? { href: step.href } : {})}
                 className={`group relative overflow-hidden rounded-2xl border p-6 shadow-sm ring-1 backdrop-blur transition hover:-translate-y-1 hover:shadow-lg ${
                   step.highlight
                     ? 'border-primary/30 bg-primary/5 ring-primary/30 hover:ring-primary/50 dark:border-primary/30 dark:bg-primary/10'
                     : 'border-black/5 bg-white/70 ring-black/5 hover:ring-primary/30 dark:border-white/10 dark:bg-slate-900/60 dark:ring-white/5'
-                }`}
+                } ${step.href ? 'cursor-pointer block' : ''}`}
               >
                 {step.highlight && (
-                  <span className="bg-primary absolute top-4 right-4 rounded-full px-3 py-1 text-xs font-semibold text-white shadow-sm">
+                  <span className="bg-primary mb-3 inline-block rounded-full px-3 py-1 text-xs font-semibold text-white shadow-sm sm:absolute sm:top-4 sm:right-4 sm:mb-0">
                     Aloita tästä
                   </span>
                 )}
@@ -67,7 +70,7 @@ export default function ProcessSteps() {
                     <p className="text-sm text-black/70 dark:text-white/70">{step.desc}</p>
                   </div>
                 </div>
-              </div>
+              </Wrapper>
             );
           })}
         </div>
