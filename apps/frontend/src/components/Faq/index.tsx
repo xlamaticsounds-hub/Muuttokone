@@ -22,6 +22,10 @@ const faqData = [
     a: 'Kyllä, kaikkiin täyspalvelumuuttoihimme sisältyy muuttovakuutus, joka kattaa tavaroidesi kuljetuksen aikana sattuvat vahingot. Vakuutus on automaattisesti mukana hinnassa, eikä siitä tarvitse maksaa erikseen.',
   },
   {
+    q: 'Mitä tapahtuu, jos tavarani vaurioituu muutossa?',
+    a: 'Ilmoita havaitsemastasi vahingosta meille kirjallisesti 7 vuorokauden kuluessa muutosta. Lakisääteinen tiekuljetus- ja vastuuvakuutuksemme korvaa vakuutusehtojen mukaisesti vahingot, jotka aiheutuvat huolimattomuudestamme kuljetuksen aikana. Vakuutus ei kata vahinkoja, jotka johtuvat asiakkaan itse pakkaamien tavaroiden puutteellisesta pakkauksesta.',
+  },
+  {
     q: 'Kuinka pitkälle etukäteen muutto kannattaa varata?',
     a: 'Suosittelemme varaamaan vähintään 1–2 viikkoa etukäteen, erityisesti kuun vaihteen ja kesäkuukausien aikana kysynnän ollessa suurimmillaan. Tarvittaessa autamme myös kiireellisissä, lyhyellä varoitusajalla tehtävissä muutoissa.',
   },
