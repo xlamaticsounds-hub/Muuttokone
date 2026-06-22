@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/server/db'; // <- make sure you have the hot-reload-safe prisma client here
 import { LeadStatus, LeadSource } from '@prisma/client';
+import { rateLimit } from '@/server/rate-limit';
 
 // Force Node.js runtime (multipart + File)
 export const runtime = 'nodejs';
@@ -31,6 +32,7 @@ const LeadSchema = z
     floor: z.string().or(z.number()).optional(),
     has_elevator: z.string().or(z.boolean()).optional(),
     box_count: z.string().or(z.number()).optional(),
+    gdpr_consent: z.boolean().optional(),
   })
   .passthrough(); // allow extra fields without failing
 
@@ -48,6 +50,7 @@ const MessageSchema = z
     source: z.string().optional(),
     ip: z.string().optional(),
     user_agent: z.string().optional(),
+    gdpr_consent: z.boolean().optional(),
   })
   .passthrough();
 
@@ -174,7 +177,7 @@ async function submitLead(data: z.infer<typeof LeadSchema>) {
     // street: data.from_street ?? null,
     // postalCode: data.from_postal ?? null,
     notes: data.message ?? undefined,
-    gdprConsent: true,
+    gdprConsent: data.gdpr_consent === true,
   });
 
   const requestedDate = toDateOrNull(data.moving_date ?? undefined);
@@ -339,7 +342,7 @@ async function submitBooking(data: any) {
     phone: data.contactPhone || null,
     firstName,
     lastName,
-    gdprConsent: true,
+    gdprConsent: data.gdpr_consent === true,
     notes: `Varaus muuttolaskurin kautta. Asunnon koko: ${data.apartmentSize}, Pinta-ala: ${data.squareMeters || '?'}, Kerros: ${data.floorFrom} -> ${data.floorTo}`,
   });
 
@@ -395,7 +398,7 @@ async function submitMessage(data: z.infer<typeof MessageSchema>) {
     firstName,
     lastName,
     notes: data.message,
-    gdprConsent: true,
+    gdprConsent: data.gdpr_consent === true,
     tags: ['inbox-message'],
   });
 
@@ -428,6 +431,23 @@ async function submitMessage(data: z.infer<typeof MessageSchema>) {
 /* ===================== HTTP Handlers ===================== */
 
 export async function POST(request: NextRequest) {
+  const forwardedForRateLimit =
+    request.headers.get('x-forwarded-for') ||
+    request.headers.get('x-real-ip') ||
+    request.headers.get('x-client-ip');
+  const requestIp = forwardedForRateLimit
+    ? String(forwardedForRateLimit).split(',')[0].trim()
+    : 'unknown';
+
+  try {
+    await rateLimit(requestIp, 'submit');
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, message: error instanceof Error ? error.message : 'Liikaa pyyntöjä.' },
+      { status: 429 },
+    );
+  }
+
   try {
     let body: unknown;
     const contentType = request.headers.get('content-type');
@@ -464,11 +484,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Attach server IP & UA for leads
-    const forwarded =
-      request.headers.get('x-forwarded-for') ||
-      request.headers.get('x-real-ip') ||
-      request.headers.get('x-client-ip');
-    const ip = forwarded ? String(forwarded).split(',')[0].trim() : undefined;
+    const ip = requestIp !== 'unknown' ? requestIp : undefined;
     const ua = request.headers.get('user-agent') || undefined;
 
     if (
@@ -480,6 +496,13 @@ export async function POST(request: NextRequest) {
       const d = (body as any).data as Record<string, any>;
       if (ip && !d.ip) d.ip = ip;
       if (ua && !d.user_agent) d.user_agent = ua;
+    }
+
+    // Honeypot: real visitors never fill this field (see Honeypot.tsx). Pretend
+    // success so the bot doesn't retry, but never touch the database.
+    const honeypotValue = (body as any)?.data?.company;
+    if (typeof honeypotValue === 'string' && honeypotValue.trim() !== '') {
+      return NextResponse.json({ success: true, message: 'OK' });
     }
 
     const parsed = SubmissionSchema.parse(body);

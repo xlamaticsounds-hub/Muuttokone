@@ -1,6 +1,8 @@
 'use client';
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
+import Honeypot from '@/components/Forms/Honeypot';
+import GdprConsentCheckbox from '@/components/Forms/GdprConsentCheckbox';
 
 export default function ContactFormBox() {
   const [data, setData] = useState({
@@ -9,6 +11,8 @@ export default function ContactFormBox() {
     phone: '',
     message: '',
   });
+  const [gdprConsent, setGdprConsent] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -20,6 +24,11 @@ export default function ContactFormBox() {
 
     if (!data.name.trim() || !data.message.trim()) {
       toast.error('Nimi ja viesti ovat pakollisia');
+      return;
+    }
+
+    if (!gdprConsent) {
+      toast.error('Hyväksy tietojen käsittely jatkaaksesi');
       return;
     }
 
@@ -38,6 +47,8 @@ export default function ContactFormBox() {
             phone: data.phone || null,
             message: data.message,
             source: 'website_contact',
+            gdpr_consent: gdprConsent,
+            company: honeypot,
           },
         }),
       });
@@ -53,6 +64,8 @@ export default function ContactFormBox() {
           phone: '',
           message: '',
         });
+        setGdprConsent(false);
+        setHoneypot('');
       } else {
         throw new Error(result.message || 'Lähetys epäonnistui');
       }
@@ -134,6 +147,12 @@ export default function ContactFormBox() {
             required
             className="w-full border-b border-stroke bg-transparent pb-3.5 focus:border-primary focus:placeholder:opacity-50 focus-visible:outline-none dark:border-strokedark dark:focus:border-primary dark:focus:placeholder:opacity-50 resize-none"
           />
+        </div>
+
+        <Honeypot value={honeypot} onChange={setHoneypot} />
+
+        <div className="mb-7.5">
+          <GdprConsentCheckbox checked={gdprConsent} onChange={setGdprConsent} />
         </div>
 
         <button

@@ -7,6 +7,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { calculateMovingPrice, CalculatorData, PriceBreakdown, FURNITURE_CATALOG, INCLUDED_DISTANCE_KM } from './pricing';
 import toast from 'react-hot-toast';
 import { Loader2, ArrowRight, ArrowLeft, Calculator as CalcIcon, Calendar, CheckCircle2 } from 'lucide-react';
+import Honeypot from '@/components/Forms/Honeypot';
+import GdprConsentCheckbox from '@/components/Forms/GdprConsentCheckbox';
 
 const DIFFICULTY_BADGES: Record<PriceBreakdown['difficultyLevel'], { emoji: string; label: string }> = {
   easy: { emoji: '🟢', label: 'Helppo muutto' },
@@ -70,6 +72,8 @@ export default function Calculator() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
+  const [gdprConsent, setGdprConsent] = useState(false);
+  const [honeypot, setHoneypot] = useState('');
 
   // Autocomplete Refs
   const fromRef = useRef<HTMLInputElement>(null);
@@ -148,6 +152,13 @@ export default function Calculator() {
       } catch (err) {
         console.warn('Failed to parse quickQuoteData', err);
       }
+    }
+
+    // Prefill the starting address from a ?postal= param, e.g. coming from the
+    // "toimimmeko alueellasi?" postal code checker on the homepage.
+    const postal = searchParams.get('postal');
+    if (postal) {
+      setFormData((prev) => (prev.addressFrom ? prev : { ...prev, addressFrom: postal }));
     }
   }, [searchParams]);
 
@@ -324,6 +335,12 @@ export default function Calculator() {
 
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!gdprConsent) {
+      toast.error('Hyväksy tietojen käsittely jatkaaksesi');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -345,7 +362,9 @@ export default function Calculator() {
             contactEmail: formData.contactEmail,
             contactPhone: formData.contactPhone,
             services: formData.services,
-            status: 'NEW_BOOKING'
+            status: 'NEW_BOOKING',
+            gdpr_consent: gdprConsent,
+            company: honeypot,
           }
         })
       });
@@ -1403,10 +1422,15 @@ export default function Calculator() {
                   </div>
                 </div>
 
+                <Honeypot value={honeypot} onChange={setHoneypot} />
+
                 <div className="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
                   <p className="text-sm text-gray-500 mb-4">
                     Varaamalla hyväksyt palveluehtomme. Emme veloita tässä vaiheessa vielä mitään.
                   </p>
+                  <div className="mb-4">
+                    <GdprConsentCheckbox checked={gdprConsent} onChange={setGdprConsent} />
+                  </div>
                   <button
                     type="submit"
                     disabled={isSubmitting}
