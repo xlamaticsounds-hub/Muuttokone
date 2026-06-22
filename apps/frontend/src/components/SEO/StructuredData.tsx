@@ -23,15 +23,8 @@ export default async function StructuredData({ type, data }: StructuredDataProps
       email: siteConfig.contact.email,
       address: {
         '@type': 'PostalAddress',
-        streetAddress: 'Esimerkkikatu 1',
         addressLocality: 'Helsinki',
-        postalCode: '00100',
         addressCountry: 'FI',
-      },
-      geo: {
-        '@type': 'GeoCoordinates',
-        latitude: 60.1695,
-        longitude: 24.9354,
       },
       areaServed: [
         {
@@ -77,16 +70,9 @@ export default async function StructuredData({ type, data }: StructuredDataProps
           closes: '22:00',
         },
       ],
-      sameAs: [
-        siteConfig.contact.social.facebook,
-        siteConfig.contact.social.linkedin,
-        siteConfig.contact.social.twitter,
-      ],
-      hasCredential: {
-        '@type': 'EducationalOccupationalCredential',
-        name: 'SMPY Certified Moving Company',
-        credentialCategory: 'Professional Certification',
-      },
+      // Real hasCredential / aggregateRating can be added back once backed by an
+      // actual certification and real review data — publishing invented ones
+      // violates Google's structured data guidelines.
     };
 
     switch (type) {
@@ -97,13 +83,6 @@ export default async function StructuredData({ type, data }: StructuredDataProps
           '@type': 'LocalBusiness',
           priceRange: '€€',
           paymentAccepted: ['Cash', 'Credit Card', 'Bank Transfer'],
-          aggregateRating: {
-            '@type': 'AggregateRating',
-            ratingValue: '4.8',
-            reviewCount: '127',
-            bestRating: '5',
-            worstRating: '1',
-          },
         };
 
       case 'Organization':

@@ -9,11 +9,6 @@ export const siteConfig = {
     },
     email: 'info@muuttokone.fi',
     openingHours: 'Joka päivä 8:00-22:00.',
-    social: {
-      facebook: '#',
-      twitter: '#',
-      linkedin: '#',
-      instagram: '#',},
   },
 } as const;
 

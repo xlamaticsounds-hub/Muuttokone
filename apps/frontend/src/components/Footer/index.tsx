@@ -2,7 +2,6 @@ import Link from 'next/link';
 import Image from 'next/image';
 import FooterBottom from '@/components/Footer/FooterBottom';
 import footerNavData from '@/components/Footer/footerNavData';
-import FooterSocialLinks from '@/components/Footer/FooterSocialLinks';
 import SlideOnReveal from '@/components/SlideOnReveal';
 import { siteConfig } from '@/config/site';
 
@@ -36,8 +35,6 @@ export default function Footer() {
                   Luotettava muuttopalveluyritys Helsingissä ja Uudellamaalla. Tarjoamme
                   ammattitaitoisia koti- ja yritysmuuttoja, pakkausta, kuljetuksia ja kuolinpesätyhjennyksiä.
                 </p>
-
-                <FooterSocialLinks />
               </div>
 
               {/* Column 2: Contact Details (Now in the middle) */}
