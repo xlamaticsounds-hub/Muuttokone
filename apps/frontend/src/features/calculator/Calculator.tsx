@@ -247,6 +247,11 @@ export default function Calculator() {
       toast.error('Valitse muuttopaketti');
       return;
     }
+    // Skip apartment details step for recycling (locations → inventory directly)
+    if (currentStep === 1 && formData.serviceType === 'recycling') {
+      setCurrentStep(3);
+      return;
+    }
     // Skip moving package step if not moving
     if (currentStep === 1 && formData.serviceType !== 'moving') {
       setCurrentStep(2);
@@ -262,6 +267,11 @@ export default function Calculator() {
   };
 
   const handleBack = () => {
+    // Skip apartment details step going back for recycling (inventory → locations directly)
+    if (currentStep === 3 && formData.serviceType === 'recycling') {
+      setCurrentStep(1);
+      return;
+    }
     // If we're at a step after moving package and service is not moving, skip back one more
     if (currentStep === 2 && formData.serviceType !== 'moving') {
       setCurrentStep(0);
@@ -750,8 +760,8 @@ export default function Calculator() {
               </div>
             )}
 
-            {/* Step 3: Apartment Details */}
-            {currentStep === (formData.serviceType === 'moving' ? 3 : 2) && (
+            {/* Step 3: Apartment Details (not shown for recycling) */}
+            {currentStep === (formData.serviceType === 'moving' ? 3 : 2) && formData.serviceType !== 'recycling' && (
               <div className="space-y-5">
                 <div className="text-center mb-5">
                   <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1.5">
