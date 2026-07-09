@@ -342,6 +342,12 @@ export default function Calculator() {
       return;
     }
 
+    const phoneRegex = /^(\+358|0)(4[0-9]|50|9)[0-9\s\-]{5,}$/;
+    if (!phoneRegex.test((formData.contactPhone ?? '').replace(/\s/g, ''))) {
+      toast.error('Tarkista puhelinnumeron muoto (esim. 040 123 4567)');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -822,6 +828,7 @@ export default function Calculator() {
                       </label>
                       <div>
                         <label className="text-xs font-bold uppercase text-gray-400">Kantomatka ovelta autoon</label>
+                        <p className="text-xs text-gray-400 mb-1">Matka ulko-ovelta muuttoauton luokse</p>
                         <select
                           className="w-full bg-transparent border-b border-gray-300 dark:border-gray-600 py-2 outline-none"
                           value={formData.carryDistanceFrom}
@@ -863,6 +870,7 @@ export default function Calculator() {
                       </label>
                       <div>
                         <label className="text-xs font-bold uppercase text-gray-400">Kantomatka autolta ovelle</label>
+                        <p className="text-xs text-gray-400 mb-1">Matka muuttoauton luota kohteen ulko-ovelle</p>
                         <select
                           className="w-full bg-transparent border-b border-gray-300 dark:border-gray-600 py-2 outline-none"
                           value={formData.carryDistanceTo}
@@ -884,6 +892,40 @@ export default function Calculator() {
                   <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1.5">{getInventoryLabel()}</h2>
                   <p className="text-gray-500">Tavaralista on tärkein tekijä hinta-arviossa — mitä tarkempi lista, sitä tarkempi hinta.</p>
                 </div>
+
+                {/* Quick presets (only for moving) */}
+                {formData.serviceType === 'moving' && (
+                  <div className="space-y-3">
+                    <h3 className="font-bold text-sm uppercase tracking-widest text-gray-400">Pikavalinnat</h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {([
+                        { label: 'Tyhjä / muutama asia', items: {} },
+                        {
+                          label: 'Tyypillinen 1h',
+                          items: { sofa_2: 1, bed_140: 1, wardrobe_assembled: 1, coffee_table: 1, bookshelf: 1, nightstand: 1, dresser_small: 1, box_standard: 10 },
+                        },
+                        {
+                          label: 'Tyypillinen 2h',
+                          items: { sofa_3: 1, bed_140: 1, bed_80: 1, wardrobe_assembled: 2, coffee_table: 1, bookshelf: 2, nightstand: 2, dresser_small: 1, dining_table_small: 1, kitchen_chair: 4, box_standard: 20 },
+                        },
+                        {
+                          label: 'Tyypillinen 3h',
+                          items: { sofa_3: 1, sofa_2: 1, bed_140: 1, bed_80: 2, wardrobe_assembled: 3, coffee_table: 1, bookshelf: 3, nightstand: 2, dresser_large: 1, dining_table_large: 1, kitchen_chair: 6, box_standard: 35 },
+                        },
+                      ] as { label: string; items: Record<string, number> }[]).map((preset) => (
+                        <button
+                          key={preset.label}
+                          type="button"
+                          onClick={() => updateField('furnitureItems', preset.items)}
+                          className="p-3 rounded-xl border-2 border-gray-100 dark:border-gray-800 text-sm font-medium hover:border-primary hover:bg-primary/5 transition-all text-left"
+                        >
+                          {preset.label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-xs text-gray-400">Pikavalinta täyttää tyypillisen tavaralistan — muokkaa vapaasti alta.</p>
+                  </div>
+                )}
 
                 {/* Waste type selector (only for recycling) */}
                 {formData.serviceType === 'recycling' && (
@@ -1128,6 +1170,13 @@ export default function Calculator() {
                     {formData.serviceType === 'transport' ? 'Kuljetuksen hinta-arvio' : 'Hinta-arviosi'}
                   </h2>
                   <p className="text-gray-500">Laskettu annettujen tietojen perusteella.</p>
+                </div>
+
+                {/* Trust signals */}
+                <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-gray-500">
+                  <span className="flex items-center gap-1.5">🛡️ Vakuutus sisältyy</span>
+                  <span className="flex items-center gap-1.5">✅ Ei piilokuluja</span>
+                  <span className="flex items-center gap-1.5">📋 Hinta-arvio ei sido sinua</span>
                 </div>
 
                 <div className="max-w-xs mx-auto">
