@@ -1065,7 +1065,7 @@ export default function Calculator() {
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
-                        className="flex-1 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all text-sm"
+                        className="flex-1 min-w-0 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all text-sm"
                         placeholder="Esim. Akvaario, soutuvene, jääkellari..."
                         value={customItemLabel}
                         onChange={(e) => setCustomItemLabel(e.target.value)}
@@ -1427,70 +1427,6 @@ export default function Calculator() {
                   </div>
                 )}
 
-                {(formData.serviceType === 'moving' || formData.serviceType === 'transport') && priceResult.details.itemBreakdown.length > 0 && (
-                  <details className="rounded-2xl border border-gray-100 dark:border-gray-800 p-4 text-sm">
-                    <summary className="cursor-pointer font-bold text-gray-500">Yhteenveto — mistä hinta perustuu</summary>
-                    <div className="mt-4 space-y-3">
-                      <p className="text-xs text-gray-400">
-                        Tässä näet jokaisen lisäämäsi tavaran vaikutuksen työaikaan minuutteina, sekä koko
-                        työajan koostumuksen kohta kohdalta — täysin läpinäkyvästi.
-                      </p>
-                      <div className="rounded-xl border border-gray-100 dark:border-gray-800 divide-y divide-gray-50 dark:divide-gray-800 overflow-hidden">
-                        {priceResult.details.itemBreakdown.map((item) => (
-                          <div key={item.id} className="flex items-center justify-between px-4 py-2">
-                            <span>{item.label} × {item.qty}{item.isCustom && <span className="text-gray-400"> (mukautettu)</span>}</span>
-                            <span className="font-bold">{item.minutes.toFixed(1)} min</span>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex justify-between px-1">
-                        <span className="text-gray-500">Käsittelyminuutit yhteensä (raaka)</span>
-                        <span className="font-bold">{priceResult.details.rawHandlingMinutes.toFixed(1)} min</span>
-                      </div>
-                      {priceResult.details.crewEfficiencyApplied && (
-                        <p className="text-xs text-gray-400">
-                          Tavaramäärä ylittää tämän asunnon koon tyypillisen tason, joten ylimenevä osa käsittelyajasta on
-                          hinnoiteltu tehokkuuskertoimella (kuorma-auto käsittelee suuren tavaramäärän tehokkaammin kuin
-                          suora minuuttisumma antaisi ymmärtää). Tämä ei koskaan nosta hintaa, vain hillitsee sitä.
-                        </p>
-                      )}
-
-                      <div className="border-t border-gray-100 dark:border-gray-800 pt-3 space-y-2">
-                        <h4 className="font-bold text-xs uppercase text-gray-400">
-                          Koko työajan erittely (tämä summa = "Arvioitu työaika" yllä)
-                        </h4>
-                        <div className="flex justify-between px-1">
-                          <span className="text-gray-500">Käsittelyaika (tehokkuuskertoimen jälkeen)</span>
-                          <span className="font-bold">{priceResult.details.timeBreakdown.handlingMinutes.toFixed(1)} min</span>
-                        </div>
-                        <div className="flex justify-between px-1">
-                          <span className="text-gray-500">Kerrosten/hissin/kantomatkan lisäaika</span>
-                          <span className="font-bold">{priceResult.details.timeBreakdown.carryExtraMinutes.toFixed(1)} min</span>
-                        </div>
-                        <div className="flex justify-between px-1">
-                          <span className="text-gray-500">Purku/kasauspalvelu</span>
-                          <span className="font-bold">{priceResult.details.timeBreakdown.assemblyMinutes.toFixed(1)} min</span>
-                        </div>
-                        <div className="flex justify-between px-1">
-                          <span className="text-gray-500">Pakkauspalvelu</span>
-                          <span className="font-bold">{priceResult.details.timeBreakdown.packingMinutes.toFixed(1)} min</span>
-                        </div>
-                        <div className="flex justify-between px-1">
-                          <span className="text-gray-500">Ajomatka-aika</span>
-                          <span className="font-bold">{(priceResult.details.timeBreakdown.driveTimeHours * 60).toFixed(1)} min</span>
-                        </div>
-                        <div className="flex justify-between px-1">
-                          <span className="text-gray-500">Koordinointiaika (kiinteä)</span>
-                          <span className="font-bold">{(priceResult.details.timeBreakdown.baseTimeHours * 60).toFixed(1)} min</span>
-                        </div>
-                        <div className="flex justify-between px-1 pt-2 border-t border-gray-100 dark:border-gray-800">
-                          <span className="font-semibold">Yhteensä (pyöristetty 15 min tarkkuudella)</span>
-                          <span className="font-bold">{priceResult.estimatedDurationHours} h</span>
-                        </div>
-                      </div>
-                    </div>
-                  </details>
-                )}
 
                 <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-100 dark:border-yellow-900/30 flex gap-4">
                   <span className="text-2xl">💡</span>
@@ -1567,7 +1503,7 @@ export default function Calculator() {
 
                 <div className="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
                   <p className="text-sm text-gray-500 mb-4">
-                    Varaamalla hyväksyt palveluehtomme. Emme veloita tässä vaiheessa vielä mitään.
+                    Lähetämme sinulle lopullisen tarjouksen sähköpostiin — ei sitovia lupauksia vielä. Emme veloita mitään ennen kuin olet hyväksynyt tarjouksen.
                   </p>
                   <div className="mb-4">
                     <GdprConsentCheckbox checked={gdprConsent} onChange={setGdprConsent} />
@@ -1580,11 +1516,11 @@ export default function Calculator() {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-6 h-6 animate-spin" />
-                        Käsitellään varausta...
+                        Lähetetään pyyntöä...
                       </>
                     ) : (
                       <>
-                        {formData.serviceType === 'transport' ? 'Vahvista kuljetusvaraus' : 'Vahvista muuttovaraus'}
+                        Lähetä tarjouspyyntö
                         <ArrowRight className="w-6 h-6" />
                       </>
                     )}
