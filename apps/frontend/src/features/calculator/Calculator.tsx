@@ -1278,9 +1278,6 @@ export default function Calculator() {
                       <span className="text-gray-500">Työkustannukset ({priceResult.details.laborHours}h)</span>
                       <span className="font-bold">{Math.round(priceResult.laborCost)}€</span>
                     </div>
-<<<<<<< Updated upstream
-                    <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-=======
                     {priceResult.disposalCost > 0 && (
                       <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
                         <span className="text-gray-500">
@@ -1293,7 +1290,6 @@ export default function Calculator() {
                       </div>
                     )}
                     <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
->>>>>>> Stashed changes
                       <span className="text-gray-500">
                         {priceResult.details.distanceKm > 0
                           ? `Kilometrikorvaukset (${Math.round(priceResult.details.distanceKm)} km)`
