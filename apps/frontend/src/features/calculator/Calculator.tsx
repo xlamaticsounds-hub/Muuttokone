@@ -4,7 +4,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 import { motion, AnimatePresence } from 'framer-motion';
-import { calculateMovingPrice, CalculatorData, PriceBreakdown, FURNITURE_CATALOG, INCLUDED_DISTANCE_KM } from './pricing';
+import { calculateMovingPrice, CalculatorData, PriceBreakdown, FURNITURE_CATALOG, INCLUDED_DISTANCE_KM, RECYCLING_WASTE_TYPES } from './pricing';
 import toast from 'react-hot-toast';
 import { Loader2, ArrowRight, ArrowLeft, Calculator as CalcIcon, Calendar, CheckCircle2 } from 'lucide-react';
 import Honeypot from '@/components/Forms/Honeypot';
@@ -63,6 +63,7 @@ export default function Calculator() {
     needsPacking: false,
     needsCleaning: false,
     services: [],
+    selectedWasteTypes: [],
     contactName: '',
     contactEmail: '',
     contactPhone: '',
@@ -884,6 +885,46 @@ export default function Calculator() {
                   <p className="text-gray-500">Tavaralista on tärkein tekijä hinta-arviossa — mitä tarkempi lista, sitä tarkempi hinta.</p>
                 </div>
 
+                {/* Waste type selector (only for recycling) */}
+                {formData.serviceType === 'recycling' && (
+                  <div className="space-y-3">
+                    <h3 className="font-bold text-lg">Jätteen laji</h3>
+                    <p className="text-sm text-gray-500">Valitse kaikki jätetyypit — kierrätysmaksu lisätään automaattisesti hintaan.</p>
+                    <div className="grid gap-3">
+                      {RECYCLING_WASTE_TYPES.map((wt) => {
+                        const selected = (formData.selectedWasteTypes ?? []).includes(wt.id);
+                        return (
+                          <div
+                            key={wt.id}
+                            onClick={() => {
+                              const current = formData.selectedWasteTypes ?? [];
+                              const next = selected ? current.filter((id) => id !== wt.id) : [...current, wt.id];
+                              updateField('selectedWasteTypes', next);
+                            }}
+                            className={`p-4 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between gap-4 ${
+                              selected ? 'border-primary bg-primary/5' : 'border-gray-100 dark:border-gray-800'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${selected ? 'border-primary bg-primary' : 'border-gray-300'}`}>
+                                {selected && <span className="text-white text-xs">✓</span>}
+                              </div>
+                              <span className="text-xl">{wt.icon}</span>
+                              <div>
+                                <p className="font-semibold text-sm">{wt.label}</p>
+                                <p className="text-xs text-gray-500">{wt.description}</p>
+                              </div>
+                            </div>
+                            <span className={`text-sm font-bold flex-shrink-0 ${wt.disposalCostPerLoad === 0 ? 'text-green-600' : 'text-gray-700 dark:text-gray-300'}`}>
+                              {wt.disposalCostPerLoad === 0 ? 'Ilmainen' : `+${wt.disposalCostPerLoad} €/erä`}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {/* Furniture List */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
@@ -1237,7 +1278,22 @@ export default function Calculator() {
                       <span className="text-gray-500">Työkustannukset ({priceResult.details.laborHours}h)</span>
                       <span className="font-bold">{Math.round(priceResult.laborCost)}€</span>
                     </div>
+<<<<<<< Updated upstream
                     <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+=======
+                    {priceResult.disposalCost > 0 && (
+                      <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                        <span className="text-gray-500">
+                          Kierrätysmaksut ({(formData.selectedWasteTypes ?? [])
+                            .map((id) => RECYCLING_WASTE_TYPES.find((w) => w.id === id)?.label)
+                            .filter(Boolean)
+                            .join(', ')})
+                        </span>
+                        <span className="font-bold">{Math.round(priceResult.disposalCost)}€</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+>>>>>>> Stashed changes
                       <span className="text-gray-500">
                         {priceResult.details.distanceKm > 0
                           ? `Kilometrikorvaukset (${Math.round(priceResult.details.distanceKm)} km)`

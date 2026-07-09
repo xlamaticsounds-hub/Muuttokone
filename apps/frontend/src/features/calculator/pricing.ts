@@ -183,6 +183,24 @@ function categoryFactors(category: string) {
   return CATEGORY_FACTORS[category] ?? { carryRatio: 0.40, volumeM3PerMin: 0.08 };
 }
 
+export type RecyclingWasteType = {
+  id: string;
+  label: string;
+  icon: string;
+  description: string;
+  disposalCostPerLoad: number; // € per erä. 0 = ilmainen kierrätys.
+};
+
+// Jätetyyppikohtaiset kierrätysmaksut (HSY/Ämmässuo 2024 kaupalliset hinnat, per pieni erä).
+export const RECYCLING_WASTE_TYPES: RecyclingWasteType[] = [
+  { id: 'suurjate',      label: 'Suurjäte',          icon: '🛋️', description: 'Huonekalut, matot, patjat',              disposalCostPerLoad: 25 },
+  { id: 'puujate',       label: 'Puujäte',            icon: '🪵', description: 'Puu, laudat, puiset huonekalut',         disposalCostPerLoad: 20 },
+  { id: 'sekajate',      label: 'Sekajäte',           icon: '🗑️', description: 'Sekalainen jäte, ei lajiteltavissa',    disposalCostPerLoad: 50 },
+  { id: 'metallit',      label: 'Metallit',           icon: '🔧', description: 'Metalliromut, kodinkoneet (metalli)',    disposalCostPerLoad: 0  },
+  { id: 'elektroniikka', label: 'Elektroniikka (SER)', icon: '📺', description: 'TV, kodinelektroniikka — WEEE-velvoite', disposalCostPerLoad: 0  },
+  { id: 'rakennusjate',  label: 'Rakennusjäte',       icon: '🧱', description: 'Remonttijäte, tiili, kipsilevy, betoni', disposalCostPerLoad: 60 },
+];
+
 export const CalculatorSchema = z.object({
   // Service type
   serviceType: z.enum(['moving', 'transport', 'recycling']).default('moving'),
@@ -221,6 +239,7 @@ export const CalculatorSchema = z.object({
   needsPacking: z.boolean().default(false),
   needsCleaning: z.boolean().default(false),
   services: z.array(z.string()).default([]),
+  selectedWasteTypes: z.array(z.string()).default([]), // Kierrätys-jätetyypit
 
   // Timing
   date: z.date().optional(),
@@ -238,6 +257,7 @@ export interface PriceBreakdown {
   distanceCost: number;
   laborCost: number;
   extrasCost: number;
+  disposalCost: number; // Kierrätysmaksut (jätetyypeistä), 0 muilla palvelutyypeillä
   subtotal: number;
   vat: number;
   total: number;
@@ -460,6 +480,7 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
     customItems = [],
     driverCount = '1',
     additionalStops = [],
+    selectedWasteTypes = [],
     date,
   } = data;
 
@@ -592,8 +613,8 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
 
     let subtotal = distanceCost + laborCost;
 
-    // Minimum Charge for transport (lower than moving), korkeampi 2 kuljettajalle
-    const transportMinimum = driverCount === '2' ? 229 : 199; // €
+    // Minimum Charge for transport, korkeampi 2 kuljettajalle
+    const transportMinimum = driverCount === '2' ? 169 : 99; // €
     if (subtotal < transportMinimum) {
       subtotal = transportMinimum;
     }
@@ -616,6 +637,7 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
       distanceCost,
       laborCost,
       extrasCost: 0,
+      disposalCost: 0,
       subtotal: total - vat,
       vat,
       total,
@@ -653,6 +675,78 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
           distance: distanceImpact,
           extras: extrasImpact,
           base: baseImpact,
+        },
+      },
+    };
+  }
+
+  // RECYCLING SERVICE (kierrätys) — sama työvoimalogiikka kuin Muutossa, lisäksi kierrätysmaksut.
+  if (serviceType === 'recycling') {
+    const disposalCost = selectedWasteTypes.reduce((sum, typeId) => {
+      const wt = RECYCLING_WASTE_TYPES.find((w) => w.id === typeId);
+      return sum + (wt?.disposalCostPerLoad ?? 0);
+    }, 0);
+
+    const rawMinutesR = handlingMinutes + carryExtraMinutes;
+    let totalLaborHoursR = rawMinutesR / 60 + driveTime + COORDINATION_TIME_HOURS;
+    totalLaborHoursR = Math.ceil(totalLaborHoursR * 4) / 4;
+
+    const hourlyRateR = PRICING_CONSTANTS.hourlyRateDefault;
+    const laborCostR = totalLaborHoursR * hourlyRateR;
+
+    const subtotalR = distanceCost + laborCostR + disposalCost;
+    const normalPriceTotalR = subtotalR;
+    const { total: totalR, dateDiscountAmount: dateDiscountAmountR } = applyDateDiscount(normalPriceTotalR);
+    const vatR = totalR - (totalR / (1 + PRICING_CONSTANTS.vatRate));
+
+    const itemsImpactR = (handlingMinutes / 60) * hourlyRateR;
+    const floorsImpactR = (floorsExtraMinutes / 60) * hourlyRateR;
+    const carryDistanceImpactR = (carryDistanceExtraMinutes / 60) * hourlyRateR;
+    const distanceImpactR = distanceCost + driveTime * hourlyRateR;
+    const baseImpactR = laborCostR - itemsImpactR - floorsImpactR - carryDistanceImpactR - driveTime * hourlyRateR;
+
+    return {
+      distanceCost,
+      laborCost: laborCostR,
+      extrasCost: disposalCost,
+      disposalCost,
+      subtotal: totalR - vatR,
+      vat: vatR,
+      total: totalR,
+      normalPriceTotal: normalPriceTotalR,
+      dateDiscountFraction: dateDiscount.discount,
+      dateDiscountAmount: dateDiscountAmountR,
+      dateDiscountLabel: dateDiscount.label,
+      dateDiscountEmoji: dateDiscount.emoji,
+      priceRangeLow: round5(totalR * (1 - PRICING_CONSTANTS.priceRangeNormal)),
+      priceRangeHigh: round5(totalR * (1 + PRICING_CONSTANTS.priceRangeNormal)),
+      difficultyLevel,
+      estimatedDurationHours: totalLaborHoursR,
+      details: {
+        distanceKm: billableDistanceKm,
+        laborHours: totalLaborHoursR,
+        laborRate: hourlyRateR,
+        crewSize: 2,
+        totalVolumeM3,
+        totalItemCount,
+        rawHandlingMinutes,
+        crewEfficiencyApplied,
+        itemBreakdown,
+        timeBreakdown: {
+          handlingMinutes,
+          carryExtraMinutes,
+          assemblyMinutes: 0,
+          packingMinutes: 0,
+          driveTimeHours: driveTime,
+          baseTimeHours: COORDINATION_TIME_HOURS,
+        },
+        impactBreakdown: {
+          items: itemsImpactR,
+          floors: floorsImpactR,
+          carryDistance: carryDistanceImpactR,
+          distance: distanceImpactR,
+          extras: disposalCost,
+          base: baseImpactR,
         },
       },
     };
@@ -703,6 +797,7 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
       distanceCost,
       laborCost,
       extrasCost: 0,
+      disposalCost: 0,
       subtotal: total - vat,
       vat,
       total,
@@ -755,6 +850,7 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
       distanceCost: 0,
       laborCost,
       extrasCost: 0,
+      disposalCost: 0,
       subtotal: total - vat,
       vat,
       total,
@@ -833,6 +929,7 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
     distanceCost,
     laborCost,
     extrasCost,
+    disposalCost: 0,
     subtotal: total - vat,
     vat,
     total,
