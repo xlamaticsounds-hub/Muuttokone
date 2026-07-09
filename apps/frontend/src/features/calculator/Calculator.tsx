@@ -6,7 +6,7 @@ import Script from 'next/script';
 import { motion, AnimatePresence } from 'framer-motion';
 import { calculateMovingPrice, CalculatorData, PriceBreakdown, FURNITURE_CATALOG, INCLUDED_DISTANCE_KM, RECYCLING_WASTE_TYPES } from './pricing';
 import toast from 'react-hot-toast';
-import { Loader2, ArrowRight, ArrowLeft, Calculator as CalcIcon, Calendar, CheckCircle2 } from 'lucide-react';
+import { Loader2, ArrowRight, ArrowLeft, Calculator as CalcIcon, Calendar, CheckCircle2, ChevronDown } from 'lucide-react';
 import Honeypot from '@/components/Forms/Honeypot';
 import GdprConsentCheckbox from '@/components/Forms/GdprConsentCheckbox';
 
@@ -320,6 +320,16 @@ export default function Calculator() {
   };
 
   const [customItemLabel, setCustomItemLabel] = useState('');
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  const toggleCategory = (category: string) => {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) next.delete(category);
+      else next.add(category);
+      return next;
+    });
+  };
   const [customItemQty, setCustomItemQty] = useState(1);
 
   const addCustomItem = () => {
@@ -987,13 +997,31 @@ export default function Calculator() {
                       </span>
                     )}
                   </div>
-                  {furnitureCategories.map((category) => (
+                  {furnitureCategories.map((category) => {
+                    const isOpen = expandedCategories.has(category);
+                    const categoryItems = FURNITURE_CATALOG.filter((f) => f.category === category);
+                    const selectedCount = categoryItems.reduce((sum, item) => sum + (formData.furnitureItems[item.id] ?? 0), 0);
+                    return (
                     <div key={category} className="rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
-                      <div className="bg-gray-50 dark:bg-gray-800/60 px-5 py-3">
-                        <span className="text-xs font-bold uppercase tracking-widest text-gray-400">{category}</span>
-                      </div>
+                      <button
+                        type="button"
+                        onClick={() => toggleCategory(category)}
+                        className="w-full bg-gray-50 dark:bg-gray-800/60 px-5 py-3 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                      >
+                        <span className="flex items-center gap-3">
+                          <span className="text-xs font-bold uppercase tracking-widest text-gray-400">{category}</span>
+                          {selectedCount > 0 && (
+                            <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{selectedCount} kpl</span>
+                          )}
+                        </span>
+                        <ChevronDown
+                          size={16}
+                          className={`text-gray-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                        />
+                      </button>
+                      {isOpen && (
                       <div className="divide-y divide-gray-50 dark:divide-gray-800">
-                        {FURNITURE_CATALOG.filter((f) => f.category === category).map((item) => {
+                        {categoryItems.map((item) => {
                           const qty = formData.furnitureItems[item.id] ?? 0;
                           return (
                             <div key={item.id} className="flex items-center justify-between px-5 py-3">
@@ -1023,8 +1051,10 @@ export default function Calculator() {
                           );
                         })}
                       </div>
+                      )}
                     </div>
-                  ))}
+                  );
+                })}
                 </div>
 
                 {/* Mukautetut tavarat — jos tavaraa ei löydy katalogista */}
