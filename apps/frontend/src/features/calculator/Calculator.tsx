@@ -80,6 +80,10 @@ export default function Calculator() {
   const fromRef = useRef<HTMLInputElement>(null);
   const toRef = useRef<HTMLInputElement>(null);
   const scriptLoaded = useRef(false);
+  const savedScrollY = useRef(0);
+  const autocompleteServiceRef = useRef<any>(null);
+  const [fromPredictions, setFromPredictions] = useState<{description: string; place_id: string}[]>([]);
+  const [toPredictions, setToPredictions] = useState<{description: string; place_id: string}[]>([]);
 
   const priceResult = useMemo(() => calculateMovingPrice(formData), [formData]);
 
@@ -164,42 +168,26 @@ export default function Calculator() {
   }, [searchParams]);
 
   const initAutocomplete = () => {
-    if (typeof window === 'undefined') return;
+    // AutocompleteService is initialized lazily in fetchPredictions
+  };
+
+  const fetchPredictions = (query: string, setter: (p: {description: string; place_id: string}[]) => void) => {
+    if (!query || query.length < 2) { setter([]); return; }
     const google = (window as any).google;
-    if (!google || !google.maps || !google.maps.places) {
-      console.warn('Google Maps Places library not available');
-      return;
+    if (!google?.maps?.places) return;
+    if (!autocompleteServiceRef.current) {
+      autocompleteServiceRef.current = new google.maps.places.AutocompleteService();
     }
-
-    // Initialize From Address
-    if (fromRef.current) {
-      const fromAutocomplete = new google.maps.places.Autocomplete(fromRef.current, {
-        types: ['address'],
-        componentRestrictions: { country: 'fi' },
-        fields: ['formatted_address', 'geometry']
-      });
-      fromAutocomplete.addListener('place_changed', () => {
-        const place = fromAutocomplete.getPlace();
-        if (place.formatted_address) {
-          updateField('addressFrom', place.formatted_address);
+    autocompleteServiceRef.current.getPlacePredictions(
+      { input: query, types: ['address'], componentRestrictions: { country: 'fi' } },
+      (predictions: any[], status: string) => {
+        if (predictions && status === 'OK') {
+          setter(predictions.slice(0, 5).map((p: any) => ({ description: p.description, place_id: p.place_id })));
+        } else {
+          setter([]);
         }
-      });
-    }
-
-    // Initialize To Address
-    if (toRef.current) {
-      const toAutocomplete = new google.maps.places.Autocomplete(toRef.current, {
-        types: ['address'],
-        componentRestrictions: { country: 'fi' },
-        fields: ['formatted_address', 'geometry']
-      });
-      toAutocomplete.addListener('place_changed', () => {
-        const place = toAutocomplete.getPlace();
-        if (place.formatted_address) {
-          updateField('addressTo', place.formatted_address);
-        }
-      });
-    }
+      }
+    );
   };
 
   // Re-initialize if the component mounts and google is already loaded
@@ -433,6 +421,15 @@ export default function Calculator() {
   }
 
   return (
+    <>
+    {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && (
+      <Script
+        src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
+        strategy="afterInteractive"
+        onReady={() => { scriptLoaded.current = true; }}
+        onError={() => console.error('Google Maps script failed to load')}
+      />
+    )}
     <div
       ref={calculatorRef}
       className="max-w-4xl mx-auto bg-white dark:bg-gray-900 shadow-2xl rounded-3xl overflow-hidden border border-gray-100 dark:border-gray-800 scroll-mt-24"
@@ -676,27 +673,59 @@ export default function Calculator() {
                       ⚠️ Google Maps API avain puuttuu. Osoitteiden automaattinen täyttö ei ole käytössä.
                     </div>
                   )}
-                  <div>
+                  <div className="relative">
                     <label className="block text-sm font-semibold mb-2">Lähtöosoite</label>
                     <input
                       ref={fromRef}
                       type="text"
+                      autoComplete="off"
                       className="w-full px-5 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all"
                       placeholder="Esim. Mannerheimintie 1, Helsinki"
                       value={formData.addressFrom}
-                      onChange={(e) => updateField('addressFrom', e.target.value)}
+                      onChange={(e) => { updateField('addressFrom', e.target.value); fetchPredictions(e.target.value, setFromPredictions); }}
+                      onBlur={() => setTimeout(() => setFromPredictions([]), 150)}
                     />
+                    {fromPredictions.length > 0 && (
+                      <ul className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
+                        {fromPredictions.map((p) => (
+                          <li
+                            key={p.place_id}
+                            className="px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-800 last:border-0"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => { updateField('addressFrom', p.description); setFromPredictions([]); }}
+                          >
+                            {p.description}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
-                  <div>
+                  <div className="relative">
                     <label className="block text-sm font-semibold mb-2">Määränpää</label>
                     <input
                       ref={toRef}
                       type="text"
+                      autoComplete="off"
                       className="w-full px-5 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all"
                       placeholder="Esim. Hämeentie 10, Helsinki"
                       value={formData.addressTo}
-                      onChange={(e) => updateField('addressTo', e.target.value)}
+                      onChange={(e) => { updateField('addressTo', e.target.value); fetchPredictions(e.target.value, setToPredictions); }}
+                      onBlur={() => setTimeout(() => setToPredictions([]), 150)}
                     />
+                    {toPredictions.length > 0 && (
+                      <ul className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-xl shadow-lg overflow-hidden">
+                        {toPredictions.map((p) => (
+                          <li
+                            key={p.place_id}
+                            className="px-4 py-3 text-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 border-b border-gray-100 dark:border-gray-800 last:border-0"
+                            onMouseDown={(e) => e.preventDefault()}
+                            onClick={() => { updateField('addressTo', p.description); setToPredictions([]); }}
+                          >
+                            {p.description}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
 
                   {formData.serviceType === 'transport' && (
@@ -752,21 +781,6 @@ export default function Calculator() {
                     </div>
                   </div>
                 </div>
-                {/* Load Google Maps Script for Autocomplete */}
-                {process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && (
-                  <Script
-                    src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`}
-                    onReady={() => {
-                      scriptLoaded.current = true;
-                      initAutocomplete();
-                    }}
-                    onError={() => {
-                      console.error('Google Maps script failed to load');
-                      toast.error('Google Maps lataus epäonnistui');
-                    }}
-                    strategy="lazyOnload"
-                  />
-                )}
               </div>
             )}
 
@@ -1557,5 +1571,6 @@ export default function Calculator() {
         )}
       </div>
     </div>
+    </>
   );
 }
