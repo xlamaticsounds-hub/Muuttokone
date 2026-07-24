@@ -7,7 +7,7 @@ const allowedEmails = (process.env.ALLOWED_EMAILS || "")
   .map((e) => e.trim().toLowerCase())
   .filter(Boolean);
 
-const builtInAllowedEmails = ["xlamaticsounds@gmail.com", "domenic.eklund@gmail.com"];
+const builtInAllowedEmails = ["xlamaticsounds@gmail.com", "domenic.eklund@gmail.com", "paavo.penttinen@proton.me"];
 
 const isAllowedEmail = (email?: string | null) => {
   if (!email) return false;
