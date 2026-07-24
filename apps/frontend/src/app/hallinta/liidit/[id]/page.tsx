@@ -1,12 +1,79 @@
 import { prisma } from '@/server/db';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Calendar, MapPin, User, Phone, Mail, FileText, Globe } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, User, Phone, Mail, FileText, Globe, Package } from 'lucide-react';
 import { LeadStatus } from '@prisma/client';
+import { FURNITURE_CATALOG, RECYCLING_WASTE_TYPES } from '@/features/calculator/pricing';
 import StatusSelector from './StatusSelector';
 import LeadDetailActions from './LeadDetailActions';
 
 export const dynamic = 'force-dynamic';
+
+const SERVICE_TYPE_LABELS: Record<string, string> = {
+  moving: 'Muutto',
+  transport: 'Kuljetus',
+  recycling: 'Kierrätys',
+};
+
+const PACKAGE_LABELS: Record<string, string> = {
+  full_service: 'Täyspalvelu',
+  driver_with_vehicle: 'Vain kuljettaja ajoneuvolla',
+  carrying_help: 'Vain kantoapu',
+};
+
+type InventoryEntry = { icon: string; label: string; qty: number };
+
+// Laskurin lomake tallentaa tavaralistan formData-JSONiin id:einä (esim. "sofa_3": 2), ei
+// ihmisluettavina nimin — täällä käännetään ne samasta katalogista jota Muuttolaskuri käyttää,
+// jotta hallintapaneeli näyttää täsmälleen sen mitä asiakas ilmoitti eikä pelkkiä id-koodeja.
+function getInventoryEntries(data: unknown): InventoryEntry[] {
+  if (!data || typeof data !== 'object') return [];
+  const record = data as Record<string, unknown>;
+  const entries: InventoryEntry[] = [];
+
+  const furnitureItems = record.furnitureItems;
+  if (furnitureItems && typeof furnitureItems === 'object') {
+    for (const [id, qty] of Object.entries(furnitureItems as Record<string, unknown>)) {
+      const n = Number(qty);
+      if (!n || n <= 0) continue;
+      const item = FURNITURE_CATALOG.find((f) => f.id === id);
+      entries.push(item ? { icon: item.icon, label: item.label, qty: n } : { icon: '📦', label: id, qty: n });
+    }
+  }
+
+  if (Array.isArray(record.customItems)) {
+    for (const custom of record.customItems as Array<{ label?: string; qty?: number }>) {
+      const n = Number(custom?.qty);
+      if (custom?.label && n > 0) entries.push({ icon: '➕', label: `${custom.label} (ei katalogissa)`, qty: n });
+    }
+  }
+
+  return entries;
+}
+
+function getWasteTypeLabels(data: unknown): string[] {
+  if (!data || typeof data !== 'object') return [];
+  const record = data as Record<string, unknown>;
+  if (!Array.isArray(record.selectedWasteTypes)) return [];
+  return record.selectedWasteTypes
+    .map((id) => RECYCLING_WASTE_TYPES.find((w) => w.id === id)?.label)
+    .filter((label): label is string => Boolean(label));
+}
+
+function getExtraServices(data: unknown): string[] {
+  if (!data || typeof data !== 'object') return [];
+  const record = data as Record<string, unknown>;
+  const extras: string[] = [];
+  if (Array.isArray(record.services) && record.services.includes('Purkupalvelu')) {
+    extras.push('Purkupalvelu (huonekalujen purku ja kasaus)');
+  }
+  if (record.needsPacking) extras.push('Pakkauspalvelu (pakkaamme tavarat)');
+  if (record.needsCleaning) extras.push('Muuttosiivous');
+  if (Array.isArray(record.additionalStops) && record.additionalStops.length > 0) {
+    extras.push(`${record.additionalStops.length} välipysähdystä`);
+  }
+  return extras;
+}
 
 export default async function LeadDetailPage({
   params,
@@ -31,14 +98,23 @@ export default async function LeadDetailPage({
   // in server/actions.ts) — Prisma's Json column returns whichever shape was actually
   // stored, so this has to handle both instead of always assuming a string.
   let formDataDisplay = '{}';
+  let parsedFormData: unknown = null;
   if (lead.formData) {
     try {
-      const parsed = typeof lead.formData === 'string' ? JSON.parse(lead.formData) : lead.formData;
-      formDataDisplay = JSON.stringify(parsed, null, 2);
+      parsedFormData = typeof lead.formData === 'string' ? JSON.parse(lead.formData) : lead.formData;
+      formDataDisplay = JSON.stringify(parsedFormData, null, 2);
     } catch {
       formDataDisplay = String(lead.formData);
     }
   }
+
+  const inventoryEntries = getInventoryEntries(parsedFormData);
+  const wasteTypeLabels = getWasteTypeLabels(parsedFormData);
+  const extraServices = getExtraServices(parsedFormData);
+  const pfd = (parsedFormData && typeof parsedFormData === 'object' ? parsedFormData : {}) as Record<string, unknown>;
+  const serviceTypeLabel = typeof pfd.serviceType === 'string' ? SERVICE_TYPE_LABELS[pfd.serviceType] ?? pfd.serviceType : null;
+  const packageLabel = typeof pfd.movingPackage === 'string' ? PACKAGE_LABELS[pfd.movingPackage] ?? pfd.movingPackage : null;
+  const totalItemCount = inventoryEntries.reduce((sum, e) => sum + e.qty, 0);
 
   // Helper to format date
   const formatDate = (date: Date | null) => {
@@ -169,6 +245,65 @@ export default async function LeadDetailPage({
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Ilmoitetut tavarat (muuttolaskurin tavaralista) */}
+          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
+                <Package className="h-5 w-5 text-gray-400" />
+                Ilmoitetut tavarat
+              </h2>
+              {(serviceTypeLabel || packageLabel) && (
+                <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                  {[serviceTypeLabel, packageLabel].filter(Boolean).join(' · ')}
+                </span>
+              )}
+            </div>
+
+            {inventoryEntries.length === 0 ? (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Tälle liidille ei ole tallennettu tavaralistaa (esim. yleinen yhteydenotto tai muu lomake kuin muuttolaskuri).
+              </p>
+            ) : (
+              <>
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {inventoryEntries.map((entry, i) => (
+                    <div
+                      key={`${entry.label}-${i}`}
+                      className="flex items-center justify-between gap-2 rounded-md bg-gray-50 px-3 py-2 text-sm dark:bg-gray-900/50"
+                    >
+                      <span className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+                        <span>{entry.icon}</span>
+                        {entry.label}
+                      </span>
+                      <span className="font-semibold text-gray-900 dark:text-white">× {entry.qty}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-3 text-xs font-medium uppercase text-gray-400">
+                  {totalItemCount} tavaraa yhteensä ({inventoryEntries.length} nimikettä)
+                </p>
+              </>
+            )}
+
+            {wasteTypeLabels.length > 0 && (
+              <div className="mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
+                <label className="text-xs font-medium uppercase text-gray-500">Jätetyypit</label>
+                <p className="mt-1 text-sm text-gray-900 dark:text-white">{wasteTypeLabels.join(', ')}</p>
+              </div>
+            )}
+
+            {extraServices.length > 0 && (
+              <div className="mt-4 border-t border-gray-100 pt-4 dark:border-gray-700">
+                <label className="text-xs font-medium uppercase text-gray-500">Lisäpalvelut</label>
+                <ul className="mt-1 list-inside list-disc text-sm text-gray-900 dark:text-white">
+                  {extraServices.map((s) => (
+                    <li key={s}>{s}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           {/* Additional Notes */}
