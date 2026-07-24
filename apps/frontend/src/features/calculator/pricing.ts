@@ -403,16 +403,30 @@ function applyCrewEfficiency(rawHandlingMinutes: number, apartmentSize: Calculat
 // vain tarkistusmuuttuja, ei hinnoitteluperuste.
 const COORDINATION_TIME_HOURS = 0.25;
 
+// v2.2 kalibrointikorjaus: täyden palvelun (full_service) kaksio (2h) hinnoiteltiin
+// tavaralistapohjaisesti jäljelle jäävää markkinaa selvästi halvemmaksi (tyypillinen
+// kalustettu kaksio ~2,75-3,75h laskurissa vs. kilpailijoiden tyypillinen 3-5h samasta
+// työstä). Muita kokoluokkia EI kosketa — vain kaksio nostettiin, koska vain se oli
+// alihinnoiteltu suhteessa markkinaan. Tämä on vähimmäisveloitus, ei korvaa
+// tavaralistalaskentaa: iso kaksio joka jo ylittää tämän ajan hinnoitellaan normaalisti.
+const FULL_SERVICE_MIN_LABOR_HOURS: Partial<Record<CalculatorData['apartmentSize'], number>> = {
+  '2h': 4.5,
+};
+
 // Mukautetun (katalogin ulkopuolisen) tavaran oletuskäsittelyaika — keskikokoisen
 // tavaran arvio, koska tarkkaa kokoa ei tunneta. Kanto-/tilavaikutus käyttää
 // categoryFactors()-fallbackia (ei omaa kategoriaa).
 const CUSTOM_ITEM_MINUTES_EACH = 5;
 
-// Kuljetus (transport) -palvelun omat vakiot. Ei kilpailijadataa toistaiseksi —
-// nämä ovat lähtöarvoja samalla logiikalla kuin Muutto-kalibroinnissa.
+// Kuljetus (transport) -palvelun omat vakiot.
+// v2.2: tuntihinta yhdistetty samaksi kuin Muutto-välilehden "Kuljettaja + auto"
+// -paketin driverWithVehicleRate (ks. PRICING_CONSTANTS) — molemmat myyvät saman
+// resurssin (1 kuljettaja + pakettiauto/kuorma-auto), joten sama työ ei saa maksaa
+// kahta eri hintaa riippuen siitä kummalta välilehdeltä sen tilaa. Kilpailijavertailu
+// (Avainmuutto: 87,90 €/h 1 kuljettaja, 119,20 €/h 2 kuljettajaa, alv sis.) tukee tätä tasoa.
 const EXTRA_STOP_MINUTES = 15; // ylimääräisen välipysähdyksen lastaus/purku-aika
 const DRIVER_COUNT_EFFICIENCY: Record<'1' | '2', number> = { '1': 1.0, '2': 0.65 };
-const SECOND_DRIVER_RATE_ADDON = 35; // €/h, 2. kuljettajan lisähinta
+const SECOND_DRIVER_RATE_ADDON = 30; // €/h, 2. kuljettajan lisähinta (89 + 30 = 119 €/h, ks. yllä)
 
 function round5(value: number): number {
   return Math.round(value / 5) * 5;
@@ -608,7 +622,7 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
     let totalLaborHours = rawTransportMinutes / 60 + driveTime + COORDINATION_TIME_HOURS;
     totalLaborHours = Math.ceil(totalLaborHours * 4) / 4;
 
-    const hourlyRate = PRICING_CONSTANTS.hourlyRateDefault + (driverCount === '2' ? SECOND_DRIVER_RATE_ADDON : 0);
+    const hourlyRate = PRICING_CONSTANTS.driverWithVehicleRate + (driverCount === '2' ? SECOND_DRIVER_RATE_ADDON : 0);
     const laborCost = totalLaborHours * hourlyRate;
 
     let subtotal = distanceCost + laborCost;
@@ -773,16 +787,11 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
   totalLaborHours = Math.ceil(totalLaborHours * 4) / 4;
 
   if (movingPackage === 'driver_with_vehicle') {
-    const lightMoveHoursBySize: Record<CalculatorData['apartmentSize'], number> = {
-      '1h': 2,
-      '2h': 2.5,
-      '3h': 3.5,
-      '4h+': 4.5,
-      office: 4.5,
-    };
-    const totalDriverHours = Math.ceil((lightMoveHoursBySize[apartmentSize] + billableDistanceKm / 40) * 2) / 2;
+    // v2.2: käyttää samaa tavaralistapohjaista totalLaborHours-arviota kuin muut paketit
+    // (aiemmin oma kiinteä lightMoveHoursBySize-taulukko sivuutti tavaralistan kokonaan —
+    // sama bugi joka aiheutti Kuljetus-välilehden kanssa ristiriitaisen hinnan samasta työstä).
     const hourlyRate = PRICING_CONSTANTS.driverWithVehicleRate;
-    const laborCost = totalDriverHours * hourlyRate;
+    const laborCost = totalLaborHours * hourlyRate;
     let subtotal = distanceCost + laborCost;
 
     if (subtotal < PRICING_CONSTANTS.driverWithVehicleMinimum) {
@@ -792,6 +801,16 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
     const normalPriceTotal = subtotal;
     const { total, dateDiscountAmount } = applyDateDiscount(normalPriceTotal);
     const vat = total - (total / (1 + PRICING_CONSTANTS.vatRate));
+
+    // Erittely samalla kaavalla kuin täysi palvelu (ks. alempana), mutta normalPriceTotal:ia
+    // vasten (ei raakaa laborCost:ia) — jos minimihintakorotus laukesi, se sisältyy
+    // "base"-erään, jotta erittely täsmää aina näytettyyn hintaan (sama tekniikka kuin Kuljetuksessa).
+    const itemsImpact = (handlingMinutes / 60) * hourlyRate;
+    const floorsImpact = (floorsExtraMinutes / 60) * hourlyRate;
+    const carryDistanceImpact = (carryDistanceExtraMinutes / 60) * hourlyRate;
+    const extrasImpact = ((assemblyMinutes + packingMinutes) / 60) * hourlyRate;
+    const distanceImpact = distanceCost + driveTime * hourlyRate;
+    const baseImpact = (normalPriceTotal - distanceCost) - itemsImpact - floorsImpact - carryDistanceImpact - extrasImpact - driveTime * hourlyRate;
 
     return {
       distanceCost,
@@ -808,11 +827,11 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
       dateDiscountEmoji: dateDiscount.emoji,
       priceRangeLow: round5(total * (1 - PRICING_CONSTANTS.priceRangeNormal)),
       priceRangeHigh: round5(total * (1 + PRICING_CONSTANTS.priceRangeNormal)),
-      difficultyLevel: 'medium',
-      estimatedDurationHours: totalDriverHours,
+      difficultyLevel,
+      estimatedDurationHours: totalLaborHours,
       details: {
         distanceKm: billableDistanceKm,
-        laborHours: totalDriverHours,
+        laborHours: totalLaborHours,
         laborRate: hourlyRate,
         crewSize: 1,
         totalVolumeM3,
@@ -821,14 +840,21 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
         crewEfficiencyApplied,
         itemBreakdown,
         timeBreakdown: {
-          handlingMinutes: 0,
-          carryExtraMinutes: 0,
-          assemblyMinutes: 0,
-          packingMinutes: 0,
-          driveTimeHours: billableDistanceKm / 40,
-          baseTimeHours: lightMoveHoursBySize[apartmentSize],
+          handlingMinutes,
+          carryExtraMinutes,
+          assemblyMinutes,
+          packingMinutes,
+          driveTimeHours: driveTime,
+          baseTimeHours: adminTime,
         },
-        impactBreakdown: { items: 0, floors: 0, carryDistance: 0, distance: laborCost + distanceCost, extras: 0, base: 0 },
+        impactBreakdown: {
+          items: itemsImpact,
+          floors: floorsImpact,
+          carryDistance: carryDistanceImpact,
+          distance: distanceImpact,
+          extras: extrasImpact,
+          base: baseImpact,
+        },
       },
     };
   }
@@ -891,6 +917,14 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
   // Increase rate for complex moves (high floors no elevator, or large moves)
   if ((!elevatorFrom && floorFrom > 2) || (!elevatorTo && floorTo > 2) || apartmentSize === '4h+') {
     hourlyRate = PRICING_CONSTANTS.hourlyRateComplex;
+  }
+
+  // Kalibrointikorjaus: vain full_service, vain kokoluokat joilla on FULL_SERVICE_MIN_LABOR_HOURS-arvo
+  // (ks. määrittely yllä) — ei vaikuta driver_with_vehicle/carrying_help-paketteihin, jotka
+  // palasivat jo omalla logiikallaan ennen tätä kohtaa.
+  const minLaborHours = FULL_SERVICE_MIN_LABOR_HOURS[apartmentSize];
+  if (minLaborHours) {
+    totalLaborHours = Math.max(totalLaborHours, minLaborHours);
   }
 
   const laborCost = totalLaborHours * hourlyRate;
