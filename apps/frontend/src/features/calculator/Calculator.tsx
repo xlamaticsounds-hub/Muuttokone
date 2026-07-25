@@ -408,7 +408,7 @@ export default function Calculator() {
         <h2 className="text-3xl font-bold mb-4">Kiitos varauksestasi!</h2>
         <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg">
           Olemme vastaanottaneet muuttovarauksesi. <br />
-          Saat vahvistuksen sähköpostiisi pian ja olemme sinuun yhteydessä puhelimitse.
+          Saat tarjouksen sähköpostiisi pian, ja olemme tarvittaessa yhteydessä myös puhelimitse.
         </p>
         <button
           onClick={() => window.location.reload()}
