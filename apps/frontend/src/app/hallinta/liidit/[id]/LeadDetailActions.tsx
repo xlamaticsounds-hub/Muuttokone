@@ -3,16 +3,41 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateLeadDetails } from '@/server/actions';
+import { sendQuoteEmail } from '@/server/send-quote';
 import { Lead, Contact } from '@prisma/client';
 
-export default function LeadDetailActions({ 
-  lead 
-}: { 
-  lead: Lead & { contact: Contact } 
+export default function LeadDetailActions({
+  lead
+}: {
+  lead: Lead & { contact: Contact }
 }) {
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [sendingQuote, setSendingQuote] = useState(false);
+  const [quoteFeedback, setQuoteFeedback] = useState<{ ok: boolean; message: string } | null>(null);
+
+  const alreadySent = lead.status === 'PROPOSAL_SENT' || lead.status === 'WON';
+
+  const handleSendQuote = async () => {
+    if (!lead.contact.email) return;
+    const confirmed = window.confirm(
+      `Lähetetäänkö tarjous sähköpostitse osoitteeseen ${lead.contact.email}?`,
+    );
+    if (!confirmed) return;
+
+    setSendingQuote(true);
+    setQuoteFeedback(null);
+    try {
+      const result = await sendQuoteEmail(lead.id);
+      setQuoteFeedback({ ok: true, message: `Tarjous lähetetty osoitteeseen ${result.sentTo}.` });
+      router.refresh();
+    } catch (err) {
+      setQuoteFeedback({ ok: false, message: err instanceof Error ? err.message : 'Lähetys epäonnistui.' });
+    } finally {
+      setSendingQuote(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -35,10 +60,27 @@ export default function LeadDetailActions({
   return (
     <>
       <div className="flex flex-col gap-2">
-        <button className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-          Lähetä tarjous
+        <button
+          onClick={handleSendQuote}
+          disabled={sendingQuote || !lead.contact.email}
+          title={!lead.contact.email ? 'Liidillä ei ole sähköpostiosoitetta' : undefined}
+          className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {sendingQuote
+            ? 'Lähetetään...'
+            : alreadySent
+              ? 'Lähetä tarjous uudelleen'
+              : 'Lähetä tarjous'}
         </button>
-        <button 
+        {quoteFeedback && (
+          <p className={`text-sm ${quoteFeedback.ok ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+            {quoteFeedback.message}
+          </p>
+        )}
+        {alreadySent && !quoteFeedback && (
+          <p className="text-xs text-gray-500 dark:text-gray-400">Tarjous on jo lähetetty tälle liidille.</p>
+        )}
+        <button
           onClick={() => setIsEditing(true)}
           className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
         >

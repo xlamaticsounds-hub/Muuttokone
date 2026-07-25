@@ -2,78 +2,18 @@ import { prisma } from '@/server/db';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Calendar, MapPin, User, Phone, Mail, FileText, Globe, Package } from 'lucide-react';
-import { LeadStatus } from '@prisma/client';
-import { FURNITURE_CATALOG, RECYCLING_WASTE_TYPES } from '@/features/calculator/pricing';
+import {
+  getInventoryEntries,
+  getWasteTypeLabels,
+  getExtraServices,
+  getServiceLabel,
+  getPackageLabel,
+  parseLeadFormData,
+} from '@/server/lead-format';
 import StatusSelector from './StatusSelector';
 import LeadDetailActions from './LeadDetailActions';
 
 export const dynamic = 'force-dynamic';
-
-const SERVICE_TYPE_LABELS: Record<string, string> = {
-  moving: 'Muutto',
-  transport: 'Kuljetus',
-  recycling: 'Kierrätys',
-};
-
-const PACKAGE_LABELS: Record<string, string> = {
-  full_service: 'Täyspalvelu',
-  driver_with_vehicle: 'Vain kuljettaja ajoneuvolla',
-  carrying_help: 'Vain kantoapu',
-};
-
-type InventoryEntry = { icon: string; label: string; qty: number };
-
-// Laskurin lomake tallentaa tavaralistan formData-JSONiin id:einä (esim. "sofa_3": 2), ei
-// ihmisluettavina nimin — täällä käännetään ne samasta katalogista jota Muuttolaskuri käyttää,
-// jotta hallintapaneeli näyttää täsmälleen sen mitä asiakas ilmoitti eikä pelkkiä id-koodeja.
-function getInventoryEntries(data: unknown): InventoryEntry[] {
-  if (!data || typeof data !== 'object') return [];
-  const record = data as Record<string, unknown>;
-  const entries: InventoryEntry[] = [];
-
-  const furnitureItems = record.furnitureItems;
-  if (furnitureItems && typeof furnitureItems === 'object') {
-    for (const [id, qty] of Object.entries(furnitureItems as Record<string, unknown>)) {
-      const n = Number(qty);
-      if (!n || n <= 0) continue;
-      const item = FURNITURE_CATALOG.find((f) => f.id === id);
-      entries.push(item ? { icon: item.icon, label: item.label, qty: n } : { icon: '📦', label: id, qty: n });
-    }
-  }
-
-  if (Array.isArray(record.customItems)) {
-    for (const custom of record.customItems as Array<{ label?: string; qty?: number }>) {
-      const n = Number(custom?.qty);
-      if (custom?.label && n > 0) entries.push({ icon: '➕', label: `${custom.label} (ei katalogissa)`, qty: n });
-    }
-  }
-
-  return entries;
-}
-
-function getWasteTypeLabels(data: unknown): string[] {
-  if (!data || typeof data !== 'object') return [];
-  const record = data as Record<string, unknown>;
-  if (!Array.isArray(record.selectedWasteTypes)) return [];
-  return record.selectedWasteTypes
-    .map((id) => RECYCLING_WASTE_TYPES.find((w) => w.id === id)?.label)
-    .filter((label): label is string => Boolean(label));
-}
-
-function getExtraServices(data: unknown): string[] {
-  if (!data || typeof data !== 'object') return [];
-  const record = data as Record<string, unknown>;
-  const extras: string[] = [];
-  if (Array.isArray(record.services) && record.services.includes('Purkupalvelu')) {
-    extras.push('Purkupalvelu (huonekalujen purku ja kasaus)');
-  }
-  if (record.needsPacking) extras.push('Pakkauspalvelu (pakkaamme tavarat)');
-  if (record.needsCleaning) extras.push('Muuttosiivous');
-  if (Array.isArray(record.additionalStops) && record.additionalStops.length > 0) {
-    extras.push(`${record.additionalStops.length} välipysähdystä`);
-  }
-  return extras;
-}
 
 export default async function LeadDetailPage({
   params,
@@ -97,23 +37,14 @@ export default async function LeadDetailPage({
   // /api/submit) but as a raw object by others (submitContact/submitQuickQuote/submitQuote
   // in server/actions.ts) — Prisma's Json column returns whichever shape was actually
   // stored, so this has to handle both instead of always assuming a string.
-  let formDataDisplay = '{}';
-  let parsedFormData: unknown = null;
-  if (lead.formData) {
-    try {
-      parsedFormData = typeof lead.formData === 'string' ? JSON.parse(lead.formData) : lead.formData;
-      formDataDisplay = JSON.stringify(parsedFormData, null, 2);
-    } catch {
-      formDataDisplay = String(lead.formData);
-    }
-  }
+  const formDataDisplay = lead.formData ? JSON.stringify(parseLeadFormData(lead.formData), null, 2) : '{}';
+  const pfd = parseLeadFormData(lead.formData);
 
-  const inventoryEntries = getInventoryEntries(parsedFormData);
-  const wasteTypeLabels = getWasteTypeLabels(parsedFormData);
-  const extraServices = getExtraServices(parsedFormData);
-  const pfd = (parsedFormData && typeof parsedFormData === 'object' ? parsedFormData : {}) as Record<string, unknown>;
-  const serviceTypeLabel = typeof pfd.serviceType === 'string' ? SERVICE_TYPE_LABELS[pfd.serviceType] ?? pfd.serviceType : null;
-  const packageLabel = typeof pfd.movingPackage === 'string' ? PACKAGE_LABELS[pfd.movingPackage] ?? pfd.movingPackage : null;
+  const inventoryEntries = getInventoryEntries(pfd);
+  const wasteTypeLabels = getWasteTypeLabels(pfd);
+  const extraServices = getExtraServices(pfd);
+  const serviceTypeLabel = getServiceLabel(pfd);
+  const packageLabel = getPackageLabel(pfd);
   const totalItemCount = inventoryEntries.reduce((sum, e) => sum + e.qty, 0);
 
   // Helper to format date
