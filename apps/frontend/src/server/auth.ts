@@ -11,7 +11,7 @@ const builtInAllowedEmails = ["xlamaticsounds@gmail.com", "domenic.eklund@gmail.
 
 const isAllowedEmail = (email?: string | null) => {
   if (!email) return false;
-  const normalized = email.toLowerCase();
+  const normalized = email.trim().toLowerCase();
   return builtInAllowedEmails.includes(normalized) || allowedEmails.includes(normalized);
 };
 
@@ -43,7 +43,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Salasana", type: "password" },
       },
       async authorize(credentials) {
-        const email = credentials?.email?.toLowerCase();
+        const email = credentials?.email?.trim().toLowerCase();
         const password = credentials?.password;
 
         if (!email || !password) return null;
