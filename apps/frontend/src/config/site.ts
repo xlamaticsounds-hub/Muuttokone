@@ -4,8 +4,8 @@ export const siteConfig = {
   },
   contact: {
     phone: {
-      display: '+358 45 346 0072',
-      tel: '+358453460072',
+      display: '+358 45 847 0755',
+      tel: '+358458470755',
     },
     email: 'info@muuttokone.fi',
     openingHours: 'Joka päivä 8:00-22:00.',

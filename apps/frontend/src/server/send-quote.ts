@@ -127,7 +127,7 @@ function renderQuoteEmailHtml(params: {
 
     <div style="margin-top:24px;padding-top:20px;border-top:1px solid #e5e7eb;font-size:13px;color:#6b7280;">
       <p style="margin:0 0 4px;"><strong>Muuttokone.fi</strong></p>
-      <p style="margin:0 0 2px;">📞 +358 45 346 0072</p>
+      <p style="margin:0 0 2px;">📞 +358 45 847 0755</p>
       <p style="margin:0;">✉️ info@muuttokone.fi</p>
     </div>
   </div>`;
