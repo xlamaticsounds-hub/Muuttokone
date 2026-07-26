@@ -135,8 +135,8 @@ export async function sendQuoteEmail(leadId: string): Promise<{ success: true; s
     throw new Error('Kirjaudu sisään lähettääksesi tarjouksen.');
   }
 
-  if (!process.env.RESEND_API_KEY) {
-    throw new Error('Sähköpostiasetuksia (RESEND_API_KEY) ei ole vielä määritetty palvelimelle.');
+  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
+    throw new Error('Sähköpostiasetuksia (SMTP_HOST/SMTP_USER/SMTP_PASSWORD) ei ole vielä määritetty palvelimelle.');
   }
 
   const lead = await prisma.lead.findUnique({ where: { id: leadId }, include: { contact: true } });
@@ -172,22 +172,33 @@ export async function sendQuoteEmail(leadId: string): Promise<{ success: true; s
   });
 
   const subjectPrice = priceLow !== null && priceHigh !== null ? ` — ${priceLow}–${priceHigh} €` : '';
-  const fromAddress = process.env.QUOTE_EMAIL_FROM || 'Muuttokone.fi <onboarding@resend.dev>';
+  const senderName = process.env.QUOTE_EMAIL_FROM_NAME || 'Muuttokone.fi';
 
-  // Ladataan Resend vasta täällä (ei moduulin huipulla) jotta puuttuva RESEND_API_KEY ei kaada
-  // koko sovellusta buildissa/importissa — vain tätä toimintoa kutsuttaessa.
-  const { Resend } = await import('resend');
-  const resend = new Resend(process.env.RESEND_API_KEY);
-
-  const { error } = await resend.emails.send({
-    from: fromAddress,
-    to: lead.contact.email,
-    subject: `Tarjouksesi Muuttokone.fi:ltä${subjectPrice}`,
-    html,
+  // Ladataan nodemailer vasta täällä (ei moduulin huipulla) jotta puuttuvat SMTP-asetukset
+  // eivät kaada koko sovellusta buildissa/importissa — vain tätä toimintoa kutsuttaessa.
+  // Lähetetään suoraan tarjous@muuttokone.fi -postilaatikon kautta (Zoner SMTP), ei kolmannen
+  // osapuolen palvelun kautta — ei vaadi erillistä domain-vahvistusta koska osoite on jo oma.
+  const { default: nodemailer } = await import('nodemailer');
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT || 587),
+    secure: false,
+    requireTLS: true,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD,
+    },
   });
 
-  if (error) {
-    throw new Error(`Sähköpostin lähetys epäonnistui: ${error.message}`);
+  try {
+    await transporter.sendMail({
+      from: `"${senderName}" <${process.env.SMTP_USER}>`,
+      to: lead.contact.email,
+      subject: `Tarjouksesi Muuttokone.fi:ltä${subjectPrice}`,
+      html,
+    });
+  } catch (err) {
+    throw new Error(`Sähköpostin lähetys epäonnistui: ${err instanceof Error ? err.message : 'tuntematon virhe'}`);
   }
 
   await prisma.lead.update({ where: { id: leadId }, data: { status: LeadStatus.PROPOSAL_SENT } });
