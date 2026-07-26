@@ -1,16 +1,21 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
+import { useT } from '@/i18n/useT';
+import { pricingPreviewDictionary } from '@/i18n/homeDictionary';
 
 export default function PricingPreview() {
+  const t = useT(pricingPreviewDictionary);
   return (
     <section className="relative z-20 py-20 lg:py-25">
       <div className="mx-auto max-w-1390 px-4">
         {/* Pricing Badge */}
         <div className="animate_top mx-auto mb-10 max-w-fit rounded-full bg-white px-6 py-2 text-center shadow-lg ring-1 ring-black/5 md:px-8 md:py-3 dark:bg-black dark:ring-white/10">
           <p className="flex flex-wrap items-center justify-center gap-2 text-sm font-semibold text-black md:text-base dark:text-white">
-            <span className="text-primary">🔥 Muutot alk. 200€</span>
+            <span className="text-primary">{t('🔥 Muutot alk. 200€')}</span>
             <span className="hidden h-1 w-1 rounded-full bg-gray-300 sm:block"></span>
-            <span>5 km sisältyy hintaan</span>
+            <span>{t('5 km sisältyy hintaan')}</span>
           </p>
         </div>
 
@@ -19,37 +24,37 @@ export default function PricingPreview() {
           {/* Card 1 */}
           <div className="animate_top group rounded-3xl bg-white p-6 shadow-solid-8 transition-all hover:shadow-solid-4 dark:bg-blacksection dark:border dark:border-strokedark">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-black dark:text-white">Yksiö (25-35m²)</h3>
+              <h3 className="text-xl font-bold text-black dark:text-white">{t('Yksiö (25-35m²)')}</h3>
               <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
-                Suosittu
+                {t('Suosittu')}
               </span>
             </div>
             <p className="mb-4 text-sm text-black/60 dark:text-white/60">
-              Sopii opiskelijoille ja sinkuille. Nopea ja ketterä muutto.
+              {t('Sopii opiskelijoille ja sinkuille. Nopea ja ketterä muutto.')}
             </p>
             <div className="mb-6 flex items-baseline gap-1">
-              <span className="text-sm font-medium text-black/60 dark:text-white/60">Alkaen</span>
+              <span className="text-sm font-medium text-black/60 dark:text-white/60">{t('Alkaen')}</span>
               <span className="text-3xl font-bold text-primary">200€</span>
             </div>
             <ul className="mb-8 space-y-3 text-sm font-medium text-black dark:text-white">
               <li className="flex items-center gap-3">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] text-primary">✓</span>
-                2 muuttomiestä
+                {t('2 muuttomiestä')}
               </li>
               <li className="flex items-center gap-3">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] text-primary">✓</span>
-                Kuorma-auto (20m³)
+                {t('Kuorma-auto (20m³)')}
               </li>
               <li className="flex items-center gap-3">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] text-primary">✓</span>
-                Noin 2-3 tuntia
+                {t('Noin 2-3 tuntia')}
               </li>
             </ul>
             <Link
               href="/muuttolaskuri"
               className="group inline-flex w-full items-center justify-center gap-2.5 rounded-full bg-primary/10 px-6 py-3 font-medium text-primary duration-300 ease-in-out hover:bg-primary hover:text-white dark:bg-white/10 dark:hover:bg-primary"
             >
-              Laske tarkka hinta
+              {t('Laske tarkka hinta')}
               <svg
                 width="14"
                 height="14"
@@ -68,34 +73,34 @@ export default function PricingPreview() {
           {/* Card 2 */}
           <div className="animate_top group rounded-3xl bg-white p-6 shadow-solid-8 transition-all hover:shadow-solid-4 dark:bg-blacksection dark:border dark:border-strokedark">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-black dark:text-white">Kaksio (40-60m²)</h3>
+              <h3 className="text-xl font-bold text-black dark:text-white">{t('Kaksio (40-60m²)')}</h3>
             </div>
             <p className="mb-4 text-sm text-black/60 dark:text-white/60">
-              Pariskunnille ja pienille perheille. Tehokas palvelu.
+              {t('Pariskunnille ja pienille perheille. Tehokas palvelu.')}
             </p>
             <div className="mb-6 flex items-baseline gap-1">
-              <span className="text-sm font-medium text-black/60 dark:text-white/60">Alkaen</span>
+              <span className="text-sm font-medium text-black/60 dark:text-white/60">{t('Alkaen')}</span>
               <span className="text-3xl font-bold text-primary">450€</span>
             </div>
             <ul className="mb-8 space-y-3 text-sm font-medium text-black dark:text-white">
               <li className="flex items-center gap-3">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] text-primary">✓</span>
-                2-3 muuttomiestä
+                {t('2-3 muuttomiestä')}
               </li>
               <li className="flex items-center gap-3">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] text-primary">✓</span>
-                Iso kuorma-auto
+                {t('Iso kuorma-auto')}
               </li>
               <li className="flex items-center gap-3">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] text-primary">✓</span>
-                Noin 3-5 tuntia
+                {t('Noin 3-5 tuntia')}
               </li>
             </ul>
             <Link
               href="/muuttolaskuri"
               className="group inline-flex w-full items-center justify-center gap-2.5 rounded-full bg-primary/10 px-6 py-3 font-medium text-primary duration-300 ease-in-out hover:bg-primary hover:text-white dark:bg-white/10 dark:hover:bg-primary"
             >
-              Laske tarkka hinta
+              {t('Laske tarkka hinta')}
               <svg
                 width="14"
                 height="14"
@@ -114,34 +119,34 @@ export default function PricingPreview() {
           {/* Card 3 */}
           <div className="animate_top group rounded-3xl bg-white p-6 shadow-solid-8 transition-all hover:shadow-solid-4 dark:bg-blacksection dark:border dark:border-strokedark">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-xl font-bold text-black dark:text-white">Kolmio+ (70m²+)</h3>
+              <h3 className="text-xl font-bold text-black dark:text-white">{t('Kolmio+ (70m²+)')}</h3>
             </div>
             <p className="mb-4 text-sm text-black/60 dark:text-white/60">
-              Perheasunnot ja omakotitalot. Täyden palvelun muutto.
+              {t('Perheasunnot ja omakotitalot. Täyden palvelun muutto.')}
             </p>
             <div className="mb-6 flex items-baseline gap-1">
-              <span className="text-sm font-medium text-black/60 dark:text-white/60">Alkaen</span>
+              <span className="text-sm font-medium text-black/60 dark:text-white/60">{t('Alkaen')}</span>
               <span className="text-3xl font-bold text-primary">700€</span>
             </div>
             <ul className="mb-8 space-y-3 text-sm font-medium text-black dark:text-white">
               <li className="flex items-center gap-3">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] text-primary">✓</span>
-                3-4 muuttomiestä
+                {t('3-4 muuttomiestä')}
               </li>
               <li className="flex items-center gap-3">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] text-primary">✓</span>
-                Iso kuorma-auto
+                {t('Iso kuorma-auto')}
               </li>
               <li className="flex items-center gap-3">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/10 text-[10px] text-primary">✓</span>
-                Koko päivä
+                {t('Koko päivä')}
               </li>
             </ul>
             <Link
               href="/muuttolaskuri"
               className="group inline-flex w-full items-center justify-center gap-2.5 rounded-full bg-primary/10 px-6 py-3 font-medium text-primary duration-300 ease-in-out hover:bg-primary hover:text-white dark:bg-white/10 dark:hover:bg-primary"
             >
-              Laske tarkka hinta
+              {t('Laske tarkka hinta')}
               <svg
                 width="14"
                 height="14"

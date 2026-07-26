@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import SectionTitle from '@/components/SectionTitle';
+import { useT } from '@/i18n/useT';
+import { faqDictionary } from '@/i18n/homeDictionary';
 
 const faqData = [
   {
@@ -32,6 +34,7 @@ const faqData = [
 ];
 
 export default function Faq() {
+  const t = useT(faqDictionary);
   const [openId, setOpenId] = useState<number | null>(null);
 
   const toggle = (id: number) => {
@@ -43,8 +46,8 @@ export default function Faq() {
       <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
         <div className="animate_top mb-15 text-center">
           <SectionTitle
-            title="Usein kysytyt kysymykset"
-            subtitle="Vastauksia yleisimpiin kysymyksiin muutostamme ja palveluistamme."
+            title={t('Usein kysytyt kysymykset')}
+            subtitle={t('Vastauksia yleisimpiin kysymyksiin muutostamme ja palveluistamme.')}
           />
         </div>
 
@@ -72,7 +75,7 @@ export default function Faq() {
                   >
                     {index + 1}
                   </span>
-                  <span className="flex-1 text-lg font-semibold text-black/90 dark:text-white">{item.q}</span>
+                  <span className="flex-1 text-lg font-semibold text-black/90 dark:text-white">{t(item.q)}</span>
                   <ChevronDown
                     aria-hidden="true"
                     className={`h-5 w-5 flex-shrink-0 text-black/60 transition-transform duration-300 dark:text-white/60 ${
@@ -87,7 +90,7 @@ export default function Faq() {
                   }`}
                 >
                   <div className="min-h-0 pl-[68px] pr-5 pb-5 md:pl-[72px] md:pr-6 md:pb-6">
-                    <p className="text-sm text-black/70 dark:text-white/70">{item.a}</p>
+                    <p className="text-sm text-black/70 dark:text-white/70">{t(item.a)}</p>
                   </div>
                 </div>
               </div>

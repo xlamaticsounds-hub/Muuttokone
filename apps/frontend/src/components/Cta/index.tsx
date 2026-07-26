@@ -1,7 +1,12 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { useT } from '@/i18n/useT';
+import { ctaDictionary } from '@/i18n/homeDictionary';
 
 export default function Cta() {
+  const t = useT(ctaDictionary);
   return (
     <>
       <section className="bg-primary relative overflow-hidden py-25">
@@ -17,11 +22,10 @@ export default function Cta() {
           <div className="flex flex-wrap gap-8 md:flex-nowrap md:items-center md:justify-between">
             <div className="animate_left lg:w-1/2">
               <h2 className="text-title-lg lg:text-title-xl xl:text-title-xl mb-4 font-semibold text-white">
-                Valmis muuttoon? Aloita tänään!
+                {t('Valmis muuttoon? Aloita tänään!')}
               </h2>
               <p className="text-regular text-white">
-                Saat meiltä maksuttoman kartoituksen ja tarjouksen 24 tunnin sisällä. Liity satojen
-                tyytyväisten asiakkaiden joukkoon ja koe stressitön muutto.
+                {t('Saat meiltä maksuttoman kartoituksen ja tarjouksen 24 tunnin sisällä. Liity satojen tyytyväisten asiakkaiden joukkoon ja koe stressitön muutto.')}
               </p>
             </div>
             <div className="animate_right shrink-0">
@@ -29,7 +33,7 @@ export default function Cta() {
                 href="/muuttolaskuri"
                 className="hover:shadow-1 inline-flex rounded-full bg-white px-7.5 py-3 font-medium text-black duration-300 ease-out"
               >
-                Pyydä tarjous
+                {t('Pyydä tarjous')}
               </Link>
             </div>
           </div>

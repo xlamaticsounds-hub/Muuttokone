@@ -1,9 +1,14 @@
+'use client';
+
 import Graphics from '@/features/contact/Graphics';
 import SectionTitle from '@/components/SectionTitle';
 import ContactInfoCard from '@/features/contact/ContactInfoCard';
 import ContactFormBox from '@/features/contact/ContactFormBox';
+import { useT } from '@/i18n/useT';
+import { contactDictionary } from '@/i18n/homeDictionary';
 
 const Contact = () => {
+  const t = useT(contactDictionary);
   return (
     <>
       <section
@@ -13,8 +18,8 @@ const Contact = () => {
         <Graphics />
 
         <SectionTitle
-          title="Ota yhteyttä"
-          subtitle="Saat meiltä maksuttoman kartoituksen ja tarjouksen nopeasti. Kerro meille muuttosi yksityiskohdat, niin autamme sinua parhaalla mahdollisella tavalla."
+          title={t('Ota yhteyttä')}
+          subtitle={t('Saat meiltä maksuttoman kartoituksen ja tarjouksen nopeasti. Kerro meille muuttosi yksityiskohdat, niin autamme sinua parhaalla mahdollisella tavalla.')}
         />
 
         <div className="relative z-10 mx-auto mt-12.5 max-w-1390 px-4 md:px-8 lg:mt-20 xl:px-21">

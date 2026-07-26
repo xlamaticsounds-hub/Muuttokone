@@ -7,9 +7,13 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useSiteConfig } from '@/app/context/SiteConfigContext';
 import menuData from '@/components/Header/menuData';
+import LanguageSwitcher from '@/components/Header/LanguageSwitcher';
+import { useT } from '@/i18n/useT';
+import { headerDictionary } from '@/i18n/homeDictionary';
 
 const Header = () => {
   const siteConfig = useSiteConfig();
+  const t = useT(headerDictionary);
   useEffect(() => {
     if (window.location.pathname === '/') {
       window.addEventListener('scroll', onScroll);
@@ -76,8 +80,9 @@ const Header = () => {
                 href={`tel:${siteConfig.contact.phone.tel}`}
                 className="border-primary text-primary flex h-9 items-center justify-center rounded-full border px-3.5 text-sm font-semibold sm:hidden"
               >
-                Soita
+                {t('Soita')}
               </a>
+              <LanguageSwitcher />
               <button
                 onClick={navbarToggleHandler}
                 className="navbarOpen flex h-10 w-10 flex-col items-center justify-center space-y-[6px] font-bold"
@@ -112,7 +117,7 @@ const Header = () => {
                         onClick={closeMenu}
                         className={`ud-menu-scroll hover:text-primary inline-flex items-center font-medium text-black/90 lg:py-[21px] dark:text-white`}
                       >
-                        {item.label}
+                        {t(item.label)}
                       </Link>
                     </li>
                   ))}
@@ -123,7 +128,7 @@ const Header = () => {
                       onClick={closeMenu}
                       className="bg-primary mb-3 block w-full rounded-full px-7.5 py-3 text-center text-white transition-all duration-300 hover:bg-primary/90 hover:shadow-lg font-bold font-outfit"
                     >
-                      Muuttolaskuri
+                      {t('Muuttolaskuri')}
                     </Link>
                   </li>
                 </ul>
@@ -145,8 +150,10 @@ const Header = () => {
                   href="/muuttolaskuri"
                   className="bg-primary hover:shadow-1 flex items-center justify-center rounded-full px-7.5 py-3 text-base font-bold text-white whitespace-nowrap font-outfit"
                 >
-                  Muuttolaskuri
+                  {t('Muuttolaskuri')}
                 </Link>
+
+                <LanguageSwitcher className="ml-3" />
               </div>
             </div>
           </div>

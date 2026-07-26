@@ -8,6 +8,7 @@ import SmallFeatures from '@/components/SmallFeatures';
 import Contact from '@/features/contact';
 import Cta from '@/components/Cta';
 import Calculator from '@/features/calculator/Calculator';
+import CalculatorIntro from '@/components/CalculatorIntro';
 import StatsBand from '@/components/StatsBand';
 import ProcessSteps from '@/components/ProcessSteps';
 import PricingPreview from '@/components/PricingPreview';
@@ -49,14 +50,7 @@ export default async function Home() {
       <ProcessSteps />
       <section id="muuttolaskuri" className="bg-gray-1 dark:bg-bg-color-dark py-8 lg:py-12 scroll-mt-20">
         <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
-          <div className="mb-5 text-center">
-            <h2 className="text-xl font-semibold text-black lg:text-3xl dark:text-white">
-              Aloita tästä – saat hinta-arvion nopeasti
-            </h2>
-            <p className="mt-2 text-gray-600 dark:text-gray-300">
-              Laske tarkka hinta-arvio muutollesi suoraan tästä. Tämä ei sido sinua mihinkään.
-            </p>
-          </div>
+          <CalculatorIntro />
           <Suspense>
             <Calculator />
           </Suspense>
@@ -67,8 +61,8 @@ export default async function Home() {
       <Faq />
       <ServicesDivider />
       <Services
-        title={pageData?.sections?.[1]?.props?.title || "Palvelumme"}
-        subtitle={pageData?.sections?.[1]?.props?.subtitle || "Tarjoamme kattavat muuttopalvelut kotitalouksille ja yrityksille Helsingissä ja Uudellamaalla."}
+        title={pageData?.sections?.[1]?.props?.title}
+        subtitle={pageData?.sections?.[1]?.props?.subtitle}
         items={services}
       />
       <About />

@@ -2,9 +2,12 @@
 
 import { useSiteConfig } from '@/app/context/SiteConfigContext';
 import Link from 'next/link';
+import { useT } from '@/i18n/useT';
+import { footerDictionary } from '@/i18n/homeDictionary';
 
 export default function FooterBottom() {
   const siteConfig = useSiteConfig();
+  const t = useT(footerDictionary);
   return (
     <>
       <div className="border-strokedark dark:border-stroke flex items-center justify-center border-t py-4">
@@ -19,7 +22,7 @@ export default function FooterBottom() {
             >
               Muuttokone.fi
             </Link>
-            . Kaikki oikeudet pidätetään.
+            . {t('Kaikki oikeudet pidätetään.')}
           </p>
         </div>
       </div>

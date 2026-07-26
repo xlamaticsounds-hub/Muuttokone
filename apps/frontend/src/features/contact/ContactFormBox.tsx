@@ -3,8 +3,11 @@ import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import Honeypot from '@/components/Forms/Honeypot';
 import GdprConsentCheckbox from '@/components/Forms/GdprConsentCheckbox';
+import { useT } from '@/i18n/useT';
+import { contactDictionary } from '@/i18n/homeDictionary';
 
 export default function ContactFormBox() {
+  const t = useT(contactDictionary);
   const [data, setData] = useState({
     name: '',
     email: '',
@@ -23,12 +26,12 @@ export default function ContactFormBox() {
     e.preventDefault();
 
     if (!data.name.trim() || !data.message.trim()) {
-      toast.error('Nimi ja viesti ovat pakollisia');
+      toast.error(t('Nimi ja viesti ovat pakollisia'));
       return;
     }
 
     if (!gdprConsent) {
-      toast.error('Hyväksy tietojen käsittely jatkaaksesi');
+      toast.error(t('Hyväksy tietojen käsittely jatkaaksesi'));
       return;
     }
 
@@ -56,7 +59,7 @@ export default function ContactFormBox() {
       const result = await response.json();
 
       if (result.success) {
-        toast.success('Viesti lähetetty onnistuneesti!');
+        toast.success(t('Viesti lähetetty onnistuneesti!'));
         // Reset form
         setData({
           name: '',
@@ -67,11 +70,11 @@ export default function ContactFormBox() {
         setGdprConsent(false);
         setHoneypot('');
       } else {
-        throw new Error(result.message || 'Lähetys epäonnistui');
+        throw new Error(result.message || t('Lähetys epäonnistui'));
       }
     } catch (error) {
       console.error('Contact submission error:', error);
-      toast.error('Viestin lähetys epäonnistui. Yritä uudelleen.');
+      toast.error(t('Viestin lähetys epäonnistui. Yritä uudelleen.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -83,13 +86,13 @@ export default function ContactFormBox() {
         <div className="mb-7.5 flex flex-col gap-7.5 lg:flex-row lg:justify-between lg:gap-14">
           <div className="w-full">
             <label htmlFor="name" className="mb-3 block text-sm font-medium text-black dark:text-white">
-              Nimi <span className="text-meta-1">*</span>
+              {t('Nimi')} <span className="text-meta-1">*</span>
             </label>
             <input
               type="text"
               id="name"
               name="name"
-              placeholder="Nimesi"
+              placeholder={t('Nimesi')}
               autoComplete="name"
               value={data.name}
               onChange={handleChange}
@@ -100,13 +103,13 @@ export default function ContactFormBox() {
 
           <div className="w-full">
             <label htmlFor="phone" className="mb-3 block text-sm font-medium text-black dark:text-white">
-              Puhelinnumero
+              {t('Puhelinnumero')}
             </label>
             <input
               type="tel"
               id="phone"
               name="phone"
-              placeholder="+358 40 123 4567"
+              placeholder={t('+358 40 123 4567')}
               autoComplete="tel"
               value={data.phone}
               onChange={handleChange}
@@ -118,13 +121,13 @@ export default function ContactFormBox() {
         <div className="mb-7.5 flex flex-col gap-7.5 lg:flex-row lg:justify-between lg:gap-14">
           <div className="w-full">
             <label htmlFor="email" className="mb-3 block text-sm font-medium text-black dark:text-white">
-              Sähköposti
+              {t('Sähköposti')}
             </label>
             <input
               type="email"
               id="email"
               name="email"
-              placeholder="sahkoposti@esimerkki.fi"
+              placeholder={t('sahkoposti@esimerkki.fi')}
               autoComplete="email"
               value={data.email}
               onChange={handleChange}
@@ -135,13 +138,13 @@ export default function ContactFormBox() {
 
         <div className="mb-12.5">
           <label htmlFor="message" className="mb-3 block text-sm font-medium text-black dark:text-white">
-            Viesti <span className="text-meta-1">*</span>
+            {t('Viesti')} <span className="text-meta-1">*</span>
           </label>
           <textarea
             rows={5}
             id="message"
             name="message"
-            placeholder="Kerro meille kuinka voimme auttaa..."
+            placeholder={t('Kerro meille kuinka voimme auttaa...')}
             value={data.message}
             onChange={handleChange}
             required
@@ -160,7 +163,7 @@ export default function ContactFormBox() {
           disabled={isSubmitting}
           className="flex w-full items-center justify-center gap-2.5 rounded-full bg-primary px-8 py-4 font-medium text-white shadow-1 duration-300 ease-in-out hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
         >
-          {isSubmitting ? 'Lähetetään...' : 'Lähetä viesti'}
+          {isSubmitting ? t('Lähetetään...') : t('Lähetä viesti')}
           {!isSubmitting && (
             <svg
               className="fill-current"

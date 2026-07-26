@@ -1,11 +1,16 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import FooterBottom from '@/components/Footer/FooterBottom';
 import footerNavData from '@/components/Footer/footerNavData';
 import SlideOnReveal from '@/components/SlideOnReveal';
 import { siteConfig } from '@/config/site';
+import { useT } from '@/i18n/useT';
+import { footerDictionary } from '@/i18n/homeDictionary';
 
 export default function Footer() {
+  const t = useT(footerDictionary);
   return (
     <>
       <footer>
@@ -32,14 +37,13 @@ export default function Footer() {
                 </Link>
 
                 <p className="mt-5 mb-8 text-base">
-                  Luotettava muuttopalveluyritys Helsingissä ja Uudellamaalla. Tarjoamme
-                  ammattitaitoisia koti- ja yritysmuuttoja, pakkausta, kuljetuksia ja kuolinpesätyhjennyksiä.
+                  {t('Luotettava muuttopalveluyritys Helsingissä ja Uudellamaalla. Tarjoamme ammattitaitoisia koti- ja yritysmuuttoja, pakkausta, kuljetuksia ja kuolinpesätyhjennyksiä.')}
                 </p>
               </div>
 
               {/* Column 2: Contact Details (Now in the middle) */}
               <div className="animate_top lg:pl-8">
-                <h4 className="mb-6 text-xl font-bold text-black dark:text-white">Yhteystiedot</h4>
+                <h4 className="mb-6 text-xl font-bold text-black dark:text-white">{t('Yhteystiedot')}</h4>
                 <ul className="space-y-4 text-sm font-medium text-black/70 dark:text-white/70">
                   <li className="flex items-center gap-3">
                     <span className="text-lg">📞</span>
@@ -65,7 +69,7 @@ export default function Footer() {
                 <div key={groupIndex} className="animate_top lg:pl-8">
                   <SlideOnReveal delay={0.2 + groupIndex * 0.05}>
                     <div>
-                      <h4 className="mb-6 text-xl font-bold text-black dark:text-white">{group.title}</h4>
+                      <h4 className="mb-6 text-xl font-bold text-black dark:text-white">{t(group.title)}</h4>
                       <ul className="space-y-3">
                         {group.navItems &&
                           group.navItems.map((item, index) => (
@@ -74,7 +78,7 @@ export default function Footer() {
                                 href={item.route}
                                 className="hover:text-primary text-sm font-medium text-black/70 dark:text-white/70 inline-flex items-center gap-1 transition-colors duration-200"
                               >
-                                {item.label}
+                                {t(item.label)}
                                 <span className="translate-x-0 opacity-0 transition-all duration-200 group-hover:translate-x-1 group-hover:opacity-100">
                                   →
                                 </span>

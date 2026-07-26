@@ -1,7 +1,12 @@
+'use client';
+
 import contactData from '@/features/contact/contactData';
 import Link from 'next/link';
+import { useT } from '@/i18n/useT';
+import { contactDictionary } from '@/i18n/homeDictionary';
 
 export default function ContactInfoCard() {
+  const t = useT(contactDictionary);
   const getIcon = (title: string) => {
     switch (title) {
       case 'Sähköposti':
@@ -77,7 +82,7 @@ export default function ContactInfoCard() {
     <div className="animate_top w-full rounded-2xl bg-white p-7.5 shadow-solid-8 md:w-[38%] lg:w-[32%] xl:p-12.5 dark:bg-blacksection dark:border dark:border-strokedark">
       <div className="mb-12">
         <h3 className="mb-8 text-2xl font-semibold text-black dark:text-white">
-          Yhteystiedot
+          {t('Yhteystiedot')}
         </h3>
         
         <div className="flex flex-col gap-8">
@@ -88,7 +93,7 @@ export default function ContactInfoCard() {
               </div>
               <div>
                 <h4 className="mb-1 text-lg font-medium text-black dark:text-white">
-                  {item.title}
+                  {t(item.title)}
                 </h4>
                 <p className="text-body-color dark:text-body-color-dark">
                   {item.subtitle}
@@ -103,7 +108,7 @@ export default function ContactInfoCard() {
 
       <div>
         <h4 className="mb-6 text-lg font-medium text-black dark:text-white">
-          Sosiaalinen media
+          {t('Sosiaalinen media')}
         </h4>
         <ul className="flex items-center gap-4">
           <li>

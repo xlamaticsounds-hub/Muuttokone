@@ -1,4 +1,8 @@
+'use client';
+
 import React from 'react';
+import { useT } from '@/i18n/useT';
+import { statsDictionary } from '@/i18n/homeDictionary';
 
 const stats = [
   { label: '4.9/5 asiakastyytyväisyys', value: 'stars', detail: 'Keskiarvo viimeisen 12 kk aikana' },
@@ -7,6 +11,7 @@ const stats = [
 ];
 
 export default function StatsBand() {
+  const t = useT(statsDictionary);
   return (
     <section className="relative z-20 -mt-[50px] px-4 md:-mt-[66px] lg:-mt-[82px]">
       <div className="mx-auto max-w-1390">
@@ -24,8 +29,8 @@ export default function StatsBand() {
                   item.value
                 )}
               </div>
-              <div className="mt-2 text-xl font-bold text-black/90 dark:text-white/95">{item.label}</div>
-              <div className="mt-0.5 text-sm font-medium text-black/65 dark:text-white/65">{item.detail}</div>
+              <div className="mt-2 text-xl font-bold text-black/90 dark:text-white/95">{t(item.label)}</div>
+              <div className="mt-0.5 text-sm font-medium text-black/65 dark:text-white/65">{t(item.detail)}</div>
             </div>
           ))}
         </div>

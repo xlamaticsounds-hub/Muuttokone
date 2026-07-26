@@ -9,6 +9,10 @@ import toast from 'react-hot-toast';
 import { Loader2, ArrowRight, ArrowLeft, Calculator as CalcIcon, Calendar, CheckCircle2, ChevronDown } from 'lucide-react';
 import Honeypot from '@/components/Forms/Honeypot';
 import GdprConsentCheckbox from '@/components/Forms/GdprConsentCheckbox';
+import { useLocale } from '@/i18n/LocaleContext';
+import { useT } from '@/i18n/useT';
+import { calculatorDictionary } from '@/i18n/calculatorDictionary';
+import { FURNITURE_LABELS_EN, CATEGORY_LABELS_EN, WASTE_TYPE_LABELS_EN } from '@/i18n/catalogTranslations';
 
 const DIFFICULTY_BADGES: Record<PriceBreakdown['difficultyLevel'], { emoji: string; label: string }> = {
   easy: { emoji: '🟢', label: 'Helppo muutto' },
@@ -38,6 +42,10 @@ const STEPS = [
 ];
 
 export default function Calculator() {
+  const { locale } = useLocale();
+  const t = useT(calculatorDictionary);
+  const furnitureLabel = (id: string, fallback: string) => (locale === 'en' ? FURNITURE_LABELS_EN[id] ?? fallback : fallback);
+  const categoryLabel = (category: string) => (locale === 'en' ? CATEGORY_LABELS_EN[category] ?? category : category);
   const [currentStep, setCurrentStep] = useState(0);
   const calculatorRef = useRef<HTMLDivElement>(null);
   const isFirstStepRender = useRef(true);
@@ -101,34 +109,43 @@ export default function Calculator() {
 
   // Helper function to get inventory step label based on service type
   const getInventoryLabel = () => {
-    if (formData.serviceType === 'recycling') return 'Poistettavat tavarat';
-    if (formData.serviceType === 'transport') return 'Kuljetettavat tavarat';
-    return 'Muutettava tavara';
+    if (formData.serviceType === 'recycling') return t('Poistettavat tavarat');
+    if (formData.serviceType === 'transport') return t('Kuljetettavat tavarat');
+    return t('Muutettava tavara');
   };
+
+  const driversAndVan = () =>
+    locale === 'en'
+      ? `${formData.driverCount} driver${formData.driverCount === '2' ? 's' : ''} + van`
+      : `${formData.driverCount} kuljettaja${formData.driverCount === '2' ? 'a' : ''} + pakettiauto`;
+  const firstKmIncluded = () =>
+    locale === 'en'
+      ? `First ${INCLUDED_DISTANCE_KM} km included in the price`
+      : `Ensimmäiset ${INCLUDED_DISTANCE_KM} km sisältyvät hintaan`;
 
   // Hinta-arvioon aina sisältyvät hyödyt (ei lisäpalveluita) — vaihtelee palvelupaketin mukaan
   const getIncludedServices = () => {
     if (formData.serviceType === 'transport') {
       return [
-        `${formData.driverCount} kuljettaja${formData.driverCount === '2' ? 'a' : ''} + pakettiauto`,
-        'Kuljetusvakuutus',
-        `Ensimmäiset ${INCLUDED_DISTANCE_KM} km sisältyvät hintaan`,
-        'ALV sisältyy hintaan',
+        driversAndVan(),
+        t('Kuljetusvakuutus'),
+        firstKmIncluded(),
+        t('ALV sisältyy hintaan'),
       ];
     }
     if (formData.movingPackage === 'driver_with_vehicle') {
-      return ['Kuljettaja + kuorma-auto', 'Muuttovakuutus', `Ensimmäiset ${INCLUDED_DISTANCE_KM} km sisältyvät hintaan`, 'ALV sisältyy hintaan'];
+      return [t('Kuljettaja + kuorma-auto'), t('Muuttovakuutus'), firstKmIncluded(), t('ALV sisältyy hintaan')];
     }
     if (formData.movingPackage === 'carrying_help') {
-      return ['2 kantajaa', 'Muuttovakuutus', 'ALV sisältyy hintaan'];
+      return [t('2 kantajaa'), t('Muuttovakuutus'), t('ALV sisältyy hintaan')];
     }
     return [
-      '2 muuttajaa',
-      'Muuttoauto',
-      'Muuttovakuutus',
-      'Suojamateriaalit',
-      `Ensimmäiset ${INCLUDED_DISTANCE_KM} km sisältyvät hintaan`,
-      'ALV sisältyy hintaan',
+      t('2 muuttajaa'),
+      t('Muuttoauto'),
+      t('Muuttovakuutus'),
+      t('Suojamateriaalit'),
+      firstKmIncluded(),
+      t('ALV sisältyy hintaan'),
     ];
   };
 
@@ -138,7 +155,7 @@ export default function Calculator() {
     .filter(([, qty]) => qty > 0)
     .flatMap(([id, qty]) => {
       const item = FURNITURE_CATALOG.find((f) => f.id === id);
-      return item ? [{ id, label: item.label, icon: item.icon, qty }] : [];
+      return item ? [{ id, label: furnitureLabel(item.id, item.label), icon: item.icon, qty }] : [];
     });
 
   // Prefill contact info from quick quote data stored in localStorage
@@ -227,12 +244,12 @@ export default function Calculator() {
   const handleNext = () => {
     // Validate service step
     if (currentStep === 0 && !formData.serviceType) {
-      toast.error('Valitse palvelu');
+      toast.error(t('Valitse palvelu'));
       return;
     }
     // Validate moving package step
     if (currentStep === 1 && formData.serviceType === 'moving' && !formData.movingPackage) {
-      toast.error('Valitse muuttopaketti');
+      toast.error(t('Valitse muuttopaketti'));
       return;
     }
     // Skip apartment details step for recycling (locations → inventory directly)
@@ -247,7 +264,7 @@ export default function Calculator() {
     }
     // Validate locations step
     if (currentStep === 2 && (!formData.addressFrom || !formData.addressTo)) {
-      toast.error('Täytä molemmat osoitteet');
+      toast.error(t('Täytä molemmat osoitteet'));
       return;
     }
     const maxStep = formData.serviceType === 'moving' ? 6 : 5;
@@ -346,13 +363,13 @@ export default function Calculator() {
     e.preventDefault();
 
     if (!gdprConsent) {
-      toast.error('Hyväksy tietojen käsittely jatkaaksesi');
+      toast.error(t('Hyväksy tietojen käsittely jatkaaksesi'));
       return;
     }
 
     const phoneRegex = /^(\+358|0)(4[0-9]|50|9)[0-9\s\-]{5,}$/;
     if (!phoneRegex.test((formData.contactPhone ?? '').replace(/\s/g, ''))) {
-      toast.error('Tarkista puhelinnumeron muoto (esim. 040 123 4567)');
+      toast.error(t('Tarkista puhelinnumeron muoto (esim. 040 123 4567)'));
       return;
     }
 
@@ -386,12 +403,12 @@ export default function Calculator() {
 
       if (response.ok) {
         setIsBooked(true);
-        toast.success('Varaus vastaanotettu! Olemme sinuun yhteydessä pian.');
+        toast.success(t('Varaus vastaanotettu! Olemme sinuun yhteydessä pian.'));
       } else {
         throw new Error('Varaus epäonnistui');
       }
     } catch (err) {
-      toast.error('Jotain meni pieleen. Yritä uudelleen tai soita meille.');
+      toast.error(t('Jotain meni pieleen. Yritä uudelleen tai soita meille.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -405,16 +422,16 @@ export default function Calculator() {
             <CheckCircle2 className="w-16 h-16 text-green-600 dark:text-green-400" />
           </div>
         </div>
-        <h2 className="text-3xl font-bold mb-4">Kiitos varauksestasi!</h2>
+        <h2 className="text-3xl font-bold mb-4">{t('Kiitos varauksestasi!')}</h2>
         <p className="text-gray-600 dark:text-gray-400 mb-8 text-lg">
-          Olemme vastaanottaneet muuttovarauksesi. <br />
-          Saat tarjouksen sähköpostiisi pian, ja olemme tarvittaessa yhteydessä myös puhelimitse.
+          {t('Olemme vastaanottaneet muuttovarauksesi.')} <br />
+          {t('Saat tarjouksen sähköpostiisi pian, ja olemme tarvittaessa yhteydessä myös puhelimitse.')}
         </p>
         <button
           onClick={() => window.location.reload()}
           className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-full font-semibold transition-all"
         >
-          Palaa etusivulle
+          {t('Palaa etusivulle')}
         </button>
       </div>
     );
@@ -464,7 +481,7 @@ export default function Calculator() {
                   {isCompleted && idx > 0 ? '✓' : displayIdx + 1}
                 </div>
                 <span className={`text-xs font-medium hidden md:block ${isCompleted || isCurrent ? 'text-primary' : 'text-gray-400'}`}>
-                  {step.title}
+                  {t(step.title)}
                 </span>
               </div>
             );
@@ -496,8 +513,8 @@ export default function Calculator() {
             {currentStep === 0 && (
               <div className="space-y-5">
                 <div className="text-center mb-6">
-                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1.5">Valitse palvelu</h2>
-                  <p className="text-gray-500">Mitä palvelua tarvitset?</p>
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1.5">{t('Valitse palvelu')}</h2>
+                  <p className="text-gray-500">{t('Mitä palvelua tarvitset?')}</p>
                 </div>
 
                 <div className="grid md:grid-cols-3 gap-4">
@@ -511,9 +528,9 @@ export default function Calculator() {
                     }`}
                   >
                     <div className="text-3xl mb-2">📦</div>
-                    <h3 className="font-bold text-lg mb-2">Muutto</h3>
+                    <h3 className="font-bold text-lg mb-2">{t('Muutto')}</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Kodin tai toimiston muutto uuteen osoitteeseen.
+                      {t('Kodin tai toimiston muutto uuteen osoitteeseen.')}
                     </p>
                   </div>
 
@@ -527,9 +544,9 @@ export default function Calculator() {
                     }`}
                   >
                     <div className="text-3xl mb-2">🚚</div>
-                    <h3 className="font-bold text-lg mb-2">Kuljetus</h3>
+                    <h3 className="font-bold text-lg mb-2">{t('Kuljetus')}</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Yksittäisten tavaroiden, huonekalujen tai ostosten kuljetus.
+                      {t('Yksittäisten tavaroiden, huonekalujen tai ostosten kuljetus.')}
                     </p>
                   </div>
 
@@ -543,9 +560,9 @@ export default function Calculator() {
                     }`}
                   >
                     <div className="text-3xl mb-2">♻️</div>
-                    <h3 className="font-bold text-lg mb-2">Kierrätys</h3>
+                    <h3 className="font-bold text-lg mb-2">{t('Kierrätys')}</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Vanhojen huonekalujen, roskien ja ylimääräisten tavaroiden poisvienti.
+                      {t('Vanhojen huonekalujen, roskien ja ylimääräisten tavaroiden poisvienti.')}
                     </p>
                   </div>
                 </div>
@@ -556,8 +573,8 @@ export default function Calculator() {
             {currentStep === 1 && formData.serviceType === 'moving' && (
               <div className="space-y-5">
                 <div className="text-center mb-6">
-                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1.5">Olet valinnut muuttopalvelun</h2>
-                  <p className="text-gray-500 mb-8">Valitse muuttopaketti</p>
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1.5">{t('Olet valinnut muuttopalvelun')}</h2>
+                  <p className="text-gray-500 mb-8">{t('Valitse muuttopaketti')}</p>
                 </div>
 
                 <div className="space-y-4">
@@ -572,12 +589,12 @@ export default function Calculator() {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="font-bold text-lg mb-1">Täyspalvelu</h3>
+                        <h3 className="font-bold text-lg mb-1">{t('Täyspalvelu')}</h3>
                         <span className="inline-block text-xs font-bold bg-primary/10 text-primary px-3 py-1 rounded-full mb-3">
-                          Suositeltu
+                          {t('Suositeltu')}
                         </span>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Kantajat, sopiva kuljetusauto ja vähintään herkimpien tavaroiden suojaus.
+                          {t('Kantajat, sopiva kuljetusauto ja vähintään herkimpien tavaroiden suojaus.')}
                         </p>
                       </div>
                       <div
@@ -605,9 +622,9 @@ export default function Calculator() {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="font-bold text-lg mb-3">Vain kuljettaja ajoneuvolla</h3>
+                        <h3 className="font-bold text-lg mb-3">{t('Vain kuljettaja ajoneuvolla')}</h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Pääsen itse auttamaan kantamisessa.
+                          {t('Pääsen itse auttamaan kantamisessa.')}
                         </p>
                       </div>
                       <div
@@ -635,11 +652,11 @@ export default function Calculator() {
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <h3 className="font-bold text-lg mb-3">Vain kantoapu</h3>
+                        <h3 className="font-bold text-lg mb-3">{t('Vain kantoapu')}</h3>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Tarvitsen vain kantajat.
+                          {t('Tarvitsen vain kantajat.')}
                         </p>
-                        <p className="text-xs text-gray-500 mt-2">89,90 €/h, min. 180 €</p>
+                        <p className="text-xs text-gray-500 mt-2">{t('89,90 €/h, min. 180 €')}</p>
                       </div>
                       <div
                         className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ml-4 flex-shrink-0 ${
@@ -663,24 +680,24 @@ export default function Calculator() {
               <div className="space-y-6">
                 <div className="text-center mb-6">
                   <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1.5">
-                    {formData.serviceType === 'transport' ? 'Mistä ja mihin kuljetetaan?' : 'Mistä ja mihin muutetaan?'}
+                    {formData.serviceType === 'transport' ? t('Mistä ja mihin kuljetetaan?') : t('Mistä ja mihin muutetaan?')}
                   </h2>
-                  <p className="text-gray-500">Anna kohteiden osoitteet hinnan laskemiseksi.</p>
+                  <p className="text-gray-500">{t('Anna kohteiden osoitteet hinnan laskemiseksi.')}</p>
                 </div>
                 <div className="grid gap-6">
                   {(!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY === '') && (
                     <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm mb-4 border border-red-100">
-                      ⚠️ Google Maps API avain puuttuu. Osoitteiden automaattinen täyttö ei ole käytössä.
+                      {t('⚠️ Google Maps API avain puuttuu. Osoitteiden automaattinen täyttö ei ole käytössä.')}
                     </div>
                   )}
                   <div className="relative">
-                    <label className="block text-sm font-semibold mb-2">Lähtöosoite</label>
+                    <label className="block text-sm font-semibold mb-2">{t('Lähtöosoite')}</label>
                     <input
                       ref={fromRef}
                       type="text"
                       autoComplete="off"
                       className="w-full px-5 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all"
-                      placeholder="Esim. Mannerheimintie 1, Helsinki"
+                      placeholder={t('Esim. Mannerheimintie 1, Helsinki')}
                       value={formData.addressFrom}
                       onChange={(e) => { updateField('addressFrom', e.target.value); fetchPredictions(e.target.value, setFromPredictions); }}
                       onBlur={() => setTimeout(() => setFromPredictions([]), 150)}
@@ -701,13 +718,13 @@ export default function Calculator() {
                     )}
                   </div>
                   <div className="relative">
-                    <label className="block text-sm font-semibold mb-2">Määränpää</label>
+                    <label className="block text-sm font-semibold mb-2">{t('Määränpää')}</label>
                     <input
                       ref={toRef}
                       type="text"
                       autoComplete="off"
                       className="w-full px-5 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all"
-                      placeholder="Esim. Hämeentie 10, Helsinki"
+                      placeholder={t('Esim. Hämeentie 10, Helsinki')}
                       value={formData.addressTo}
                       onChange={(e) => { updateField('addressTo', e.target.value); fetchPredictions(e.target.value, setToPredictions); }}
                       onBlur={() => setTimeout(() => setToPredictions([]), 150)}
@@ -731,13 +748,13 @@ export default function Calculator() {
                   {formData.serviceType === 'transport' && (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <label className="block text-sm font-semibold">Välipysähdykset (valinnainen)</label>
+                        <label className="block text-sm font-semibold">{t('Välipysähdykset (valinnainen)')}</label>
                         <button
                           type="button"
                           onClick={addStop}
                           className="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full hover:bg-primary/20 transition-all"
                         >
-                          + Lisää välipysähdys
+                          {t('+ Lisää välipysähdys')}
                         </button>
                       </div>
                       {formData.additionalStops.map((stop, index) => (
@@ -745,7 +762,7 @@ export default function Calculator() {
                           <input
                             type="text"
                             className="flex-1 px-5 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all"
-                            placeholder={`Välipysähdys ${index + 1} osoite`}
+                            placeholder={locale === 'en' ? `Stop ${index + 1} address` : `Välipysähdys ${index + 1} osoite`}
                             value={stop}
                             onChange={(e) => updateStop(index, e.target.value)}
                           />
@@ -760,14 +777,14 @@ export default function Calculator() {
                       ))}
                       {formData.additionalStops.length > 0 && (
                         <p className="text-xs text-gray-400">
-                          Muista huomioida välipysähdysten lisäämä matka alla olevassa etäisyysarviossa.
+                          {t('Muista huomioida välipysähdysten lisäämä matka alla olevassa etäisyysarviossa.')}
                         </p>
                       )}
                     </div>
                   )}
 
                   <div className="pt-4">
-                    <label className="block text-sm font-semibold mb-2">Arvioitu etäisyys (km)</label>
+                    <label className="block text-sm font-semibold mb-2">{t('Arvioitu etäisyys (km)')}</label>
                     <div className="flex items-center gap-4">
                       <input
                         type="range"
@@ -789,14 +806,14 @@ export default function Calculator() {
               <div className="space-y-5">
                 <div className="text-center mb-5">
                   <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1.5">
-                    {formData.serviceType === 'transport' ? 'Kuljettajat ja kohteet' : 'Asunnon koko ja kerrokset'}
+                    {formData.serviceType === 'transport' ? t('Kuljettajat ja kohteet') : t('Asunnon koko ja kerrokset')}
                   </h2>
-                  <p className="text-gray-500">Nämä vaikuttavat tarvittavaan aikaan ja miehitykseen.</p>
+                  <p className="text-gray-500">{t('Nämä vaikuttavat tarvittavaan aikaan ja miehitykseen.')}</p>
                 </div>
 
                 {formData.serviceType === 'transport' ? (
                   <div className="space-y-3">
-                    <label className="block text-sm font-semibold mb-2 text-center">Kuljettajien määrä</label>
+                    <label className="block text-sm font-semibold mb-2 text-center">{t('Kuljettajien määrä')}</label>
                     <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
                       {(['1', '2'] as const).map((count) => (
                         <button
@@ -835,24 +852,24 @@ export default function Calculator() {
                   <div className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-800/50">
                     <h3 className="font-bold mb-4 flex items-center gap-2">
                       <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm">1</span>
-                      Lähtökohde
+                      {t('Lähtökohde')}
                     </h3>
                     <div className="space-y-4">
                       <div>
-                        <label className="text-xs font-bold uppercase text-gray-400">Kerros</label>
+                        <label className="text-xs font-bold uppercase text-gray-400">{t('Kerros')}</label>
                         <select
                           className="w-full bg-transparent border-b border-gray-300 dark:border-gray-600 py-2 outline-none"
                           value={formData.floorFrom}
                           onChange={(e) => updateField('floorFrom', parseInt(e.target.value))}
                         >
-                          {[0,1,2,3,4,5,6,7,8,9,10].map(f => <option key={f} value={f}>{f === 0 ? 'Katutaso' : `${f}. kerros`}</option>)}
+                          {[0,1,2,3,4,5,6,7,8,9,10].map(f => <option key={f} value={f}>{f === 0 ? t('Katutaso') : (locale === 'en' ? `Floor ${f}` : `${f}. kerros`)}</option>)}
                         </select>
                       </div>
                       <label className="flex items-center gap-3 cursor-pointer group">
                         <div className={`w-12 h-6 rounded-full transition-all relative ${formData.elevatorFrom ? 'bg-primary' : 'bg-gray-300'}`}>
                           <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.elevatorFrom ? 'left-7' : 'left-1'}`} />
                         </div>
-                        <span className="font-medium">Hissi käytössä</span>
+                        <span className="font-medium">{t('Hissi käytössä')}</span>
                         <input
                           type="checkbox"
                           className="hidden"
@@ -861,14 +878,14 @@ export default function Calculator() {
                         />
                       </label>
                       <div>
-                        <label className="text-xs font-bold uppercase text-gray-400">Kantomatka ovelta autoon</label>
-                        <p className="text-xs text-gray-400 mb-1">Matka ulko-ovelta muuttoauton luokse</p>
+                        <label className="text-xs font-bold uppercase text-gray-400">{t('Kantomatka ovelta autoon')}</label>
+                        <p className="text-xs text-gray-400 mb-1">{t('Matka ulko-ovelta muuttoauton luokse')}</p>
                         <select
                           className="w-full bg-transparent border-b border-gray-300 dark:border-gray-600 py-2 outline-none"
                           value={formData.carryDistanceFrom}
                           onChange={(e) => updateField('carryDistanceFrom', e.target.value)}
                         >
-                          {CARRY_DISTANCE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                          {CARRY_DISTANCE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{t(opt.label)}</option>)}
                         </select>
                       </div>
                     </div>
@@ -877,24 +894,24 @@ export default function Calculator() {
                   <div className="p-6 rounded-2xl bg-gray-50 dark:bg-gray-800/50">
                     <h3 className="font-bold mb-4 flex items-center gap-2">
                       <span className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm">2</span>
-                      {formData.serviceType === 'transport' ? 'Toimitusosoite' : 'Uusi koti'}
+                      {formData.serviceType === 'transport' ? t('Toimitusosoite') : t('Uusi koti')}
                     </h3>
                     <div className="space-y-4">
                       <div>
-                        <label className="text-xs font-bold uppercase text-gray-400">Kerros</label>
+                        <label className="text-xs font-bold uppercase text-gray-400">{t('Kerros')}</label>
                         <select
                           className="w-full bg-transparent border-b border-gray-300 dark:border-gray-600 py-2 outline-none"
                           value={formData.floorTo}
                           onChange={(e) => updateField('floorTo', parseInt(e.target.value))}
                         >
-                          {[0,1,2,3,4,5,6,7,8,9,10].map(f => <option key={f} value={f}>{f === 0 ? 'Katutaso' : `${f}. kerros`}</option>)}
+                          {[0,1,2,3,4,5,6,7,8,9,10].map(f => <option key={f} value={f}>{f === 0 ? t('Katutaso') : (locale === 'en' ? `Floor ${f}` : `${f}. kerros`)}</option>)}
                         </select>
                       </div>
                       <label className="flex items-center gap-3 cursor-pointer">
                         <div className={`w-12 h-6 rounded-full transition-all relative ${formData.elevatorTo ? 'bg-primary' : 'bg-gray-300'}`}>
                           <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${formData.elevatorTo ? 'left-7' : 'left-1'}`} />
                         </div>
-                        <span className="font-medium">Hissi käytössä</span>
+                        <span className="font-medium">{t('Hissi käytössä')}</span>
                         <input
                           type="checkbox"
                           className="hidden"
@@ -903,14 +920,14 @@ export default function Calculator() {
                         />
                       </label>
                       <div>
-                        <label className="text-xs font-bold uppercase text-gray-400">Kantomatka autolta ovelle</label>
-                        <p className="text-xs text-gray-400 mb-1">Matka muuttoauton luota kohteen ulko-ovelle</p>
+                        <label className="text-xs font-bold uppercase text-gray-400">{t('Kantomatka autolta ovelle')}</label>
+                        <p className="text-xs text-gray-400 mb-1">{t('Matka muuttoauton luota kohteen ulko-ovelle')}</p>
                         <select
                           className="w-full bg-transparent border-b border-gray-300 dark:border-gray-600 py-2 outline-none"
                           value={formData.carryDistanceTo}
                           onChange={(e) => updateField('carryDistanceTo', e.target.value)}
                         >
-                          {CARRY_DISTANCE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                          {CARRY_DISTANCE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{t(opt.label)}</option>)}
                         </select>
                       </div>
                     </div>
@@ -924,26 +941,26 @@ export default function Calculator() {
               <div className="space-y-5">
                 <div className="text-center mb-5">
                   <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1.5">{getInventoryLabel()}</h2>
-                  <p className="text-gray-500">Tavaralista on tärkein tekijä hinta-arviossa — mitä tarkempi lista, sitä tarkempi hinta.</p>
+                  <p className="text-gray-500">{t('Tavaralista on tärkein tekijä hinta-arviossa — mitä tarkempi lista, sitä tarkempi hinta.')}</p>
                 </div>
 
                 {/* Quick presets (only for moving) */}
                 {formData.serviceType === 'moving' && (
                   <div className="space-y-3">
-                    <h3 className="font-bold text-sm uppercase tracking-widest text-gray-400">Pikavalinnat</h3>
+                    <h3 className="font-bold text-sm uppercase tracking-widest text-gray-400">{t('Pikavalinnat')}</h3>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {([
-                        { label: 'Tyhjä / muutama asia', items: {} },
+                        { label: t('Tyhjä / muutama asia'), items: {} },
                         {
-                          label: 'Tyypillinen 1h',
+                          label: t('Tyypillinen 1h'),
                           items: { sofa_2: 1, bed_140: 1, wardrobe_assembled: 1, coffee_table: 1, bookshelf: 1, nightstand: 1, dresser_small: 1, box_standard: 10 },
                         },
                         {
-                          label: 'Tyypillinen 2h',
+                          label: t('Tyypillinen 2h'),
                           items: { sofa_3: 1, bed_140: 1, bed_80: 1, wardrobe_assembled: 2, coffee_table: 1, bookshelf: 2, nightstand: 2, dresser_small: 1, dining_table_small: 1, kitchen_chair: 4, box_standard: 20 },
                         },
                         {
-                          label: 'Tyypillinen 3h',
+                          label: t('Tyypillinen 3h'),
                           items: { sofa_3: 1, sofa_2: 1, bed_140: 1, bed_80: 2, wardrobe_assembled: 3, coffee_table: 1, bookshelf: 3, nightstand: 2, dresser_large: 1, dining_table_large: 1, kitchen_chair: 6, box_standard: 35 },
                         },
                       ] as { label: string; items: Record<string, number> }[]).map((preset) => (
@@ -957,15 +974,15 @@ export default function Calculator() {
                         </button>
                       ))}
                     </div>
-                    <p className="text-xs text-gray-400">Pikavalinta täyttää tyypillisen tavaralistan — muokkaa vapaasti alta.</p>
+                    <p className="text-xs text-gray-400">{t('Pikavalinta täyttää tyypillisen tavaralistan — muokkaa vapaasti alta.')}</p>
                   </div>
                 )}
 
                 {/* Waste type selector (only for recycling) */}
                 {formData.serviceType === 'recycling' && (
                   <div className="space-y-3">
-                    <h3 className="font-bold text-lg">Jätteen laji</h3>
-                    <p className="text-sm text-gray-500">Valitse kaikki jätetyypit — kierrätysmaksu lisätään automaattisesti hintaan.</p>
+                    <h3 className="font-bold text-lg">{t('Jätteen laji')}</h3>
+                    <p className="text-sm text-gray-500">{t('Valitse kaikki jätetyypit — kierrätysmaksu lisätään automaattisesti hintaan.')}</p>
                     <div className="grid gap-3">
                       {RECYCLING_WASTE_TYPES.map((wt) => {
                         const selected = (formData.selectedWasteTypes ?? []).includes(wt.id);
@@ -987,12 +1004,12 @@ export default function Calculator() {
                               </div>
                               <span className="text-xl">{wt.icon}</span>
                               <div>
-                                <p className="font-semibold text-sm">{wt.label}</p>
-                                <p className="text-xs text-gray-500">{wt.description}</p>
+                                <p className="font-semibold text-sm">{locale === 'en' ? WASTE_TYPE_LABELS_EN[wt.id]?.label ?? wt.label : wt.label}</p>
+                                <p className="text-xs text-gray-500">{locale === 'en' ? WASTE_TYPE_LABELS_EN[wt.id]?.description ?? wt.description : wt.description}</p>
                               </div>
                             </div>
                             <span className={`text-sm font-bold flex-shrink-0 ${wt.disposalCostPerLoad === 0 ? 'text-green-600' : 'text-gray-700 dark:text-gray-300'}`}>
-                              {wt.disposalCostPerLoad === 0 ? 'Ilmainen' : `+${wt.disposalCostPerLoad} €/erä`}
+                              {wt.disposalCostPerLoad === 0 ? t('Ilmainen') : (locale === 'en' ? `+€${wt.disposalCostPerLoad}/load` : `+${wt.disposalCostPerLoad} €/erä`)}
                             </span>
                           </div>
                         );
@@ -1004,10 +1021,10 @@ export default function Calculator() {
                 {/* Furniture List */}
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-bold text-lg">Huonekalut ja laatikot</h3>
+                    <h3 className="font-bold text-lg">{t('Huonekalut ja laatikot')}</h3>
                     {totalFurniturePieces > 0 && (
                       <span className="text-sm font-semibold text-primary bg-primary/10 px-3 py-1 rounded-full">
-                        {totalFurniturePieces} kpl valittu ({derivedBoxCount} laatikkoa)
+                        {locale === 'en' ? `${totalFurniturePieces} items selected (${derivedBoxCount} boxes)` : `${totalFurniturePieces} kpl valittu (${derivedBoxCount} laatikkoa)`}
                       </span>
                     )}
                   </div>
@@ -1023,9 +1040,9 @@ export default function Calculator() {
                         className="w-full bg-gray-50 dark:bg-gray-800/60 px-5 py-3 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                       >
                         <span className="flex items-center gap-3">
-                          <span className="text-xs font-bold uppercase tracking-widest text-gray-400">{category}</span>
+                          <span className="text-xs font-bold uppercase tracking-widest text-gray-400">{categoryLabel(category)}</span>
                           {selectedCount > 0 && (
-                            <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{selectedCount} kpl</span>
+                            <span className="text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-full">{locale === 'en' ? `${selectedCount} pcs` : `${selectedCount} kpl`}</span>
                           )}
                         </span>
                         <ChevronDown
@@ -1041,7 +1058,7 @@ export default function Calculator() {
                             <div key={item.id} className="flex items-center justify-between px-5 py-3">
                               <span className="flex items-center gap-3">
                                 <span className="text-xl">{item.icon}</span>
-                                <span className="font-medium text-sm">{item.label}</span>
+                                <span className="font-medium text-sm">{furnitureLabel(item.id, item.label)}</span>
                               </span>
                               <div className="flex items-center gap-3">
                                 <button
@@ -1074,13 +1091,13 @@ export default function Calculator() {
                 {/* Mukautetut tavarat — jos tavaraa ei löydy katalogista */}
                 <div className="space-y-4">
                   <div className="rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
-                    <h3 className="font-bold text-sm mb-1">Tavaraa ei löydy listalta?</h3>
-                    <p className="text-xs text-gray-500 mb-4">Kirjoita tavaran nimi ja määrä, ja lisäämme sen arvioon.</p>
+                    <h3 className="font-bold text-sm mb-1">{t('Tavaraa ei löydy listalta?')}</h3>
+                    <p className="text-xs text-gray-500 mb-4">{t('Kirjoita tavaran nimi ja määrä, ja lisäämme sen arvioon.')}</p>
                     <div className="flex items-center gap-2">
                       <input
                         type="text"
                         className="flex-1 min-w-0 px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all text-sm"
-                        placeholder="Esim. Akvaario, soutuvene, jääkellari..."
+                        placeholder={t('Esim. Akvaario, soutuvene, jääkellari...')}
                         value={customItemLabel}
                         onChange={(e) => setCustomItemLabel(e.target.value)}
                       />
@@ -1135,8 +1152,8 @@ export default function Calculator() {
                       )}
                     </div>
                     <div>
-                      <h4 className="font-bold">Purkupalvelu</h4>
-                      <p className="text-xs text-gray-500">Huonekalujen purku ja kasaus</p>
+                      <h4 className="font-bold">{t('Purkupalvelu')}</h4>
+                      <p className="text-xs text-gray-500">{t('Huonekalujen purku ja kasaus')}</p>
                     </div>
                   </div>
 
@@ -1156,8 +1173,8 @@ export default function Calculator() {
                       )}
                     </div>
                     <div>
-                      <h4 className="font-bold">Kierrätys & jäte</h4>
-                      <p className="text-xs text-gray-500">Poistettavien tavaroiden kierrätys</p>
+                      <h4 className="font-bold">{t('Kierrätys & jäte')}</h4>
+                      <p className="text-xs text-gray-500">{t('Poistettavien tavaroiden kierrätys')}</p>
                     </div>
                   </div>
 
@@ -1171,8 +1188,8 @@ export default function Calculator() {
                       {formData.needsPacking && <span className="text-white text-xs">✓</span>}
                     </div>
                     <div>
-                      <h4 className="font-bold">Pakkauspalvelu</h4>
-                      <p className="text-xs text-gray-500">Me pakkaamme tavarat puolestasi</p>
+                      <h4 className="font-bold">{t('Pakkauspalvelu')}</h4>
+                      <p className="text-xs text-gray-500">{t('Me pakkaamme tavarat puolestasi')}</p>
                     </div>
                   </div>
                   <div
@@ -1185,8 +1202,8 @@ export default function Calculator() {
                       {formData.needsCleaning && <span className="text-white text-xs">✓</span>}
                     </div>
                     <div>
-                      <h4 className="font-bold">Muuttosiivous</h4>
-                      <p className="text-xs text-gray-500">Vanhan asunnon loppusiivous</p>
+                      <h4 className="font-bold">{t('Muuttosiivous')}</h4>
+                      <p className="text-xs text-gray-500">{t('Vanhan asunnon loppusiivous')}</p>
                     </div>
                   </div>
                 </div>
@@ -1198,21 +1215,21 @@ export default function Calculator() {
               <div className="space-y-5">
                 <div className="text-center mb-5">
                   <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1.5">
-                    {formData.serviceType === 'transport' ? 'Kuljetuksen hinta-arvio' : 'Hinta-arviosi'}
+                    {formData.serviceType === 'transport' ? t('Kuljetuksen hinta-arvio') : t('Hinta-arviosi')}
                   </h2>
-                  <p className="text-gray-500">Laskettu annettujen tietojen perusteella.</p>
+                  <p className="text-gray-500">{t('Laskettu annettujen tietojen perusteella.')}</p>
                 </div>
 
                 {/* Trust signals */}
                 <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-gray-500">
-                  <span className="flex items-center gap-1.5">🛡️ Vakuutus sisältyy</span>
-                  <span className="flex items-center gap-1.5">✅ Ei piilokuluja</span>
-                  <span className="flex items-center gap-1.5">📋 Hinta-arvio ei sido sinua</span>
+                  <span className="flex items-center gap-1.5">{t('🛡️ Vakuutus sisältyy')}</span>
+                  <span className="flex items-center gap-1.5">{t('✅ Ei piilokuluja')}</span>
+                  <span className="flex items-center gap-1.5">{t('📋 Hinta-arvio ei sido sinua')}</span>
                 </div>
 
                 <div className="max-w-xs mx-auto">
                   <label className="block text-xs font-bold uppercase text-gray-400 mb-2 text-center">
-                    Muuttopäivä (vaikuttaa hintaan)
+                    {t('Muuttopäivä (vaikuttaa hintaan)')}
                   </label>
                   <input
                     type="date"
@@ -1221,7 +1238,7 @@ export default function Calculator() {
                     onChange={(e) => updateField('date', e.target.value ? new Date(e.target.value) : undefined)}
                   />
                   {!formData.date && (
-                    <p className="text-xs text-gray-400 text-center mt-2">Valitse päivä nähdäksesi voiko ajankohta tuoda alennusta.</p>
+                    <p className="text-xs text-gray-400 text-center mt-2">{t('Valitse päivä nähdäksesi voiko ajankohta tuoda alennusta.')}</p>
                   )}
                 </div>
 
@@ -1229,52 +1246,52 @@ export default function Calculator() {
                   {(formData.serviceType === 'moving' || formData.serviceType === 'transport') && (
                     <span className="inline-flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800">
                       <span>{DIFFICULTY_BADGES[priceResult.difficultyLevel].emoji}</span>
-                      {DIFFICULTY_BADGES[priceResult.difficultyLevel].label}
+                      {t(DIFFICULTY_BADGES[priceResult.difficultyLevel].label)}
                     </span>
                   )}
                   <span className="inline-flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-full bg-gray-100 dark:bg-gray-800">
                     <span>{priceResult.dateDiscountEmoji}</span>
-                    {priceResult.dateDiscountLabel}
+                    {t(priceResult.dateDiscountLabel)}
                   </span>
                 </div>
 
                 <div className="bg-primary text-white p-6 sm:p-8 rounded-3xl shadow-xl shadow-primary/20 relative overflow-hidden">
                    <div className="relative z-10">
-                      <p className="text-primary-foreground/80 font-medium mb-1">Arvioitu muuttosi</p>
+                      <p className="text-primary-foreground/80 font-medium mb-1">{t('Arvioitu muuttosi')}</p>
                       <div className="flex items-end gap-2">
                         <span className="text-4xl sm:text-5xl font-black">
                           {priceResult.priceRangeLow}–{priceResult.priceRangeHigh}€
                         </span>
-                        <span className="text-xl font-bold mb-2">sis. ALV</span>
+                        <span className="text-xl font-bold mb-2">{t('sis. ALV')}</span>
                       </div>
                       <div className="mt-6 grid grid-cols-2 gap-4 border-t border-white/20 pt-6">
                         <div>
-                          <p className="text-xs uppercase font-bold text-white/60 mb-1">Arvioitu kesto</p>
-                          <p className="text-xl font-bold">{priceResult.estimatedDurationHours} tuntia</p>
+                          <p className="text-xs uppercase font-bold text-white/60 mb-1">{t('Arvioitu kesto')}</p>
+                          <p className="text-xl font-bold">{priceResult.estimatedDurationHours} {t('tuntia')}</p>
                         </div>
                         <div>
-                          <p className="text-xs uppercase font-bold text-white/60 mb-1">Tiimi</p>
+                          <p className="text-xs uppercase font-bold text-white/60 mb-1">{t('Tiimi')}</p>
                           <p className="text-xl font-bold">
                             {formData.serviceType === 'transport'
-                              ? `${formData.driverCount} kuljettaja${formData.driverCount === '2' ? 'a' : ''} + pakettiauto`
+                              ? driversAndVan()
                               : formData.movingPackage === 'driver_with_vehicle'
-                                ? 'Kuljettaja + Kuorma-auto'
+                                ? t('Kuljettaja + Kuorma-auto')
                                 : formData.movingPackage === 'carrying_help'
-                                  ? '2 kantajaa'
-                                  : 'Kuorma-auto + 2 miestä'}
+                                  ? t('2 kantajaa')
+                                  : t('Kuorma-auto + 2 miestä')}
                           </p>
                         </div>
                         <div>
-                          <p className="text-xs uppercase font-bold text-white/60 mb-1">Muuttoauto</p>
-                          <p className="text-xl font-bold">Sopiva kuorma-auto</p>
+                          <p className="text-xs uppercase font-bold text-white/60 mb-1">{t('Muuttoauto')}</p>
+                          <p className="text-xl font-bold">{t('Sopiva kuorma-auto')}</p>
                         </div>
                         <div>
-                          <p className="text-xs uppercase font-bold text-white/60 mb-1">Vakuutus</p>
-                          <p className="text-xl font-bold">Sisältyy</p>
+                          <p className="text-xs uppercase font-bold text-white/60 mb-1">{t('Vakuutus')}</p>
+                          <p className="text-xl font-bold">{t('Sisältyy')}</p>
                         </div>
                         {formData.serviceType === 'transport' && formData.additionalStops.length > 0 && (
                           <div>
-                            <p className="text-xs uppercase font-bold text-white/60 mb-1">Välipysähdykset</p>
+                            <p className="text-xs uppercase font-bold text-white/60 mb-1">{t('Välipysähdykset')}</p>
                             <p className="text-xl font-bold">+{formData.additionalStops.length}</p>
                           </div>
                         )}
@@ -1286,24 +1303,24 @@ export default function Calculator() {
                 {priceResult.dateDiscountAmount > 0 && (
                   <div className="grid gap-3">
                     <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                      <span className="text-gray-500">Normaalihinta</span>
+                      <span className="text-gray-500">{t('Normaalihinta')}</span>
                       <span className="font-bold">{Math.round(priceResult.normalPriceTotal)}€</span>
                     </div>
                     <div className="flex justify-between p-3 rounded-xl bg-green-50 dark:bg-green-900/20">
                       <span className="text-green-700 dark:text-green-300">
-                        Hiljaisen päivän alennus ({Math.round(priceResult.dateDiscountFraction * 100)}%)
+                        {locale === 'en' ? `Off-peak discount (${Math.round(priceResult.dateDiscountFraction * 100)}%)` : `Hiljaisen päivän alennus (${Math.round(priceResult.dateDiscountFraction * 100)}%)`}
                       </span>
                       <span className="font-bold text-green-700 dark:text-green-300">-{Math.round(priceResult.dateDiscountAmount)}€</span>
                     </div>
                     <div className="flex justify-between p-3 rounded-xl bg-primary/5">
-                      <span className="font-semibold">Lopullinen arvio</span>
+                      <span className="font-semibold">{t('Lopullinen arvio')}</span>
                       <span className="font-bold">{priceResult.priceRangeLow}–{priceResult.priceRangeHigh}€</span>
                     </div>
                   </div>
                 )}
 
                 <div className="grid gap-2">
-                  <h3 className="font-bold text-sm uppercase tracking-wide text-gray-400">Sisältää</h3>
+                  <h3 className="font-bold text-sm uppercase tracking-wide text-gray-400">{t('Sisältää')}</h3>
                   <div className="grid sm:grid-cols-2 gap-2">
                     {getIncludedServices().map((service) => (
                       <div key={service} className="flex items-center gap-2 text-sm">
@@ -1316,37 +1333,37 @@ export default function Calculator() {
 
                 {(formData.serviceType === 'moving' || formData.serviceType === 'transport') && (
                   <div className="grid gap-3">
-                    <h3 className="font-bold text-sm uppercase tracking-wide text-gray-400">Mistä hinta muodostuu</h3>
+                    <h3 className="font-bold text-sm uppercase tracking-wide text-gray-400">{t('Mistä hinta muodostuu')}</h3>
                     <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                      <span className="text-gray-500">Tavaramäärän vaikutus</span>
+                      <span className="text-gray-500">{t('Tavaramäärän vaikutus')}</span>
                       <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.items)}€</span>
                     </div>
                     <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                      <span className="text-gray-500">Kerrosten ja hissin vaikutus</span>
+                      <span className="text-gray-500">{t('Kerrosten ja hissin vaikutus')}</span>
                       <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.floors)}€</span>
                     </div>
                     <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                      <span className="text-gray-500">Kantomatkan vaikutus</span>
+                      <span className="text-gray-500">{t('Kantomatkan vaikutus')}</span>
                       <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.carryDistance)}€</span>
                     </div>
                     <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                      <span className="text-gray-500">{formData.serviceType === 'transport' ? 'Kuljetusmatkan vaikutus' : 'Muuttomatkan vaikutus'}</span>
+                      <span className="text-gray-500">{formData.serviceType === 'transport' ? t('Kuljetusmatkan vaikutus') : t('Muuttomatkan vaikutus')}</span>
                       <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.distance)}€</span>
                     </div>
                     {priceResult.details.impactBreakdown.extras > 0 && (
                       <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
                         <span className="text-gray-500">
-                          {formData.serviceType === 'transport' ? 'Välipysähdysten vaikutus' : 'Lisäpalveluiden vaikutus'}
+                          {formData.serviceType === 'transport' ? t('Välipysähdysten vaikutus') : t('Lisäpalveluiden vaikutus')}
                         </span>
                         <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.extras)}€</span>
                       </div>
                     )}
                     <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                      <span className="text-gray-500">Koordinointiaika (kiinteä, auton valmistelu ja paperityöt)</span>
+                      <span className="text-gray-500">{t('Koordinointiaika (kiinteä, auton valmistelu ja paperityöt)')}</span>
                       <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.base)}€</span>
                     </div>
                     <div className="flex justify-between p-3 rounded-xl bg-primary/5 font-semibold">
-                      <span>Yhteensä (ennen muuttopäivän alennusta)</span>
+                      <span>{t('Yhteensä (ennen muuttopäivän alennusta)')}</span>
                       <span>{Math.round(priceResult.normalPriceTotal)}€</span>
                     </div>
                   </div>
@@ -1355,14 +1372,14 @@ export default function Calculator() {
                 {formData.serviceType === 'recycling' && (
                   <div className="grid gap-3">
                     <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                      <span className="text-gray-500">Työkustannukset ({priceResult.details.laborHours}h)</span>
+                      <span className="text-gray-500">{locale === 'en' ? `Labor cost (${priceResult.details.laborHours}h)` : `Työkustannukset (${priceResult.details.laborHours}h)`}</span>
                       <span className="font-bold">{Math.round(priceResult.laborCost)}€</span>
                     </div>
                     {priceResult.disposalCost > 0 && (
                       <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
                         <span className="text-gray-500">
-                          Kierrätysmaksut ({(formData.selectedWasteTypes ?? [])
-                            .map((id) => RECYCLING_WASTE_TYPES.find((w) => w.id === id)?.label)
+                          {locale === 'en' ? 'Disposal fees' : 'Kierrätysmaksut'} ({(formData.selectedWasteTypes ?? [])
+                            .map((id) => locale === 'en' ? WASTE_TYPE_LABELS_EN[id]?.label ?? RECYCLING_WASTE_TYPES.find((w) => w.id === id)?.label : RECYCLING_WASTE_TYPES.find((w) => w.id === id)?.label)
                             .filter(Boolean)
                             .join(', ')})
                         </span>
@@ -1371,9 +1388,13 @@ export default function Calculator() {
                     )}
                     <div className="flex justify-between p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
                       <span className="text-gray-500">
-                        {priceResult.details.distanceKm > 0
-                          ? `Kilometrikorvaukset (${Math.round(priceResult.details.distanceKm)} km)`
-                          : `Kilometrit sisältyvät hintaan (${INCLUDED_DISTANCE_KM} km asti)`}
+                        {locale === 'en'
+                          ? (priceResult.details.distanceKm > 0
+                              ? `Distance fee (${Math.round(priceResult.details.distanceKm)} km)`
+                              : `First ${INCLUDED_DISTANCE_KM} km included in the price`)
+                          : (priceResult.details.distanceKm > 0
+                              ? `Kilometrikorvaukset (${Math.round(priceResult.details.distanceKm)} km)`
+                              : `Kilometrit sisältyvät hintaan (${INCLUDED_DISTANCE_KM} km asti)`)}
                       </span>
                       <span className="font-bold">{Math.round(priceResult.distanceCost)}€</span>
                     </div>
@@ -1382,7 +1403,7 @@ export default function Calculator() {
 
                 {(formData.serviceType === 'moving' || formData.serviceType === 'transport') && selectedInventoryItems.length > 0 && (
                   <div className="grid gap-3">
-                    <h3 className="font-bold text-sm uppercase tracking-wide text-gray-400">Lisätyt tavarat</h3>
+                    <h3 className="font-bold text-sm uppercase tracking-wide text-gray-400">{t('Lisätyt tavarat')}</h3>
                     <div className="rounded-2xl border border-gray-100 dark:border-gray-800 divide-y divide-gray-50 dark:divide-gray-800 overflow-hidden">
                       {selectedInventoryItems.map((item) => (
                         <div key={item.id} className="flex items-center justify-between px-5 py-3">
@@ -1397,15 +1418,15 @@ export default function Calculator() {
                     <div className="grid grid-cols-3 gap-3 text-center">
                       <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
                         <p className="text-2xl font-black text-primary">{priceResult.details.totalItemCount}</p>
-                        <p className="text-xs text-gray-400">tavaraa yhteensä</p>
+                        <p className="text-xs text-gray-400">{t('tavaraa yhteensä')}</p>
                       </div>
                       <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
                         <p className="text-2xl font-black text-primary">{priceResult.details.totalVolumeM3.toFixed(1)}</p>
-                        <p className="text-xs text-gray-400">m³ arvioitu tilavuus</p>
+                        <p className="text-xs text-gray-400">{t('m³ arvioitu tilavuus')}</p>
                       </div>
                       <div className="p-4 rounded-xl bg-gray-50 dark:bg-gray-800/50">
                         <p className="text-2xl font-black text-primary">{priceResult.estimatedDurationHours}</p>
-                        <p className="text-xs text-gray-400">h arvioitu työaika</p>
+                        <p className="text-xs text-gray-400">{t('h arvioitu työaika')}</p>
                       </div>
                     </div>
                   </div>
@@ -1422,7 +1443,7 @@ export default function Calculator() {
                 <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-xl border border-yellow-100 dark:border-yellow-900/30 flex gap-4">
                   <span className="text-2xl">💡</span>
                   <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                    Tämä on automaattinen arvio. Lopullinen hinta vahvistetaan kun asiantuntijamme on käynyt tiedot läpi.
+                    {t('Tämä on automaattinen arvio. Lopullinen hinta vahvistetaan kun asiantuntijamme on käynyt tiedot läpi.')}
                   </p>
                 </div>
               </div>
@@ -1432,9 +1453,9 @@ export default function Calculator() {
             {currentStep === (formData.serviceType === 'moving' ? 6 : 5) && (
               <form onSubmit={handleBooking} className="space-y-6">
                 <div className="text-center mb-5">
-                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1.5">Viimeistele varaus</h2>
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1.5">{t('Viimeistele varaus')}</h2>
                   <p className="text-gray-500">
-                    {formData.serviceType === 'transport' ? 'Valitse kuljetuspäivä' : 'Valitse muuttopäivä'} ja jätä yhteystietosi.
+                    {formData.serviceType === 'transport' ? t('Valitse kuljetuspäivä') : t('Valitse muuttopäivä')} {t('ja jätä yhteystietosi.')}
                   </p>
                 </div>
 
@@ -1442,7 +1463,7 @@ export default function Calculator() {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-semibold mb-2 flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-primary" /> Toivottu muuttopäivä
+                        <Calendar className="w-4 h-4 text-primary" /> {t('Toivottu muuttopäivä')}
                       </label>
                       <input
                         type="date"
@@ -1453,12 +1474,12 @@ export default function Calculator() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold mb-2">Nimi</label>
+                      <label className="block text-sm font-semibold mb-2">{t('Nimi')}</label>
                       <input
                         type="text"
                         required
                         className="w-full px-5 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none"
-                        placeholder="Etunimi Sukunimi"
+                        placeholder={t('Etunimi Sukunimi')}
                         value={formData.contactName || ''}
                         onChange={(e) => updateField('contactName', e.target.value)}
                       />
@@ -1466,18 +1487,18 @@ export default function Calculator() {
                   </div>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-semibold mb-2">Sähköposti</label>
+                      <label className="block text-sm font-semibold mb-2">{t('Sähköposti')}</label>
                       <input
                         type="email"
                         required
                         className="w-full px-5 py-4 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none"
-                        placeholder="posti@esimerkki.fi"
+                        placeholder={t('posti@esimerkki.fi')}
                         value={formData.contactEmail || ''}
                         onChange={(e) => updateField('contactEmail', e.target.value)}
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-semibold mb-2">Puhelinnumero</label>
+                      <label className="block text-sm font-semibold mb-2">{t('Puhelinnumero')}</label>
                       <input
                         type="tel"
                         required
@@ -1494,7 +1515,7 @@ export default function Calculator() {
 
                 <div className="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-2xl">
                   <p className="text-sm text-gray-500 mb-4">
-                    Lähetämme sinulle lopullisen tarjouksen sähköpostiin — ei sitovia lupauksia vielä. Emme veloita mitään ennen kuin olet hyväksynyt tarjouksen.
+                    {t('Lähetämme sinulle lopullisen tarjouksen sähköpostiin — ei sitovia lupauksia vielä. Emme veloita mitään ennen kuin olet hyväksynyt tarjouksen.')}
                   </p>
                   <div className="mb-4">
                     <GdprConsentCheckbox checked={gdprConsent} onChange={setGdprConsent} />
@@ -1507,11 +1528,11 @@ export default function Calculator() {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-6 h-6 animate-spin" />
-                        Lähetetään pyyntöä...
+                        {t('Lähetetään pyyntöä...')}
                       </>
                     ) : (
                       <>
-                        Lähetä tarjouspyyntö
+                        {t('Lähetä tarjouspyyntö')}
                         <ArrowRight className="w-6 h-6" />
                       </>
                     )}
@@ -1535,13 +1556,13 @@ export default function Calculator() {
               }`}
             >
               <ArrowLeft className="w-5 h-5" />
-              Takaisin
+              {t('Takaisin')}
             </button>
             <button
               onClick={handleNext}
               className="bg-black dark:bg-white dark:text-black text-white px-8 sm:px-12 py-3.5 rounded-xl font-bold hover:scale-105 transition-all flex items-center gap-2 shadow-xl"
             >
-              {currentStep === (formData.serviceType === 'moving' ? 5 : 4) ? 'Siirry varaukseen' : 'Seuraava'}
+              {currentStep === (formData.serviceType === 'moving' ? 5 : 4) ? t('Siirry varaukseen') : t('Seuraava')}
               <ArrowRight className="w-5 h-5" />
             </button>
           </div>

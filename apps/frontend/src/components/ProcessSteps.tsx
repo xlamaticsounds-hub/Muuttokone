@@ -1,5 +1,9 @@
+'use client';
+
 import React from 'react';
 import { Calculator, CalendarCheck, Truck, PartyPopper } from 'lucide-react';
+import { useT } from '@/i18n/useT';
+import { processStepsDictionary } from '@/i18n/homeDictionary';
 
 const steps = [
   {
@@ -27,14 +31,15 @@ const steps = [
 ];
 
 export default function ProcessSteps() {
+  const t = useT(processStepsDictionary);
   return (
     <section className="py-16 lg:py-24">
       <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
         <div className="mb-10 text-center mx-auto max-w-2xl">
-          <p className="text-primary mb-2 text-sm font-semibold uppercase tracking-wide">Muutto selkokielellä</p>
-          <h2 className="text-3xl font-bold text-black/90 dark:text-white sm:text-4xl">Näin etenemme</h2>
+          <p className="text-primary mb-2 text-sm font-semibold uppercase tracking-wide">{t('Muutto selkokielellä')}</p>
+          <h2 className="text-3xl font-bold text-black/90 dark:text-white sm:text-4xl">{t('Näin etenemme')}</h2>
           <p className="text-black/70 dark:text-white/70">
-            Selkeä ja nopea prosessi alusta loppuun – tiedät aina hinnan ja seuraavan askeleen etukäteen. Ei piilokuluja, ei yllätyksiä.
+            {t('Selkeä ja nopea prosessi alusta loppuun – tiedät aina hinnan ja seuraavan askeleen etukäteen. Ei piilokuluja, ei yllätyksiä.')}
           </p>
         </div>
 
@@ -62,14 +67,14 @@ export default function ProcessSteps() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-start justify-between gap-3">
-                      <h3 className="text-lg font-semibold text-black/90 dark:text-white">{step.title}</h3>
+                      <h3 className="text-lg font-semibold text-black/90 dark:text-white">{t(step.title)}</h3>
                       {step.highlight && (
                         <span className="bg-primary shrink-0 rounded-full px-3 py-1 text-xs font-semibold text-white shadow-sm">
-                          Aloita tästä
+                          {t('Aloita tästä')}
                         </span>
                       )}
                     </div>
-                    <p className="text-sm text-black/70 dark:text-white/70">{step.desc}</p>
+                    <p className="text-sm text-black/70 dark:text-white/70">{t(step.desc)}</p>
                   </div>
                 </div>
               </Wrapper>

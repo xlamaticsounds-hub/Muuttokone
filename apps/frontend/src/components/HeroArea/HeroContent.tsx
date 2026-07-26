@@ -4,20 +4,27 @@ import SlideOnReveal from '@/components/SlideOnReveal';
 import Link from 'next/link';
 import { useSiteConfig } from '@/app/context/SiteConfigContext';
 import { useEffect, useMemo, useState } from 'react';
+import { useLocale } from '@/i18n/LocaleContext';
+import { useT } from '@/i18n/useT';
+import { heroDictionary, headerDictionary } from '@/i18n/homeDictionary';
 
 export default function HeroContent({ content }: { content?: any }) {
   const siteConfig = useSiteConfig();
+  const { locale } = useLocale();
+  const t = useT(heroDictionary);
+  const tHeader = useT(headerDictionary);
   // Typing effect state
+  const baseTexts = content?.typingTexts || [
+    'kotimuutossa',
+    'yritysmuutossa',
+    'pakkauspalveluissa',
+    'varastoinnissa',
+    'muuttosiivouksessa',
+    'erikoiskuljetuksissa',
+  ];
   const texts = useMemo(
-    () => content?.typingTexts || [
-      'kotimuutossa',
-      'yritysmuutossa',
-      'pakkauspalveluissa',
-      'varastoinnissa',
-      'muuttosiivouksessa',
-      'erikoiskuljetuksissa',
-    ],
-    [content],
+    () => (locale === 'en' ? baseTexts.map((w: string) => t(w)) : baseTexts),
+    [content, locale],
   );
   const [textIndex, setTextIndex] = useState(0);
   const [displayText, setDisplayText] = useState('');
@@ -75,17 +82,17 @@ export default function HeroContent({ content }: { content?: any }) {
         <div className="flex lg:items-center">
           <div className="animate_left max-w-[720px] md:max-w-none lg:pr-8 xl:pr-12">
             <h1 className="text-title-xl sm:text-title-xxl lg:text-title-xxl mb-4 leading-tight font-bold sm:font-semibold text-black/90 drop-shadow-sm dark:text-white">
-              {content?.title || "Luotettava apusi"}
+              {content?.title || t('Luotettava apusi')}
               <span className="text-primary mt-2 block">
                 {displayText}
                 <span className="caret" aria-hidden="true" />
               </span>
             </h1>
             <p className="text-regular text-black/70 sm:text-lg dark:text-white/80">
-              {content?.description || "Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Ammattitaitoiset ja tehokkaat muuttopalvelut yksityis- ja yritysasiakkaille. Ei piilokuluja, vain rehellinen hinnoittelu."}
+              {content?.description || t('Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Ammattitaitoiset ja tehokkaat muuttopalvelut yksityis- ja yritysasiakkaille. Ei piilokuluja, vain rehellinen hinnoittelu.')}
             </p>
             <p className="text-regular text-primary mt-3 font-semibold sm:text-lg">
-              Laske muuttolaskurilla ja saat kiinteän hinnan jo 3 minuutissa – ei arvailua, ei piilokuluja, vain tarkka hinta etukäteen.
+              {t('Laske muuttolaskurilla ja saat kiinteän hinnan jo 3 minuutissa – ei arvailua, ei piilokuluja, vain tarkka hinta etukäteen.')}
             </p>
 
             <div className="mt-8 flex flex-col-reverse gap-5 sm:flex-row">
@@ -93,7 +100,7 @@ export default function HeroContent({ content }: { content?: any }) {
                 href="/muuttolaskuri"
                 className="bg-primary text-regular hover:shadow-1 inline-flex w-fit rounded-full px-7.5 py-3 leading-7 font-medium text-white transition-all duration-300 hover:bg-primary/90 hover:shadow-lg ease-in-out"
               >
-                Muuttolaskuri
+                {tHeader('Muuttolaskuri')}
               </Link>
               {/*Below the button insert VASTAUS TULEE AUTOMAATTISESTI*/}
 
@@ -102,20 +109,20 @@ export default function HeroContent({ content }: { content?: any }) {
                   href={`tel:${siteConfig.contact.phone.tel}`}
                   className="hover:text-primary inline-block text-lg font-medium text-black/90 transition-colors duration-300 dark:text-white"
                 >
-                  {` Soita meille ${siteConfig.contact.phone.display} `}
+                  {locale === 'en' ? ` Call us ${siteConfig.contact.phone.display} ` : ` Soita meille ${siteConfig.contact.phone.display} `}
                 </a>
                 <span className="inline-block text-black/60 dark:text-white/70">
-                  Maksuton kartoitus ja neuvonta
+                  {t('Maksuton kartoitus ja neuvonta')}
                 </span>
               </span>
             </div>
 
             <div className="mt-6 flex flex-wrap gap-4 text-sm font-medium text-black/70 dark:text-white/70">
               <span className="flex items-center gap-2">
-                <span className="text-green-500">✅</span> Vakuutettu ja rekisteröity
+                <span className="text-green-500">✅</span> {t('Vakuutettu ja rekisteröity')}
               </span>
               <span className="flex items-center gap-2">
-                <span className="text-green-500">✅</span> Nopea vastaus
+                <span className="text-green-500">✅</span> {t('Nopea vastaus')}
               </span>
             </div>
           </div>

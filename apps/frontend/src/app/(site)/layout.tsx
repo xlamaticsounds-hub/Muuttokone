@@ -4,8 +4,10 @@ import ToasterContext from '@/app/context/ToastContext';
 import Footer from '@/components/Footer';
 import ScrollToTop from '@/components/ScrollToTop';
 import React from 'react';
+import { cookies } from 'next/headers';
 import { Providers } from './providers';
 import { siteConfig } from '@/config/site';
+import { LOCALE_COOKIE, type Locale } from '@/i18n/LocaleContext';
 import Script from 'next/script';
 import GA from '@/components/Analytics/GA';
 import StructuredData from '@/components/SEO/StructuredData';
@@ -16,11 +18,15 @@ export default async function SiteLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const localeCookie = cookieStore.get(LOCALE_COOKIE)?.value;
+  const initialLocale: Locale = localeCookie === 'en' ? 'en' : 'fi';
+
   return (
     <>
       <StructuredData type="LocalBusiness" />
       <ToasterContext />
-      <Providers siteConfig={siteConfig}>
+      <Providers siteConfig={siteConfig} initialLocale={initialLocale}>
         <NextTopLoader color="#006BFF" crawlSpeed={300} showSpinner={false} shadow="none" />
         {/* Page background and decorative glows for depth */}
         <div className="relative min-h-screen">
