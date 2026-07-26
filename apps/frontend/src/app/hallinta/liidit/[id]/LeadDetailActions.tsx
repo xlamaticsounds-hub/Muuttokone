@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateLeadDetails } from '@/server/actions';
 import { sendQuoteEmail } from '@/server/send-quote';
+import { parseLeadFormData, getStoredPrice } from '@/server/lead-format';
 import { Lead, Contact } from '@prisma/client';
 
 export default function LeadDetailActions({
@@ -18,6 +19,8 @@ export default function LeadDetailActions({
   const [quoteFeedback, setQuoteFeedback] = useState<{ ok: boolean; message: string } | null>(null);
 
   const alreadySent = lead.status === 'PROPOSAL_SENT' || lead.status === 'WON';
+  const pfd = parseLeadFormData(lead.formData);
+  const { confirmed: confirmedPrice, low: estimateLow, high: estimateHigh } = getStoredPrice(pfd);
 
   const handleSendQuote = async () => {
     if (!lead.contact.email) return;
@@ -65,6 +68,21 @@ export default function LeadDetailActions({
   return (
     <>
       <div className="flex flex-col gap-2">
+        <div className="mb-1 rounded-md bg-gray-50 px-3 py-2 text-sm dark:bg-gray-900/50">
+          {confirmedPrice !== null ? (
+            <>
+              <span className="text-gray-500 dark:text-gray-400">Vahvistettu hinta: </span>
+              <span className="font-semibold text-gray-900 dark:text-white">{confirmedPrice} €</span>
+            </>
+          ) : estimateLow !== null && estimateHigh !== null ? (
+            <>
+              <span className="text-gray-500 dark:text-gray-400">Ei vahvistettua hintaa — laskurin arvio: </span>
+              <span className="font-medium text-gray-700 dark:text-gray-300">{estimateLow}–{estimateHigh} €</span>
+            </>
+          ) : (
+            <span className="text-gray-500 dark:text-gray-400">Ei hintaa vielä asetettu.</span>
+          )}
+        </div>
         <button
           onClick={handleSendQuote}
           disabled={sendingQuote || !lead.contact.email}
@@ -98,6 +116,22 @@ export default function LeadDetailActions({
           <div className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800">
             <h2 className="mb-4 text-xl font-bold dark:text-white">Muokkaa liidiä</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/30">
+                <label className="block text-xs font-medium text-blue-700 uppercase dark:text-blue-300">
+                  Vahvistettu hinta (€) — ohittaa laskurin arvion sähköpostitse lähetettävässä tarjouksessa
+                </label>
+                <input
+                  type="number"
+                  step="1"
+                  name="confirmedPrice"
+                  placeholder={estimateLow !== null && estimateHigh !== null ? `Laskurin arvio: ${estimateLow}–${estimateHigh}` : 'Esim. 450'}
+                  defaultValue={confirmedPrice ?? ''}
+                  className="mt-1 w-full rounded-md border border-blue-300 bg-white px-3 py-2 text-sm dark:border-blue-800 dark:bg-gray-800 dark:text-white"
+                />
+                <p className="mt-1 text-xs text-blue-600 dark:text-blue-400">
+                  Jätä tyhjäksi jos haluat että sähköpostissa näkyy laskurin arvioima hintahaarukka.
+                </p>
+              </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-xs font-medium text-gray-500 uppercase">Mistä</label>

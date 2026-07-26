@@ -84,8 +84,16 @@ export function getPackageLabel(pfd: Record<string, unknown>): string | null {
   return typeof pfd.movingPackage === 'string' ? PACKAGE_LABELS[pfd.movingPackage] ?? pfd.movingPackage : null;
 }
 
-export function getStoredPrice(pfd: Record<string, unknown>): { exact: number | null; low: number | null; high: number | null } {
+export function getStoredPrice(pfd: Record<string, unknown>): {
+  confirmed: number | null;
+  exact: number | null;
+  low: number | null;
+  high: number | null;
+} {
   return {
+    // Ihmisen hallintapaneelissa vahvistama kiinteä hinta — jos asetettu, tämä korvaa
+    // laskurin nettisivulla näyttämän arvion lopullisessa, sähköpostitse lähetettävässä tarjouksessa.
+    confirmed: typeof pfd.confirmedPrice === 'number' ? pfd.confirmedPrice : null,
     exact: typeof pfd.price === 'number' ? pfd.price : null,
     low: typeof pfd.priceRangeLow === 'number' ? pfd.priceRangeLow : null,
     high: typeof pfd.priceRangeHigh === 'number' ? pfd.priceRangeHigh : null,

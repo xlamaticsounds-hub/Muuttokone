@@ -177,7 +177,24 @@ export async function updateLeadDetails(leadId: string, data: any) {
   }
 
   const { prisma } = await import('@/server/db');
-  
+  const { parseLeadFormData } = await import('@/server/lead-format');
+
+  // Vahvistettu (kiinteä) hinta ei ole oma Prisma-sarake — se tallennetaan olemassa olevan
+  // formData-JSONin sisään ("confirmedPrice"), jotta tämä ei vaadi tietokantamigraatiota.
+  // sendQuoteEmail (send-quote.ts) suosii tätä arvoa laskurin hinta-arvion sijaan, kun se on
+  // asetettu — juuri sitä varten että laskurin nettisivulla näkyvä ARVIO ja sähköpostitse
+  // lähetetty lopullinen TARJOUS voivat olla eri asioita.
+  const existingLead = await prisma.lead.findUnique({ where: { id: leadId }, select: { formData: true } });
+  const existingFormData = parseLeadFormData(existingLead?.formData ?? null);
+  const confirmedPriceRaw = typeof data.confirmedPrice === 'string' ? data.confirmedPrice.trim() : data.confirmedPrice;
+  const updatedFormData = { ...existingFormData };
+  if (confirmedPriceRaw === '' || confirmedPriceRaw === undefined || confirmedPriceRaw === null) {
+    delete updatedFormData.confirmedPrice;
+  } else {
+    const parsed = parseFloat(confirmedPriceRaw);
+    if (!Number.isNaN(parsed)) updatedFormData.confirmedPrice = parsed;
+  }
+
   // Basic mapping of fields
   await prisma.lead.update({
     where: { id: leadId },
@@ -191,6 +208,7 @@ export async function updateLeadDetails(leadId: string, data: any) {
       hasElevator: data.hasElevator === 'true' || data.hasElevator === true,
       boxCount: data.boxCount ? parseInt(data.boxCount) : null,
       notes: data.notes,
+      formData: JSON.stringify(updatedFormData),
     },
   });
 

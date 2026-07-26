@@ -52,6 +52,7 @@ function renderQuoteEmailHtml(params: {
   requestedDate: Date | null;
   serviceLabel: string;
   packageLabel: string | null;
+  priceConfirmed: number | null;
   priceLow: number | null;
   priceHigh: number | null;
   priceExact: number | null;
@@ -61,27 +62,35 @@ function renderQuoteEmailHtml(params: {
 }): string {
   const {
     contactName, fromAddress, toAddress, requestedDate, serviceLabel, packageLabel,
-    priceLow, priceHigh, priceExact, items, wasteTypes, extras,
+    priceConfirmed, priceLow, priceHigh, priceExact, items, wasteTypes, extras,
   } = params;
 
-  const priceHtml =
-    priceLow !== null && priceHigh !== null
+  // Vahvistettu (kiinteä) hinta ohittaa aina laskurin nettisivulla näyttämän arvion —
+  // ks. server/actions.ts:updateLeadDetails ja lead-format.ts:getStoredPrice.
+  const isFixedPrice = priceConfirmed !== null;
+  const priceHtml = isFixedPrice
+    ? `${priceConfirmed} €`
+    : priceLow !== null && priceHigh !== null
       ? `${priceLow}–${priceHigh} €`
       : priceExact !== null
         ? `${priceExact} €`
         : 'Tarkennetaan puhelimitse';
+  const priceLabel = isFixedPrice ? 'Tarjoushinta' : 'Arvioitu hinta';
+  const priceSubtext = isFixedPrice
+    ? 'sis. ALV — kiinteä tarjous'
+    : 'sis. ALV — lopullinen hinta vahvistetaan yhdessä kanssasi';
 
   return `
   <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;padding:32px 20px;color:#111827;">
     <p style="font-size:16px;margin:0 0 4px;">Hei ${esc(contactName || '')},</p>
     <p style="font-size:16px;line-height:1.6;margin:0 0 24px;">
-      Kiitos yhteydenotostasi! Tässä on ${esc(serviceLabel).toLowerCase()}n hinta-arviosi Muuttokoneelta.
+      Kiitos yhteydenotostasi! Tässä on ${esc(serviceLabel).toLowerCase()}si ${isFixedPrice ? 'tarjous' : 'hinta-arvio'} Muuttokoneelta.
     </p>
 
     <div style="background:#111827;color:#ffffff;border-radius:16px;padding:24px;margin-bottom:24px;">
-      <p style="margin:0 0 4px;font-size:13px;letter-spacing:0.04em;text-transform:uppercase;color:#9ca3af;">Arvioitu hinta</p>
+      <p style="margin:0 0 4px;font-size:13px;letter-spacing:0.04em;text-transform:uppercase;color:#9ca3af;">${esc(priceLabel)}</p>
       <p style="margin:0;font-size:32px;font-weight:800;">${priceHtml}</p>
-      <p style="margin:8px 0 0;font-size:13px;color:#9ca3af;">sis. ALV — lopullinen hinta vahvistetaan yhdessä kanssasi</p>
+      <p style="margin:8px 0 0;font-size:13px;color:#9ca3af;">${esc(priceSubtext)}</p>
     </div>
 
     <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
@@ -170,7 +179,7 @@ async function sendQuoteEmailInner(leadId: string): Promise<SendQuoteResult> {
   }
 
   const pfd = parseLeadFormData(lead.formData);
-  const { exact: priceExact, low: priceLow, high: priceHigh } = getStoredPrice(pfd);
+  const { confirmed: priceConfirmed, exact: priceExact, low: priceLow, high: priceHigh } = getStoredPrice(pfd);
   const items = getInventoryEntries(pfd);
   const wasteTypes = getWasteTypeLabels(pfd);
   const extras = getExtraServices(pfd);
@@ -185,6 +194,7 @@ async function sendQuoteEmailInner(leadId: string): Promise<SendQuoteResult> {
     requestedDate: lead.requestedDate,
     serviceLabel,
     packageLabel,
+    priceConfirmed,
     priceLow,
     priceHigh,
     priceExact,
@@ -193,7 +203,12 @@ async function sendQuoteEmailInner(leadId: string): Promise<SendQuoteResult> {
     extras,
   });
 
-  const subjectPrice = priceLow !== null && priceHigh !== null ? ` — ${priceLow}–${priceHigh} €` : '';
+  const subjectPrice =
+    priceConfirmed !== null
+      ? ` — ${priceConfirmed} €`
+      : priceLow !== null && priceHigh !== null
+        ? ` — ${priceLow}–${priceHigh} €`
+        : '';
   const senderName = process.env.QUOTE_EMAIL_FROM_NAME || 'Muuttokone.fi';
 
   // Ladataan nodemailer vasta täällä (ei moduulin huipulla) jotta puuttuvat SMTP-asetukset
@@ -234,7 +249,7 @@ async function sendQuoteEmailInner(leadId: string): Promise<SendQuoteResult> {
     entityId: leadId,
     action: 'lead.quote_sent',
     message: `Tarjous lähetetty sähköpostitse osoitteeseen ${lead.contact.email}`,
-    data: { email: lead.contact.email, priceLow, priceHigh, priceExact },
+    data: { email: lead.contact.email, priceConfirmed, priceLow, priceHigh, priceExact },
     actorId: session.user?.email ?? null,
   });
 
