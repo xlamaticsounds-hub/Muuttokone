@@ -29,7 +29,7 @@ export default async function SiteLayout({
       <Providers siteConfig={siteConfig} initialLocale={initialLocale}>
         <NextTopLoader color="#006BFF" crawlSpeed={300} showSpinner={false} shadow="none" />
         {/* Page background and decorative glows for depth */}
-        <div className="relative min-h-screen">
+        <div className="site-zoom-out relative min-h-screen">
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 -z-20 bg-gradient-to-b from-gray-50 via-white to-white dark:from-[#0b0c0f] dark:via-[#0b0c0f] dark:to-black"

@@ -208,3 +208,19 @@
     animation-timing-function: var(--ease-smooth);
   }
 }
+
+/* Public site slightly zoomed out by default (like browser zoom at ~90%) —
+   scoped to the (site) layout wrapper only, not the hallinta admin panel. */
+.site-zoom-out {
+  zoom: 90%;
+}
+
+/* html/body use a fixed height:100% (h-full) globally. Combined with zoom on a
+   descendant, that fixed height stops scrollHeight from ever growing past the
+   viewport — the page becomes unscrollable. Only relax it to min-height on
+   pages that actually use the zoom wrapper, so hallinta is unaffected. */
+html:has(.site-zoom-out),
+body:has(.site-zoom-out) {
+  height: auto;
+  min-height: 100%;
+}
