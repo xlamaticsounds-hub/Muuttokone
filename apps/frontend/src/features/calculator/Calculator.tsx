@@ -1120,27 +1120,6 @@ export default function Calculator() {
 
                 <div className="grid md:grid-cols-2 gap-4">
                   <div
-                    onClick={() => toggleService('Muuttolaatikot')}
-                    className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex items-center gap-4 ${
-                      formData.services.includes('Muuttolaatikot') ? 'border-primary bg-primary/5' : 'border-gray-100 dark:border-gray-800'
-                    }`}
-                  >
-                    <div
-                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
-                        formData.services.includes('Muuttolaatikot') ? 'border-primary bg-primary' : 'border-gray-300'
-                      }`}
-                    >
-                      {formData.services.includes('Muuttolaatikot') && (
-                        <span className="text-white text-xs">✓</span>
-                      )}
-                    </div>
-                    <div>
-                      <h4 className="font-bold">Muuttolaatikot</h4>
-                      <p className="text-xs text-gray-500">Laatikoiden toimitus ja nouto</p>
-                    </div>
-                  </div>
-
-                  <div
                     onClick={() => toggleService('Purkupalvelu')}
                     className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex items-center gap-4 ${
                       formData.services.includes('Purkupalvelu') ? 'border-primary bg-primary/5' : 'border-gray-100 dark:border-gray-800'
@@ -1181,9 +1160,7 @@ export default function Calculator() {
                       <p className="text-xs text-gray-500">Poistettavien tavaroiden kierrätys</p>
                     </div>
                   </div>
-                </div>
 
-                <div className="grid md:grid-cols-2 gap-4">
                   <div
                     onClick={() => updateField('needsPacking', !formData.needsPacking)}
                     className={`p-6 rounded-2xl border-2 cursor-pointer transition-all flex items-center gap-4 ${
