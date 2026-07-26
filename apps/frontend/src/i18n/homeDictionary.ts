@@ -41,15 +41,6 @@ export const heroDictionary: Record<string, string> = {
   'erikoiskuljetuksissa': 'special transports',
 };
 
-export const statsDictionary: Record<string, string> = {
-  '4.9/5 asiakastyytyväisyys': '4.9/5 customer satisfaction',
-  'Keskiarvo viimeisen 12 kk aikana': 'Average over the last 12 months',
-  '3 200+ muuttoa': '3,200+ moves',
-  'Kotitaloudet ja yritykset': 'Households and businesses',
-  '98 % aikataulussa': '98% on schedule',
-  'Toimitukset sovitussa ajassa': 'Deliveries within the agreed time',
-};
-
 export const pricingPreviewDictionary: Record<string, string> = {
   '🔥 Muutot alk. 200€': '🔥 Moves from €200',
   '5 km sisältyy hintaan': '5 km included in the price',

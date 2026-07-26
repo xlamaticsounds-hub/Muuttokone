@@ -9,7 +9,6 @@ import Contact from '@/features/contact';
 import Cta from '@/components/Cta';
 import Calculator from '@/features/calculator/Calculator';
 import CalculatorIntro from '@/components/CalculatorIntro';
-import StatsBand from '@/components/StatsBand';
 import ProcessSteps from '@/components/ProcessSteps';
 import PricingPreview from '@/components/PricingPreview';
 import Faq from '@/components/Faq';
@@ -45,7 +44,6 @@ export default async function Home() {
   return (
     <>
       <HeroArea content={pageData?.sections?.[0]?.props} />
-      <StatsBand />
       <ServicesDivider />
       <ProcessSteps />
       <section id="muuttolaskuri" className="bg-gray-1 dark:bg-bg-color-dark py-8 lg:py-12 scroll-mt-20">
