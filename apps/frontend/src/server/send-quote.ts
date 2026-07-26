@@ -124,27 +124,49 @@ function renderQuoteEmailHtml(params: {
   </div>`;
 }
 
+export type SendQuoteResult = { success: true; sentTo: string } | { success: false; message: string };
+
 /**
  * Lähettää tarjouksen liidin yhteystiedon sähköpostiin ja merkitsee liidin tilaan
  * PROPOSAL_SENT. Kutsutaan vasta kun ihminen on itse tarkistanut liidin hallintapaneelista
  * ja painanut "Lähetä tarjous" — ei koskaan automaattisesti varauksen yhteydessä.
+ *
+ * Palauttaa aina tuloksen (ei heitä poikkeuksia) — Next.js piilottaa Server Actionin
+ * throw-virheiden viestin tuotannossa turvallisuussyistä ("An error occurred in the
+ * Server Components render..."), jolloin käyttäjä ei koskaan näe mitä oikeasti meni
+ * pieleen. Oikea virhe kirjataan aina palvelimen lokiin (console.error) debuggausta varten.
  */
-export async function sendQuoteEmail(leadId: string): Promise<{ success: true; sentTo: string }> {
+export async function sendQuoteEmail(leadId: string): Promise<SendQuoteResult> {
+  try {
+    return await sendQuoteEmailInner(leadId);
+  } catch (err) {
+    // Viimeinen turvaverkko: mikä tahansa odottamaton virhe (esim. tietokantayhteys poikki)
+    // kirjataan lokiin mutta EI heitetä eteenpäin — throw täältä näkyisi asiakkaalle vain
+    // Next.js:n yleisenä "An error occurred in the Server Components render" -viestinä.
+    console.error('sendQuoteEmail: unexpected error', err);
+    return {
+      success: false,
+      message: err instanceof Error ? err.message : 'Odottamaton virhe tarjouksen lähetyksessä.',
+    };
+  }
+}
+
+async function sendQuoteEmailInner(leadId: string): Promise<SendQuoteResult> {
   const session = await getServerSession(authOptions);
   if (!session) {
-    throw new Error('Kirjaudu sisään lähettääksesi tarjouksen.');
+    return { success: false, message: 'Kirjaudu sisään lähettääksesi tarjouksen.' };
   }
 
   if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
-    throw new Error('Sähköpostiasetuksia (SMTP_HOST/SMTP_USER/SMTP_PASSWORD) ei ole vielä määritetty palvelimelle.');
+    return { success: false, message: 'Sähköpostiasetuksia (SMTP_HOST/SMTP_USER/SMTP_PASSWORD) ei ole vielä määritetty palvelimelle.' };
   }
 
   const lead = await prisma.lead.findUnique({ where: { id: leadId }, include: { contact: true } });
   if (!lead) {
-    throw new Error('Liidiä ei löytynyt.');
+    return { success: false, message: 'Liidiä ei löytynyt.' };
   }
   if (!lead.contact.email) {
-    throw new Error('Tällä liidillä ei ole sähköpostiosoitetta — ei voida lähettää tarjousta sähköpostitse.');
+    return { success: false, message: 'Tällä liidillä ei ole sähköpostiosoitetta — ei voida lähettää tarjousta sähköpostitse.' };
   }
 
   const pfd = parseLeadFormData(lead.formData);
@@ -198,7 +220,11 @@ export async function sendQuoteEmail(leadId: string): Promise<{ success: true; s
       html,
     });
   } catch (err) {
-    throw new Error(`Sähköpostin lähetys epäonnistui: ${err instanceof Error ? err.message : 'tuntematon virhe'}`);
+    console.error('sendQuoteEmail: SMTP send failed', err);
+    return {
+      success: false,
+      message: `Sähköpostin lähetys epäonnistui: ${err instanceof Error ? err.message : 'tuntematon virhe'}`,
+    };
   }
 
   await prisma.lead.update({ where: { id: leadId }, data: { status: LeadStatus.PROPOSAL_SENT } });

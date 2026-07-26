@@ -30,9 +30,14 @@ export default function LeadDetailActions({
     setQuoteFeedback(null);
     try {
       const result = await sendQuoteEmail(lead.id);
-      setQuoteFeedback({ ok: true, message: `Tarjous lähetetty osoitteeseen ${result.sentTo}.` });
-      router.refresh();
+      if (result.success) {
+        setQuoteFeedback({ ok: true, message: `Tarjous lähetetty osoitteeseen ${result.sentTo}.` });
+        router.refresh();
+      } else {
+        setQuoteFeedback({ ok: false, message: result.message });
+      }
     } catch (err) {
+      // Ei pitäisi tapahtua (sendQuoteEmail ei enää heitä), mutta varmuuden vuoksi.
       setQuoteFeedback({ ok: false, message: err instanceof Error ? err.message : 'Lähetys epäonnistui.' });
     } finally {
       setSendingQuote(false);
