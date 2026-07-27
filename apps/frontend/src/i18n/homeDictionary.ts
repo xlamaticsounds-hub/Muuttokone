@@ -42,7 +42,7 @@ export const heroDictionary: Record<string, string> = {
 };
 
 export const pricingPreviewDictionary: Record<string, string> = {
-  '🔥 Muutot alk. 200€': '🔥 Moves from €200',
+  '🔥 Muutot alk. 189€': '🔥 Moves from €189',
   '5 km sisältyy hintaan': '5 km included in the price',
   'Yksiö (25-35m²)': 'Studio (25–35 m²)',
   'Suosittu': 'Popular',

@@ -13,7 +13,7 @@ export default function PricingPreview() {
         {/* Pricing Badge */}
         <div className="animate_top mx-auto mb-10 max-w-fit rounded-full bg-white px-6 py-2 text-center shadow-lg ring-1 ring-black/5 md:px-8 md:py-3 dark:bg-black dark:ring-white/10">
           <p className="flex flex-wrap items-center justify-center gap-2 text-sm font-semibold text-black md:text-base dark:text-white">
-            <span className="text-primary">{t('🔥 Muutot alk. 200€')}</span>
+            <span className="text-primary">{t('🔥 Muutot alk. 189€')}</span>
             <span className="hidden h-1 w-1 rounded-full bg-gray-300 sm:block"></span>
             <span>{t('5 km sisältyy hintaan')}</span>
           </p>
@@ -34,7 +34,7 @@ export default function PricingPreview() {
             </p>
             <div className="mb-6 flex items-baseline gap-1">
               <span className="text-sm font-medium text-black/60 dark:text-white/60">{t('Alkaen')}</span>
-              <span className="text-3xl font-bold text-primary">200€</span>
+              <span className="text-3xl font-bold text-primary">189€</span>
             </div>
             <ul className="mb-8 space-y-3 text-sm font-medium text-black dark:text-white">
               <li className="flex items-center gap-3">
