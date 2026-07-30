@@ -80,7 +80,7 @@ export default function PricingPreview() {
             </p>
             <div className="mb-6 flex items-baseline gap-1">
               <span className="text-sm font-medium text-black/60 dark:text-white/60">{t('Alkaen')}</span>
-              <span className="text-3xl font-bold text-primary">450€</span>
+              <span className="text-3xl font-bold text-primary">299€</span>
             </div>
             <ul className="mb-8 space-y-3 text-sm font-medium text-black dark:text-white">
               <li className="flex items-center gap-3">

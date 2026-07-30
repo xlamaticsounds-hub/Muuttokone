@@ -417,7 +417,7 @@ const COORDINATION_TIME_HOURS = 0.25;
 // yrityksen todellisella (kevyellä, ei-alv-velvollisella) kulurakenteella.
 const FULL_SERVICE_MIN_PRICE: Partial<Record<CalculatorData['apartmentSize'], number>> = {
   '1h': 189,
-  '2h': 300,
+  '2h': 299,
   '3h': 500,
 };
 
