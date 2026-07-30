@@ -403,14 +403,22 @@ function applyCrewEfficiency(rawHandlingMinutes: number, apartmentSize: Calculat
 // vain tarkistusmuuttuja, ei hinnoitteluperuste.
 const COORDINATION_TIME_HOURS = 0.25;
 
-// v2.2 kalibrointikorjaus: täyden palvelun (full_service) kaksio (2h) hinnoiteltiin
-// tavaralistapohjaisesti jäljelle jäävää markkinaa selvästi halvemmaksi (tyypillinen
-// kalustettu kaksio ~2,75-3,75h laskurissa vs. kilpailijoiden tyypillinen 3-5h samasta
-// työstä). Muita kokoluokkia EI kosketa — vain kaksio nostettiin, koska vain se oli
-// alihinnoiteltu suhteessa markkinaan. Tämä on vähimmäisveloitus, ei korvaa
-// tavaralistalaskentaa: iso kaksio joka jo ylittää tämän ajan hinnoitellaan normaalisti.
-const FULL_SERVICE_MIN_LABOR_HOURS: Partial<Record<CalculatorData['apartmentSize'], number>> = {
-  '2h': 4.5,
+// v2.4 hinnoitteluperiaate: yritys haluaa olla markkinoiden HALVIN mutta silti voittoa
+// tekevä, ja hinnan pitää määräytyä tavaramäärästä (ei keinotekoisesta tuntiminimistä) -
+// tunti-pohjainen minimi (aiempi v2.2/v2.3-yritys) vääristi näytettyä työaikaa, vaikka
+// tarkoitus oli vain estää liian halpa loppuhinta. Euromääräinen vähimmäishinta on
+// rehellisempi: sama periaate kuin driverWithVehicleMinimum/carryingHelpMinimum-paketeilla
+// jo käyttävät, nyt myös täydelle palvelulle. Kevyt/pieni tavaramäärä hinnoitellaan yhä
+// puhtaasti tavaralistan mukaan - minimi vaikuttaa vain jos se ylittäisi laskennallisen hinnan.
+//
+// Tasot kalibroitu kilpailijoiden halvimpiin julkaistuihin minimiveloituksiin nähden
+// (esim. Muuttohelposti/Avainmuutto 2h-minimit ~170-264 €, MuuttoPAVU 3h-minimi 357 €) -
+// nämä asettuvat niiden alle tai samalle tasolle, ja on vahvistettu kannattavaksi tämän
+// yrityksen todellisella (kevyellä, ei-alv-velvollisella) kulurakenteella.
+const FULL_SERVICE_MIN_PRICE: Partial<Record<CalculatorData['apartmentSize'], number>> = {
+  '1h': 189,
+  '2h': 300,
+  '3h': 500,
 };
 
 // Mukautetun (katalogin ulkopuolisen) tavaran oletuskäsittelyaika — keskikokoisen
@@ -919,21 +927,18 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
     hourlyRate = PRICING_CONSTANTS.hourlyRateComplex;
   }
 
-  // Kalibrointikorjaus: vain full_service, vain kokoluokat joilla on FULL_SERVICE_MIN_LABOR_HOURS-arvo
-  // (ks. määrittely yllä) — ei vaikuta driver_with_vehicle/carrying_help-paketteihin, jotka
-  // palasivat jo omalla logiikallaan ennen tätä kohtaa.
-  const minLaborHours = FULL_SERVICE_MIN_LABOR_HOURS[apartmentSize];
-  if (minLaborHours) {
-    totalLaborHours = Math.max(totalLaborHours, minLaborHours);
-  }
-
   const laborCost = totalLaborHours * hourlyRate;
 
   // 3. Extras (reserved for future separately-priced add-ons; currently folded into labor)
   const extrasCost = 0;
 
-  // 4. Totals — ei minimihintaa tavaralistapohjaisessa hinnoittelussa (v2-speksi)
-  const subtotal = distanceCost + laborCost + extrasCost;
+  // 4. Totals — euromääräinen vähimmäishinta (ks. FULL_SERVICE_MIN_PRICE yllä), sovelletaan
+  // ennen muuttopäivän alennusta samalla tavalla kuin driver_with_vehicle/carrying_help.
+  let subtotal = distanceCost + laborCost + extrasCost;
+  const minPrice = FULL_SERVICE_MIN_PRICE[apartmentSize];
+  if (minPrice && subtotal < minPrice) {
+    subtotal = minPrice;
+  }
   const normalPriceTotal = subtotal;
   const { total, dateDiscountAmount } = applyDateDiscount(normalPriceTotal);
   const vat = total - (total / (1 + PRICING_CONSTANTS.vatRate));
@@ -955,9 +960,11 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
   const carryDistanceImpact = (carryDistanceExtraMinutes / 60) * hourlyRate;
   const extrasImpact = ((assemblyMinutes + packingMinutes) / 60) * hourlyRate;
   const distanceImpact = distanceCost + driveTime * hourlyRate;
-  // "Base" saa loput (perusaika + 15 min -pyöristyksen erotus), jotta erittely summautuu
-  // AINA tarkalleen samaksi kuin näytetty hinta — ei pelkkää adminTime*hourlyRate-arviota.
-  const baseImpact = laborCost - itemsImpact - floorsImpact - carryDistanceImpact - extrasImpact - driveTime * hourlyRate;
+  // "Base" saa loput (perusaika + 15 min -pyöristyksen erotus + mahdollinen vähimmäishinnan
+  // korotus), jotta erittely summautuu AINA tarkalleen samaksi kuin näytetty hinta —
+  // käytetään normalPriceTotal:ia (ei raakaa laborCost:ia) samaan tapaan kuin muissa
+  // paketeissa, jotta FULL_SERVICE_MIN_PRICE-korotus (jos se laukesi) näkyy "base"-erässä.
+  const baseImpact = (normalPriceTotal - distanceCost) - itemsImpact - floorsImpact - carryDistanceImpact - extrasImpact - driveTime * hourlyRate;
 
   return {
     distanceCost,
