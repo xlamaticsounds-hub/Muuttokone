@@ -17,7 +17,7 @@ const faqData = [
   },
   {
     q: 'Mitä hyötyä muuttolaskurista on?',
-    a: 'Muuttolaskuri antaa sinulle tarkan, kiinteän hinta-arvion vain 3 minuutissa antamiesi tietojen perusteella – ei tarvitse odottaa puhelinsoittoa tai sähköpostia. Näet suoraan arvioidun työajan, tarvittavan kaluston ja hinnan haarukan, ja voit verrata eri palvelupaketteja ennen päätöksentekoa.',
+    a: 'Muuttolaskuri antaa sinulle tarkan, kiinteän hinta-arvion vain muutamassa sekunnissa antamiesi tietojen perusteella – ei tarvitse odottaa puhelinsoittoa tai sähköpostia. Näet suoraan arvioidun työajan, tarvittavan kaluston ja hinnan haarukan, ja voit verrata eri palvelupaketteja ennen päätöksentekoa.',
   },
   {
     q: 'Sisältyykö muuttooni vakuutus?',

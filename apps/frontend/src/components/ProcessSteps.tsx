@@ -8,7 +8,7 @@ import { processStepsDictionary } from '@/i18n/homeDictionary';
 const steps = [
   {
     title: 'Laske tarkka hinta muuttolaskurilla',
-    desc: 'Täytä tietosi vain 3 minuutissa ja saat tarkan, sitoumuksettoman hinnan heti – ei arvailua, ei piilokuluja, ei odottelua.',
+    desc: 'Täytä tietosi vain muutamassa sekunnissa ja saat tarkan, sitoumuksettoman hinnan heti – ei arvailua, ei piilokuluja, ei odottelua.',
     icon: Calculator,
     highlight: true,
     href: '#muuttolaskuri',

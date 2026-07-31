@@ -92,7 +92,7 @@ export default function HeroContent({ content }: { content?: any }) {
               {content?.description || t('Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Ammattitaitoiset ja tehokkaat muuttopalvelut yksityis- ja yritysasiakkaille. Ei piilokuluja, vain rehellinen hinnoittelu.')}
             </p>
             <p className="text-regular text-primary mt-3 font-semibold sm:text-lg">
-              {t('Laske muuttolaskurilla ja saat kiinteän hinnan jo 3 minuutissa – ei arvailua, ei piilokuluja, vain tarkka hinta etukäteen.')}
+              {t('Laske muuttolaskurilla ja saat kiinteän hinnan jo muutamassa sekunnissa – ei arvailua, ei piilokuluja, vain tarkka hinta etukäteen.')}
             </p>
 
             <div className="mt-8 flex flex-col-reverse gap-5 sm:flex-row">

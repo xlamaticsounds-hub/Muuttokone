@@ -28,8 +28,8 @@ export const heroDictionary: Record<string, string> = {
   'Luotettava apusi': 'Your Reliable Helper',
   'Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Ammattitaitoiset ja tehokkaat muuttopalvelut yksityis- ja yritysasiakkaille. Ei piilokuluja, vain rehellinen hinnoittelu.':
     'A fast, safe, and transparent move in Helsinki and Uusimaa. Professional, efficient moving services for private and business customers. No hidden fees, just honest pricing.',
-  'Laske muuttolaskurilla ja saat kiinteän hinnan jo 3 minuutissa – ei arvailua, ei piilokuluja, vain tarkka hinta etukäteen.':
-    'Use the moving calculator and get a fixed price in just 3 minutes – no guessing, no hidden fees, just an accurate price upfront.',
+  'Laske muuttolaskurilla ja saat kiinteän hinnan jo muutamassa sekunnissa – ei arvailua, ei piilokuluja, vain tarkka hinta etukäteen.':
+    'Use the moving calculator and get a fixed price in just seconds – no guessing, no hidden fees, just an accurate price upfront.',
   'Maksuton kartoitus ja neuvonta': 'Free assessment and advice',
   'Vakuutettu ja rekisteröity': 'Insured and registered',
   'Nopea vastaus': 'Fast response',
@@ -69,8 +69,8 @@ export const processStepsDictionary: Record<string, string> = {
   'Selkeä ja nopea prosessi alusta loppuun – tiedät aina hinnan ja seuraavan askeleen etukäteen. Ei piilokuluja, ei yllätyksiä.':
     'A clear, fast process from start to finish – you always know the price and the next step in advance. No hidden fees, no surprises.',
   'Laske tarkka hinta muuttolaskurilla': 'Calculate an exact price with the moving calculator',
-  'Täytä tietosi vain 3 minuutissa ja saat tarkan, sitoumuksettoman hinnan heti – ei arvailua, ei piilokuluja, ei odottelua.':
-    'Fill in your details in just 3 minutes and get an exact, no-obligation price right away – no guessing, no hidden fees, no waiting.',
+  'Täytä tietosi vain muutamassa sekunnissa ja saat tarkan, sitoumuksettoman hinnan heti – ei arvailua, ei piilokuluja, ei odottelua.':
+    'Fill in your details in just seconds and get an exact, no-obligation price right away – no guessing, no hidden fees, no waiting.',
   'Sovitaan sinulle sopiva ajankohta': "We'll agree on a time that suits you",
   'Käymme yhdessä läpi muuton yksityiskohdat ja varmistamme aikataulun, joka sopii juuri sinulle.':
     "We'll go through the details of your move together and confirm a schedule that works for you.",
@@ -109,8 +109,8 @@ export const faqDictionary: Record<string, string> = {
     'Nothing extra — if the items and details given in the quote match reality, you will not incur any additional costs even if the move takes longer than estimated. Payment is made directly to us, Muuttokone.fi, once the move is complete.',
 
   'Mitä hyötyä muuttolaskurista on?': 'What is the benefit of the moving calculator?',
-  'Muuttolaskuri antaa sinulle tarkan, kiinteän hinta-arvion vain 3 minuutissa antamiesi tietojen perusteella – ei tarvitse odottaa puhelinsoittoa tai sähköpostia. Näet suoraan arvioidun työajan, tarvittavan kaluston ja hinnan haarukan, ja voit verrata eri palvelupaketteja ennen päätöksentekoa.':
-    'The moving calculator gives you an exact, fixed price estimate in just 3 minutes based on the details you provide — no need to wait for a phone call or email. You see the estimated labor time, the equipment needed, and the price range right away, and you can compare different service packages before deciding.',
+  'Muuttolaskuri antaa sinulle tarkan, kiinteän hinta-arvion vain muutamassa sekunnissa antamiesi tietojen perusteella – ei tarvitse odottaa puhelinsoittoa tai sähköpostia. Näet suoraan arvioidun työajan, tarvittavan kaluston ja hinnan haarukan, ja voit verrata eri palvelupaketteja ennen päätöksentekoa.':
+    'The moving calculator gives you an exact, fixed price estimate in just seconds based on the details you provide — no need to wait for a phone call or email. You see the estimated labor time, the equipment needed, and the price range right away, and you can compare different service packages before deciding.',
 
   'Sisältyykö muuttooni vakuutus?': 'Is insurance included in my move?',
   'Kyllä, kaikkiin täyspalvelumuuttoihimme sisältyy muuttovakuutus, joka kattaa tavaroidesi kuljetuksen aikana sattuvat vahingot. Vakuutus on automaattisesti mukana hinnassa, eikä siitä tarvitse maksaa erikseen.':
