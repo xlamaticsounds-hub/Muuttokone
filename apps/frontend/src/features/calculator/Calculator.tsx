@@ -806,9 +806,13 @@ export default function Calculator() {
               <div className="space-y-5">
                 <div className="text-center mb-5">
                   <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1.5">
-                    {formData.serviceType === 'transport' ? t('Kuljettajat ja kohteet') : t('Asunnon koko ja kerrokset')}
+                    {formData.serviceType === 'transport' ? t('Kuljettajat ja kohteet') : t('Nykyisen asuntosi koko ja kerrokset')}
                   </h2>
-                  <p className="text-gray-500">{t('Nämä vaikuttavat tarvittavaan aikaan ja miehitykseen.')}</p>
+                  <p className="text-gray-500">
+                    {formData.serviceType === 'transport'
+                      ? t('Nämä vaikuttavat tarvittavaan aikaan ja miehitykseen.')
+                      : t('Valitse asunnon koko josta muutat pois — se määrittää tarvittavan ajan ja miehityksen.')}
+                  </p>
                 </div>
 
                 {formData.serviceType === 'transport' ? (

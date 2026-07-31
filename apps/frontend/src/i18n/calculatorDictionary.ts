@@ -97,8 +97,9 @@ export const calculatorDictionary: Record<string, string> = {
 
   // Step 3: apartment / driver details
   'Kuljettajat ja kohteet': 'Drivers and destinations',
-  'Asunnon koko ja kerrokset': 'Home size and floors',
+  'Nykyisen asuntosi koko ja kerrokset': 'Your current home\'s size and floors',
   'Nämä vaikuttavat tarvittavaan aikaan ja miehitykseen.': 'These affect the time and crew needed.',
+  'Valitse asunnon koko josta muutat pois — se määrittää tarvittavan ajan ja miehityksen.': 'Choose the size of the home you\'re moving out of — this determines the time and crew needed.',
   'Kuljettajien määrä': 'Number of drivers',
   'Lähtökohde': 'Origin',
   'Kerros': 'Floor',

@@ -156,7 +156,7 @@ async function logEvent(params: {
       entityId: params.entityId,
       action: params.action,
       message: params.message,
-      data: params.data ? JSON.stringify(params.data) : undefined,
+      data: params.data ?? undefined,
       ip: params.ip ?? null,
     },
   });
