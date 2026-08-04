@@ -10,6 +10,7 @@ export const siteConfig = {
     email: 'info@muuttokone.fi',
     openingHours: 'Joka päivä 8:00-22:00.',
   },
+  businessId: '3624534-1',
 } as const;
 
 export type SiteConfig = typeof siteConfig;

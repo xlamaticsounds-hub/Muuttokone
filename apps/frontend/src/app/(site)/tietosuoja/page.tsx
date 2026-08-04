@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { siteConfig } from '@/config/site';
 
 export const metadata: Metadata = {
   title: 'Tietosuojaseloste | Muuttokone.fi',
@@ -21,6 +22,7 @@ export default function PrivacyPolicy() {
             <h2 className="text-xl font-semibold text-black dark:text-white mt-6 mb-4">1. Rekisterinpitäjä</h2>
             <p>
               Muuttokone.fi<br />
+              Y-tunnus: {siteConfig.businessId}<br />
               Helsinki, Suomi<br />
               Sähköposti: info@muuttokone.fi
             </p>

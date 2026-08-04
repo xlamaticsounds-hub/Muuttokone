@@ -61,6 +61,10 @@ export default function Footer() {
                     <span className="text-lg">🕒</span>
                     <span className="leading-relaxed">{siteConfig.contact.openingHours}</span>
                   </li>
+                  <li className="flex items-center gap-3">
+                    <span className="text-lg">🏢</span>
+                    <span>Y-tunnus: {siteConfig.businessId}</span>
+                  </li>
                 </ul>
               </div>
 
