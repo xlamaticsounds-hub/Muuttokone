@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { updateLeadDetails } from '@/server/actions';
 import { sendQuoteEmail } from '@/server/send-quote';
 import { parseLeadFormData, getStoredPrice } from '@/server/lead-format';
@@ -109,6 +110,12 @@ export default function LeadDetailActions({
         >
           Muokkaa tietoja
         </button>
+        <Link
+          href={`/hallinta/liidit/${lead.id}/kuitti`}
+          className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-center text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+        >
+          Tee kuitti
+        </Link>
       </div>
 
       {isEditing && (
