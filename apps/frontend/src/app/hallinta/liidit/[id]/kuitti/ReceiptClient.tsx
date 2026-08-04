@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Plus, Trash2, Printer } from 'lucide-react';
+import { siteConfig } from '@/config/site';
 
 type LineItem = {
   id: string;
@@ -12,10 +13,17 @@ type LineItem = {
 };
 
 const VAT_RATE = 0.255;
-const YTUNNUS_STORAGE_KEY = 'muuttokone_kuitti_ytunnus';
 
 function newId() {
   return Math.random().toString(36).slice(2, 10);
+}
+
+// Antaa kuvausrivin textarean kasvaa sisällön mukana, jotta pitkät tekstit
+// (esim. käsin kirjoitetut osoitteet) eivät leikkaudu näkymättömiin tulosteessa.
+function autoGrow(el: HTMLTextAreaElement | null) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = `${el.scrollHeight}px`;
 }
 
 function formatDateFi(date: Date) {
@@ -47,26 +55,16 @@ export default function ReceiptClient({
   requestedDate: string | null;
   prefillAmount: number | null;
 }) {
-  const [ytunnus, setYtunnus] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Verkkomaksu');
   const [receiptDate] = useState(() => new Date());
   const [items, setItems] = useState<LineItem[]>(() => [
     {
       id: newId(),
-      label: fromAddress && toAddress ? `Muutto: ${fromAddress} → ${toAddress}` : 'Muutto',
+      label: 'Muutto',
       amount: prefillAmount ?? 0,
       vatRate: VAT_RATE,
     },
   ]);
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem(YTUNNUS_STORAGE_KEY);
-    if (stored) setYtunnus(stored);
-  }, []);
-
-  useEffect(() => {
-    if (ytunnus) window.localStorage.setItem(YTUNNUS_STORAGE_KEY, ytunnus);
-  }, [ytunnus]);
 
   const addItem = () => {
     setItems((prev) => [...prev, { id: newId(), label: '', amount: 0, vatRate: VAT_RATE }]);
@@ -115,15 +113,7 @@ export default function ReceiptClient({
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white print:text-black">Muuttokone.fi</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 print:text-gray-600">+358 45 847 0755</p>
             <p className="text-sm text-gray-500 dark:text-gray-400 print:text-gray-600">info@muuttokone.fi</p>
-            <div className="mt-1 flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 print:text-gray-600">
-              <span>Y-tunnus:</span>
-              <input
-                value={ytunnus}
-                onChange={(e) => setYtunnus(e.target.value)}
-                placeholder="XXXXXXX-X"
-                className="w-28 border-b border-dashed border-gray-300 bg-transparent px-1 focus:border-blue-500 focus:outline-none dark:border-gray-600 print:border-none"
-              />
-            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 print:text-gray-600">Y-tunnus: {siteConfig.businessId}</p>
           </div>
           <div className="text-right">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white print:text-black">Kuitti</h2>
@@ -146,6 +136,23 @@ export default function ReceiptClient({
           )}
         </div>
 
+        {/* Muuton osoitteet — omana rivittyvänä lohkona, jotta pitkät osoitteet näkyvät kokonaan */}
+        {(fromAddress || toAddress) && (
+          <div className="mb-8 rounded-md bg-gray-50 p-4 dark:bg-gray-900/50 print:bg-gray-50">
+            <p className="text-xs font-medium uppercase text-gray-500">Muuton osoitteet</p>
+            {fromAddress && (
+              <p className="mt-1 text-sm break-words text-gray-700 dark:text-gray-300 print:text-gray-700">
+                <span className="font-medium">Mistä:</span> {fromAddress}
+              </p>
+            )}
+            {toAddress && (
+              <p className="mt-1 text-sm break-words text-gray-700 dark:text-gray-300 print:text-gray-700">
+                <span className="font-medium">Minne:</span> {toAddress}
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Line items */}
         <table className="mb-2 w-full border-collapse text-sm">
           <thead>
@@ -160,11 +167,16 @@ export default function ReceiptClient({
             {items.map((item) => (
               <tr key={item.id} className="border-b border-gray-100 dark:border-gray-800">
                 <td className="py-2 pr-2">
-                  <input
+                  <textarea
+                    ref={autoGrow}
+                    rows={1}
                     value={item.label}
-                    onChange={(e) => updateItem(item.id, { label: e.target.value })}
+                    onChange={(e) => {
+                      autoGrow(e.target);
+                      updateItem(item.id, { label: e.target.value });
+                    }}
                     placeholder="Esim. Varastointi 3 kk"
-                    className="w-full bg-transparent text-gray-900 focus:outline-none dark:text-white print:text-black"
+                    className="w-full resize-none overflow-hidden bg-transparent text-gray-900 focus:outline-none dark:text-white print:text-black"
                   />
                 </td>
                 <td className="py-2 text-right">
