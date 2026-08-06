@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { prisma } from '@/server/db';
 import { formatDateFi, formatEuro } from '@/lib/format';
+import { computeInvoiceTotals, parseInvoiceItems } from '@/lib/invoice';
 import { Plus } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -48,19 +49,24 @@ export default async function LaskutusPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {invoices.map((invoice) => (
-                <tr key={invoice.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/40">
-                  <td className="px-4 py-3">
-                    <Link href={`/hallinta/laskutus/${invoice.id}`} className="font-medium text-blue-600 hover:underline dark:text-blue-400">
-                      #{invoice.invoiceNumber}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-3 text-gray-900 dark:text-white">{invoice.customerName}</td>
-                  <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{invoice.description}</td>
-                  <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{formatDateFi(invoice.createdAt)}</td>
-                  <td className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-white">{formatEuro(invoice.amount)} €</td>
-                </tr>
-              ))}
+              {invoices.map((invoice) => {
+                const items = parseInvoiceItems(invoice.items);
+                const totals = computeInvoiceTotals(items);
+                const description = items.map((i) => i.description).join(', ');
+                return (
+                  <tr key={invoice.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/40">
+                    <td className="px-4 py-3">
+                      <Link href={`/hallinta/laskutus/${invoice.id}`} className="font-medium text-blue-600 hover:underline dark:text-blue-400">
+                        #{invoice.invoiceNumber}
+                      </Link>
+                    </td>
+                    <td className="px-4 py-3 text-gray-900 dark:text-white">{invoice.customerName}</td>
+                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{description}</td>
+                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{formatDateFi(invoice.createdAt)}</td>
+                    <td className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-white">{formatEuro(totals.gross)} €</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>

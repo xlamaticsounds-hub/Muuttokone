@@ -6,6 +6,7 @@ import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
 import { siteConfig } from '@/config/site';
 import { generateViitenumero } from '@/lib/reference-number';
+import { computeInvoiceTotals, parseInvoiceItems, type InvoiceLineItem } from '@/lib/invoice';
 import { renderInvoicePdf } from '@/server/pdf/invoice-pdf';
 
 // Sama HTML-pako kuin send-quote.ts:ssä — asiakkaan/laskun teksti päätyy raakaan
@@ -27,28 +28,44 @@ function formatEuro(value: number): string {
   return value.toLocaleString('fi-FI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+function renderItemRows(items: InvoiceLineItem[]): string {
+  return items
+    .map(
+      (item) => `
+        <tr>
+          <td style="padding:6px 0;color:#374151;font-size:14px;">${esc(item.description)}</td>
+          <td style="padding:6px 0;color:#111827;font-size:14px;text-align:right;font-weight:600;">${formatEuro(item.amount)} €</td>
+        </tr>`,
+    )
+    .join('');
+}
+
 function renderInvoiceEmailHtml(params: {
   customerName: string;
   invoiceNumber: number;
-  description: string;
-  amount: number;
+  items: InvoiceLineItem[];
+  totalAmount: number;
   dueDate: Date | null;
   viitenumero: string;
 }): string {
-  const { customerName, invoiceNumber, description, amount, dueDate, viitenumero } = params;
+  const { customerName, invoiceNumber, items, totalAmount, dueDate, viitenumero } = params;
 
   return `
   <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;padding:32px 20px;color:#111827;">
     <p style="font-size:16px;margin:0 0 4px;">Hei ${esc(customerName || '')},</p>
     <p style="font-size:16px;line-height:1.6;margin:0 0 24px;">
-      Kiitos kun valitsit Muuttokone.fi:n! Tässä lasku nro ${esc(invoiceNumber)} palvelustamme: ${esc(description)}.
+      Kiitos kun valitsit Muuttokone.fi:n! Tässä lasku nro ${esc(invoiceNumber)}.
     </p>
 
     <div style="background:#111827;color:#ffffff;border-radius:16px;padding:24px;margin-bottom:24px;">
       <p style="margin:0 0 4px;font-size:13px;letter-spacing:0.04em;text-transform:uppercase;color:#9ca3af;">Maksettava summa</p>
-      <p style="margin:0;font-size:32px;font-weight:800;">${formatEuro(amount)} €</p>
+      <p style="margin:0;font-size:32px;font-weight:800;">${formatEuro(totalAmount)} €</p>
       <p style="margin:8px 0 0;font-size:13px;color:#9ca3af;">sis. ALV</p>
     </div>
+
+    <table style="width:100%;border-collapse:collapse;border-top:1px solid #e5e7eb;margin-bottom:16px;">
+      ${renderItemRows(items)}
+    </table>
 
     <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
       <tr>
@@ -124,12 +141,14 @@ async function sendInvoiceEmailInner(invoiceId: string): Promise<SendInvoiceResu
     return { success: false, message: 'Tällä laskulla ei ole sähköpostiosoitetta — valitse asiakas listalta jolla on sähköposti, tai lähetä lasku muulla tavalla.' };
   }
 
+  const items = parseInvoiceItems(invoice.items);
+  const totals = computeInvoiceTotals(items);
   const viitenumero = generateViitenumero(invoice.invoiceNumber);
   const html = renderInvoiceEmailHtml({
     customerName: invoice.customerName,
     invoiceNumber: invoice.invoiceNumber,
-    description: invoice.description,
-    amount: invoice.amount,
+    items,
+    totalAmount: totals.gross,
     dueDate: invoice.dueDate,
     viitenumero,
   });
@@ -143,9 +162,7 @@ async function sendInvoiceEmailInner(invoiceId: string): Promise<SendInvoiceResu
     customerName: invoice.customerName,
     customerAddress: customerAddress || null,
     customerEmail: invoice.contact?.email ?? null,
-    description: invoice.description,
-    amount: invoice.amount,
-    vatRate: invoice.vatRate,
+    items,
     createdAt: invoice.createdAt,
     dueDate: invoice.dueDate,
     viitenumero,
@@ -169,7 +186,7 @@ async function sendInvoiceEmailInner(invoiceId: string): Promise<SendInvoiceResu
     await transporter.sendMail({
       from: `"${senderName}" <${process.env.SMTP_USER}>`,
       to: recipientEmail,
-      subject: `Laskusi Muuttokone.fi:ltä — Nro ${invoice.invoiceNumber} — ${formatEuro(invoice.amount)} €`,
+      subject: `Laskusi Muuttokone.fi:ltä — Nro ${invoice.invoiceNumber} — ${formatEuro(totals.gross)} €`,
       html,
       attachments: [
         {
@@ -194,7 +211,7 @@ async function sendInvoiceEmailInner(invoiceId: string): Promise<SendInvoiceResu
     entityId: invoiceId,
     action: 'invoice.sent',
     message: `Lasku lähetetty sähköpostitse osoitteeseen ${recipientEmail}`,
-    data: { email: recipientEmail, amount: invoice.amount, invoiceNumber: invoice.invoiceNumber },
+    data: { email: recipientEmail, amount: totals.gross, invoiceNumber: invoice.invoiceNumber },
     actorId: session.user?.email ?? null,
   });
 

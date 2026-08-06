@@ -1,6 +1,7 @@
 import path from 'path';
 import { Document, Page, View, Text, Image, StyleSheet, renderToBuffer } from '@react-pdf/renderer';
 import { siteConfig } from '@/config/site';
+import { computeInvoiceTotals, type InvoiceLineItem } from '@/lib/invoice';
 
 // PNG eikä webp — react-pdf:n kuvadekooderi ei tue webp:iä luotettavasti.
 const LOGO_PATH = path.join(process.cwd(), 'public/images/logo/logo.png');
@@ -47,18 +48,15 @@ type InvoicePdfProps = {
   customerName: string;
   customerAddress: string | null;
   customerEmail: string | null;
-  description: string;
-  amount: number;
-  vatRate: number;
+  items: InvoiceLineItem[];
   createdAt: Date;
   dueDate: Date | null;
   viitenumero: string;
 };
 
 function InvoicePdfDocument(props: InvoicePdfProps) {
-  const { invoiceNumber, customerName, customerAddress, customerEmail, description, amount, vatRate, createdAt, dueDate, viitenumero } = props;
-  const net = amount / (1 + vatRate);
-  const vat = amount - net;
+  const { invoiceNumber, customerName, customerAddress, customerEmail, items, createdAt, dueDate, viitenumero } = props;
+  const totals = computeInvoiceTotals(items);
 
   return (
     <Document>
@@ -92,25 +90,27 @@ function InvoicePdfDocument(props: InvoicePdfProps) {
             <Text style={[styles.th, styles.colVat]}>ALV</Text>
             <Text style={[styles.th, styles.colAmount]}>Hinta (sis. alv)</Text>
           </View>
-          <View style={styles.tableRow}>
-            <Text style={styles.colDescription}>{description}</Text>
-            <Text style={styles.colVat}>{vatRate === 0 ? '0 %' : '25,5 %'}</Text>
-            <Text style={styles.colAmount}>{formatEuro(amount)} €</Text>
-          </View>
+          {items.map((item, i) => (
+            <View key={i} style={styles.tableRow}>
+              <Text style={styles.colDescription}>{item.description}</Text>
+              <Text style={styles.colVat}>{item.vatRate === 0 ? '0 %' : '25,5 %'}</Text>
+              <Text style={styles.colAmount}>{formatEuro(item.amount)} €</Text>
+            </View>
+          ))}
         </View>
 
         <View style={styles.totals}>
           <View style={styles.totalsRow}>
             <Text style={styles.totalsLabel}>Veroton hinta</Text>
-            <Text>{formatEuro(net)} €</Text>
+            <Text>{formatEuro(totals.net)} €</Text>
           </View>
           <View style={styles.totalsRow}>
             <Text style={styles.totalsLabel}>ALV</Text>
-            <Text>{formatEuro(vat)} €</Text>
+            <Text>{formatEuro(totals.vat)} €</Text>
           </View>
           <View style={styles.totalsGrandRow}>
             <Text style={styles.totalsGrandLabel}>Yhteensä</Text>
-            <Text style={styles.totalsGrandValue}>{formatEuro(amount)} €</Text>
+            <Text style={styles.totalsGrandValue}>{formatEuro(totals.gross)} €</Text>
           </View>
         </View>
 

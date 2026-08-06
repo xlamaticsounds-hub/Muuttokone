@@ -1,5 +1,6 @@
 import { prisma } from '@/server/db';
 import { notFound } from 'next/navigation';
+import { parseInvoiceItems } from '@/lib/invoice';
 import InvoiceClient from './InvoiceClient';
 
 export const dynamic = 'force-dynamic';
@@ -31,9 +32,7 @@ export default async function InvoicePage({
       customerName={invoice.customerName}
       customerAddress={customerAddress || null}
       customerEmail={invoice.contact?.email ?? null}
-      description={invoice.description}
-      amount={invoice.amount}
-      vatRate={invoice.vatRate}
+      items={parseInvoiceItems(invoice.items)}
       createdAt={invoice.createdAt.toISOString()}
       dueDate={invoice.dueDate ? invoice.dueDate.toISOString() : null}
       sentAt={invoice.sentAt ? invoice.sentAt.toISOString() : null}

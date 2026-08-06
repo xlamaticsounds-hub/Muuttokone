@@ -7,6 +7,7 @@ import { ArrowLeft, Printer, Mail } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { formatDateFi, formatEuro } from '@/lib/format';
 import { generateViitenumero } from '@/lib/reference-number';
+import { computeInvoiceTotals, type InvoiceLineItem } from '@/lib/invoice';
 import { sendInvoiceEmail } from '@/server/send-invoice';
 
 export default function InvoiceClient({
@@ -15,9 +16,7 @@ export default function InvoiceClient({
   customerName,
   customerAddress,
   customerEmail,
-  description,
-  amount,
-  vatRate,
+  items,
   createdAt,
   dueDate,
   sentAt,
@@ -27,9 +26,7 @@ export default function InvoiceClient({
   customerName: string;
   customerAddress: string | null;
   customerEmail: string | null;
-  description: string;
-  amount: number;
-  vatRate: number;
+  items: InvoiceLineItem[];
   createdAt: string;
   dueDate: string | null;
   sentAt: string | null;
@@ -38,8 +35,7 @@ export default function InvoiceClient({
   const [sending, setSending] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; message: string } | null>(null);
 
-  const net = amount / (1 + vatRate);
-  const vat = amount - net;
+  const totals = computeInvoiceTotals(items);
   const viitenumero = generateViitenumero(invoiceNumber);
 
   const handleSend = async () => {
@@ -139,11 +135,13 @@ export default function InvoiceClient({
             </tr>
           </thead>
           <tbody>
-            <tr className="border-b border-gray-100 dark:border-gray-800">
-              <td className="py-2 pr-2 text-gray-900 dark:text-white print:text-black">{description}</td>
-              <td className="py-2 text-right text-gray-700 dark:text-gray-300 print:text-black">{vatRate === 0 ? '0 %' : '25,5 %'}</td>
-              <td className="py-2 text-right font-medium text-gray-900 dark:text-white print:text-black">{formatEuro(amount)} €</td>
-            </tr>
+            {items.map((item, i) => (
+              <tr key={i} className="border-b border-gray-100 dark:border-gray-800">
+                <td className="py-2 pr-2 text-gray-900 dark:text-white print:text-black">{item.description}</td>
+                <td className="py-2 text-right text-gray-700 dark:text-gray-300 print:text-black">{item.vatRate === 0 ? '0 %' : '25,5 %'}</td>
+                <td className="py-2 text-right font-medium text-gray-900 dark:text-white print:text-black">{formatEuro(item.amount)} €</td>
+              </tr>
+            ))}
           </tbody>
         </table>
 
@@ -151,15 +149,15 @@ export default function InvoiceClient({
         <div className="ml-auto max-w-xs space-y-1 border-t border-gray-200 pt-4 text-sm dark:border-gray-700">
           <div className="flex justify-between text-gray-600 dark:text-gray-400 print:text-gray-700">
             <span>Veroton hinta</span>
-            <span>{formatEuro(net)} €</span>
+            <span>{formatEuro(totals.net)} €</span>
           </div>
           <div className="flex justify-between text-gray-600 dark:text-gray-400 print:text-gray-700">
             <span>ALV</span>
-            <span>{formatEuro(vat)} €</span>
+            <span>{formatEuro(totals.vat)} €</span>
           </div>
           <div className="flex justify-between text-base font-bold text-gray-900 dark:text-white print:text-black">
             <span>Yhteensä</span>
-            <span>{formatEuro(amount)} €</span>
+            <span>{formatEuro(totals.gross)} €</span>
           </div>
         </div>
 
