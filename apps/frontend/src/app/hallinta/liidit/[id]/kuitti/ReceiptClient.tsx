@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Plus, Trash2, Printer } from 'lucide-react';
 import { siteConfig } from '@/config/site';
+import { formatDateFi, formatEuro } from '@/lib/format';
 
 type LineItem = {
   id: string;
@@ -24,14 +25,6 @@ function autoGrow(el: HTMLTextAreaElement | null) {
   if (!el) return;
   el.style.height = 'auto';
   el.style.height = `${el.scrollHeight}px`;
-}
-
-function formatDateFi(date: Date) {
-  return date.toLocaleDateString('fi-FI', { day: 'numeric', month: 'long', year: 'numeric' });
-}
-
-function formatEuro(value: number) {
-  return value.toLocaleString('fi-FI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 export default function ReceiptClient({

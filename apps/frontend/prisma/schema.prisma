@@ -67,7 +67,8 @@ model Contact {
   deletedAt DateTime?
 
   // Relations
-  leads Lead[]
+  leads    Lead[]
+  invoices Invoice[]
 }
 
 model Lead {
@@ -100,6 +101,26 @@ model Lead {
   @@index([contactId])
   @@index([status])
   @@index([source])
+}
+
+model Invoice {
+  id            String  @id @default(cuid())
+  invoiceNumber Int     @default(autoincrement())
+
+  contactId    String?
+  contact      Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  customerName String // valitun kontaktin nimi, tai käsin kirjoitettu jos asiakasta ei löydy listalta
+
+  description String // mistä hinta tulee
+  amount      Float // sis. alv (bruttohinta)
+  vatRate     Float  @default(0.255)
+  dueDate     DateTime?
+  sentAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([contactId])
 }
 
 model Log {

@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookUser, ChartLine, DollarSign, Gauge, Mail, Settings, Zap, User, Search, LogOut, Send, FileText, ImageIcon, Truck, Users } from 'lucide-react';
+import { BookUser, ChartLine, DollarSign, Gauge, Mail, Settings, Zap, User, Search, LogOut, Send, FileText, ImageIcon, Truck, Users, Receipt } from 'lucide-react';
 
 interface AdminLayoutShellProps {
   children: React.ReactNode;
@@ -22,6 +22,7 @@ export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShe
     { name: "Keikat", href: "/hallinta/keikat" },
     { name: "Asiakkaat", href: "/hallinta/asiakkaat" },
     { name: "Diilit", href: "/hallinta/diilit" },
+    { name: "Laskutus", href: "/hallinta/laskutus" },
     { name: "Postilaatikko", href: "/hallinta/postilaatikko" },
     { name: "Blogi", href: "/hallinta/blogi" },
     { name: "Galleria", href: "/hallinta/galleria" },
@@ -111,6 +112,7 @@ export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShe
                     {link.name === "Keikat" && <Truck color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Asiakkaat" && <Users color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Diilit" && <DollarSign color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
+                    {link.name === "Laskutus" && <Receipt color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Postilaatikko" && <Send color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Blogi" && <FileText color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Galleria" && <ImageIcon color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}

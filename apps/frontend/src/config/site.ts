@@ -11,6 +11,7 @@ export const siteConfig = {
     openingHours: 'Joka päivä 8:00-22:00.',
   },
   businessId: '3624534-1',
+  bankAccount: 'FI18 7997 7994 3877 98',
 } as const;
 
 export type SiteConfig = typeof siteConfig;
