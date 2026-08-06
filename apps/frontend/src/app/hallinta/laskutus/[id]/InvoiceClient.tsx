@@ -107,6 +107,8 @@ export default function InvoiceClient({
         {/* Header */}
         <div className="mb-8 flex items-start justify-between">
           <div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/icons/logo.webp" alt="Muuttokone.fi" className="mb-2 h-10 w-auto" />
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white print:text-black">Muuttokone.fi</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 print:text-gray-600">+358 45 847 0755</p>
             <p className="text-sm text-gray-500 dark:text-gray-400 print:text-gray-600">info@muuttokone.fi</p>

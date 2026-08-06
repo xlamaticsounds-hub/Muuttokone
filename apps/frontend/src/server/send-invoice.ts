@@ -6,6 +6,7 @@ import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
 import { siteConfig } from '@/config/site';
 import { generateViitenumero } from '@/lib/reference-number';
+import { renderInvoicePdf } from '@/server/pdf/invoice-pdf';
 
 // Sama HTML-pako kuin send-quote.ts:ssä — asiakkaan/laskun teksti päätyy raakaan
 // HTML-merkkijonoon, joten se on paettava käsin (ei JSX:n automaattista turvaverkkoa).
@@ -133,6 +134,23 @@ async function sendInvoiceEmailInner(invoiceId: string): Promise<SendInvoiceResu
     viitenumero,
   });
 
+  const customerAddress = invoice.contact
+    ? [invoice.contact.street, invoice.contact.postalCode, invoice.contact.city].filter(Boolean).join(', ')
+    : null;
+
+  const pdfBuffer = await renderInvoicePdf({
+    invoiceNumber: invoice.invoiceNumber,
+    customerName: invoice.customerName,
+    customerAddress: customerAddress || null,
+    customerEmail: invoice.contact?.email ?? null,
+    description: invoice.description,
+    amount: invoice.amount,
+    vatRate: invoice.vatRate,
+    createdAt: invoice.createdAt,
+    dueDate: invoice.dueDate,
+    viitenumero,
+  });
+
   const senderName = process.env.QUOTE_EMAIL_FROM_NAME || 'Muuttokone.fi';
 
   const { default: nodemailer } = await import('nodemailer');
@@ -153,6 +171,13 @@ async function sendInvoiceEmailInner(invoiceId: string): Promise<SendInvoiceResu
       to: recipientEmail,
       subject: `Laskusi Muuttokone.fi:ltä — Nro ${invoice.invoiceNumber} — ${formatEuro(invoice.amount)} €`,
       html,
+      attachments: [
+        {
+          filename: `lasku-${invoice.invoiceNumber}.pdf`,
+          content: pdfBuffer,
+          contentType: 'application/pdf',
+        },
+      ],
     });
   } catch (err) {
     console.error('sendInvoiceEmail: SMTP send failed', err);
