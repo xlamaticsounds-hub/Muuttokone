@@ -6,7 +6,7 @@ import Script from 'next/script';
 import { motion, AnimatePresence } from 'framer-motion';
 import { calculateMovingPrice, CalculatorData, PriceBreakdown, FURNITURE_CATALOG, INCLUDED_DISTANCE_KM, RECYCLING_WASTE_TYPES } from './pricing';
 import toast from 'react-hot-toast';
-import { Loader2, ArrowRight, ArrowLeft, Calculator as CalcIcon, Calendar, CheckCircle2, ChevronDown } from 'lucide-react';
+import { Loader2, ArrowRight, ArrowLeft, Calculator as CalcIcon, Calendar, CheckCircle2, ChevronDown, Search } from 'lucide-react';
 import Honeypot from '@/components/Forms/Honeypot';
 import GdprConsentCheckbox from '@/components/Forms/GdprConsentCheckbox';
 import { useLocale } from '@/i18n/LocaleContext';
@@ -326,6 +326,7 @@ export default function Calculator() {
 
   const [customItemLabel, setCustomItemLabel] = useState('');
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [furnitureSearch, setFurnitureSearch] = useState('');
 
   const toggleCategory = (category: string) => {
     setExpandedCategories((prev) => {
@@ -1032,11 +1033,28 @@ export default function Calculator() {
                       </span>
                     )}
                   </div>
-                  {furnitureCategories.map((category) => {
-                    const isOpen = expandedCategories.has(category);
-                    const categoryItems = FURNITURE_CATALOG.filter((f) => f.category === category);
-                    const selectedCount = categoryItems.reduce((sum, item) => sum + (formData.furnitureItems[item.id] ?? 0), 0);
-                    return (
+                  <div className="relative">
+                    <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      value={furnitureSearch}
+                      onChange={(e) => setFurnitureSearch(e.target.value)}
+                      placeholder={t('Hae huonekalua, esim. sohva...')}
+                      className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all text-sm"
+                    />
+                  </div>
+                  {(() => {
+                    const searchQuery = furnitureSearch.trim().toLowerCase();
+                    const isSearching = searchQuery.length > 0;
+                    return furnitureCategories.map((category) => {
+                      const categoryItems = FURNITURE_CATALOG.filter((f) => f.category === category);
+                      const visibleItems = isSearching
+                        ? categoryItems.filter((item) => furnitureLabel(item.id, item.label).toLowerCase().includes(searchQuery))
+                        : categoryItems;
+                      if (isSearching && visibleItems.length === 0) return null;
+                      const isOpen = isSearching ? true : expandedCategories.has(category);
+                      const selectedCount = categoryItems.reduce((sum, item) => sum + (formData.furnitureItems[item.id] ?? 0), 0);
+                      return (
                     <div key={category} className="rounded-2xl border border-gray-100 dark:border-gray-800 overflow-hidden">
                       <button
                         type="button"
@@ -1056,7 +1074,7 @@ export default function Calculator() {
                       </button>
                       {isOpen && (
                       <div className="divide-y divide-gray-50 dark:divide-gray-800">
-                        {categoryItems.map((item) => {
+                        {visibleItems.map((item) => {
                           const qty = formData.furnitureItems[item.id] ?? 0;
                           return (
                             <div key={item.id} className="flex items-center justify-between px-5 py-3">
@@ -1088,8 +1106,9 @@ export default function Calculator() {
                       </div>
                       )}
                     </div>
-                  );
-                })}
+                      );
+                    });
+                  })()}
                 </div>
 
                 {/* Mukautetut tavarat — jos tavaraa ei löydy katalogista */}
