@@ -234,6 +234,7 @@ export const CalculatorSchema = z.object({
   heavyItems: z.array(z.string()).default([]), // Legacy, kept for backward compatibility, no longer used in pricing
   furnitureItems: z.record(z.string(), z.number()).default({}),
   customItems: z.array(z.object({ label: z.string(), qty: z.number() })).default([]), // Tavarat joita ei löydy katalogista
+  photos: z.array(z.string()).default([]), // Asiakkaan lataamien tavarakuvien URLit (valinnainen, tarkempaa tarjousta varten)
 
   // Service level
   needsPacking: z.boolean().default(false),

@@ -1,13 +1,14 @@
 import { prisma } from '@/server/db';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Calendar, MapPin, User, Phone, Mail, FileText, Globe, Package } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, User, Phone, Mail, FileText, Globe, Package, Image as ImageIcon } from 'lucide-react';
 import {
   getInventoryEntries,
   getWasteTypeLabels,
   getExtraServices,
   getServiceLabel,
   getPackageLabel,
+  getPhotoUrls,
   parseLeadFormData,
 } from '@/server/lead-format';
 import StatusSelector from './StatusSelector';
@@ -46,6 +47,7 @@ export default async function LeadDetailPage({
   const serviceTypeLabel = getServiceLabel(pfd);
   const packageLabel = getPackageLabel(pfd);
   const totalItemCount = inventoryEntries.reduce((sum, e) => sum + e.qty, 0);
+  const photoUrls = getPhotoUrls(pfd);
 
   // Helper to format date
   const formatDate = (date: Date | null) => {
@@ -236,6 +238,30 @@ export default async function LeadDetailPage({
               </div>
             )}
           </div>
+
+          {/* Asiakkaan lähettämät kuvat */}
+          {photoUrls.length > 0 && (
+            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
+                <ImageIcon className="h-5 w-5 text-gray-400" />
+                Asiakkaan lähettämät kuvat
+              </h2>
+              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5">
+                {photoUrls.map((url) => (
+                  <a
+                    key={url}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="aspect-square overflow-hidden rounded-md border border-gray-100 dark:border-gray-700"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt="Asiakkaan lähettämä kuva tavarasta" className="h-full w-full object-cover transition-transform hover:scale-105" />
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Additional Notes */}
            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">

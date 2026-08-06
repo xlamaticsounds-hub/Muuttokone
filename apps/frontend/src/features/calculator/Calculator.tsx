@@ -6,7 +6,7 @@ import Script from 'next/script';
 import { motion, AnimatePresence } from 'framer-motion';
 import { calculateMovingPrice, CalculatorData, PriceBreakdown, FURNITURE_CATALOG, INCLUDED_DISTANCE_KM, RECYCLING_WASTE_TYPES } from './pricing';
 import toast from 'react-hot-toast';
-import { Loader2, ArrowRight, ArrowLeft, Calculator as CalcIcon, Calendar, CheckCircle2, ChevronDown, Search } from 'lucide-react';
+import { Loader2, ArrowRight, ArrowLeft, Calculator as CalcIcon, Calendar, CheckCircle2, ChevronDown, Search, Camera, X } from 'lucide-react';
 import Honeypot from '@/components/Forms/Honeypot';
 import GdprConsentCheckbox from '@/components/Forms/GdprConsentCheckbox';
 import { useLocale } from '@/i18n/LocaleContext';
@@ -68,6 +68,7 @@ export default function Calculator() {
     heavyItems: [],
     furnitureItems: {},
     customItems: [],
+    photos: [],
     needsPacking: false,
     needsCleaning: false,
     services: [],
@@ -348,6 +349,76 @@ export default function Calculator() {
 
   const removeCustomItem = (index: number) => {
     setFormData((prev) => ({ ...prev, customItems: prev.customItems.filter((_, i) => i !== index) }));
+  };
+
+  // Tavarakuvat — vapaaehtoinen, auttaa antamaan tarkemman tarjouksen. Ladataan heti
+  // valinnan jälkeen (ei vasta lopullisessa lähetyksessä), jotta jo ladatut kuvat eivät
+  // katoa yhteyden katketessa ja lopullinen "Varaa"-lähetys pysyy nopeana.
+  const MAX_PHOTOS = 6;
+  type PhotoUpload = { id: string; previewUrl: string; status: 'uploading' | 'done' | 'error'; url?: string; error?: string };
+  const [photoUploads, setPhotoUploads] = useState<PhotoUpload[]>([]);
+  const photoInputRef = useRef<HTMLInputElement>(null);
+
+  // Pakkaa kuvan asiakaspäässä (max ~1600px, JPEG q0.8) ennen lähetystä, jotta lataus on
+  // nopea mobiilidatalla — jos pakkaus jostain syystä epäonnistuu (esim. selain ei tue
+  // formaattia), palautetaan alkuperäinen tiedosto ja palvelin validoi koon joka tapauksessa.
+  const compressImageFile = async (file: File, maxDimension = 1600, quality = 0.8): Promise<File> => {
+    try {
+      const bitmap = await createImageBitmap(file);
+      const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
+      const width = Math.round(bitmap.width * scale);
+      const height = Math.round(bitmap.height * scale);
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return file;
+      ctx.drawImage(bitmap, 0, 0, width, height);
+      const blob: Blob | null = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', quality));
+      if (!blob) return file;
+      return new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' });
+    } catch {
+      return file;
+    }
+  };
+
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = ''; // sallii saman tiedoston valitsemisen uudelleen myöhemmin
+    const remainingSlots = MAX_PHOTOS - photoUploads.length;
+    const filesToUpload = files.slice(0, Math.max(0, remainingSlots));
+
+    for (const file of filesToUpload) {
+      const tempId = Math.random().toString(36).slice(2, 10);
+      const previewUrl = URL.createObjectURL(file);
+      setPhotoUploads((prev) => [...prev, { id: tempId, previewUrl, status: 'uploading' }]);
+
+      try {
+        const compressed = await compressImageFile(file);
+        const body = new FormData();
+        body.append('file', compressed);
+        const res = await fetch('/api/quote-photos', { method: 'POST', body });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || t('Lataus epäonnistui'));
+        setPhotoUploads((prev) => prev.map((p) => (p.id === tempId ? { ...p, status: 'done', url: json.url } : p)));
+        setFormData((prev) => ({ ...prev, photos: [...prev.photos, json.url] }));
+      } catch (err) {
+        setPhotoUploads((prev) =>
+          prev.map((p) => (p.id === tempId ? { ...p, status: 'error', error: err instanceof Error ? err.message : t('Virhe') } : p)),
+        );
+      }
+    }
+  };
+
+  const removePhoto = (id: string) => {
+    setPhotoUploads((prev) => {
+      const target = prev.find((p) => p.id === id);
+      if (target?.url) {
+        const uploadedUrl = target.url;
+        setFormData((fd) => ({ ...fd, photos: fd.photos.filter((u) => u !== uploadedUrl) }));
+      }
+      return prev.filter((p) => p.id !== id);
+    });
   };
 
   const furnitureCategories = [...new Set(FURNITURE_CATALOG.map((f) => f.category))];
@@ -1154,6 +1225,64 @@ export default function Calculator() {
                           </div>
                         ))}
                       </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Tavarakuvat — vapaaehtoinen, auttaa antamaan tarkemman tarjouksen */}
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-gray-100 dark:border-gray-800 p-5">
+                    <h3 className="font-bold text-sm mb-1">{t('Liitä kuvia tavaroista (valinnainen)')}</h3>
+                    <p className="text-xs text-gray-500 mb-4">{t('Kuvat auttavat meitä antamaan tarkemman tarjouksen. Voit ottaa kuvan suoraan puhelimella.')}</p>
+
+                    <input
+                      ref={photoInputRef}
+                      type="file"
+                      accept="image/*"
+                      capture="environment"
+                      multiple
+                      className="hidden"
+                      onChange={handlePhotoSelect}
+                    />
+
+                    {photoUploads.length > 0 && (
+                      <div className="mb-4 grid grid-cols-3 sm:grid-cols-4 gap-3">
+                        {photoUploads.map((photo) => (
+                          <div key={photo.id} className="relative aspect-square rounded-xl overflow-hidden border-2 border-gray-100 dark:border-gray-800">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={photo.previewUrl} alt="" className="w-full h-full object-cover" />
+                            {photo.status === 'uploading' && (
+                              <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                <Loader2 className="w-6 h-6 text-white animate-spin" />
+                              </div>
+                            )}
+                            {photo.status === 'error' && (
+                              <div className="absolute inset-0 bg-red-600/70 flex items-center justify-center p-1">
+                                <span className="text-white text-[10px] text-center leading-tight">{photo.error}</span>
+                              </div>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => removePhoto(photo.id)}
+                              className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/60 hover:bg-black/80 flex items-center justify-center text-white transition-all"
+                              aria-label={t('Poista kuva')}
+                            >
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {photoUploads.length < MAX_PHOTOS && (
+                      <button
+                        type="button"
+                        onClick={() => photoInputRef.current?.click()}
+                        className="w-full flex items-center justify-center gap-2 px-5 py-4 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-700 text-sm font-bold text-gray-600 dark:text-gray-300 hover:border-primary hover:text-primary transition-all"
+                      >
+                        <Camera className="w-5 h-5" />
+                        {t('Lisää kuvia')} ({photoUploads.length}/{MAX_PHOTOS})
+                      </button>
                     )}
                   </div>
                 </div>

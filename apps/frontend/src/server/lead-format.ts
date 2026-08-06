@@ -51,6 +51,13 @@ export function getWasteTypeLabels(data: unknown): string[] {
     .filter((label): label is string => Boolean(label));
 }
 
+export function getPhotoUrls(data: unknown): string[] {
+  if (!data || typeof data !== 'object') return [];
+  const record = data as Record<string, unknown>;
+  if (!Array.isArray(record.photos)) return [];
+  return record.photos.filter((url): url is string => typeof url === 'string' && url.length > 0);
+}
+
 export function getExtraServices(data: unknown): string[] {
   if (!data || typeof data !== 'object') return [];
   const record = data as Record<string, unknown>;
