@@ -389,7 +389,7 @@ const EXPECTED_HANDLING_MINUTES: Record<CalculatorData['apartmentSize'], number>
   '4h+': 270,
   office: 170,
 };
-const EXCESS_HANDLING_EFFICIENCY = 0.20; // ylimenevästä osasta laskutetaan vain tämä osuus
+const EXCESS_HANDLING_EFFICIENCY = 0.55; // ylimenevästä osasta laskutetaan vain tämä osuus
 
 function applyCrewEfficiency(rawHandlingMinutes: number, apartmentSize: CalculatorData['apartmentSize']): number {
   const baseline = EXPECTED_HANDLING_MINUTES[apartmentSize];
