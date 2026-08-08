@@ -118,7 +118,7 @@ function InvoicePdfDocument(props: InvoicePdfProps) {
           <Text style={styles.boxLabel}>Maksutiedot</Text>
           <View style={styles.paymentRow}>
             <Text style={styles.totalsLabel}>Saaja</Text>
-            <Text style={styles.boxValue}>Muuttokone.fi</Text>
+            <Text style={styles.boxValue}>{siteConfig.invoicePayee}</Text>
           </View>
           <View style={styles.paymentRow}>
             <Text style={styles.totalsLabel}>Tilinumero (IBAN)</Text>

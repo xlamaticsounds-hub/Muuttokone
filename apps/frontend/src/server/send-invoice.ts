@@ -70,7 +70,7 @@ function renderInvoiceEmailHtml(params: {
     <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
       <tr>
         <td style="padding:6px 0;color:#6b7280;font-size:13px;text-transform:uppercase;">Saaja</td>
-        <td style="padding:6px 0;color:#111827;font-size:14px;text-align:right;">Muuttokone.fi</td>
+        <td style="padding:6px 0;color:#111827;font-size:14px;text-align:right;">${esc(siteConfig.invoicePayee)}</td>
       </tr>
       <tr>
         <td style="padding:6px 0;color:#6b7280;font-size:13px;text-transform:uppercase;">Tilinumero (IBAN)</td>
@@ -101,17 +101,22 @@ function renderInvoiceEmailHtml(params: {
 
 export type SendInvoiceResult = { success: true; sentTo: string } | { success: false; message: string };
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 /**
- * Lähettää laskun asiakkaan sähköpostiin tarjous@muuttokone.fi-postilaatikon kautta
+ * Lähettää laskun sähköpostiin tarjous@muuttokone.fi-postilaatikon kautta
  * (sama SMTP kuin send-quote.ts:ssä). Kutsutaan vasta kun ihminen painaa
  * "Lähetä lasku sähköpostitse" laskun sivulla — ei koskaan automaattisesti laskua luotaessa.
+ *
+ * `email` on laskun sivulla valittu/kirjoitettu osoite — ei aina sama kuin kontaktin
+ * oletusosoite, koska käyttäjä voi vaihtaa sen ennen lähetystä.
  *
  * Palauttaa aina tuloksen (ei heitä poikkeuksia) — sama syy kuin sendQuoteEmailissä:
  * Next.js piilottaisi Server Actionin throw-virheen tuotannossa yleiseen virheviestiin.
  */
-export async function sendInvoiceEmail(invoiceId: string): Promise<SendInvoiceResult> {
+export async function sendInvoiceEmail(invoiceId: string, email: string): Promise<SendInvoiceResult> {
   try {
-    return await sendInvoiceEmailInner(invoiceId);
+    return await sendInvoiceEmailInner(invoiceId, email);
   } catch (err) {
     console.error('sendInvoiceEmail: unexpected error', err);
     return {
@@ -121,7 +126,7 @@ export async function sendInvoiceEmail(invoiceId: string): Promise<SendInvoiceRe
   }
 }
 
-async function sendInvoiceEmailInner(invoiceId: string): Promise<SendInvoiceResult> {
+async function sendInvoiceEmailInner(invoiceId: string, email: string): Promise<SendInvoiceResult> {
   const session = await getServerSession(authOptions);
   if (!session) {
     return { success: false, message: 'Kirjaudu sisään lähettääksesi laskun.' };
@@ -131,14 +136,14 @@ async function sendInvoiceEmailInner(invoiceId: string): Promise<SendInvoiceResu
     return { success: false, message: 'Sähköpostiasetuksia (SMTP_HOST/SMTP_USER/SMTP_PASSWORD) ei ole vielä määritetty palvelimelle.' };
   }
 
+  const recipientEmail = email.trim();
+  if (!recipientEmail || !EMAIL_RE.test(recipientEmail)) {
+    return { success: false, message: 'Anna kelvollinen sähköpostiosoite johon lasku lähetetään.' };
+  }
+
   const invoice = await prisma.invoice.findUnique({ where: { id: invoiceId }, include: { contact: true } });
   if (!invoice) {
     return { success: false, message: 'Laskua ei löytynyt.' };
-  }
-
-  const recipientEmail = invoice.contact?.email;
-  if (!recipientEmail) {
-    return { success: false, message: 'Tällä laskulla ei ole sähköpostiosoitetta — valitse asiakas listalta jolla on sähköposti, tai lähetä lasku muulla tavalla.' };
   }
 
   const items = parseInvoiceItems(invoice.items);
@@ -204,7 +209,7 @@ async function sendInvoiceEmailInner(invoiceId: string): Promise<SendInvoiceResu
     };
   }
 
-  await prisma.invoice.update({ where: { id: invoiceId }, data: { sentAt: new Date() } });
+  await prisma.invoice.update({ where: { id: invoiceId }, data: { sentAt: new Date(), recipientEmail } });
 
   await createLog({
     entityType: 'Invoice',

@@ -12,6 +12,8 @@ export const siteConfig = {
   },
   businessId: '3624534-1',
   bankAccount: 'FI18 7997 7994 3877 98',
+  // Laskun maksun saaja — virallinen yhtiönimi, eri kuin verkkosivun/asiakasviestinnän brändi "Muuttokone.fi"
+  invoicePayee: 'Muuttokone Oy',
 } as const;
 
 export type SiteConfig = typeof siteConfig;

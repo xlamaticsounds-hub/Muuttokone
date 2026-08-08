@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Printer, Mail } from 'lucide-react';
+import { ArrowLeft, Printer, Mail, Download, Pencil } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { formatDateFi, formatEuro } from '@/lib/format';
 import { generateViitenumero } from '@/lib/reference-number';
 import { computeInvoiceTotals, type InvoiceLineItem } from '@/lib/invoice';
 import { sendInvoiceEmail } from '@/server/send-invoice';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function InvoiceClient({
   id,
@@ -16,6 +18,7 @@ export default function InvoiceClient({
   customerName,
   customerAddress,
   customerEmail,
+  recipientEmail,
   items,
   createdAt,
   dueDate,
@@ -26,6 +29,7 @@ export default function InvoiceClient({
   customerName: string;
   customerAddress: string | null;
   customerEmail: string | null;
+  recipientEmail: string | null;
   items: InvoiceLineItem[];
   createdAt: string;
   dueDate: string | null;
@@ -34,19 +38,21 @@ export default function InvoiceClient({
   const router = useRouter();
   const [sending, setSending] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; message: string } | null>(null);
+  const [email, setEmail] = useState(recipientEmail || customerEmail || '');
 
   const totals = computeInvoiceTotals(items);
   const viitenumero = generateViitenumero(invoiceNumber);
+  const emailValid = EMAIL_RE.test(email.trim());
 
   const handleSend = async () => {
-    if (!customerEmail) return;
-    const confirmed = window.confirm(`Lähetetäänkö lasku sähköpostitse osoitteeseen ${customerEmail}?`);
+    if (!emailValid) return;
+    const confirmed = window.confirm(`Lähetetäänkö lasku sähköpostitse osoitteeseen ${email.trim()}?`);
     if (!confirmed) return;
 
     setSending(true);
     setFeedback(null);
     try {
-      const result = await sendInvoiceEmail(id);
+      const result = await sendInvoiceEmail(id, email.trim());
       if (result.success) {
         setFeedback({ ok: true, message: `Lasku lähetetty osoitteeseen ${result.sentTo}.` });
         router.refresh();
@@ -62,13 +68,51 @@ export default function InvoiceClient({
 
   return (
     <div className="mx-auto max-w-3xl">
-      <div className="mb-6 flex items-center justify-between print:hidden">
+      <div className="mb-4 flex items-center justify-between print:hidden">
         <Link
           href="/hallinta/laskutus"
           className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
         >
           <ArrowLeft className="h-4 w-4" /> Takaisin laskuihin
         </Link>
+        <div className="flex items-center gap-3">
+          {!sentAt && (
+            <Link
+              href={`/hallinta/laskutus/${id}/muokkaa`}
+              className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+            >
+              <Pencil className="h-4 w-4" /> Muokkaa laskua
+            </Link>
+          )}
+          <a
+            href={`/api/hallinta/laskutus/${id}/pdf`}
+            className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+          >
+            <Download className="h-4 w-4" /> Lataa PDF
+          </a>
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            <Printer className="h-4 w-4" /> Tulosta
+          </button>
+        </div>
+      </div>
+
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white p-4 print:hidden dark:border-gray-700 dark:bg-gray-800">
+        <div className="flex flex-1 items-center gap-2">
+          <label htmlFor="invoice-email" className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+            Lähetä osoitteeseen
+          </label>
+          <input
+            id="invoice-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="asiakas@example.com"
+            className="flex-1 rounded-md border border-gray-300 bg-transparent px-3 py-1.5 text-sm dark:border-gray-600 dark:text-white"
+          />
+        </div>
         <div className="flex items-center gap-3">
           {feedback && (
             <p className={`text-sm ${feedback.ok ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
@@ -77,18 +121,12 @@ export default function InvoiceClient({
           )}
           <button
             onClick={handleSend}
-            disabled={sending || !customerEmail}
-            title={!customerEmail ? 'Asiakkaalla ei ole sähköpostiosoitetta' : undefined}
-            className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+            disabled={sending || !emailValid}
+            title={!emailValid ? 'Anna kelvollinen sähköpostiosoite' : undefined}
+            className="flex items-center gap-2 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
           >
             <Mail className="h-4 w-4" />
             {sending ? 'Lähetetään...' : sentAt ? 'Lähetä uudelleen' : 'Lähetä lasku sähköpostitse'}
-          </button>
-          <button
-            onClick={() => window.print()}
-            className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            <Printer className="h-4 w-4" /> Tulosta / Tallenna PDF
           </button>
         </div>
       </div>
@@ -166,7 +204,7 @@ export default function InvoiceClient({
           <p className="mb-2 text-xs font-medium uppercase text-gray-500">Maksutiedot</p>
           <div className="grid grid-cols-2 gap-y-1 text-sm">
             <span className="text-gray-500 dark:text-gray-400 print:text-gray-600">Saaja</span>
-            <span className="text-right font-medium text-gray-900 dark:text-white print:text-black">Muuttokone.fi</span>
+            <span className="text-right font-medium text-gray-900 dark:text-white print:text-black">{siteConfig.invoicePayee}</span>
             <span className="text-gray-500 dark:text-gray-400 print:text-gray-600">Tilinumero (IBAN)</span>
             <span className="text-right font-medium text-gray-900 dark:text-white print:text-black">{siteConfig.bankAccount}</span>
             <span className="text-gray-500 dark:text-gray-400 print:text-gray-600">Viitenumero</span>

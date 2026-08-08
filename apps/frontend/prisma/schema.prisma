@@ -115,6 +115,10 @@ model Invoice {
   dueDate DateTime?
   sentAt  DateTime?
 
+  // Sähköpostiosoite johon lasku lähetettiin/lähetetään — valittavissa/kirjoitettavissa
+  // laskun sivulla lähetyshetkellä, ei aina sama kuin kontaktin oletusosoite.
+  recipientEmail String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

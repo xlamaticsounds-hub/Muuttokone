@@ -3,12 +3,20 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2 } from 'lucide-react';
-import { createInvoice } from '@/server/invoice-actions';
+import { createInvoice, updateInvoice } from '@/server/invoice-actions';
 import { computeInvoiceTotals } from '@/lib/invoice';
 
 const VAT_RATE = 0.255;
 
 type Row = { id: string; description: string; amount: string; vatRate: number };
+
+export type ExistingInvoice = {
+  id: string;
+  contactId: string | null;
+  customerName: string;
+  items: { description: string; amount: number; vatRate: number }[];
+  dueDate: string | null; // ISO-päivämäärä
+};
 
 function newId() {
   return Math.random().toString(36).slice(2, 10);
@@ -20,13 +28,26 @@ function defaultDueDate() {
   return d.toISOString().split('T')[0];
 }
 
-export default function NewInvoiceForm({ contacts }: { contacts: { id: string; name: string; email: string | null }[] }) {
+function initialRows(invoice: ExistingInvoice | undefined): Row[] {
+  if (invoice && invoice.items.length > 0) {
+    return invoice.items.map((item) => ({ id: newId(), description: item.description, amount: String(item.amount), vatRate: item.vatRate }));
+  }
+  return [{ id: newId(), description: '', amount: '', vatRate: VAT_RATE }];
+}
+
+export default function NewInvoiceForm({
+  contacts,
+  invoice,
+}: {
+  contacts: { id: string; name: string; email: string | null }[];
+  invoice?: ExistingInvoice;
+}) {
   const router = useRouter();
-  const [nameQuery, setNameQuery] = useState('');
-  const [selectedContactId, setSelectedContactId] = useState<string | null>(null);
+  const [nameQuery, setNameQuery] = useState(invoice?.customerName ?? '');
+  const [selectedContactId, setSelectedContactId] = useState<string | null>(invoice?.contactId ?? null);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [rows, setRows] = useState<Row[]>([{ id: newId(), description: '', amount: '', vatRate: VAT_RATE }]);
-  const [dueDate, setDueDate] = useState(defaultDueDate());
+  const [rows, setRows] = useState<Row[]>(initialRows(invoice));
+  const [dueDate, setDueDate] = useState(invoice?.dueDate ? invoice.dueDate.split('T')[0] : defaultDueDate());
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -84,15 +105,16 @@ export default function NewInvoiceForm({ contacts }: { contacts: { id: string; n
 
     setSubmitting(true);
     try {
-      const { id } = await createInvoice({
+      const input = {
         contactId: selectedContactId,
         customerName: nameQuery.trim(),
         items,
         dueDate: dueDate || null,
-      });
+      };
+      const { id } = invoice ? await updateInvoice(invoice.id, input) : await createInvoice(input);
       router.push(`/hallinta/laskutus/${id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Laskun luonti epäonnistui.');
+      setError(err instanceof Error ? err.message : (invoice ? 'Laskun tallennus epäonnistui.' : 'Laskun luonti epäonnistui.'));
       setSubmitting(false);
     }
   };
@@ -236,7 +258,7 @@ export default function NewInvoiceForm({ contacts }: { contacts: { id: string; n
         disabled={submitting}
         className="w-full rounded-md bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
       >
-        {submitting ? 'Luodaan...' : 'Luo lasku'}
+        {submitting ? (invoice ? 'Tallennetaan...' : 'Luodaan...') : invoice ? 'Tallenna muutokset' : 'Luo lasku'}
       </button>
     </form>
   );

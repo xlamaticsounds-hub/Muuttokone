@@ -32,6 +32,7 @@ export default async function InvoicePage({
       customerName={invoice.customerName}
       customerAddress={customerAddress || null}
       customerEmail={invoice.contact?.email ?? null}
+      recipientEmail={invoice.recipientEmail}
       items={parseInvoiceItems(invoice.items)}
       createdAt={invoice.createdAt.toISOString()}
       dueDate={invoice.dueDate ? invoice.dueDate.toISOString() : null}
