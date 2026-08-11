@@ -11,10 +11,15 @@ const getStorageConfig = () => {
   if (process.env.GCP_SERVICE_ACCOUNT_KEY) {
     try {
       config.credentials = JSON.parse(process.env.GCP_SERVICE_ACCOUNT_KEY);
+      // Avaimen oma project_id on aina oikea — käytetään sitä jos GOOGLE_CLOUD_PROJECT
+      // ei ole erikseen asetettu, ettei jäädä väärän oletusprojektin ('muuttokone') taakse.
+      if (!process.env.GOOGLE_CLOUD_PROJECT && config.credentials.project_id) {
+        config.projectId = config.credentials.project_id;
+      }
     } catch (e) {
       console.error('❌ Failed to parse GCP_SERVICE_ACCOUNT_KEY JSON');
     }
-  } 
+  }
   // 2. Support for Impersonation (New)
   else if (process.env.GCP_IMPERSONATE_SERVICE_ACCOUNT) {
     // Note: This requires the user to be logged in via 'gcloud auth application-default login'
@@ -29,10 +34,23 @@ const getStorageConfig = () => {
 };
 
 const storage = new Storage(getStorageConfig());
-const bucketName = 'muuttokone.fi';
+const bucketName = 'muuttokone-api-uploads';
 const bucket = storage.bucket(bucketName);
 
+// Ilman jompaakumpaa näistä @google-cloud/storage yrittää hakea tunnukset GCP:n
+// sisäiseltä metadata-palvelimelta, jota ei ole olemassa Railwaylla — haku jää
+// roikkumaan pitkäksi aikaa ennen kuin lopulta epäonnistuu, ja lataus näyttää
+// käyttäjälle vain jäävän pyörimään. Tarkistetaan siis heti eikä vasta GCS-kutsussa.
+function assertStorageConfigured() {
+  if (!process.env.GCP_SERVICE_ACCOUNT_KEY && !process.env.GCP_IMPERSONATE_SERVICE_ACCOUNT) {
+    throw new Error(
+      'Kuvien tallennuspalvelua (Google Cloud Storage) ei ole vielä määritetty palvelimelle — GCP_SERVICE_ACCOUNT_KEY-ympäristömuuttuja puuttuu.',
+    );
+  }
+}
+
 export async function uploadImage(file: Buffer, fileName: string, mimeType: string) {
+  assertStorageConfigured();
   try {
     const uniqueName = `${Date.now()}-${fileName.replace(/\s+/g, '-')}`;
     const gcsFile = bucket.file(`uploads/${uniqueName}`);
