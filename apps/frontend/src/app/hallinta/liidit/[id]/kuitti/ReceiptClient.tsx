@@ -1,10 +1,22 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { ArrowLeft, Plus, Trash2, Printer } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { formatDateFi, formatEuro } from '@/lib/format';
+
+// @react-pdf/renderer:in PDFDownloadLink käyttää selaimen Blob/URL-rajapintoja, joten
+// se ei saa yrittää renderöityä palvelimella (SSR) — ladataan siksi vasta asiakaspäässä.
+const ReceiptDownloadButton = dynamic(() => import('./ReceiptDownloadButton'), {
+  ssr: false,
+  loading: () => (
+    <span className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white opacity-50">
+      Lataa PDF
+    </span>
+  ),
+});
 
 type LineItem = {
   id: string;
@@ -91,12 +103,27 @@ export default function ReceiptClient({
         >
           <ArrowLeft className="h-4 w-4" /> Takaisin liidiin
         </Link>
-        <button
-          onClick={() => window.print()}
-          className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          <Printer className="h-4 w-4" /> Tulosta / Tallenna PDF
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => window.print()}
+            className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+          >
+            <Printer className="h-4 w-4" /> Tulosta
+          </button>
+          <ReceiptDownloadButton
+            receiptNumber={receiptNumber}
+            receiptDate={receiptDate}
+            customerName={customerName}
+            customerEmail={customerEmail}
+            customerPhone={customerPhone}
+            customerAddress={customerAddress}
+            fromAddress={fromAddress}
+            toAddress={toAddress}
+            requestedDate={requestedDate}
+            items={items}
+            paymentMethod={paymentMethod}
+          />
+        </div>
       </div>
 
       <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-sm print:border-0 print:shadow-none dark:border-gray-700 dark:bg-gray-800 print:dark:bg-white print:text-black">
