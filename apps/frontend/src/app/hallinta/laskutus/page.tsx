@@ -54,11 +54,14 @@ export default async function LaskutusPage() {
                 const totals = computeInvoiceTotals(items);
                 const description = items.map((i) => i.description).join(', ');
                 return (
-                  <tr key={invoice.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/40">
+                  <tr key={invoice.id} className="relative cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900/40">
                     <td className="px-4 py-3">
-                      <Link href={`/hallinta/laskutus/${invoice.id}`} className="font-medium text-blue-600 hover:underline dark:text-blue-400">
-                        #{invoice.invoiceNumber}
-                      </Link>
+                      <Link
+                        href={`/hallinta/laskutus/${invoice.id}`}
+                        className="absolute inset-0"
+                        aria-label={`Avaa lasku #${invoice.invoiceNumber} — ${invoice.customerName}`}
+                      />
+                      <span className="font-medium text-blue-600 dark:text-blue-400">#{invoice.invoiceNumber}</span>
                     </td>
                     <td className="px-4 py-3 text-gray-900 dark:text-white">{invoice.customerName}</td>
                     <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{description}</td>
