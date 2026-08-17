@@ -97,7 +97,7 @@ export default function LeadDetailActions({
 
       {isEditing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800">
+          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800">
             <h2 className="mb-4 text-xl font-bold dark:text-white">Muokkaa liidiä</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/30">
