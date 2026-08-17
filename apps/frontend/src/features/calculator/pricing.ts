@@ -422,6 +422,19 @@ const FULL_SERVICE_MIN_PRICE: Partial<Record<CalculatorData['apartmentSize'], nu
   '3h': 500,
 };
 
+// Muuttosiivouksen ("needsCleaning") kiinteä lisähinta asunnon koon mukaan — siivous ei
+// riipu kannettavasta tavaramäärästä vaan asunnon pinta-alasta, joten se hinnoitellaan
+// kiinteänä lisänä (kuten FULL_SERVICE_MIN_PRICE) eikä käsittelyajan kautta.
+// HUOM: tätä kenttää ei ennen v2.5:tä luettu ollenkaan hinnoittelussa — asiakas saattoi
+// valita "Muuttosiivous"-lisäpalvelun ilmaiseksi. Office hinnoitellaan kuten 4h+.
+const CLEANING_PRICE: Record<CalculatorData['apartmentSize'], number> = {
+  '1h': 129,
+  '2h': 169,
+  '3h': 219,
+  '4h+': 289,
+  office: 289,
+};
+
 // Mukautetun (katalogin ulkopuolisen) tavaran oletuskäsittelyaika — keskikokoisen
 // tavaran arvio, koska tarkkaa kokoa ei tunneta. Kanto-/tilavaikutus käyttää
 // categoryFactors()-fallbackia (ei omaa kategoriaa).
@@ -498,6 +511,7 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
     carryDistanceFrom,
     carryDistanceTo,
     needsPacking,
+    needsCleaning,
     services,
     furnitureItems = {},
     customItems = [],
@@ -785,6 +799,10 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
     ? boxItemCount * PRICING_CONSTANTS.packingMinutesPerBox + nonBoxItemCount * PRICING_CONSTANTS.packingMinutesPerOtherItem
     : 0;
 
+  // Muuttosiivous: kiinteä lisä asunnon koon mukaan (ks. CLEANING_PRICE) — ei osa
+  // työaikaa, koska siivous skaalautuu pinta-alan eikä kannettavan tavaramäärän mukaan.
+  const cleaningCost = needsCleaning ? CLEANING_PRICE[apartmentSize] : 0;
+
   // Koordinointiaika — kiinteä kaikille, ei riipu asunnon koosta (ks. yllä).
   const adminTime = COORDINATION_TIME_HOURS;
 
@@ -801,11 +819,12 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
     // sama bugi joka aiheutti Kuljetus-välilehden kanssa ristiriitaisen hinnan samasta työstä).
     const hourlyRate = PRICING_CONSTANTS.driverWithVehicleRate;
     const laborCost = totalLaborHours * hourlyRate;
-    let subtotal = distanceCost + laborCost;
-
-    if (subtotal < PRICING_CONSTANTS.driverWithVehicleMinimum) {
-      subtotal = PRICING_CONSTANTS.driverWithVehicleMinimum;
+    // Minimi koskee vain matkaa+työtä — siivous lisätään aina kokonaan sen päälle (ks. full_service).
+    let movingSubtotal = distanceCost + laborCost;
+    if (movingSubtotal < PRICING_CONSTANTS.driverWithVehicleMinimum) {
+      movingSubtotal = PRICING_CONSTANTS.driverWithVehicleMinimum;
     }
+    const subtotal = movingSubtotal + cleaningCost;
 
     const normalPriceTotal = subtotal;
     const { total, dateDiscountAmount } = applyDateDiscount(normalPriceTotal);
@@ -817,14 +836,14 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
     const itemsImpact = (handlingMinutes / 60) * hourlyRate;
     const floorsImpact = (floorsExtraMinutes / 60) * hourlyRate;
     const carryDistanceImpact = (carryDistanceExtraMinutes / 60) * hourlyRate;
-    const extrasImpact = ((assemblyMinutes + packingMinutes) / 60) * hourlyRate;
+    const extrasImpact = ((assemblyMinutes + packingMinutes) / 60) * hourlyRate + cleaningCost;
     const distanceImpact = distanceCost + driveTime * hourlyRate;
     const baseImpact = (normalPriceTotal - distanceCost) - itemsImpact - floorsImpact - carryDistanceImpact - extrasImpact - driveTime * hourlyRate;
 
     return {
       distanceCost,
       laborCost,
-      extrasCost: 0,
+      extrasCost: cleaningCost,
       disposalCost: 0,
       subtotal: total - vat,
       vat,
@@ -871,11 +890,12 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
   if (movingPackage === 'carrying_help') {
     const hourlyRate = PRICING_CONSTANTS.carryingHelpRate;
     const laborCost = totalLaborHours * hourlyRate;
-    let subtotal = laborCost;
-
-    if (subtotal < PRICING_CONSTANTS.carryingHelpMinimum) {
-      subtotal = PRICING_CONSTANTS.carryingHelpMinimum;
+    // Minimi koskee vain työtä — siivous lisätään aina kokonaan sen päälle (ks. full_service).
+    let movingSubtotal = laborCost;
+    if (movingSubtotal < PRICING_CONSTANTS.carryingHelpMinimum) {
+      movingSubtotal = PRICING_CONSTANTS.carryingHelpMinimum;
     }
+    const subtotal = movingSubtotal + cleaningCost;
 
     const normalPriceTotal = subtotal;
     const { total, dateDiscountAmount } = applyDateDiscount(normalPriceTotal);
@@ -884,7 +904,7 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
     return {
       distanceCost: 0,
       laborCost,
-      extrasCost: 0,
+      extrasCost: cleaningCost,
       disposalCost: 0,
       subtotal: total - vat,
       vat,
@@ -916,7 +936,7 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
           driveTimeHours: driveTime,
           baseTimeHours: adminTime,
         },
-        impactBreakdown: { items: laborCost, floors: 0, carryDistance: 0, distance: 0, extras: 0, base: 0 },
+        impactBreakdown: { items: laborCost, floors: 0, carryDistance: 0, distance: 0, extras: cleaningCost, base: 0 },
       },
     };
   }
@@ -930,16 +950,19 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
 
   const laborCost = totalLaborHours * hourlyRate;
 
-  // 3. Extras (reserved for future separately-priced add-ons; currently folded into labor)
-  const extrasCost = 0;
+  // 3. Extras — muuttosiivous (kiinteä, ks. CLEANING_PRICE yllä)
+  const extrasCost = cleaningCost;
 
   // 4. Totals — euromääräinen vähimmäishinta (ks. FULL_SERVICE_MIN_PRICE yllä), sovelletaan
   // ennen muuttopäivän alennusta samalla tavalla kuin driver_with_vehicle/carrying_help.
-  let subtotal = distanceCost + laborCost + extrasCost;
+  // Minimi koskee vain itse muuttotyötä (matka+työ) — muuttosiivous lisätään aina kokonaan
+  // sen päälle, ettei pienen muuton minimihinta "niele" siivousmaksua osittain.
+  let movingSubtotal = distanceCost + laborCost;
   const minPrice = FULL_SERVICE_MIN_PRICE[apartmentSize];
-  if (minPrice && subtotal < minPrice) {
-    subtotal = minPrice;
+  if (minPrice && movingSubtotal < minPrice) {
+    movingSubtotal = minPrice;
   }
+  const subtotal = movingSubtotal + extrasCost;
   const normalPriceTotal = subtotal;
   const { total, dateDiscountAmount } = applyDateDiscount(normalPriceTotal);
   const vat = total - (total / (1 + PRICING_CONSTANTS.vatRate));
@@ -959,7 +982,7 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
   const itemsImpact = (handlingMinutes / 60) * hourlyRate;
   const floorsImpact = (floorsExtraMinutes / 60) * hourlyRate;
   const carryDistanceImpact = (carryDistanceExtraMinutes / 60) * hourlyRate;
-  const extrasImpact = ((assemblyMinutes + packingMinutes) / 60) * hourlyRate;
+  const extrasImpact = ((assemblyMinutes + packingMinutes) / 60) * hourlyRate + cleaningCost;
   const distanceImpact = distanceCost + driveTime * hourlyRate;
   // "Base" saa loput (perusaika + 15 min -pyöristyksen erotus + mahdollinen vähimmäishinnan
   // korotus), jotta erittely summautuu AINA tarkalleen samaksi kuin näytetty hinta —
