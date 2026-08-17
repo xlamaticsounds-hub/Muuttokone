@@ -3,7 +3,7 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/server/auth';
 import { prisma } from '@/server/db';
-import type { InvoiceLineItem } from '@/lib/invoice';
+import { parseInvoiceItems, type InvoiceLineItem } from '@/lib/invoice';
 
 export type CreateInvoiceInput = {
   contactId: string | null;
@@ -79,6 +79,33 @@ export async function updateInvoice(invoiceId: string, input: UpdateInvoiceInput
       customerName,
       items,
       dueDate: input.dueDate ? new Date(input.dueDate) : null,
+    },
+  });
+
+  return { id: invoice.id };
+}
+
+// Luo uuden, muokattavan (lähettämättömän) laskun jo lähetetyn laskun tiedoista.
+// Tarkoitus: lähetettyä laskua ei saa enää muokata, mutta samat tiedot halutaan
+// usein pohjaksi seuraavalle laskulle ilman että kukaan kirjoittaa koko laskua
+// uusiksi — kopiossa ei näy mitään "kopio"-merkintää, se on ihan tavallinen uusi lasku.
+export async function duplicateInvoice(invoiceId: string): Promise<{ id: string }> {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new Error('Unauthorized');
+  }
+
+  const source = await prisma.invoice.findUnique({ where: { id: invoiceId } });
+  if (!source) {
+    throw new Error('Laskua ei löytynyt.');
+  }
+
+  const invoice = await prisma.invoice.create({
+    data: {
+      contactId: source.contactId,
+      customerName: source.customerName,
+      items: parseInvoiceItems(source.items),
+      dueDate: source.dueDate,
     },
   });
 

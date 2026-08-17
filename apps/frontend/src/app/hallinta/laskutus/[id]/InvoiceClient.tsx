@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Printer, Mail, Download, Pencil } from 'lucide-react';
+import { ArrowLeft, Printer, Mail, Download, Pencil, Copy } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { formatDateFi, formatEuro } from '@/lib/format';
 import { generateViitenumero } from '@/lib/reference-number';
 import { computeInvoiceTotals, type InvoiceLineItem } from '@/lib/invoice';
 import { sendInvoiceEmail } from '@/server/send-invoice';
+import { duplicateInvoice } from '@/server/invoice-actions';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -37,12 +38,24 @@ export default function InvoiceClient({
 }) {
   const router = useRouter();
   const [sending, setSending] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; message: string } | null>(null);
   const [email, setEmail] = useState(recipientEmail || customerEmail || '');
 
   const totals = computeInvoiceTotals(items);
   const viitenumero = generateViitenumero(invoiceNumber);
   const emailValid = EMAIL_RE.test(email.trim());
+
+  const handleDuplicate = async () => {
+    setDuplicating(true);
+    try {
+      const { id: newId } = await duplicateInvoice(id);
+      router.push(`/hallinta/laskutus/${newId}/muokkaa`);
+    } catch (err) {
+      setFeedback({ ok: false, message: err instanceof Error ? err.message : 'Kopiointi epäonnistui.' });
+      setDuplicating(false);
+    }
+  };
 
   const handleSend = async () => {
     if (!emailValid) return;
@@ -84,6 +97,13 @@ export default function InvoiceClient({
               <Pencil className="h-4 w-4" /> Muokkaa laskua
             </Link>
           )}
+          <button
+            onClick={handleDuplicate}
+            disabled={duplicating}
+            className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+          >
+            <Copy className="h-4 w-4" /> {duplicating ? 'Kopioidaan...' : 'Kopioi lasku'}
+          </button>
           <a
             href={`/api/hallinta/laskutus/${id}/pdf`}
             className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
