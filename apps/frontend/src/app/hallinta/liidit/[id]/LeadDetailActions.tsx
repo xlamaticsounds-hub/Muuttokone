@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { updateLeadDetails } from '@/server/actions';
-import { sendQuoteEmail } from '@/server/send-quote';
 import { parseLeadFormData, getStoredPrice } from '@/server/lead-format';
 import { Lead, Contact } from '@prisma/client';
+import QuoteEmailPreviewModal from './QuoteEmailPreviewModal';
 
 export default function LeadDetailActions({
   lead
@@ -16,36 +16,17 @@ export default function LeadDetailActions({
   const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [sendingQuote, setSendingQuote] = useState(false);
+  const [showQuotePreview, setShowQuotePreview] = useState(false);
   const [quoteFeedback, setQuoteFeedback] = useState<{ ok: boolean; message: string } | null>(null);
 
   const alreadySent = lead.status === 'PROPOSAL_SENT' || lead.status === 'WON';
   const pfd = parseLeadFormData(lead.formData);
   const { confirmed: confirmedPrice, low: estimateLow, high: estimateHigh } = getStoredPrice(pfd);
 
-  const handleSendQuote = async () => {
-    if (!lead.contact.email) return;
-    const confirmed = window.confirm(
-      `Lähetetäänkö tarjous sähköpostitse osoitteeseen ${lead.contact.email}?`,
-    );
-    if (!confirmed) return;
-
-    setSendingQuote(true);
-    setQuoteFeedback(null);
-    try {
-      const result = await sendQuoteEmail(lead.id);
-      if (result.success) {
-        setQuoteFeedback({ ok: true, message: `Tarjous lähetetty osoitteeseen ${result.sentTo}.` });
-        router.refresh();
-      } else {
-        setQuoteFeedback({ ok: false, message: result.message });
-      }
-    } catch (err) {
-      // Ei pitäisi tapahtua (sendQuoteEmail ei enää heitä), mutta varmuuden vuoksi.
-      setQuoteFeedback({ ok: false, message: err instanceof Error ? err.message : 'Lähetys epäonnistui.' });
-    } finally {
-      setSendingQuote(false);
-    }
+  const handleQuoteSent = (sentTo: string) => {
+    setShowQuotePreview(false);
+    setQuoteFeedback({ ok: true, message: `Tarjous lähetetty osoitteeseen ${sentTo}.` });
+    router.refresh();
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -85,16 +66,12 @@ export default function LeadDetailActions({
           )}
         </div>
         <button
-          onClick={handleSendQuote}
-          disabled={sendingQuote || !lead.contact.email}
+          onClick={() => setShowQuotePreview(true)}
+          disabled={!lead.contact.email}
           title={!lead.contact.email ? 'Liidillä ei ole sähköpostiosoitetta' : undefined}
           className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {sendingQuote
-            ? 'Lähetetään...'
-            : alreadySent
-              ? 'Lähetä tarjous uudelleen'
-              : 'Lähetä tarjous'}
+          {alreadySent ? 'Esikatsele ja lähetä uudelleen' : 'Esikatsele ja lähetä tarjous'}
         </button>
         {quoteFeedback && (
           <p className={`text-sm ${quoteFeedback.ok ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
@@ -243,6 +220,14 @@ export default function LeadDetailActions({
             </form>
           </div>
         </div>
+      )}
+
+      {showQuotePreview && (
+        <QuoteEmailPreviewModal
+          leadId={lead.id}
+          onClose={() => setShowQuotePreview(false)}
+          onSent={handleQuoteSent}
+        />
       )}
     </>
   );
