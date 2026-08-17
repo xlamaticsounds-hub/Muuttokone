@@ -177,7 +177,7 @@ export async function updateLeadDetails(leadId: string, data: any) {
   }
 
   const { prisma } = await import('@/server/db');
-  const { parseLeadFormData } = await import('@/server/lead-format');
+  const { parseLeadFormData, recomputeLeadPrice } = await import('@/server/lead-format');
 
   // Vahvistettu (kiinteä) hinta ei ole oma Prisma-sarake — se tallennetaan olemassa olevan
   // formData-JSONin sisään ("confirmedPrice"), jotta tämä ei vaadi tietokantamigraatiota.
@@ -195,6 +195,40 @@ export async function updateLeadDetails(leadId: string, data: any) {
     if (!Number.isNaN(parsed)) updatedFormData.confirmedPrice = parsed;
   }
 
+  // Asunnon kokoluokka ja kohteen kerros/hissi eivät ole omia Prisma-sarakkeita (vain
+  // lähtöosoitteella on floor/hasElevator-sarakkeet) — tallennetaan formData:aan samalla
+  // periaatteella kuin confirmedPrice, koska calculateMovingPrice lukee ne juuri sieltä.
+  if (typeof data.apartmentSize === 'string' && data.apartmentSize) {
+    updatedFormData.apartmentSize = data.apartmentSize;
+  }
+  if (data.floorTo !== undefined && data.floorTo !== '') {
+    const floorToNum = parseInt(data.floorTo);
+    if (!Number.isNaN(floorToNum)) updatedFormData.floorTo = floorToNum;
+  }
+  if (data.elevatorTo === 'true' || data.elevatorTo === 'false') {
+    updatedFormData.elevatorTo = data.elevatorTo === 'true';
+  }
+  // Peilataan lähtöosoitteen kerros/hissi formData:aan floorFrom/elevatorFrom-nimillä, koska
+  // calculateMovingPrice lukee niitä nimillä eikä Lead-taulun floor/hasElevator-sarakkeista.
+  const floorFromNum = data.floor !== undefined && data.floor !== '' ? parseInt(data.floor) : NaN;
+  if (!Number.isNaN(floorFromNum)) updatedFormData.floorFrom = floorFromNum;
+  if (data.hasElevator === 'true' || data.hasElevator === 'false') {
+    updatedFormData.elevatorFrom = data.hasElevator === 'true';
+  }
+
+  // "null" (ei tiedossa) ei saa muuttua false:ksi — vain eksplisiittinen 'true'/'false' kirjataan.
+  const hasElevatorValue = data.hasElevator === 'true' ? true : data.hasElevator === 'false' ? false : null;
+
+  // Jos muokatut kentät riittävät hinnan uudelleenlaskentaan (liidi tuli alunperin
+  // muuttolaskurista, formData sisältää mm. furnitureItems/distanceKm), päivitetään myös
+  // laskurin näyttämä hinta-arvio vastaamaan uusia tietoja.
+  const recomputed = recomputeLeadPrice(updatedFormData);
+  if (recomputed) {
+    updatedFormData.price = recomputed.price;
+    updatedFormData.priceRangeLow = recomputed.priceRangeLow;
+    updatedFormData.priceRangeHigh = recomputed.priceRangeHigh;
+  }
+
   // Basic mapping of fields
   await prisma.lead.update({
     where: { id: leadId },
@@ -204,8 +238,8 @@ export async function updateLeadDetails(leadId: string, data: any) {
       requestedDate: data.requestedDate ? new Date(data.requestedDate) : null,
       volumeM3: data.volumeM3 ? parseFloat(data.volumeM3) : null,
       squareMeters: data.squareMeters ? parseFloat(data.squareMeters) : null,
-      floor: data.floor !== undefined ? parseInt(data.floor) : null,
-      hasElevator: data.hasElevator === 'true' || data.hasElevator === true,
+      floor: data.floor !== undefined && data.floor !== '' ? parseInt(data.floor) : null,
+      hasElevator: hasElevatorValue,
       boxCount: data.boxCount ? parseInt(data.boxCount) : null,
       notes: data.notes,
       formData: JSON.stringify(updatedFormData),

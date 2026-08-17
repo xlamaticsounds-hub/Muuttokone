@@ -1,4 +1,4 @@
-import { FURNITURE_CATALOG, RECYCLING_WASTE_TYPES } from '@/features/calculator/pricing';
+import { FURNITURE_CATALOG, RECYCLING_WASTE_TYPES, CalculatorSchema, calculateMovingPrice } from '@/features/calculator/pricing';
 
 // Shared between the hallinta lead detail page and the quote email sender — both need to
 // turn a lead's raw formData JSON (calculator ids like "sofa_3": 2) into human-readable text.
@@ -89,6 +89,27 @@ export function getServiceLabel(pfd: Record<string, unknown>): string | null {
 
 export function getPackageLabel(pfd: Record<string, unknown>): string | null {
   return typeof pfd.movingPackage === 'string' ? PACKAGE_LABELS[pfd.movingPackage] ?? pfd.movingPackage : null;
+}
+
+// Laskee liidin hinta-arvion uudelleen tallennetun formData:n pohjalta — käytetään kun
+// hallinnassa muokataan hintaan vaikuttavia kenttiä (kokoluokka, kerros, hissi) jälkikäteen,
+// jotta laskurin näyttämä arvio ei jää vanhentuneeksi. Palauttaa null jos formData ei sisällä
+// tarpeeksi laskuripohjaisia kenttiä (esim. yhteydenottolomakkeelta tullut liidi ei ole koskaan
+// käynyt muuttolaskurin kautta) — silloin olemassa oleva hinta jätetään koskematta.
+export function recomputeLeadPrice(
+  pfd: Record<string, unknown>,
+): { price: number; priceRangeLow: number; priceRangeHigh: number } | null {
+  try {
+    const input = {
+      ...pfd,
+      date: typeof pfd.date === 'string' || pfd.date instanceof Date ? new Date(pfd.date as string) : undefined,
+    };
+    const parsed = CalculatorSchema.parse(input);
+    const result = calculateMovingPrice(parsed);
+    return { price: result.total, priceRangeLow: result.priceRangeLow, priceRangeHigh: result.priceRangeHigh };
+  } catch {
+    return null;
+  }
 }
 
 export function getStoredPrice(pfd: Record<string, unknown>): {

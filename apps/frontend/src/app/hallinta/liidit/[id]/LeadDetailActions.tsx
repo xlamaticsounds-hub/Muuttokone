@@ -152,7 +152,23 @@ export default function LeadDetailActions({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 uppercase">Kerros</label>
+                  <label className="block text-xs font-medium text-gray-500 uppercase">Kokoluokka</label>
+                  <select
+                    name="apartmentSize"
+                    defaultValue={typeof pfd.apartmentSize === 'string' ? pfd.apartmentSize : ''}
+                    className="mt-1 w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:text-white"
+                  >
+                    <option value="">-</option>
+                    <option value="1h">Yksiö (1h)</option>
+                    <option value="2h">Kaksio (2h)</option>
+                    <option value="3h">Kolmio (3h)</option>
+                    <option value="4h+">4h+ / iso</option>
+                    <option value="office">Toimisto</option>
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Vaikuttaa laskurin hinta-arvioon.</p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 uppercase">Kerros (lähtö)</label>
                   <input
                     type="number"
                     name="floor"
@@ -161,10 +177,31 @@ export default function LeadDetailActions({
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 uppercase">Hissi</label>
+                  <label className="block text-xs font-medium text-gray-500 uppercase">Hissi (lähtö)</label>
                   <select
                     name="hasElevator"
                     defaultValue={String(lead.hasElevator)}
+                    className="mt-1 w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:text-white"
+                  >
+                    <option value="true">Kyllä</option>
+                    <option value="false">Ei</option>
+                    <option value="null">-</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 uppercase">Kerros (kohde)</label>
+                  <input
+                    type="number"
+                    name="floorTo"
+                    defaultValue={typeof pfd.floorTo === 'number' ? pfd.floorTo : ''}
+                    className="mt-1 w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 uppercase">Hissi (kohde)</label>
+                  <select
+                    name="elevatorTo"
+                    defaultValue={String(pfd.elevatorTo)}
                     className="mt-1 w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:text-white"
                   >
                     <option value="true">Kyllä</option>

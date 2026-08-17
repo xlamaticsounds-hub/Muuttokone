@@ -49,6 +49,21 @@ export default async function LeadDetailPage({
   const totalItemCount = inventoryEntries.reduce((sum, e) => sum + e.qty, 0);
   const photoUrls = getPhotoUrls(pfd);
 
+  // Kohteen kerros/hissi ja asunnon kokoluokka elävät vain formData-JSONissa (muuttolaskurin
+  // syöttämät kentät), ei omina Lead-sarakkeinaan — Lead.floor/hasElevator kuvaavat vain
+  // lähtöosoitetta. calculateMovingPrice (pricing.ts) käyttää juuri näitä nimillä floorTo/elevatorTo.
+  const floorTo = typeof pfd.floorTo === 'number' ? pfd.floorTo : null;
+  const elevatorTo = typeof pfd.elevatorTo === 'boolean' ? pfd.elevatorTo : null;
+  const APARTMENT_SIZE_LABELS: Record<string, string> = {
+    '1h': 'Yksiö (1h)',
+    '2h': 'Kaksio (2h)',
+    '3h': 'Kolmio (3h)',
+    '4h+': '4h+ / iso',
+    office: 'Toimisto',
+  };
+  const apartmentSizeLabel =
+    typeof pfd.apartmentSize === 'string' ? APARTMENT_SIZE_LABELS[pfd.apartmentSize] ?? pfd.apartmentSize : '-';
+
   // Helper to format date
   const formatDate = (date: Date | null) => {
     if (!date) return '-';
@@ -163,13 +178,27 @@ export default async function LeadDetailPage({
                   <p className="mt-1 text-gray-900 dark:text-white">{lead.squareMeters ? `${lead.squareMeters} m²` : '-'}</p>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase">Kerros</label>
+                  <label className="text-xs font-medium text-gray-500 uppercase">Kokoluokka</label>
+                  <p className="mt-1 text-gray-900 dark:text-white">{apartmentSizeLabel}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500 uppercase">Kerros (lähtö)</label>
                   <p className="mt-1 text-gray-900 dark:text-white">{lead.floor !== null ? `${lead.floor}. krs` : '-'}</p>
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-gray-500 uppercase">Hissi</label>
+                  <label className="text-xs font-medium text-gray-500 uppercase">Hissi (lähtö)</label>
                   <p className="mt-1 text-gray-900 dark:text-white">
                     {lead.hasElevator === true ? 'Kyllä' : lead.hasElevator === false ? 'Ei' : '-'}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500 uppercase">Kerros (kohde)</label>
+                  <p className="mt-1 text-gray-900 dark:text-white">{floorTo !== null ? `${floorTo}. krs` : '-'}</p>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-500 uppercase">Hissi (kohde)</label>
+                  <p className="mt-1 text-gray-900 dark:text-white">
+                    {elevatorTo === true ? 'Kyllä' : elevatorTo === false ? 'Ei' : '-'}
                   </p>
                 </div>
                 <div>
