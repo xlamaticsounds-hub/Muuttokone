@@ -53,20 +53,34 @@ export default async function LaskutusPage() {
                 const items = parseInvoiceItems(invoice.items);
                 const totals = computeInvoiceTotals(items);
                 const description = items.map((i) => i.description).join(', ');
+                const href = `/hallinta/laskutus/${invoice.id}`;
                 return (
-                  <tr key={invoice.id} className="relative cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900/40">
-                    <td className="px-4 py-3">
-                      <Link
-                        href={`/hallinta/laskutus/${invoice.id}`}
-                        className="absolute inset-0"
-                        aria-label={`Avaa lasku #${invoice.invoiceNumber} — ${invoice.customerName}`}
-                      />
-                      <span className="font-medium text-blue-600 dark:text-blue-400">#{invoice.invoiceNumber}</span>
+                  <tr key={invoice.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/40">
+                    <td className="p-0">
+                      <Link href={href} className="block px-4 py-3 font-medium text-blue-600 dark:text-blue-400">
+                        #{invoice.invoiceNumber}
+                      </Link>
                     </td>
-                    <td className="px-4 py-3 text-gray-900 dark:text-white">{invoice.customerName}</td>
-                    <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{description}</td>
-                    <td className="px-4 py-3 text-gray-500 dark:text-gray-400">{formatDateFi(invoice.createdAt)}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-gray-900 dark:text-white">{formatEuro(totals.gross)} €</td>
+                    <td className="p-0">
+                      <Link href={href} className="block px-4 py-3 text-gray-900 dark:text-white">
+                        {invoice.customerName}
+                      </Link>
+                    </td>
+                    <td className="p-0">
+                      <Link href={href} className="block px-4 py-3 text-gray-600 dark:text-gray-300">
+                        {description}
+                      </Link>
+                    </td>
+                    <td className="p-0">
+                      <Link href={href} className="block px-4 py-3 text-gray-500 dark:text-gray-400">
+                        {formatDateFi(invoice.createdAt)}
+                      </Link>
+                    </td>
+                    <td className="p-0 text-right">
+                      <Link href={href} className="block px-4 py-3 font-semibold text-gray-900 dark:text-white">
+                        {formatEuro(totals.gross)} €
+                      </Link>
+                    </td>
                   </tr>
                 );
               })}
