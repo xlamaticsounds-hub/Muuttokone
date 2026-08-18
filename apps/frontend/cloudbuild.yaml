@@ -25,5 +25,5 @@ substitutions:
   _REPO_NAME: muuttokone
   _SERVICE_NAME: muuttokone
   _TAG: latest
-  _NEXT_PUBLIC_GA_ID: ""
+  _NEXT_PUBLIC_GA_ID: "G-J377XWYS04"
   _NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: ""
