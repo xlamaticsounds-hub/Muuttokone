@@ -15,7 +15,7 @@ const menuData: Menu[] = [
   },
   {
     label: 'Blogi',
-    route: '/blog',
+    route: '/blogi',
   },
   {
     label: 'Yhteystiedot',

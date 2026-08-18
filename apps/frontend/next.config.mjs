@@ -22,7 +22,8 @@ const nextConfig = {
       { source: "/contact", destination: "/yhteystiedot", permanent: true },
 
       // Finnish aliases
-      { source: "/blogi", destination: "/blog", permanent: true },
+      { source: "/blog", destination: "/blogi", permanent: true },
+      { source: "/blog/:path*", destination: "/blogi/:path*", permanent: true },
       { source: "/ota-yhteytta", destination: "/yhteystiedot", permanent: true },
   { source: "/ukk", destination: "/usein-kysytyt-kysymykset", permanent: true },
 

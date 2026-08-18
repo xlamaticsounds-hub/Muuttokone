@@ -1,13 +1,19 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import SectionTitle from '@/components/SectionTitle';
 import { prisma } from '@/server/db';
+import { generateSEOMetadata, SEOConfigs } from '@/components/SEO/SEOHelpers';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata = {
-  title: 'Blogi | Muuttokone.fi',
-  description: 'Ajankohtaista tietoa ja vinkkejä muuttamiseen liittyen.',
-};
+export const metadata: Metadata = generateSEOMetadata({
+  ...SEOConfigs.blog,
+  openGraph: {
+    title: SEOConfigs.blog.title,
+    description: SEOConfigs.blog.description,
+    type: 'website',
+  },
+});
 
 // Revalidate every hour
 export const revalidate = 3600;
@@ -53,7 +59,7 @@ export default async function BlogPage() {
         <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-0">
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                 {posts.map((post) => (
-                    <Link key={post.slug} href={`/blog/${post.slug}`} className="group relative block h-full bg-white rounded-lg shadow-solid-5 dark:bg-blacksection hover:shadow-xl transition-all duration-300 border border-stroke dark:border-strokedark p-8">
+                    <Link key={post.slug} href={`/blogi/${post.slug}`} className="group relative block h-full bg-white rounded-lg shadow-solid-5 dark:bg-blacksection hover:shadow-xl transition-all duration-300 border border-stroke dark:border-strokedark p-8">
                         <div className="flex flex-col h-full justify-between">
                             <div>
                                 {post.featuredImage && (

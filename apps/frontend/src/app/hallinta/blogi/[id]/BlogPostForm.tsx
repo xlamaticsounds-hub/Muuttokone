@@ -12,8 +12,16 @@ interface BlogPostFormProps {
   id: string;
 }
 
+function seoLengthColor(length: number, max: number): string {
+  if (length === 0) return 'text-gray-400 dark:text-gray-500';
+  if (length <= max) return 'text-green-600 dark:text-green-400';
+  if (length <= max + 15) return 'text-amber-600 dark:text-amber-400';
+  return 'text-red-600 dark:text-red-500';
+}
+
 export default function BlogPostForm({ post, isNew, id }: BlogPostFormProps) {
   const [content, setContent] = useState(post?.content || '');
+  const [slug, setSlug] = useState(post?.slug || '');
   const [metaTitle, setMetaTitle] = useState(post?.metaTitle || '');
   const [metaDescription, setMetaDescription] = useState(post?.metaDescription || '');
   const [tab, setTab] = useState<'edit' | 'preview'>('edit');
@@ -114,11 +122,12 @@ export default function BlogPostForm({ post, isNew, id }: BlogPostFormProps) {
         
         <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300">Slug (URL)</label>
-            <input 
-                type="text" 
-                name="slug" 
-                defaultValue={post?.slug || ''} 
-                required 
+            <input
+                type="text"
+                name="slug"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                required
                 className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-shadow font-mono text-sm"
             />
         </div>
@@ -255,25 +264,50 @@ export default function BlogPostForm({ post, isNew, id }: BlogPostFormProps) {
         <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Hakukoneoptimointi (SEO)</h3>
         <div className="grid grid-cols-1 gap-6">
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">SEO Otsikko</label>
-                <input 
-                    type="text" 
-                    name="metaTitle" 
+                <div className="flex items-center justify-between">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">SEO Otsikko</label>
+                    <span className={`text-xs font-medium ${seoLengthColor(metaTitle.length, 60)}`}>
+                        {metaTitle.length} / 60 merkkiä
+                    </span>
+                </div>
+                <input
+                    type="text"
+                    name="metaTitle"
                     value={metaTitle}
                     onChange={(e) => setMetaTitle(e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-shadow"
                 />
             </div>
-            
+
             <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">SEO Kuvaus</label>
-                <textarea 
-                    name="metaDescription" 
+                <div className="flex items-center justify-between">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">SEO Kuvaus</label>
+                    <span className={`text-xs font-medium ${seoLengthColor(metaDescription.length, 160)}`}>
+                        {metaDescription.length} / 160 merkkiä
+                    </span>
+                </div>
+                <textarea
+                    name="metaDescription"
                     value={metaDescription}
                     onChange={(e) => setMetaDescription(e.target.value)}
                     rows={3}
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-slate-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-shadow resize-none"
                 />
+            </div>
+
+            <div className="pt-2">
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-3">Esikatselu Google-hakutuloksissa</p>
+                <div className="max-w-xl p-4 bg-white dark:bg-slate-900 border border-gray-200 dark:border-gray-700 rounded-lg">
+                    <p className="text-sm text-gray-700 dark:text-gray-300 truncate">
+                        muuttokone.fi › blogi › {slug || 'artikkelin-osoite'}
+                    </p>
+                    <p className="text-xl text-blue-700 dark:text-blue-400 truncate leading-snug mt-1">
+                        {metaTitle ? `${metaTitle} | Muuttokone.fi` : 'SEO-otsikko näkyy tässä | Muuttokone.fi'}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                        {metaDescription || 'SEO-kuvaus näkyy tässä. Tyhjänä Google generoi katkelman sisällöstä automaattisesti.'}
+                    </p>
+                </div>
             </div>
         </div>
       </div>

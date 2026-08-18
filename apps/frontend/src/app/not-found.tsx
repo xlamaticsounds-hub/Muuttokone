@@ -30,7 +30,7 @@ export default function NotFound() {
       />
 
       <div className="relative z-10 mx-auto max-w-[530px] text-center">
-        <Image src="/images/404.png" alt="404" width={400} height={300} className="mx-auto mb-10" />
+        <Image src="/images/webp/muuttokone/webp/boxguy.webp" alt="404" width={362} height={320} className="mx-auto mb-10" />
 
         <h1 className="mb-5 text-4xl font-bold text-black dark:text-white">Sivua ei löydy</h1>
 

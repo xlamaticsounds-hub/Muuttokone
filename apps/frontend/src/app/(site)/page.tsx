@@ -25,7 +25,7 @@ export const metadata: Metadata = generateSEOMetadata({
   openGraph: {
     title: SEOConfigs.home.title,
     description: SEOConfigs.home.description,
-    image: '/images/og-home.jpg',
+    image: '/images/webp/hero/hero.webp',
     type: 'website',
   },
 });

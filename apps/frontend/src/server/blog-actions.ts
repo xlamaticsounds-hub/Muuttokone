@@ -46,7 +46,7 @@ export async function createPost(formData: FormData) {
     redirect(`/hallinta/blogi/uusi?error=${encodeURIComponent(saveErrorMessage(error))}`);
   }
 
-  revalidatePath('/blog');
+  revalidatePath('/blogi');
   revalidatePath('/hallinta/blogi');
   redirect('/hallinta/blogi');
 }
@@ -80,8 +80,8 @@ export async function updatePost(id: string, formData: FormData) {
     redirect(`/hallinta/blogi/${id}?error=${encodeURIComponent(saveErrorMessage(error))}`);
   }
 
-  revalidatePath('/blog');
-  revalidatePath(`/blog/${slug}`);
+  revalidatePath('/blogi');
+  revalidatePath(`/blogi/${slug}`);
   revalidatePath('/hallinta/blogi');
   redirect('/hallinta/blogi');
 }
@@ -91,7 +91,7 @@ export async function deletePost(id: string) {
     where: { id },
   });
 
-  revalidatePath('/blog');
+  revalidatePath('/blogi');
   revalidatePath('/hallinta/blogi');
 }
 
@@ -124,7 +124,7 @@ export async function saveAiPost(data: {
     throw new Error(saveErrorMessage(error));
   }
 
-  revalidatePath('/blog');
+  revalidatePath('/blogi');
   revalidatePath('/hallinta/blogi');
 
   return { id: post.id };

@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { generateSEOMetadata, SEOConfigs } from '@/components/SEO/SEOHelpers';
+import StructuredData from '@/components/SEO/StructuredData';
 
 const faqs = [
   {
@@ -23,14 +25,19 @@ const faqs = [
   },
 ];
 
-export const metadata: Metadata = {
-  title: 'Usein kysytyt kysymykset | Muuttokone',
-  description: 'Nopeat vastaukset yleisimpiin kysymyksiin hinnoittelusta, aikatauluista ja pakkauspalveluista.',
-};
+export const metadata: Metadata = generateSEOMetadata({
+  ...SEOConfigs.faq,
+  openGraph: {
+    title: SEOConfigs.faq.title,
+    description: SEOConfigs.faq.description,
+    type: 'website',
+  },
+});
 
 export default function FAQPage() {
   return (
     <section className="py-16 lg:py-24">
+      <StructuredData type="FAQPage" data={{ faqs }} />
       <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
         <div className="mb-10 text-center mx-auto max-w-3xl">
           <p className="text-primary mb-2 text-sm font-semibold uppercase tracking-wide">FAQ</p>

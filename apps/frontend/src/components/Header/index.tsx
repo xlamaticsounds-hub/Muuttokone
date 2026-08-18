@@ -39,7 +39,6 @@ const Header = () => {
   const [updatedMenuData, setUpdatedMenuData] = useState(menuData);
 
   useEffect(() => {
-    // No dynamic menu rewrites needed now that Blog is removed
     setUpdatedMenuData(menuData);
   }, []);
 

@@ -82,7 +82,7 @@ export default async function BlogAdminPage() {
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2">
-                        <Link href={`/blog/${post.slug}`} target="_blank" className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" title="Katso">
+                        <Link href={`/blogi/${post.slug}`} target="_blank" className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors" title="Katso">
                             <Eye size={18} />
                         </Link>
                         <Link href={`/hallinta/blogi/${post.id}`} className="p-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors" title="Muokkaa">

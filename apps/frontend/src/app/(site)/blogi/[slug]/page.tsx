@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/server/db';
 import { MDXRemote } from 'next-mdx-remote/rsc';
 import type { Metadata } from 'next';
+import { generateSEOMetadata } from '@/components/SEO/SEOHelpers';
+import StructuredData from '@/components/SEO/StructuredData';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 3600; // Revalidate every hour
@@ -11,23 +13,33 @@ type BlogParams = { params: Promise<{ slug: string }> };
 export async function generateMetadata(props: BlogParams): Promise<Metadata> {
   const params = await props.params;
   const { slug } = params;
-  let post: { title: string; metaTitle: string | null; metaDescription: string | null; excerpt: string | null } | null = null;
+  let post: { title: string; metaTitle: string | null; metaDescription: string | null; excerpt: string | null; featuredImage: string | null } | null = null;
 
   try {
     post = await prisma.post.findFirst({
       where: { slug, published: true },
-      select: { title: true, metaTitle: true, metaDescription: true, excerpt: true },
+      select: { title: true, metaTitle: true, metaDescription: true, excerpt: true, featuredImage: true },
     });
   } catch (error) {
-    console.warn(`[blog/${slug}] Metadata fallback due to database error`, error);
+    console.warn(`[blogi/${slug}] Metadata fallback due to database error`, error);
   }
 
-  if (!post) return { title: 'Blogi | Muuttokone.fi' };
+  if (!post) return { title: 'Blogi' };
 
-  return {
-    title: post.metaTitle || `${post.title} | Muuttokone.fi`,
-    description: post.metaDescription || post.excerpt,
-  };
+  const title = post.metaTitle || post.title;
+  const description = post.metaDescription || post.excerpt || undefined;
+
+  return generateSEOMetadata({
+    title,
+    description,
+    canonical: `/blogi/${slug}`,
+    openGraph: {
+      title,
+      description,
+      image: post.featuredImage || undefined,
+      type: 'article',
+    },
+  });
 }
 
 export default async function Page(props: BlogParams) {
@@ -45,13 +57,27 @@ export default async function Page(props: BlogParams) {
       },
     });
   } catch (error) {
-    console.warn(`[blog/${slug}] Content fallback due to database error`, error);
+    console.warn(`[blogi/${slug}] Content fallback due to database error`, error);
   }
 
   if (!post) notFound();
 
+  const siteUrl = process.env.SITE_URL ?? 'https://muuttokone.fi';
+
   return (
     <section className="pt-35 pb-20 lg:pt-45 lg:pb-30">
+      <StructuredData
+        type="BlogPosting"
+        data={{
+          title: post.metaTitle || post.title,
+          description: post.metaDescription || post.excerpt || undefined,
+          image: post.featuredImage || undefined,
+          datePublished: post.publishedAt ?? undefined,
+          dateModified: post.updatedAt,
+          authorName: post.authorName || undefined,
+          url: `${siteUrl}/blogi/${post.slug}`,
+        }}
+      />
       <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-0">
         <div className="mb-10 text-center">
              <h1 className="mb-4 text-3xl font-bold text-black dark:text-white md:text-5xl">

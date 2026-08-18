@@ -1,7 +1,7 @@
 import { siteConfig } from '@/config/site';
 
 interface StructuredDataProps {
-  type: 'LocalBusiness' | 'Organization' | 'Service' | 'MovingCompany';
+  type: 'LocalBusiness' | 'Organization' | 'Service' | 'MovingCompany' | 'BlogPosting' | 'FAQPage';
   data?: any;
 }
 
@@ -15,8 +15,8 @@ export default async function StructuredData({ type, data }: StructuredDataProps
       name: 'Muuttokone.fi',
       legalName: 'Muuttokone Oy',
       url: siteUrl,
-      logo: `${siteUrl}/images/logo.png`,
-      image: `${siteUrl}/images/og-image.jpg`,
+      logo: `${siteUrl}/images/logo/logo.png`,
+      image: `${siteUrl}/images/webp/hero/hero.webp`,
       description:
         'Luotettava muuttopalvelu Helsingissä ja Uudellamaalla. Koti- ja yritysmuutot, pakkaus, kuljetukset, kuolinpesätyhjennnykset ja siivous.',
       telephone: siteConfig.contact.phone.tel,
@@ -115,6 +115,51 @@ export default async function StructuredData({ type, data }: StructuredDataProps
               description: 'Hinnat alkaen - pyydä henkilökohtainen tarjous',
             },
           },
+        };
+
+      case 'BlogPosting':
+        return {
+          '@context': 'https://schema.org',
+          '@type': 'BlogPosting',
+          headline: data?.title,
+          description: data?.description,
+          image: data?.image
+            ? data.image.startsWith('http')
+              ? data.image
+              : `${siteUrl}${data.image}`
+            : undefined,
+          datePublished: data?.datePublished,
+          dateModified: data?.dateModified || data?.datePublished,
+          author: {
+            '@type': 'Organization',
+            name: data?.authorName || 'Muuttokone.fi',
+          },
+          publisher: {
+            '@type': 'Organization',
+            name: 'Muuttokone.fi',
+            logo: {
+              '@type': 'ImageObject',
+              url: `${siteUrl}/images/logo/logo.png`,
+            },
+          },
+          mainEntityOfPage: {
+            '@type': 'WebPage',
+            '@id': data?.url,
+          },
+        };
+
+      case 'FAQPage':
+        return {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: (data?.faqs || []).map((item: { q: string; a: string }) => ({
+            '@type': 'Question',
+            name: item.q,
+            acceptedAnswer: {
+              '@type': 'Answer',
+              text: item.a,
+            },
+          })),
         };
 
       default:

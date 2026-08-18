@@ -54,7 +54,7 @@ export const metadata: Metadata = {
       'Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Koti- ja yritysmuutot, pakkaus, kuljetukset ja kuolinpesätyhjennnykset.',
     images: [
       {
-        url: '/images/webp/hero/hero.avif',
+        url: '/images/webp/hero/hero.webp',
         width: 1200,
         height: 630,
         alt: 'Muuttokone.fi - Luotettava muuttopalvelu',
@@ -66,7 +66,7 @@ export const metadata: Metadata = {
     title: 'Muuttokone.fi - Luotettava muuttopalvelu',
     description:
       'Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Koti- ja yritysmuutot, pakkaus, kuljetukset ja kuolinpesätyhjennnykset.',
-    images: ['/images/twitter-image.jpg'],
+    images: ['/images/webp/hero/hero.webp'],
     creator: '@muuttokone',
   },
   robots: {

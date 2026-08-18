@@ -1,14 +1,16 @@
 import type { Metadata } from 'next';
 import { siteConfig } from '@/config/site';
+import { generateSEOMetadata, SEOConfigs } from '@/components/SEO/SEOHelpers';
 
-export const metadata: Metadata = {
-  title: 'Tietosuojaseloste | Muuttokone.fi',
-  description: 'Muuttokone.fi tietosuojaseloste. Lue miten käsittelemme henkilötietojasi.',
-  robots: {
-    index: false,
-    follow: false,
+export const metadata: Metadata = generateSEOMetadata({
+  ...SEOConfigs.privacy,
+  noindex: true,
+  openGraph: {
+    title: SEOConfigs.privacy.title,
+    description: SEOConfigs.privacy.description,
+    type: 'website',
   },
-};
+});
 
 export default function PrivacyPolicy() {
   return (

@@ -1,9 +1,14 @@
 import type { Metadata } from 'next';
+import { generateSEOMetadata, SEOConfigs } from '@/components/SEO/SEOHelpers';
 
-export const metadata: Metadata = {
-  title: 'Käyttöehdot | Muuttokone.fi',
-  description: 'Muuttokone.fi palvelun käyttöehdot. Lue ehdot ennen palvelun tilaamista.',
-};
+export const metadata: Metadata = generateSEOMetadata({
+  ...SEOConfigs.terms,
+  openGraph: {
+    title: SEOConfigs.terms.title,
+    description: SEOConfigs.terms.description,
+    type: 'website',
+  },
+});
 
 export default function TermsOfService() {
   return (

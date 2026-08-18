@@ -13,7 +13,7 @@ export const metadata: Metadata = generateSEOMetadata({
   openGraph: {
     title: SEOConfigs.services.title,
     description: SEOConfigs.services.description,
-    image: '/images/og-services.jpg',
+    image: '/images/webp/hero/hero.webp',
     type: 'website',
   },
 });

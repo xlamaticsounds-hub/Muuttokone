@@ -8,7 +8,6 @@ import { cookies } from 'next/headers';
 import { Providers } from './providers';
 import { siteConfig } from '@/config/site';
 import { LOCALE_COOKIE, type Locale } from '@/i18n/LocaleContext';
-import Script from 'next/script';
 import GA from '@/components/Analytics/GA';
 import StructuredData from '@/components/SEO/StructuredData';
 import CookieConsent from '@/components/CookieConsent';
@@ -52,25 +51,12 @@ export default async function SiteLayout({
         </div>
       </Providers>
 
-      {/* Google Analytics (GA4) - enabled when NEXT_PUBLIC_GA_ID is set */}
+      {/* Google Analytics (GA4) - enabled when NEXT_PUBLIC_GA_ID is set; GA.tsx gates actual
+          script loading on cookie consent */}
       {process.env.NEXT_PUBLIC_GA_ID ? (
-        <>
-          <Script
-            src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA_ID}`}
-            strategy="afterInteractive"
-          />
-          <Script id="ga4-setup" strategy="afterInteractive">
-            {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${process.env.NEXT_PUBLIC_GA_ID}', { page_path: window.location.pathname });
-              `}
-          </Script>
-          <React.Suspense fallback={null}>
-            <GA />
-          </React.Suspense>
-        </>
+        <React.Suspense fallback={null}>
+          <GA />
+        </React.Suspense>
       ) : null}
     </>
   );

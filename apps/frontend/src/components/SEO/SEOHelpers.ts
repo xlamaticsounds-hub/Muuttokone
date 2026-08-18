@@ -59,7 +59,7 @@ export function generateSEOMetadata({
 // Predefined SEO configurations for common pages
 export const SEOConfigs = {
   home: {
-    title: 'Etusivu | Muuttokone.fi – Luotettava muuttopalvelu Helsingissä',
+    title: 'Etusivu – Luotettava muuttopalvelu Helsingissä',
     description:
       'Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Koti- ja yritysmuutot, pakkaus, kuljetukset ja kuolinpesätyhjennnykset. Tehokkaat ja ammattitaitoiset tekijät. Pyydä maksuton tarjous!',
     keywords: ['muutto', 'muuttofirma', 'muuttopalvelu', 'Helsinki', 'Uusimaa', 'Espoo', 'Vantaa'],
@@ -90,25 +90,44 @@ export const SEOConfigs = {
     canonical: '/yhteystiedot',
   },
 
-  residentialMoves: {
-    title: 'Kotimuutto - Luotettava kotimuuttopalvelu',
-    description:
-      'Ammattitaitoinen kotimuutto pienestä yksiöstä suureen perheasuntoon. Pakkaus, kuljetus ja purkaminen.',
-    keywords: ['kotimuutto', 'asunnonmuutto', 'perheasunto', 'yksiö', 'pakkauspalvelu'],
-    canonical: '/kotimuutto',
+  blog: {
+    title: 'Blogi',
+    description: 'Ajankohtaista tietoa ja vinkkejä muuttamiseen liittyen.',
+    keywords: ['muuttoblogi', 'muuttovinkit', 'muuttoartikkelit', 'muuttotieto'],
+    canonical: '/blogi',
   },
 
-  businessMoves: {
-    title: 'Yritysmuutto - Toimistojen ja yritysten muutot',
+  referenssit: {
+    title: 'Referenssit',
+    description: 'Poimintoja toteutetuista muuttoprojekteista: kotimuutot, yritysmuutot ja erikoiskuljetukset.',
+    keywords: ['muuttoreferenssit', 'asiakascase', 'yritysmuutto esimerkki', 'kotimuutto esimerkki'],
+    canonical: '/referenssit',
+  },
+
+  faq: {
+    title: 'Usein kysytyt kysymykset',
+    description: 'Nopeat vastaukset yleisimpiin kysymyksiin hinnoittelusta, aikatauluista ja pakkauspalveluista.',
+    keywords: ['usein kysytyt kysymykset', 'muutto ukk', 'muuttofirma kysymykset'],
+    canonical: '/usein-kysytyt-kysymykset',
+  },
+
+  calculator: {
+    title: 'Muuttolaskuri – Saa tarkka hinta heti',
     description:
-      'Sujuva yritysmuutto minimaalinen keskeytys toimintaan. IT-laitteet, toimistokalusteet ja erikoiskuljetukset.',
-    keywords: [
-      'yritysmuutto',
-      'toimistomuutto',
-      'IT-muutto',
-      'toimistokalusteet',
-      'yrityspalvelut',
-    ],
-    canonical: '/yritysmuutto',
+      'Laske muuttosi hinta heti – tarkka hinta-arvio sekunneissa, ei piilokuluja. Suomen tarkin muuttolaskuri perustuu oikeaan tavaramäärään, ei arvioihin.',
+    keywords: ['muuttolaskuri', 'muuton hinta-arvio', 'muuttohinta laskuri'],
+    canonical: '/muuttolaskuri',
+  },
+
+  terms: {
+    title: 'Käyttöehdot',
+    description: 'Muuttokone.fi palvelun käyttöehdot. Lue ehdot ennen palvelun tilaamista.',
+    canonical: '/kayttoehdot',
+  },
+
+  privacy: {
+    title: 'Tietosuojaseloste',
+    description: 'Muuttokone.fi tietosuojaseloste. Lue miten käsittelemme henkilötietojasi.',
+    canonical: '/tietosuoja',
   },
 } as const;

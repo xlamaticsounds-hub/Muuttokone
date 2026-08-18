@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { generateSEOMetadata, SEOConfigs } from '@/components/SEO/SEOHelpers';
 
 const cases = [
   {
@@ -23,10 +24,14 @@ const cases = [
   },
 ];
 
-export const metadata: Metadata = {
-  title: 'Referenssit | Muuttokone',
-  description: 'Poimintoja toteutetuista muuttoprojekteista: kotimuutot, yritysmuutot ja erikoiskuljetukset.',
-};
+export const metadata: Metadata = generateSEOMetadata({
+  ...SEOConfigs.referenssit,
+  openGraph: {
+    title: SEOConfigs.referenssit.title,
+    description: SEOConfigs.referenssit.description,
+    type: 'website',
+  },
+});
 
 export default function ReferenssitPage() {
   return (
