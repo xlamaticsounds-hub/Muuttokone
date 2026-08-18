@@ -170,6 +170,12 @@ export default async function LeadDetailPage({
                   </div>
                 </div>
                 <div>
+                  <label className="text-xs font-medium text-gray-500 uppercase">Toivottu kellonaika</label>
+                  <p className="mt-1 text-gray-900 dark:text-white">
+                    {typeof pfd.preferredTime === 'string' && pfd.preferredTime ? pfd.preferredTime : '-'}
+                  </p>
+                </div>
+                <div>
                   <label className="text-xs font-medium text-gray-500 uppercase">Tilavuus / Koko</label>
                   <p className="mt-1 text-gray-900 dark:text-white">{lead.volumeM3 ? `${lead.volumeM3} m³` : '-'}</p>
                 </div>

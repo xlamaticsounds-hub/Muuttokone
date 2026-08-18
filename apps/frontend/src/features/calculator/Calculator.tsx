@@ -1379,20 +1379,33 @@ export default function Calculator() {
                   <span className="flex items-center gap-1.5">{t('📋 Hinta-arvio ei sido sinua')}</span>
                 </div>
 
-                <div className="max-w-xs mx-auto">
-                  <label className="block text-xs font-bold uppercase text-gray-400 mb-2 text-center">
-                    {t('Muuttopäivä (vaikuttaa hintaan)')}
-                  </label>
-                  <input
-                    type="date"
-                    className="w-full px-5 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none text-center"
-                    value={formatDateInput(formData.date)}
-                    onChange={(e) => updateField('date', e.target.value ? new Date(e.target.value) : undefined)}
-                  />
-                  {!formData.date && (
-                    <p className="text-xs text-gray-400 text-center mt-2">{t('Valitse päivä nähdäksesi voiko ajankohta tuoda alennusta.')}</p>
-                  )}
+                <div className="max-w-xs mx-auto flex gap-3">
+                  <div className="flex-1">
+                    <label className="block text-xs font-bold uppercase text-gray-400 mb-2 text-center">
+                      {t('Muuttopäivä (vaikuttaa hintaan)')}
+                    </label>
+                    <input
+                      type="date"
+                      className="w-full px-5 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none text-center"
+                      value={formatDateInput(formData.date)}
+                      onChange={(e) => updateField('date', e.target.value ? new Date(e.target.value) : undefined)}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs font-bold uppercase text-gray-400 mb-2 text-center">
+                      {t('Toivottu kellonaika')}
+                    </label>
+                    <input
+                      type="time"
+                      className="w-full px-5 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none text-center"
+                      value={formData.preferredTime || ''}
+                      onChange={(e) => updateField('preferredTime', e.target.value || undefined)}
+                    />
+                  </div>
                 </div>
+                {!formData.date && (
+                  <p className="text-xs text-gray-400 text-center -mt-3">{t('Valitse päivä nähdäksesi voiko ajankohta tuoda alennusta.')}</p>
+                )}
 
                 <div className="flex justify-center gap-3 flex-wrap">
                   {(formData.serviceType === 'moving' || formData.serviceType === 'transport') && (

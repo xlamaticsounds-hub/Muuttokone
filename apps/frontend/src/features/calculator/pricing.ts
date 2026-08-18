@@ -244,6 +244,7 @@ export const CalculatorSchema = z.object({
 
   // Timing
   date: z.date().optional(),
+  preferredTime: z.string().optional(), // Toivottu kellonaika (esim. "09:00") — ei vaikuta hintaan, vain tiedoksi
 
   // Contact (captured at booking stage)
   contactName: z.string().optional(),
