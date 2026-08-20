@@ -191,8 +191,10 @@ export async function updateLeadDetails(leadId: string, data: any) {
   if (confirmedPriceRaw === '' || confirmedPriceRaw === undefined || confirmedPriceRaw === null) {
     delete updatedFormData.confirmedPrice;
   } else {
-    const parsed = parseFloat(confirmedPriceRaw);
-    if (!Number.isNaN(parsed)) updatedFormData.confirmedPrice = parsed;
+    // Sallitaan myös haarukka (esim. "99-129") kiinteän hinnan sijaan — tallennetaan
+    // merkkijonona sellaisenaan, väliviiva normalisoituna ajatusviivaksi ("–") jotta
+    // se näyttää samalta kuin laskurin oman arvion haarukka sähköpostissa.
+    updatedFormData.confirmedPrice = String(confirmedPriceRaw).replace(/\s*-\s*/g, '–');
   }
 
   // Asunnon kokoluokka ja kohteen kerros/hissi eivät ole omia Prisma-sarakkeita (vain

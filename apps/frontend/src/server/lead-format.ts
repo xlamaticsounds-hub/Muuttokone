@@ -113,7 +113,7 @@ export function recomputeLeadPrice(
 }
 
 export function getStoredPrice(pfd: Record<string, unknown>): {
-  confirmed: number | null;
+  confirmed: string | null;
   exact: number | null;
   low: number | null;
   high: number | null;
@@ -121,7 +121,14 @@ export function getStoredPrice(pfd: Record<string, unknown>): {
   return {
     // Ihmisen hallintapaneelissa vahvistama kiinteä hinta — jos asetettu, tämä korvaa
     // laskurin nettisivulla näyttämän arvion lopullisessa, sähköpostitse lähetettävässä tarjouksessa.
-    confirmed: typeof pfd.confirmedPrice === 'number' ? pfd.confirmedPrice : null,
+    // Merkkijono (ei numero) koska tämä voi olla myös haarukka, esim. "99–129" — vanhat liidit
+    // joilla arvo on vielä tallennettu numerona (ennen tätä muutosta) tuetaan silti.
+    confirmed:
+      typeof pfd.confirmedPrice === 'string'
+        ? pfd.confirmedPrice
+        : typeof pfd.confirmedPrice === 'number'
+          ? String(pfd.confirmedPrice)
+          : null,
     exact: typeof pfd.price === 'number' ? pfd.price : null,
     low: typeof pfd.priceRangeLow === 'number' ? pfd.priceRangeLow : null,
     high: typeof pfd.priceRangeHigh === 'number' ? pfd.priceRangeHigh : null,

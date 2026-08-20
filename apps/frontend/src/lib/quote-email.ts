@@ -41,7 +41,7 @@ export type QuoteEmailParams = {
   requestedDate: Date | null;
   serviceLabel: string;
   packageLabel: string | null;
-  priceConfirmed: number | null;
+  priceConfirmed: string | null;
   priceLow: number | null;
   priceHigh: number | null;
   priceExact: number | null;

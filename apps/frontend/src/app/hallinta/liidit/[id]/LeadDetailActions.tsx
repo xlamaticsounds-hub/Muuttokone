@@ -105,15 +105,15 @@ export default function LeadDetailActions({
                   Vahvistettu hinta (€) — ohittaa laskurin arvion sähköpostitse lähetettävässä tarjouksessa
                 </label>
                 <input
-                  type="number"
-                  step="1"
+                  type="text"
+                  inputMode="text"
                   name="confirmedPrice"
-                  placeholder={estimateLow !== null && estimateHigh !== null ? `Laskurin arvio: ${estimateLow}–${estimateHigh}` : 'Esim. 450'}
+                  placeholder={estimateLow !== null && estimateHigh !== null ? `Laskurin arvio: ${estimateLow}–${estimateHigh}` : 'Esim. 450 tai 99-129'}
                   defaultValue={confirmedPrice ?? ''}
                   className="mt-1 w-full rounded-md border border-blue-300 bg-white px-3 py-2 text-sm dark:border-blue-800 dark:bg-gray-800 dark:text-white"
                 />
                 <p className="mt-1 text-xs text-blue-600 dark:text-blue-400">
-                  Jätä tyhjäksi jos haluat että sähköpostissa näkyy laskurin arvioima hintahaarukka.
+                  Kiinteä hinta (esim. 450) tai haarukka (esim. 99-129). Jätä tyhjäksi jos haluat että sähköpostissa näkyy laskurin arvioima hintahaarukka.
                 </p>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

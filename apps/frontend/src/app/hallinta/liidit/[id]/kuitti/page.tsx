@@ -23,7 +23,10 @@ export default async function ReceiptPage({
 
   const pfd = parseLeadFormData(lead.formData);
   const { confirmed, exact, low, high } = getStoredPrice(pfd);
-  const prefillAmount = confirmed ?? exact ?? (low !== null && high !== null ? Math.round((low + high) / 2) : null);
+  // Kuitille kelpaa vain yksittäinen luku (ei haarukkaa, esim. "99–129") — jos vahvistettu
+  // hinta on haarukka, jätetään se esitäyttämättä ja pyydetään ihmistä syöttämään lopullinen summa.
+  const confirmedNumeric = confirmed !== null && /^\d+(\.\d+)?$/.test(confirmed) ? Number(confirmed) : null;
+  const prefillAmount = confirmedNumeric ?? exact ?? (low !== null && high !== null ? Math.round((low + high) / 2) : null);
 
   const customerName = [lead.contact.firstName, lead.contact.lastName].filter(Boolean).join(' ');
   const customerAddress = [lead.contact.street, lead.contact.postalCode, lead.contact.city]
