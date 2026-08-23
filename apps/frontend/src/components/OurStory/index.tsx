@@ -16,7 +16,7 @@ export default function OurStory() {
           </h2>
           <p className="text-body-color dark:text-body-color-dark">
             {t(
-              'Muuttokone syntyi ajatuksesta, että muuton ei tarvitse olla stressaavaa. [Placeholder — täydennetään myöhemmin oikealla tarinalla: milloin perustettu, mistä idea lähti ja mikä meitä ajaa eteenpäin.]',
+              'Muuttokone syntyi, kun päätimme kaverin kanssa ottaa asiat omiin käsiimme — Suomen työtilanne ei tarjonnut meille eikä kavereillemme sitä mitä halusimme, joten loimme työpaikat itse. Mukaan on sittemmin liittynyt niin kavereita kuin muitakin tekijöitä. Halusimme tuoda perinteiseen muuttoalaan jotain uutta: täyden läpinäkyvyyden ja aidon, rehellisen tekemisen ilman turhia vääntöjä. Tiedämme, että muutto on jo valmiiksi stressaavaa — siksi asiakkaamme ei tarvitse miettiä, osaavatko muuttomiehet hommansa tai yllättääkö lasku suurempana kuin sovittiin. Muutto on meille vasta alku — tähtäämme kasvuun kohti isompaa logistiikka- ja kuljetusalan toimijaa.',
             )}
           </p>
         </div>

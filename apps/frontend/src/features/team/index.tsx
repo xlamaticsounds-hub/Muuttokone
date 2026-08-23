@@ -19,7 +19,7 @@ export default function Team() {
           <p>{t('Ihmiset jotka hoitavat muuttosi alusta loppuun.')}</p>
         </div>
 
-        <div className="mx-auto grid max-w-3xl grid-cols-1 gap-7.5 sm:grid-cols-2 xl:gap-10">
+        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-7.5 sm:grid-cols-2 lg:grid-cols-3 xl:gap-10">
           {teamData.map((member) => (
             <TeamCard key={member.id} member={member} />
           ))}
