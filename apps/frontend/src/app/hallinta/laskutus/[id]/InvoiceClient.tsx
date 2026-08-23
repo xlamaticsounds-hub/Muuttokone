@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Printer, Mail, Download, Pencil, Copy } from 'lucide-react';
+import { ArrowLeft, Printer, Mail, Download, Pencil, Copy, Receipt } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { formatDateFi, formatEuro } from '@/lib/format';
 import { generateViitenumero } from '@/lib/reference-number';
 import { computeInvoiceTotals, type InvoiceLineItem } from '@/lib/invoice';
 import { sendInvoiceEmail } from '@/server/send-invoice';
+import { sendReceiptForInvoice } from '@/server/send-invoice-receipt';
 import { duplicateInvoice } from '@/server/invoice-actions';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -38,8 +39,10 @@ export default function InvoiceClient({
 }) {
   const router = useRouter();
   const [sending, setSending] = useState(false);
+  const [sendingReceipt, setSendingReceipt] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; message: string } | null>(null);
+  const [receiptFeedback, setReceiptFeedback] = useState<{ ok: boolean; message: string } | null>(null);
   const [email, setEmail] = useState(recipientEmail || customerEmail || '');
 
   const totals = computeInvoiceTotals(items);
@@ -76,6 +79,27 @@ export default function InvoiceClient({
       setFeedback({ ok: false, message: err instanceof Error ? err.message : 'Lähetys epäonnistui.' });
     } finally {
       setSending(false);
+    }
+  };
+
+  const handleSendReceipt = async () => {
+    if (!emailValid) return;
+    const confirmed = window.confirm(`Lähetetäänkö kuitti laskun tiedoilla osoitteeseen ${email.trim()}?`);
+    if (!confirmed) return;
+
+    setSendingReceipt(true);
+    setReceiptFeedback(null);
+    try {
+      const result = await sendReceiptForInvoice(id, email.trim());
+      if (result.success) {
+        setReceiptFeedback({ ok: true, message: `Kuitti lähetetty osoitteeseen ${result.sentTo}.` });
+      } else {
+        setReceiptFeedback({ ok: false, message: result.message });
+      }
+    } catch (err) {
+      setReceiptFeedback({ ok: false, message: err instanceof Error ? err.message : 'Lähetys epäonnistui.' });
+    } finally {
+      setSendingReceipt(false);
     }
   };
 
@@ -140,6 +164,15 @@ export default function InvoiceClient({
             </p>
           )}
           <button
+            onClick={handleSendReceipt}
+            disabled={sendingReceipt || !emailValid}
+            title={!emailValid ? 'Anna kelvollinen sähköpostiosoite' : 'Lähettää kuitin laskun riveillä ja summalla samaan osoitteeseen'}
+            className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+          >
+            <Receipt className="h-4 w-4" />
+            {sendingReceipt ? 'Lähetetään...' : 'Lähetä kuitti samaan osoitteeseen'}
+          </button>
+          <button
             onClick={handleSend}
             disabled={sending || !emailValid}
             title={!emailValid ? 'Anna kelvollinen sähköpostiosoite' : undefined}
@@ -150,6 +183,12 @@ export default function InvoiceClient({
           </button>
         </div>
       </div>
+
+      {receiptFeedback && (
+        <p className={`mb-4 text-sm print:hidden ${receiptFeedback.ok ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+          {receiptFeedback.message}
+        </p>
+      )}
 
       {sentAt && !feedback && (
         <p className="mb-4 text-xs text-gray-500 dark:text-gray-400 print:hidden">
