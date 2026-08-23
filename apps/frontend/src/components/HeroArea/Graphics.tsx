@@ -1,25 +1,53 @@
-import React from 'react';
+'use client';
+
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 
+// Kuvien luontevat kuvasuhteet vaihtelevat (3:4 ja 9:16 sekaisin), joten kierrossa
+// käytetään kiinteää laatikkoa (aspect-[3/4]) + object-cover, jotta koko ei hyppää
+// kuvien välillä. hero.webp säilytetään kansiossa mutta ei ole enää mukana kierrossa.
+const heroImages = [
+  '/images/webp/hero/hero-1.jpg',
+  '/images/webp/hero/hero-2.jpg',
+  '/images/webp/hero/hero-3.jpg',
+  '/images/webp/hero/hero-4.jpg',
+  '/images/webp/hero/hero-5.jpg',
+];
+
+const SLIDE_DURATION_MS = 5000;
+
 const Graphics = () => {
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setIndex((i) => (i + 1) % heroImages.length);
+    }, SLIDE_DURATION_MS);
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <>
-      <div className="relative mx-auto max-w-[520px] md:mx-0 md:max-w-none">
-        {/* Soft gradient fade into background on larger screens */}
-        <div className="pointer-events-none absolute inset-0 -z-10 hidden bg-gradient-to-l from-white via-white/60 to-transparent md:block dark:from-black dark:via-black/40 dark:to-transparent" />
-
-        {/* Portrait hero image with smart sizing */}
-        <div className="relative z-10 flex items-end justify-center md:justify-end">
-          <Image
-            src="/images/webp/hero/hero.webp"
-            alt="Hero"
-            width={720}
-            height={1280}
-            priority
-            fetchPriority="high"
-            sizes="(max-width: 768px) 78vw, (max-width: 1024px) 420px, 520px"
-            className="h-auto w-[78%] max-w-[420px] min-w-[260px] md:w-auto md:max-w-none"
-          />
+      <div className="relative mx-auto aspect-[3/4] w-[78%] max-w-[420px] min-w-[260px] md:mx-0 md:w-full">
+        {/* Vaihtuvat kuvat ristihäivytyksellä: kaikki pinottuna samaan laatikkoon päällekkäin,
+            vain aktiivisen opacity on 100 — CSS-transition hoitaa pehmeän häivytyksen.
+            Pyöristetty kulma + kevyt varjo tekee kuvasta "kortin" eikä läiskän — ei mask/vinjettiä. */}
+        <div className="relative z-10 h-full w-full overflow-hidden rounded-2xl shadow-xl">
+          {heroImages.map((src, i) => (
+            <Image
+              key={src}
+              src={src}
+              alt="Muuttokone tositoimissa"
+              fill
+              priority={i === 0}
+              fetchPriority={i === 0 ? 'high' : undefined}
+              aria-hidden={i !== index}
+              sizes="(max-width: 768px) 78vw, (max-width: 1024px) 420px, 480px"
+              className={`object-cover transition-opacity duration-1000 ease-in-out ${
+                i === index ? 'opacity-100' : 'opacity-0'
+              }`}
+            />
+          ))}
         </div>
       </div>
     </>
