@@ -3,9 +3,13 @@
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Trash2, Printer } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { ArrowLeft, Plus, Trash2, Printer, Mail } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { formatDateFi, formatEuro } from '@/lib/format';
+import { sendReceiptEmail } from '@/server/send-receipt';
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // @react-pdf/renderer:in PDFDownloadLink käyttää selaimen Blob/URL-rajapintoja, joten
 // se ei saa yrittää renderöityä palvelimella (SSR) — ladataan siksi vasta asiakaspäässä.
@@ -60,6 +64,7 @@ export default function ReceiptClient({
   requestedDate: string | null;
   prefillAmount: number | null;
 }) {
+  const router = useRouter();
   const [paymentMethod, setPaymentMethod] = useState('Verkkomaksu');
   const [receiptDate] = useState(() => new Date());
   const [items, setItems] = useState<LineItem[]>(() => [
@@ -70,6 +75,10 @@ export default function ReceiptClient({
       vatRate: VAT_RATE,
     },
   ]);
+  const [email, setEmail] = useState(customerEmail || '');
+  const [sending, setSending] = useState(false);
+  const [feedback, setFeedback] = useState<{ ok: boolean; message: string } | null>(null);
+  const emailValid = EMAIL_RE.test(email.trim());
 
   const addItem = () => {
     setItems((prev) => [...prev, { id: newId(), label: '', amount: 0, vatRate: VAT_RATE }]);
@@ -93,6 +102,41 @@ export default function ReceiptClient({
   );
 
   const receiptNumber = `${receiptDate.getFullYear()}-${leadId.slice(0, 6).toUpperCase()}`;
+
+  const handleSend = async () => {
+    if (!emailValid) return;
+    const confirmed = window.confirm(`Lähetetäänkö kuitti sähköpostitse osoitteeseen ${email.trim()}?`);
+    if (!confirmed) return;
+
+    setSending(true);
+    setFeedback(null);
+    try {
+      const result = await sendReceiptEmail({
+        leadId,
+        email: email.trim(),
+        receiptNumber,
+        receiptDate: receiptDate.toISOString(),
+        customerName,
+        customerPhone,
+        customerAddress,
+        fromAddress,
+        toAddress,
+        requestedDate,
+        items,
+        paymentMethod,
+      });
+      if (result.success) {
+        setFeedback({ ok: true, message: `Kuitti lähetetty osoitteeseen ${result.sentTo}.` });
+        router.refresh();
+      } else {
+        setFeedback({ ok: false, message: result.message });
+      }
+    } catch (err) {
+      setFeedback({ ok: false, message: err instanceof Error ? err.message : 'Lähetys epäonnistui.' });
+    } finally {
+      setSending(false);
+    }
+  };
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -123,6 +167,38 @@ export default function ReceiptClient({
             items={items}
             paymentMethod={paymentMethod}
           />
+        </div>
+      </div>
+
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white p-4 print:hidden dark:border-gray-700 dark:bg-gray-800">
+        <div className="flex flex-1 items-center gap-2">
+          <label htmlFor="receipt-email" className="text-xs font-medium uppercase text-gray-500 dark:text-gray-400">
+            Lähetä osoitteeseen
+          </label>
+          <input
+            id="receipt-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="asiakas@example.com"
+            className="flex-1 rounded-md border border-gray-300 bg-transparent px-3 py-1.5 text-sm dark:border-gray-600 dark:text-white"
+          />
+        </div>
+        <div className="flex items-center gap-3">
+          {feedback && (
+            <p className={`text-sm ${feedback.ok ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+              {feedback.message}
+            </p>
+          )}
+          <button
+            onClick={handleSend}
+            disabled={sending || !emailValid}
+            title={!emailValid ? 'Anna kelvollinen sähköpostiosoite' : undefined}
+            className="flex items-center gap-2 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
+          >
+            <Mail className="h-4 w-4" />
+            {sending ? 'Lähetetään...' : 'Lähetä kuitti asiakkaalle'}
+          </button>
         </div>
       </div>
 
