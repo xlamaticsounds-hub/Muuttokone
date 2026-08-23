@@ -204,3 +204,16 @@ export const serviceAreaDictionary: Record<string, string> = {
   'Tarkista postinumero – sen tulee olla 5 numeroa.': 'Please check the postal code – it should be 5 digits.',
   'Pyydä tarjous tähän alueeseen': 'Request a quote for this area',
 };
+
+export const teamDictionary: Record<string, string> = {
+  'Muuttokoneen konkkaronkka': 'The Muuttokone crew',
+  'Tiimimme': 'Our team',
+  'Ihmiset jotka hoitavat muuttosi alusta loppuun.': 'The people who take care of your move from start to finish.',
+};
+
+export const ourStoryDictionary: Record<string, string> = {
+  'Tarinamme': 'Our story',
+  'Mistä kaikki alkoi': 'Where it all began',
+  'Muuttokone syntyi ajatuksesta, että muuton ei tarvitse olla stressaavaa. [Placeholder — täydennetään myöhemmin oikealla tarinalla: milloin perustettu, mistä idea lähti ja mikä meitä ajaa eteenpäin.]':
+    "Muuttokone was born from the idea that moving doesn't have to be stressful. [Placeholder — to be replaced with the real story: when we were founded, where the idea came from, and what drives us.]",
+};
