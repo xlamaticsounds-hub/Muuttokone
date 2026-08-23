@@ -1379,7 +1379,7 @@ export default function Calculator() {
                   <span className="flex items-center gap-1.5">{t('📋 Hinta-arvio ei sido sinua')}</span>
                 </div>
 
-                <div className="max-w-xs mx-auto flex gap-3">
+                <div className="max-w-xs sm:max-w-sm mx-auto flex flex-col sm:flex-row gap-3">
                   <div className="flex-1">
                     <label className="block text-xs font-bold uppercase text-gray-400 mb-2 text-center">
                       {t('Muuttopäivä (vaikuttaa hintaan)')}
@@ -1397,10 +1397,13 @@ export default function Calculator() {
                     </label>
                     <input
                       type="time"
+                      step={3600}
+                      placeholder="12:00"
                       className="w-full px-5 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none text-center"
                       value={formData.preferredTime || ''}
                       onChange={(e) => updateField('preferredTime', e.target.value || undefined)}
                     />
+                    <p className="mt-1 text-[11px] text-gray-400 text-center">{t('Esim. 12:00 — tunnin tarkkuudella')}</p>
                   </div>
                 </div>
                 {!formData.date && (
