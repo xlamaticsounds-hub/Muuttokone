@@ -9,8 +9,8 @@ import { formatDateFi, formatEuro } from '@/lib/format';
 import { generateViitenumero } from '@/lib/reference-number';
 import { computeInvoiceTotals, type InvoiceLineItem } from '@/lib/invoice';
 import { sendInvoiceEmail } from '@/server/send-invoice';
-import { sendReceiptForInvoice } from '@/server/send-invoice-receipt';
 import { duplicateInvoice } from '@/server/invoice-actions';
+import ReceiptPreviewModal from './ReceiptPreviewModal';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -39,10 +39,10 @@ export default function InvoiceClient({
 }) {
   const router = useRouter();
   const [sending, setSending] = useState(false);
-  const [sendingReceipt, setSendingReceipt] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; message: string } | null>(null);
   const [receiptFeedback, setReceiptFeedback] = useState<{ ok: boolean; message: string } | null>(null);
+  const [showReceiptPreview, setShowReceiptPreview] = useState(false);
   const [email, setEmail] = useState(recipientEmail || customerEmail || '');
 
   const totals = computeInvoiceTotals(items);
@@ -82,28 +82,13 @@ export default function InvoiceClient({
     }
   };
 
-  const handleSendReceipt = async () => {
-    if (!emailValid) return;
-    const confirmed = window.confirm(`Lähetetäänkö kuitti laskun tiedoilla osoitteeseen ${email.trim()}?`);
-    if (!confirmed) return;
-
-    setSendingReceipt(true);
-    setReceiptFeedback(null);
-    try {
-      const result = await sendReceiptForInvoice(id, email.trim());
-      if (result.success) {
-        setReceiptFeedback({ ok: true, message: `Kuitti lähetetty osoitteeseen ${result.sentTo}.` });
-      } else {
-        setReceiptFeedback({ ok: false, message: result.message });
-      }
-    } catch (err) {
-      setReceiptFeedback({ ok: false, message: err instanceof Error ? err.message : 'Lähetys epäonnistui.' });
-    } finally {
-      setSendingReceipt(false);
-    }
+  const handleReceiptSent = (sentTo: string) => {
+    setShowReceiptPreview(false);
+    setReceiptFeedback({ ok: true, message: `Kuitti lähetetty osoitteeseen ${sentTo}.` });
   };
 
   return (
+    <>
     <div className="mx-auto max-w-3xl">
       <div className="mb-4 flex items-center justify-between print:hidden">
         <Link
@@ -164,13 +149,13 @@ export default function InvoiceClient({
             </p>
           )}
           <button
-            onClick={handleSendReceipt}
-            disabled={sendingReceipt || !emailValid}
-            title={!emailValid ? 'Anna kelvollinen sähköpostiosoite' : 'Lähettää kuitin laskun riveillä ja summalla samaan osoitteeseen'}
+            onClick={() => setShowReceiptPreview(true)}
+            disabled={!emailValid}
+            title={!emailValid ? 'Anna kelvollinen sähköpostiosoite' : 'Esikatsele ja lähetä kuitti laskun riveillä ja summalla samaan osoitteeseen'}
             className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
           >
             <Receipt className="h-4 w-4" />
-            {sendingReceipt ? 'Lähetetään...' : 'Lähetä kuitti samaan osoitteeseen'}
+            Esikatsele kuitti
           </button>
           <button
             onClick={handleSend}
@@ -278,5 +263,18 @@ export default function InvoiceClient({
         </p>
       </div>
     </div>
+
+    {showReceiptPreview && (
+      <ReceiptPreviewModal
+        invoiceId={id}
+        invoiceNumber={invoiceNumber}
+        customerName={customerName}
+        items={items}
+        email={email.trim()}
+        onClose={() => setShowReceiptPreview(false)}
+        onSent={handleReceiptSent}
+      />
+    )}
+    </>
   );
 }
