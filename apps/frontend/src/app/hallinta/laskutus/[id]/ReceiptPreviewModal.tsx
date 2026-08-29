@@ -60,7 +60,8 @@ export default function ReceiptPreviewModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm">
+      <div className="flex min-h-full items-center justify-center p-4">
       <div className="flex h-full max-h-[90vh] w-full max-w-5xl flex-col rounded-lg bg-white shadow-xl dark:bg-gray-800">
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700">
           <h2 className="text-lg font-bold text-gray-900 dark:text-white">Kuitin esikatselu</h2>
@@ -70,12 +71,12 @@ export default function ReceiptPreviewModal({
         </div>
 
         <div className="flex flex-1 flex-col overflow-hidden sm:flex-row">
-          <div className="flex w-full flex-col gap-3 border-b border-gray-200 p-6 sm:w-80 sm:border-b-0 sm:border-r dark:border-gray-700">
+          <div className="flex max-h-[50vh] w-full flex-col gap-3 overflow-y-auto border-b border-gray-200 p-6 sm:max-h-none sm:w-80 sm:border-b-0 sm:border-r dark:border-gray-700">
             <p className="text-sm text-gray-500 dark:text-gray-400">
               Kuitti muodostetaan laskun nro {invoiceNumber} riveistä ja summasta ({totals.gross.toLocaleString('fi-FI', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €).
             </p>
 
-            <div className="mt-auto flex flex-col gap-2 pt-4">
+            <div className="sticky bottom-0 -mx-6 mt-auto flex flex-col gap-2 bg-white px-6 pt-4 pb-2 dark:bg-gray-800">
               {sendError && <p className="text-sm text-red-600 dark:text-red-400">{sendError}</p>}
               <button
                 onClick={handleSend}
@@ -92,6 +93,7 @@ export default function ReceiptPreviewModal({
             <iframe title="Kuitin esikatselu" srcDoc={previewHtml} className="h-full w-full border-0" />
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

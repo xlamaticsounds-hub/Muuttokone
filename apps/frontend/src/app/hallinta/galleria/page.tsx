@@ -305,7 +305,8 @@ function ImageDetailModal({ image, onClose, onUpdate }: { image: DBImage, onClos
   };
 
   return (
-    <div className="fixed inset-0 z-99999 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+    <div className="fixed inset-0 z-99999 overflow-y-auto p-4 bg-black/80 backdrop-blur-sm">
+      <div className="flex min-h-full items-center justify-center">
       <div className="bg-white dark:bg-slate-900 rounded-2xl overflow-hidden shadow-2xl max-w-5xl w-full flex flex-col md:flex-row h-[80vh]">
         {/* Left: Image Preview */}
         <div className="flex-1 bg-gray-100 dark:bg-gray-950 flex items-center justify-center p-8 overflow-hidden">
@@ -367,6 +368,7 @@ function ImageDetailModal({ image, onClose, onUpdate }: { image: DBImage, onClos
             </button>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
