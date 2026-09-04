@@ -117,6 +117,7 @@ export async function duplicateInvoice(invoiceId: string): Promise<{ id: string 
 const STATUS_LABELS_FI: Record<InvoiceStatus, string> = {
   DRAFT: 'Luonnos',
   SENT: 'Lähetetty',
+  UNPAID: 'Ei maksettu',
   PAID: 'Maksettu',
   OVERDUE: 'Maksu myöhässä',
 };

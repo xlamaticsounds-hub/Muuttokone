@@ -37,6 +37,7 @@ enum LeadSource {
 enum InvoiceStatus {
   DRAFT
   SENT
+  UNPAID
   PAID
   OVERDUE
 }

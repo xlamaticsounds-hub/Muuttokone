@@ -39,6 +39,8 @@ export default function InvoiceStatusSelector({
         return 'bg-gray-100 text-gray-800 ring-gray-600/20 dark:bg-gray-800 dark:text-gray-400';
       case 'SENT':
         return 'bg-blue-100 text-blue-800 ring-blue-600/20 dark:bg-blue-900/30 dark:text-blue-400';
+      case 'UNPAID':
+        return 'bg-amber-100 text-amber-800 ring-amber-600/20 dark:bg-amber-900/30 dark:text-amber-400';
       case 'PAID':
         return 'bg-green-100 text-green-800 ring-green-600/20 dark:bg-green-900/30 dark:text-green-400';
       case 'OVERDUE':
@@ -58,6 +60,7 @@ export default function InvoiceStatusSelector({
       >
         <option value="DRAFT">Luonnos</option>
         <option value="SENT">Lähetetty</option>
+        <option value="UNPAID">Ei maksettu</option>
         <option value="PAID">Maksettu</option>
         <option value="OVERDUE">Maksu myöhässä</option>
       </select>
