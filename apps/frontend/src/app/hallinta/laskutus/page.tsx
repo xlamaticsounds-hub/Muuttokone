@@ -3,6 +3,8 @@ import { prisma } from '@/server/db';
 import { formatDateFi, formatEuro } from '@/lib/format';
 import { computeInvoiceTotals, parseInvoiceItems } from '@/lib/invoice';
 import { Plus } from 'lucide-react';
+import InvoiceStatusSelector from './InvoiceStatusSelector';
+import DeleteInvoiceButton from './DeleteInvoiceButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,7 +47,9 @@ export default async function LaskutusPage() {
                 <th className="px-4 py-3">Asiakas</th>
                 <th className="px-4 py-3">Selite</th>
                 <th className="px-4 py-3">Luotu</th>
+                <th className="px-4 py-3">Tila</th>
                 <th className="px-4 py-3 text-right">Summa</th>
+                <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -76,10 +80,16 @@ export default async function LaskutusPage() {
                         {formatDateFi(invoice.createdAt)}
                       </Link>
                     </td>
+                    <td className="px-4 py-3">
+                      <InvoiceStatusSelector invoiceId={invoice.id} initialStatus={invoice.status} />
+                    </td>
                     <td className="p-0 text-right">
                       <Link href={href} className="block px-4 py-3 font-semibold text-gray-900 dark:text-white">
                         {formatEuro(totals.gross)} €
                       </Link>
+                    </td>
+                    <td className="px-2 py-3 text-right">
+                      <DeleteInvoiceButton invoiceId={invoice.id} invoiceNumber={invoice.invoiceNumber} compact />
                     </td>
                   </tr>
                 );

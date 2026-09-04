@@ -10,6 +10,9 @@ import { generateViitenumero } from '@/lib/reference-number';
 import { computeInvoiceTotals, type InvoiceLineItem } from '@/lib/invoice';
 import { sendInvoiceEmail } from '@/server/send-invoice';
 import { duplicateInvoice } from '@/server/invoice-actions';
+import type { InvoiceStatus } from '@prisma/client';
+import InvoiceStatusSelector from '../InvoiceStatusSelector';
+import DeleteInvoiceButton from '../DeleteInvoiceButton';
 import ReceiptPreviewModal from './ReceiptPreviewModal';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -25,6 +28,7 @@ export default function InvoiceClient({
   createdAt,
   dueDate,
   sentAt,
+  status,
 }: {
   id: string;
   invoiceNumber: number;
@@ -36,6 +40,7 @@ export default function InvoiceClient({
   createdAt: string;
   dueDate: string | null;
   sentAt: string | null;
+  status: InvoiceStatus;
 }) {
   const router = useRouter();
   const [sending, setSending] = useState(false);
@@ -91,13 +96,17 @@ export default function InvoiceClient({
     <>
     <div className="mx-auto max-w-3xl">
       <div className="mb-4 flex items-center justify-between print:hidden">
-        <Link
-          href="/hallinta/laskutus"
-          className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
-        >
-          <ArrowLeft className="h-4 w-4" /> Takaisin laskuihin
-        </Link>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/hallinta/laskutus"
+            className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+          >
+            <ArrowLeft className="h-4 w-4" /> Takaisin laskuihin
+          </Link>
+          <InvoiceStatusSelector invoiceId={id} initialStatus={status} />
+        </div>
         <div className="flex items-center gap-3">
+          <DeleteInvoiceButton invoiceId={id} invoiceNumber={invoiceNumber} />
           {!sentAt && (
             <Link
               href={`/hallinta/laskutus/${id}/muokkaa`}

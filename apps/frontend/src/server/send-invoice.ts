@@ -209,7 +209,10 @@ async function sendInvoiceEmailInner(invoiceId: string, email: string): Promise<
     };
   }
 
-  await prisma.invoice.update({ where: { id: invoiceId }, data: { sentAt: new Date(), recipientEmail } });
+  await prisma.invoice.update({
+    where: { id: invoiceId },
+    data: { sentAt: new Date(), recipientEmail, status: 'SENT' },
+  });
 
   await createLog({
     entityType: 'Invoice',

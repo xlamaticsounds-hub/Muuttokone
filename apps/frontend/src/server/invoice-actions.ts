@@ -3,7 +3,9 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/server/auth';
 import { prisma } from '@/server/db';
+import { createLog } from '@/server/repo/logs';
 import { parseInvoiceItems, type InvoiceLineItem } from '@/lib/invoice';
+import type { InvoiceStatus } from '@prisma/client';
 
 export type CreateInvoiceInput = {
   contactId: string | null;
@@ -110,4 +112,62 @@ export async function duplicateInvoice(invoiceId: string): Promise<{ id: string 
   });
 
   return { id: invoice.id };
+}
+
+const STATUS_LABELS_FI: Record<InvoiceStatus, string> = {
+  DRAFT: 'Luonnos',
+  SENT: 'Lähetetty',
+  PAID: 'Maksettu',
+  OVERDUE: 'Maksu myöhässä',
+};
+
+export async function updateInvoiceStatus(invoiceId: string, status: InvoiceStatus) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new Error('Unauthorized');
+  }
+
+  const invoice = await prisma.invoice.update({
+    where: { id: invoiceId },
+    data: { status },
+  });
+
+  await createLog({
+    entityType: 'Invoice',
+    entityId: invoiceId,
+    action: 'invoice.status_changed',
+    message: `Laskun tila muutettu: ${STATUS_LABELS_FI[status]}`,
+    data: { status },
+    actorId: session.user?.email ?? null,
+  });
+
+  return { id: invoice.id, status: invoice.status };
+}
+
+// Poistaa laskun pysyvästi — ei pehmeää poistoa (Invoice-mallilla ei ole deletedAt-saraketta,
+// toisin kuin Leadillä). Lokimerkintä jää talteen erikseen ennen poistoa, koska Log-rivi
+// viittaa entityId:hen joka ei enää löydy Invoice-taulusta poiston jälkeen.
+export async function deleteInvoice(invoiceId: string) {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new Error('Unauthorized');
+  }
+
+  const invoice = await prisma.invoice.findUnique({ where: { id: invoiceId } });
+  if (!invoice) {
+    throw new Error('Laskua ei löytynyt.');
+  }
+
+  await createLog({
+    entityType: 'Invoice',
+    entityId: invoiceId,
+    action: 'invoice.deleted',
+    message: `Lasku #${invoice.invoiceNumber} (${invoice.customerName}) poistettu`,
+    data: { invoiceNumber: invoice.invoiceNumber, customerName: invoice.customerName },
+    actorId: session.user?.email ?? null,
+  });
+
+  await prisma.invoice.delete({ where: { id: invoiceId } });
+
+  return { success: true };
 }

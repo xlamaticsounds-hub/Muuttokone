@@ -37,6 +37,7 @@ export default async function InvoicePage({
       createdAt={invoice.createdAt.toISOString()}
       dueDate={invoice.dueDate ? invoice.dueDate.toISOString() : null}
       sentAt={invoice.sentAt ? invoice.sentAt.toISOString() : null}
+      status={invoice.status}
     />
   );
 }
