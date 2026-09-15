@@ -1,27 +1,48 @@
 import { prisma } from '@/server/db';
+import { Lead, Contact, LeadStatus } from '@prisma/client';
+import KeikatTable from './KeikatTable';
 
 export const dynamic = 'force-dynamic';
 
-export default async function KeikatPage() {
+const PAGE_SIZE = 25;
+const INACTIVE_STATUSES: LeadStatus[] = ['LOST', 'ARCHIVED'];
+const ACTIVE_WHERE = {
+  status: {
+    notIn: INACTIVE_STATUSES,
+  },
+};
+
+export default async function KeikatPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { page: pageParam } = await searchParams;
+  const page = Math.max(1, parseInt(pageParam ?? '1', 10) || 1);
+
   let dbUnavailable = false;
-  let jobs: Awaited<ReturnType<typeof prisma.lead.findMany>> = [];
+  let jobs: (Lead & { contact: Contact })[] = [];
+  let total = 0;
 
   try {
-    jobs = await prisma.lead.findMany({
-      include: {
-        contact: true,
-      },
-      where: {
-        status: {
-          notIn: ['LOST', 'ARCHIVED'],
+    [jobs, total] = await Promise.all([
+      prisma.lead.findMany({
+        include: {
+          contact: true,
         },
-      },
-      orderBy: [{ requestedDate: 'asc' }, { createdAt: 'desc' }],
-    });
+        where: ACTIVE_WHERE,
+        orderBy: [{ requestedDate: 'asc' }, { createdAt: 'desc' }],
+        take: PAGE_SIZE,
+        skip: (page - 1) * PAGE_SIZE,
+      }),
+      prisma.lead.count({ where: ACTIVE_WHERE }),
+    ]);
   } catch (error) {
     dbUnavailable = true;
     console.warn('[hallinta/keikat] Database unavailable, showing fallback view', error);
   }
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div className="space-y-6">
@@ -31,7 +52,7 @@ export default async function KeikatPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Aktiiviset ja tulevat muutot.</p>
         </div>
         <span className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700 dark:border-blue-900/30 dark:bg-blue-900/20 dark:text-blue-400">
-          {jobs.length} aktiivista
+          {total} aktiivista
         </span>
       </div>
 
@@ -41,53 +62,14 @@ export default async function KeikatPage() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500 dark:bg-gray-900/40 dark:text-gray-400">
-              <tr>
-                <th className="px-4 py-3">Asiakas</th>
-                <th className="px-4 py-3">Muuttopäivä</th>
-                <th className="px-4 py-3">Reitti</th>
-                <th className="px-4 py-3">Tila</th>
-                <th className="px-4 py-3">Yhteys</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {jobs.length === 0 && (
-                <tr>
-                  <td className="px-4 py-6 text-gray-500 dark:text-gray-400" colSpan={5}>
-                    Ei aktiivisia keikkoja.
-                  </td>
-                </tr>
-              )}
-              {jobs.map((job) => (
-                <tr key={job.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
-                  <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
-                    {job.contact.firstName || '-'} {job.contact.lastName || ''}
-                  </td>
-                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                    {job.requestedDate ? new Date(job.requestedDate).toLocaleDateString('fi-FI') : '-'}
-                  </td>
-                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                    <div className="max-w-md truncate">
-                      {job.fromAddress || '-'} {'->'} {job.toAddress || '-'}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-200">
-                      {job.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                    {job.contact.phone || job.contact.email || '-'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <KeikatTable
+        jobs={jobs}
+        pagination={
+          dbUnavailable
+            ? undefined
+            : { page, totalPages, total, pageSize: PAGE_SIZE, basePath: '/hallinta/keikat' }
+        }
+      />
     </div>
   );
 }

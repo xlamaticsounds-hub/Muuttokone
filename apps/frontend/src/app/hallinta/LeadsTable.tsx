@@ -4,11 +4,17 @@ import { Lead, Contact, LeadStatus } from '@prisma/client';
 import { updateLeadStatus } from '@/server/actions';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { UniversalTable, Column } from '@/components/ui/UniversalTable';
+import { UniversalTable, Column, TablePagination } from '@/components/ui/UniversalTable';
 
 type LeadWithContact = Lead & { contact: Contact };
 
-export default function LeadsTable({ leads }: { leads: LeadWithContact[] }) {
+export default function LeadsTable({
+  leads,
+  pagination,
+}: {
+  leads: LeadWithContact[];
+  pagination?: TablePagination;
+}) {
   const router = useRouter();
   const [updating, setUpdating] = useState<string | null>(null);
 
@@ -125,6 +131,7 @@ export default function LeadsTable({ leads }: { leads: LeadWithContact[] }) {
         data={leads}
         columns={columns}
         onRowClick={(lead) => router.push(`/hallinta/liidit/${lead.id}`)}
+        pagination={pagination}
       />
     </div>
   );

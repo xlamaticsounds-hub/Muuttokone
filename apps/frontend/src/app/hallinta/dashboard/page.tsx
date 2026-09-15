@@ -1,11 +1,19 @@
 import { prisma } from '@/server/db';
+import { Lead, Contact } from '@prisma/client';
 import LeadsTable from '../LeadsTable';
 
 export const dynamic = 'force-dynamic'; // Ensure we always get fresh data
 
+const RECENT_LEADS_LIMIT = 8;
+const UPCOMING_JOBS_LIMIT = 5;
+const RECENT_CONTACTS_LIMIT = 8;
+
+type LeadWithContact = Lead & { contact: Contact };
+
 export default async function DashboardPage() {
   let dbUnavailable = false;
-  let leads: Awaited<ReturnType<typeof prisma.lead.findMany>> = [];
+  let recentLeads: LeadWithContact[] = [];
+  let upcomingJobs: LeadWithContact[] = [];
   let contacts: Awaited<
     ReturnType<
       typeof prisma.contact.findMany<{
@@ -13,38 +21,42 @@ export default async function DashboardPage() {
       }>
     >
   > = [];
+  let totalLeads = 0;
+  let activeJobsCount = 0;
+  let wonDeals = 0;
+  let totalContacts = 0;
 
   try {
-    [leads, contacts] = await Promise.all([
-      prisma.lead.findMany({
-        include: {
-          contact: true,
-        },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      }),
-      prisma.contact.findMany({
-        include: {
-          _count: { select: { leads: true } },
-        },
-        orderBy: {
-          updatedAt: 'desc',
-        },
-        take: 8,
-      }),
-    ]);
+    [recentLeads, upcomingJobs, contacts, totalLeads, activeJobsCount, wonDeals, totalContacts] =
+      await Promise.all([
+        prisma.lead.findMany({
+          include: { contact: true },
+          orderBy: { createdAt: 'desc' },
+          take: RECENT_LEADS_LIMIT,
+        }),
+        prisma.lead.findMany({
+          where: {
+            status: { notIn: ['LOST', 'ARCHIVED'] },
+            requestedDate: { not: null },
+          },
+          include: { contact: true },
+          orderBy: { requestedDate: 'asc' },
+          take: UPCOMING_JOBS_LIMIT,
+        }),
+        prisma.contact.findMany({
+          include: { _count: { select: { leads: true } } },
+          orderBy: { updatedAt: 'desc' },
+          take: RECENT_CONTACTS_LIMIT,
+        }),
+        prisma.lead.count(),
+        prisma.lead.count({ where: { status: { notIn: ['LOST', 'ARCHIVED'] } } }),
+        prisma.lead.count({ where: { status: 'WON' } }),
+        prisma.contact.count(),
+      ]);
   } catch (error) {
     dbUnavailable = true;
     console.warn('[hallinta/dashboard] Database unavailable, showing fallback view', error);
   }
-
-  const activeJobs = leads.filter((lead) => lead.status !== 'LOST' && lead.status !== 'ARCHIVED');
-  const upcomingJobs = activeJobs
-    .filter((lead) => lead.requestedDate)
-    .sort((a, b) => new Date(a.requestedDate as Date).getTime() - new Date(b.requestedDate as Date).getTime())
-    .slice(0, 5);
-  const wonDeals = leads.filter((lead) => lead.status === 'WON').length;
 
   return (
     <div className="space-y-6">
@@ -57,15 +69,15 @@ export default async function DashboardPage() {
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Keikat aktiivisena</p>
-          <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{activeJobs.length}</p>
+          <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{activeJobsCount}</p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Asiakkaat</p>
-          <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{contacts.length}</p>
+          <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{totalContacts}</p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Liidejä yhteensä</p>
-          <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{leads.length}</p>
+          <p className="mt-2 text-2xl font-bold text-gray-900 dark:text-white">{totalLeads}</p>
         </div>
         <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-800">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Voitetut diilit</p>
@@ -136,11 +148,16 @@ export default async function DashboardPage() {
       <div>
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Viimeisimmät liidit</h2>
-          <span className="bg-primary/10 text-primary rounded-full px-3 py-1 text-sm font-medium">
-            Yhteensä: {leads.length}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="bg-primary/10 text-primary rounded-full px-3 py-1 text-sm font-medium">
+              Yhteensä: {totalLeads}
+            </span>
+            <a href="/hallinta/liidit" className="text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
+              Näytä kaikki
+            </a>
+          </div>
         </div>
-        <LeadsTable leads={leads} />
+        <LeadsTable leads={recentLeads} />
       </div>
     </div>
   );

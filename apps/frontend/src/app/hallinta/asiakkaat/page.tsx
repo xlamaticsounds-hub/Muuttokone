@@ -1,40 +1,45 @@
 import { prisma } from '@/server/db';
+import AsiakkaatTable, { CustomerWithLeads } from './AsiakkaatTable';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AsiakkaatPage() {
+const PAGE_SIZE = 25;
+
+export default async function AsiakkaatPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
+  const { page: pageParam } = await searchParams;
+  const page = Math.max(1, parseInt(pageParam ?? '1', 10) || 1);
+
   let dbUnavailable = false;
-  let customers: Awaited<
-    ReturnType<
-      typeof prisma.contact.findMany<{
-        include: {
-          _count: { select: { leads: true } };
-          leads: {
-            take: 1;
-            orderBy: { createdAt: 'desc' };
-            select: { status: true; requestedDate: true; createdAt: true };
-          };
-        };
-      }>
-    >
-  > = [];
+  let customers: CustomerWithLeads[] = [];
+  let total = 0;
 
   try {
-    customers = await prisma.contact.findMany({
-      include: {
-        _count: { select: { leads: true } },
-        leads: {
-          take: 1,
-          orderBy: { createdAt: 'desc' },
-          select: { status: true, requestedDate: true, createdAt: true },
+    [customers, total] = await Promise.all([
+      prisma.contact.findMany({
+        include: {
+          _count: { select: { leads: true } },
+          leads: {
+            take: 1,
+            orderBy: { createdAt: 'desc' },
+            select: { status: true, requestedDate: true, createdAt: true },
+          },
         },
-      },
-      orderBy: { updatedAt: 'desc' },
-    });
+        orderBy: { updatedAt: 'desc' },
+        take: PAGE_SIZE,
+        skip: (page - 1) * PAGE_SIZE,
+      }),
+      prisma.contact.count(),
+    ]);
   } catch (error) {
     dbUnavailable = true;
     console.warn('[hallinta/asiakkaat] Database unavailable, showing fallback view', error);
   }
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div className="space-y-6">
@@ -44,7 +49,7 @@ export default async function AsiakkaatPage() {
           <p className="text-sm text-gray-500 dark:text-gray-400">Asiakastiedot ja viimeisin keikkatilanne.</p>
         </div>
         <span className="rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700 dark:border-blue-900/30 dark:bg-blue-900/20 dark:text-blue-400">
-          {customers.length} asiakasta
+          {total} asiakasta
         </span>
       </div>
 
@@ -54,49 +59,14 @@ export default async function AsiakkaatPage() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500 dark:bg-gray-900/40 dark:text-gray-400">
-              <tr>
-                <th className="px-4 py-3">Nimi</th>
-                <th className="px-4 py-3">Yhteystiedot</th>
-                <th className="px-4 py-3">Yritys</th>
-                <th className="px-4 py-3">Keikkoja</th>
-                <th className="px-4 py-3">Viimeisin status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {customers.length === 0 && (
-                <tr>
-                  <td className="px-4 py-6 text-gray-500 dark:text-gray-400" colSpan={5}>
-                    Ei asiakkaita vielä.
-                  </td>
-                </tr>
-              )}
-              {customers.map((customer) => {
-                const latestLead = customer.leads[0];
-                return (
-                  <tr key={customer.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/30">
-                    <td className="px-4 py-3 font-medium text-gray-900 dark:text-white">
-                      {customer.firstName || '-'} {customer.lastName || ''}
-                    </td>
-                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                      <div>{customer.phone || '-'}</div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">{customer.email || '-'}</div>
-                    </td>
-                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{customer.companyName || '-'}</td>
-                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{customer._count.leads}</td>
-                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                      {latestLead ? latestLead.status : '-'}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <AsiakkaatTable
+        customers={customers}
+        pagination={
+          dbUnavailable
+            ? undefined
+            : { page, totalPages, total, pageSize: PAGE_SIZE, basePath: '/hallinta/asiakkaat' }
+        }
+      />
     </div>
   );
 }

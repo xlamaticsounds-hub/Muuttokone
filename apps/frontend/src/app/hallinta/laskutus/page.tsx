@@ -1,10 +1,7 @@
 import Link from 'next/link';
 import { prisma } from '@/server/db';
-import { formatDateFi, formatEuro } from '@/lib/format';
-import { computeInvoiceTotals, parseInvoiceItems } from '@/lib/invoice';
 import { Plus } from 'lucide-react';
-import InvoiceStatusSelector from './InvoiceStatusSelector';
-import DeleteInvoiceButton from './DeleteInvoiceButton';
+import LaskutusTable from './LaskutusTable';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,70 +31,13 @@ export default async function LaskutusPage() {
         </Link>
       </div>
 
-      {dbUnavailable ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">Tietokantaan ei saatu yhteyttä.</p>
-      ) : invoices.length === 0 ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">Ei vielä laskuja.</p>
-      ) : (
-        <div className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 text-left text-xs uppercase text-gray-500 dark:bg-gray-900/50">
-              <tr>
-                <th className="px-4 py-3">Nro</th>
-                <th className="px-4 py-3">Asiakas</th>
-                <th className="px-4 py-3">Selite</th>
-                <th className="px-4 py-3">Luotu</th>
-                <th className="px-4 py-3">Tila</th>
-                <th className="px-4 py-3 text-right">Summa</th>
-                <th className="px-4 py-3"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-              {invoices.map((invoice) => {
-                const items = parseInvoiceItems(invoice.items);
-                const totals = computeInvoiceTotals(items);
-                const description = items.map((i) => i.description).join(', ');
-                const href = `/hallinta/laskutus/${invoice.id}`;
-                return (
-                  <tr key={invoice.id} className="hover:bg-gray-50 dark:hover:bg-gray-900/40">
-                    <td className="p-0">
-                      <Link href={href} className="block px-4 py-3 font-medium text-blue-600 dark:text-blue-400">
-                        #{invoice.invoiceNumber}
-                      </Link>
-                    </td>
-                    <td className="p-0">
-                      <Link href={href} className="block px-4 py-3 text-gray-900 dark:text-white">
-                        {invoice.customerName}
-                      </Link>
-                    </td>
-                    <td className="p-0">
-                      <Link href={href} className="block px-4 py-3 text-gray-600 dark:text-gray-300">
-                        {description}
-                      </Link>
-                    </td>
-                    <td className="p-0">
-                      <Link href={href} className="block px-4 py-3 text-gray-500 dark:text-gray-400">
-                        {formatDateFi(invoice.createdAt)}
-                      </Link>
-                    </td>
-                    <td className="px-4 py-3">
-                      <InvoiceStatusSelector invoiceId={invoice.id} initialStatus={invoice.status} />
-                    </td>
-                    <td className="p-0 text-right">
-                      <Link href={href} className="block px-4 py-3 font-semibold text-gray-900 dark:text-white">
-                        {formatEuro(totals.gross)} €
-                      </Link>
-                    </td>
-                    <td className="px-2 py-3 text-right">
-                      <DeleteInvoiceButton invoiceId={invoice.id} invoiceNumber={invoice.invoiceNumber} compact />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+      {dbUnavailable && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200">
+          Tietokantaan ei juuri nyt saada yhteyttä. Näkymä toimii, mutta laskudata ei päivity.
         </div>
       )}
+
+      <LaskutusTable invoices={invoices} />
     </div>
   );
 }

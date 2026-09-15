@@ -181,8 +181,8 @@ export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShe
             </div>
 
             {/* Left: Page Title */}
-            <div className="hidden sm:block">
-              <h1 className="text-xl font-semibold text-gray-800 dark:text-white">
+            <div className="min-w-0 flex-1 sm:flex-none">
+              <h1 className="truncate text-base font-semibold text-gray-800 dark:text-white sm:text-xl">
                 {getPageTitle(pathname)}
               </h1>
             </div>
