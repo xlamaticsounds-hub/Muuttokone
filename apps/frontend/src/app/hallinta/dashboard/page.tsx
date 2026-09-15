@@ -26,6 +26,9 @@ export default async function DashboardPage() {
   let wonDeals = 0;
   let totalContacts = 0;
 
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
   try {
     [recentLeads, upcomingJobs, contacts, totalLeads, activeJobsCount, wonDeals, totalContacts] =
       await Promise.all([
@@ -37,7 +40,9 @@ export default async function DashboardPage() {
         prisma.lead.findMany({
           where: {
             status: { notIn: ['LOST', 'ARCHIVED'] },
-            requestedDate: { not: null },
+            // gte excludes NULL requestedDate automatically, and keeps only
+            // today-or-later so old, never-cleaned-up leads don't show up here.
+            requestedDate: { gte: startOfToday },
           },
           include: { contact: true },
           orderBy: { requestedDate: 'asc' },
