@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/server/auth';
 import { prisma } from '@/server/db';
-import { parseInvoiceItems } from '@/lib/invoice';
+import { formatAddress, parseInvoiceItems } from '@/lib/invoice';
 import { generateViitenumero } from '@/lib/reference-number';
 import { renderInvoicePdf } from '@/server/pdf/invoice-pdf';
 
@@ -23,18 +23,21 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   const items = parseInvoiceItems(invoice.items);
   const viitenumero = generateViitenumero(invoice.invoiceNumber);
-  const customerAddress = invoice.contact
-    ? [invoice.contact.street, invoice.contact.postalCode, invoice.contact.city].filter(Boolean).join(', ')
-    : null;
+  const customerAddress = formatAddress({
+    street: invoice.customerStreet ?? invoice.contact?.street,
+    postalCode: invoice.customerPostalCode ?? invoice.contact?.postalCode,
+    city: invoice.customerCity ?? invoice.contact?.city,
+  });
 
   const pdfBuffer = await renderInvoicePdf({
     invoiceNumber: invoice.invoiceNumber,
     customerName: invoice.customerName,
-    customerAddress: customerAddress || null,
-    customerEmail: invoice.contact?.email ?? null,
+    customerAddress,
+    customerEmail: invoice.customerEmail ?? invoice.contact?.email ?? null,
     items,
     createdAt: invoice.createdAt,
     dueDate: invoice.dueDate,
+    serviceDate: invoice.serviceDate,
     viitenumero,
   });
 

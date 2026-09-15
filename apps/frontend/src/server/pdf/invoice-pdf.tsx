@@ -1,7 +1,7 @@
 import path from 'path';
 import { Document, Page, View, Text, Image, StyleSheet, renderToBuffer } from '@react-pdf/renderer';
 import { siteConfig } from '@/config/site';
-import { computeInvoiceTotals, type InvoiceLineItem } from '@/lib/invoice';
+import { computeInvoiceTotals, isSameDate, type InvoiceLineItem } from '@/lib/invoice';
 
 // PNG eikä webp — react-pdf:n kuvadekooderi ei tue webp:iä luotettavasti.
 const LOGO_PATH = path.join(process.cwd(), 'public/images/logo/logo.png');
@@ -51,12 +51,15 @@ type InvoicePdfProps = {
   items: InvoiceLineItem[];
   createdAt: Date;
   dueDate: Date | null;
+  serviceDate: Date | null;
   viitenumero: string;
 };
 
 function InvoicePdfDocument(props: InvoicePdfProps) {
-  const { invoiceNumber, customerName, customerAddress, customerEmail, items, createdAt, dueDate, viitenumero } = props;
+  const { invoiceNumber, customerName, customerAddress, customerEmail, items, createdAt, dueDate, serviceDate, viitenumero } = props;
   const totals = computeInvoiceTotals(items);
+  const hasZeroVatItem = items.some((item) => item.vatRate === 0);
+  const showServiceDate = !!serviceDate && !isSameDate(serviceDate, createdAt);
 
   return (
     <Document>
@@ -66,6 +69,7 @@ function InvoicePdfDocument(props: InvoicePdfProps) {
             {/* eslint-disable-next-line jsx-a11y/alt-text */}
             <Image src={LOGO_PATH} style={styles.logo} />
             <Text style={styles.companyName}>Muuttokone.fi</Text>
+            <Text style={styles.muted}>{siteConfig.invoiceAddress}</Text>
             <Text style={styles.muted}>+358 45 847 0755</Text>
             <Text style={styles.muted}>info@muuttokone.fi</Text>
             <Text style={styles.muted}>Y-tunnus: {siteConfig.businessId}</Text>
@@ -74,6 +78,7 @@ function InvoicePdfDocument(props: InvoicePdfProps) {
             <Text style={styles.docTitle}>Lasku</Text>
             <Text style={styles.muted}>Nro {invoiceNumber}</Text>
             <Text style={styles.muted}>{formatDateFi(createdAt)}</Text>
+            {showServiceDate && <Text style={styles.muted}>Suorituspäivä {formatDateFi(serviceDate)}</Text>}
           </View>
         </View>
 
@@ -98,6 +103,8 @@ function InvoicePdfDocument(props: InvoicePdfProps) {
             </View>
           ))}
         </View>
+
+        {hasZeroVatItem && <Text style={[styles.muted, { marginBottom: 16 }]}>{siteConfig.vatExemptionNotice}</Text>}
 
         <View style={styles.totals}>
           <View style={styles.totalsRow}>

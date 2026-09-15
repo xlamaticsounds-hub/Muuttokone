@@ -4,17 +4,20 @@ import NewInvoiceForm from './NewInvoiceForm';
 export const dynamic = 'force-dynamic';
 
 export default async function UusiLaskuPage() {
-  let contacts: { id: string; name: string; email: string | null }[] = [];
+  let contacts: { id: string; name: string; email: string | null; street: string | null; postalCode: string | null; city: string | null }[] = [];
 
   try {
     const rows = await prisma.contact.findMany({
-      select: { id: true, firstName: true, lastName: true, companyName: true, email: true },
+      select: { id: true, firstName: true, lastName: true, companyName: true, email: true, street: true, postalCode: true, city: true },
       orderBy: { updatedAt: 'desc' },
     });
     contacts = rows.map((c) => ({
       id: c.id,
       name: [c.firstName, c.lastName].filter(Boolean).join(' ') || c.companyName || 'Nimetön asiakas',
       email: c.email,
+      street: c.street,
+      postalCode: c.postalCode,
+      city: c.city,
     }));
   } catch (error) {
     console.warn('[hallinta/laskutus/uusi] Database unavailable, showing empty contact list', error);

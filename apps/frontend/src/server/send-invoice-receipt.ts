@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/server/auth';
 import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
-import { computeInvoiceTotals, parseInvoiceItems } from '@/lib/invoice';
+import { computeInvoiceTotals, formatAddress, parseInvoiceItems } from '@/lib/invoice';
 import { renderReceiptPdf } from '@/server/pdf/receipt-pdf';
 import { renderInvoiceReceiptEmailHtml } from '@/lib/receipt-invoice-email';
 import type { ReceiptLineItem } from '@/lib/pdf/receipt-pdf-document';
@@ -67,9 +67,11 @@ async function sendReceiptForInvoiceInner(invoiceId: string, email: string): Pro
   }));
   const totals = computeInvoiceTotals(invoiceItems);
   const receiptNumber = `${new Date().getFullYear()}-L${invoice.invoiceNumber}`;
-  const customerAddress = invoice.contact
-    ? [invoice.contact.street, invoice.contact.postalCode, invoice.contact.city].filter(Boolean).join(', ')
-    : null;
+  const customerAddress = formatAddress({
+    street: invoice.customerStreet ?? invoice.contact?.street,
+    postalCode: invoice.customerPostalCode ?? invoice.contact?.postalCode,
+    city: invoice.customerCity ?? invoice.contact?.city,
+  });
 
   const html = renderInvoiceReceiptEmailHtml({
     customerName: invoice.customerName,
@@ -85,7 +87,7 @@ async function sendReceiptForInvoiceInner(invoiceId: string, email: string): Pro
     customerName: invoice.customerName,
     customerEmail: recipientEmail,
     customerPhone: invoice.contact?.phone ?? null,
-    customerAddress: customerAddress || null,
+    customerAddress,
     fromAddress: null,
     toAddress: null,
     requestedDate: null,

@@ -125,6 +125,17 @@ model Invoice {
   dueDate DateTime?
   sentAt  DateTime?
 
+  // Ostajan osoite ja sähköposti laskulla — käsin kirjoitettu/muokattava kuten customerName,
+  // ei riipu siitä onko kontaktia valittu tai onko kontaktin omat tiedot ajan tasalla.
+  customerStreet     String?
+  customerPostalCode String?
+  customerCity       String?
+  customerEmail      String?
+
+  // Palvelun suorituspäivä, jos se poikkeaa laskun päiväyksestä (createdAt) — näytetään
+  // laskulla vain kun eri kuin createdAt.
+  serviceDate DateTime?
+
   // Sähköpostiosoite johon lasku lähetettiin/lähetetään — valittavissa/kirjoitettavissa
   // laskun sivulla lähetyshetkellä, ei aina sama kuin kontaktin oletusosoite.
   recipientEmail String?

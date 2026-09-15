@@ -15,6 +15,23 @@ export function computeInvoiceTotals(items: InvoiceLineItem[]) {
   );
 }
 
+export type AddressParts = {
+  street?: string | null;
+  postalCode?: string | null;
+  city?: string | null;
+};
+
+// Sama osoitemuoto kaikkialla laskulla: "Katu 1, 00100 Helsinki".
+export function formatAddress(parts: AddressParts): string | null {
+  const postalAndCity = [parts.postalCode, parts.city].filter(Boolean).join(' ');
+  const lines = [parts.street, postalAndCity].filter(Boolean);
+  return lines.length > 0 ? lines.join(', ') : null;
+}
+
+export function isSameDate(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
 // Invoice.items on Prisma Json-kenttä, joten sen muoto pitää tarkistaa ajossa
 // (ei ole tyyppiturvallinen tietokannassa) — sama varovaisuus kuin Lead.formData:ssa.
 export function parseInvoiceItems(json: unknown): InvoiceLineItem[] {

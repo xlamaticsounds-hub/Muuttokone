@@ -7,7 +7,7 @@ import { ArrowLeft, Printer, Mail, Download, Pencil, Copy, Receipt } from 'lucid
 import { siteConfig } from '@/config/site';
 import { formatDateFi, formatEuro } from '@/lib/format';
 import { generateViitenumero } from '@/lib/reference-number';
-import { computeInvoiceTotals, type InvoiceLineItem } from '@/lib/invoice';
+import { computeInvoiceTotals, isSameDate, type InvoiceLineItem } from '@/lib/invoice';
 import { sendInvoiceEmail } from '@/server/send-invoice';
 import { duplicateInvoice } from '@/server/invoice-actions';
 import type { InvoiceStatus } from '@prisma/client';
@@ -27,6 +27,7 @@ export default function InvoiceClient({
   items,
   createdAt,
   dueDate,
+  serviceDate,
   sentAt,
   status,
 }: {
@@ -39,6 +40,7 @@ export default function InvoiceClient({
   items: InvoiceLineItem[];
   createdAt: string;
   dueDate: string | null;
+  serviceDate: string | null;
   sentAt: string | null;
   status: InvoiceStatus;
 }) {
@@ -52,6 +54,8 @@ export default function InvoiceClient({
 
   const totals = computeInvoiceTotals(items);
   const viitenumero = generateViitenumero(invoiceNumber);
+  const hasZeroVatItem = items.some((item) => item.vatRate === 0);
+  const showServiceDate = !!serviceDate && !isSameDate(new Date(serviceDate), new Date(createdAt));
   const emailValid = EMAIL_RE.test(email.trim());
 
   const handleDuplicate = async () => {
@@ -197,6 +201,7 @@ export default function InvoiceClient({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/icons/logo.webp" alt="Muuttokone.fi" className="mb-2 h-10 w-auto" />
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white print:text-black">Muuttokone.fi</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 print:text-gray-600">{siteConfig.invoiceAddress}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400 print:text-gray-600">+358 45 847 0755</p>
             <p className="text-sm text-gray-500 dark:text-gray-400 print:text-gray-600">info@muuttokone.fi</p>
             <p className="text-sm text-gray-500 dark:text-gray-400 print:text-gray-600">Y-tunnus: {siteConfig.businessId}</p>
@@ -205,6 +210,9 @@ export default function InvoiceClient({
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white print:text-black">Lasku</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400 print:text-gray-600">Nro {invoiceNumber}</p>
             <p className="text-sm text-gray-500 dark:text-gray-400 print:text-gray-600">{formatDateFi(new Date(createdAt))}</p>
+            {showServiceDate && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 print:text-gray-600">Suorituspäivä {formatDateFi(new Date(serviceDate!))}</p>
+            )}
           </div>
         </div>
 
@@ -235,6 +243,10 @@ export default function InvoiceClient({
             ))}
           </tbody>
         </table>
+
+        {hasZeroVatItem && (
+          <p className="mb-6 -mt-2 text-xs text-gray-500 dark:text-gray-400 print:text-gray-600">{siteConfig.vatExemptionNotice}</p>
+        )}
 
         {/* Totals */}
         <div className="ml-auto max-w-xs space-y-1 border-t border-gray-200 pt-4 text-sm dark:border-gray-700">

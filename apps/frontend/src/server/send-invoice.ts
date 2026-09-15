@@ -6,7 +6,7 @@ import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
 import { siteConfig } from '@/config/site';
 import { generateViitenumero } from '@/lib/reference-number';
-import { computeInvoiceTotals, parseInvoiceItems, type InvoiceLineItem } from '@/lib/invoice';
+import { computeInvoiceTotals, formatAddress, parseInvoiceItems, type InvoiceLineItem } from '@/lib/invoice';
 import { renderInvoicePdf } from '@/server/pdf/invoice-pdf';
 
 // Sama HTML-pako kuin send-quote.ts:ssä — asiakkaan/laskun teksti päätyy raakaan
@@ -158,18 +158,21 @@ async function sendInvoiceEmailInner(invoiceId: string, email: string): Promise<
     viitenumero,
   });
 
-  const customerAddress = invoice.contact
-    ? [invoice.contact.street, invoice.contact.postalCode, invoice.contact.city].filter(Boolean).join(', ')
-    : null;
+  const customerAddress = formatAddress({
+    street: invoice.customerStreet ?? invoice.contact?.street,
+    postalCode: invoice.customerPostalCode ?? invoice.contact?.postalCode,
+    city: invoice.customerCity ?? invoice.contact?.city,
+  });
 
   const pdfBuffer = await renderInvoicePdf({
     invoiceNumber: invoice.invoiceNumber,
     customerName: invoice.customerName,
-    customerAddress: customerAddress || null,
-    customerEmail: invoice.contact?.email ?? null,
+    customerAddress,
+    customerEmail: invoice.customerEmail ?? invoice.contact?.email ?? null,
     items,
     createdAt: invoice.createdAt,
     dueDate: invoice.dueDate,
+    serviceDate: invoice.serviceDate,
     viitenumero,
   });
 

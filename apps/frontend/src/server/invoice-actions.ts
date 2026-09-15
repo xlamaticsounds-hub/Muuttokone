@@ -10,8 +10,13 @@ import type { InvoiceStatus } from '@prisma/client';
 export type CreateInvoiceInput = {
   contactId: string | null;
   customerName: string;
+  customerStreet: string | null;
+  customerPostalCode: string | null;
+  customerCity: string | null;
+  customerEmail: string | null;
   items: InvoiceLineItem[];
   dueDate: string | null; // ISO-päivämäärä
+  serviceDate: string | null; // ISO-päivämäärä
 };
 
 export async function createInvoice(input: CreateInvoiceInput): Promise<{ id: string }> {
@@ -37,8 +42,13 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<{ id: st
     data: {
       contactId: input.contactId || null,
       customerName,
+      customerStreet: input.customerStreet?.trim() || null,
+      customerPostalCode: input.customerPostalCode?.trim() || null,
+      customerCity: input.customerCity?.trim() || null,
+      customerEmail: input.customerEmail?.trim() || null,
       items,
       dueDate: input.dueDate ? new Date(input.dueDate) : null,
+      serviceDate: input.serviceDate ? new Date(input.serviceDate) : null,
     },
   });
 
@@ -79,8 +89,13 @@ export async function updateInvoice(invoiceId: string, input: UpdateInvoiceInput
     data: {
       contactId: input.contactId || null,
       customerName,
+      customerStreet: input.customerStreet?.trim() || null,
+      customerPostalCode: input.customerPostalCode?.trim() || null,
+      customerCity: input.customerCity?.trim() || null,
+      customerEmail: input.customerEmail?.trim() || null,
       items,
       dueDate: input.dueDate ? new Date(input.dueDate) : null,
+      serviceDate: input.serviceDate ? new Date(input.serviceDate) : null,
     },
   });
 
@@ -106,8 +121,13 @@ export async function duplicateInvoice(invoiceId: string): Promise<{ id: string 
     data: {
       contactId: source.contactId,
       customerName: source.customerName,
+      customerStreet: source.customerStreet,
+      customerPostalCode: source.customerPostalCode,
+      customerCity: source.customerCity,
+      customerEmail: source.customerEmail,
       items: parseInvoiceItems(source.items),
       dueDate: source.dueDate,
+      serviceDate: source.serviceDate,
     },
   });
 

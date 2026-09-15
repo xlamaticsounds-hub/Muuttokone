@@ -14,8 +14,22 @@ export type ExistingInvoice = {
   id: string;
   contactId: string | null;
   customerName: string;
+  customerStreet: string | null;
+  customerPostalCode: string | null;
+  customerCity: string | null;
+  customerEmail: string | null;
   items: { description: string; amount: number; vatRate: number }[];
   dueDate: string | null; // ISO-päivämäärä
+  serviceDate: string | null; // ISO-päivämäärä
+};
+
+type ContactOption = {
+  id: string;
+  name: string;
+  email: string | null;
+  street: string | null;
+  postalCode: string | null;
+  city: string | null;
 };
 
 function newId() {
@@ -39,7 +53,7 @@ export default function NewInvoiceForm({
   contacts,
   invoice,
 }: {
-  contacts: { id: string; name: string; email: string | null }[];
+  contacts: ContactOption[];
   invoice?: ExistingInvoice;
 }) {
   const router = useRouter();
@@ -47,7 +61,12 @@ export default function NewInvoiceForm({
   const [selectedContactId, setSelectedContactId] = useState<string | null>(invoice?.contactId ?? null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [rows, setRows] = useState<Row[]>(initialRows(invoice));
+  const [street, setStreet] = useState(invoice?.customerStreet ?? '');
+  const [postalCode, setPostalCode] = useState(invoice?.customerPostalCode ?? '');
+  const [city, setCity] = useState(invoice?.customerCity ?? '');
+  const [customerEmail, setCustomerEmail] = useState(invoice?.customerEmail ?? '');
   const [dueDate, setDueDate] = useState(invoice?.dueDate ? invoice.dueDate.split('T')[0] : defaultDueDate());
+  const [serviceDate, setServiceDate] = useState(invoice?.serviceDate ? invoice.serviceDate.split('T')[0] : '');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -57,9 +76,13 @@ export default function NewInvoiceForm({
     return contacts.filter((c) => c.name.toLowerCase().includes(q)).slice(0, 8);
   }, [nameQuery, contacts, selectedContactId]);
 
-  const pickContact = (contact: { id: string; name: string }) => {
+  const pickContact = (contact: ContactOption) => {
     setSelectedContactId(contact.id);
     setNameQuery(contact.name);
+    setStreet(contact.street ?? '');
+    setPostalCode(contact.postalCode ?? '');
+    setCity(contact.city ?? '');
+    setCustomerEmail(contact.email ?? '');
     setShowSuggestions(false);
   };
 
@@ -108,8 +131,13 @@ export default function NewInvoiceForm({
       const input = {
         contactId: selectedContactId,
         customerName: nameQuery.trim(),
+        customerStreet: street.trim() || null,
+        customerPostalCode: postalCode.trim() || null,
+        customerCity: city.trim() || null,
+        customerEmail: customerEmail.trim() || null,
         items,
         dueDate: dueDate || null,
+        serviceDate: serviceDate || null,
       };
       const { id } = invoice ? await updateInvoice(invoice.id, input) : await createInvoice(input);
       router.push(`/hallinta/laskutus/${id}`);
@@ -154,6 +182,49 @@ export default function NewInvoiceForm({
             ))}
           </ul>
         )}
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="sm:col-span-2">
+          <label className="block text-xs font-medium uppercase text-gray-500 mb-1">Katuosoite</label>
+          <input
+            type="text"
+            value={street}
+            onChange={(e) => setStreet(e.target.value)}
+            placeholder="Esim. Postintie 12 A9"
+            className="w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:text-white"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium uppercase text-gray-500 mb-1">Postinumero</label>
+          <input
+            type="text"
+            value={postalCode}
+            onChange={(e) => setPostalCode(e.target.value)}
+            placeholder="00100"
+            className="w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:text-white"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium uppercase text-gray-500 mb-1">Postitoimipaikka</label>
+          <input
+            type="text"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            placeholder="Helsinki"
+            className="w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:text-white"
+          />
+        </div>
+        <div className="sm:col-span-2">
+          <label className="block text-xs font-medium uppercase text-gray-500 mb-1">Sähköposti</label>
+          <input
+            type="email"
+            value={customerEmail}
+            onChange={(e) => setCustomerEmail(e.target.value)}
+            placeholder="asiakas@example.com"
+            className="w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:text-white"
+          />
+        </div>
       </div>
 
       <div>
@@ -241,14 +312,25 @@ export default function NewInvoiceForm({
         </div>
       </div>
 
-      <div>
-        <label className="block text-xs font-medium uppercase text-gray-500 mb-1">Eräpäivä</label>
-        <input
-          type="date"
-          value={dueDate}
-          onChange={(e) => setDueDate(e.target.value)}
-          className="w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:text-white"
-        />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
+          <label className="block text-xs font-medium uppercase text-gray-500 mb-1">Eräpäivä</label>
+          <input
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            className="w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:text-white"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium uppercase text-gray-500 mb-1">Suorituspäivä (jos eri kuin laskun päiväys)</label>
+          <input
+            type="date"
+            value={serviceDate}
+            onChange={(e) => setServiceDate(e.target.value)}
+            className="w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:text-white"
+          />
+        </div>
       </div>
 
       {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}

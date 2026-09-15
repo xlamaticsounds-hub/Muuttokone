@@ -17,16 +17,19 @@ export default async function MuokkaaLaskuaPage({ params }: { params: Promise<{ 
     redirect(`/hallinta/laskutus/${id}`);
   }
 
-  let contacts: { id: string; name: string; email: string | null }[] = [];
+  let contacts: { id: string; name: string; email: string | null; street: string | null; postalCode: string | null; city: string | null }[] = [];
   try {
     const rows = await prisma.contact.findMany({
-      select: { id: true, firstName: true, lastName: true, companyName: true, email: true },
+      select: { id: true, firstName: true, lastName: true, companyName: true, email: true, street: true, postalCode: true, city: true },
       orderBy: { updatedAt: 'desc' },
     });
     contacts = rows.map((c) => ({
       id: c.id,
       name: [c.firstName, c.lastName].filter(Boolean).join(' ') || c.companyName || 'Nimetön asiakas',
       email: c.email,
+      street: c.street,
+      postalCode: c.postalCode,
+      city: c.city,
     }));
   } catch (error) {
     console.warn('[hallinta/laskutus/muokkaa] Database unavailable, showing empty contact list', error);
@@ -44,8 +47,13 @@ export default async function MuokkaaLaskuaPage({ params }: { params: Promise<{ 
           id: invoice.id,
           contactId: invoice.contactId,
           customerName: invoice.customerName,
+          customerStreet: invoice.customerStreet,
+          customerPostalCode: invoice.customerPostalCode,
+          customerCity: invoice.customerCity,
+          customerEmail: invoice.customerEmail,
           items: parseInvoiceItems(invoice.items),
           dueDate: invoice.dueDate ? invoice.dueDate.toISOString() : null,
+          serviceDate: invoice.serviceDate ? invoice.serviceDate.toISOString() : null,
         }}
       />
     </div>
