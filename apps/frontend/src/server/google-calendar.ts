@@ -121,7 +121,24 @@ export async function createTentativeLeadEvent(
 ): Promise<{ eventId: string; htmlLink: string | null } | null> {
   const calendarId = getCalendarId();
   const client = getCalendarClient();
-  if (!calendarId || !client) return null;
+  if (!calendarId || !client) {
+    // Silently returning null here used to be indistinguishable from a real
+    // API failure — nothing told you WHY no event showed up. Now it's clear
+    // which of the two required pieces is actually missing.
+    console.warn('[google-calendar] Not configured, skipping calendar event:', {
+      hasServiceAccountKey: Boolean(process.env.GCP_SERVICE_ACCOUNT_KEY),
+      hasCalendarId: Boolean(calendarId),
+    });
+    await createLog({
+      entityType: 'Lead',
+      entityId: details.leadId,
+      action: 'calendar.not_configured',
+      message: !client
+        ? 'GCP_SERVICE_ACCOUNT_KEY puuttuu tai sen JSON ei jäsenny — kalenteritapahtumaa ei luotu.'
+        : 'GOOGLE_CALENDAR_ID puuttuu — kalenteritapahtumaa ei luotu.',
+    }).catch(() => {});
+    return null;
+  }
 
   const start = details.requestedDate;
   const end = new Date(start.getTime() + DEFAULT_JOB_DURATION_HOURS * 60 * 60 * 1000);

@@ -374,6 +374,16 @@ async function notifyNewLead(
       notes: lead.notes,
       hallintaUrl,
     });
+  } else {
+    // Otherwise indistinguishable from "Calendar was attempted and failed" —
+    // this is the third possible reason no event shows up, and the only one
+    // that isn't a bug: there's genuinely no date to put on a calendar yet.
+    await logEvent({
+      entityType: 'Lead',
+      entityId: lead.id,
+      action: 'calendar.skipped_no_date',
+      message: 'Ei muuttopäivää liidillä — kalenteritapahtumaa ei yritetty luoda.',
+    }).catch(() => {});
   }
 
   const posted = await postLeadToDiscord({
