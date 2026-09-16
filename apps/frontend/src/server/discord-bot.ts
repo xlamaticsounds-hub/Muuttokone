@@ -68,12 +68,26 @@ export function startDiscordBot(): Client | null {
 
   client.once(Events.ClientReady, (readyClient) => {
     console.log(`[discord-bot] Kirjautunut sisään nimellä ${readyClient.user.tag}`);
+    // Also visible in /hallinta/lokit, so a successful connection can be
+    // confirmed without needing Railway's own console logs.
+    createLog({
+      entityType: 'Lead',
+      entityId: 'discord-bot',
+      action: 'discord.bot_ready',
+      message: `Botti kirjautui sisään nimellä ${readyClient.user.tag}`,
+    }).catch(() => {});
   });
 
   client.on(Events.MessageReactionAdd, handleReactionAdd);
 
   client.login(process.env.DISCORD_BOT_TOKEN).catch((error) => {
     console.error('[discord-bot] Kirjautuminen epäonnistui:', error);
+    createLog({
+      entityType: 'Lead',
+      entityId: 'discord-bot',
+      action: 'discord.bot_login.failed',
+      message: error instanceof Error ? error.message : String(error),
+    }).catch(() => {});
   });
 
   globalForBot.discordBotClient = client;
@@ -89,12 +103,31 @@ async function handleReactionAdd(reaction: any, user: any) {
     if (reaction.partial) await reaction.fetch();
     if (reaction.message.partial) await reaction.message.fetch();
 
-    const emoji = reaction.emoji.name as string | null;
-    if (!emoji || !(emoji in REACTION_STATUS_MAP)) return;
+    const rawEmoji = reaction.emoji.name as string | null;
+    // Some clients send a trailing variation selector (U+FE0F) on an emoji
+    // depending on how it was picked — strip it so a click on the bot's own
+    // pre-added reaction always matches regardless of that.
+    const emoji = rawEmoji ? rawEmoji.replace(/️/g, '') : null;
+
+    if (!emoji || !(emoji in REACTION_STATUS_MAP)) return; // some other emoji — not ours
 
     const newStatus = REACTION_STATUS_MAP[emoji];
     const lead = await findLeadByDiscordMessageId(reaction.message.id);
-    if (!lead) return; // reaction on some other message — not one of ours
+
+    if (!lead) {
+      // Reacted with one of our three tracked emoji, but no lead has this
+      // exact discordMessageId — most likely it never got saved on the lead,
+      // or this is an old/unrelated message. Log it instead of failing
+      // completely silently, since this is otherwise invisible outside
+      // Railway's own console output.
+      await createLog({
+        entityType: 'Lead',
+        entityId: reaction.message.id,
+        action: 'discord.reaction_no_matching_lead',
+        message: `Reaktio (${emoji}) viestiin ${reaction.message.id}, mutta yhtään liidiä ei löytynyt tällä discordMessageId:llä.`,
+      }).catch(() => {});
+      return;
+    }
 
     await setLeadStatus(lead.id, newStatus);
     await createLog({
@@ -128,7 +161,20 @@ async function handleReactionAdd(reaction: any, user: any) {
       }
     }
   } catch (error) {
+    // Last-resort catch for anything the branches above couldn't log
+    // themselves (e.g. reaction.fetch() throwing on a permissions issue).
+    // Still get it into the visible log, best-effort.
     console.error('[discord-bot] Failed to handle reaction:', error);
+    try {
+      await createLog({
+        entityType: 'Lead',
+        entityId: reaction?.message?.id ?? 'unknown',
+        action: 'discord.reaction_handling.failed',
+        message: error instanceof Error ? error.message : String(error),
+      });
+    } catch {
+      // truly best-effort — don't let a logging failure mask anything further
+    }
   }
 }
 
