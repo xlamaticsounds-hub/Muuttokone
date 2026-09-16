@@ -25,6 +25,13 @@ const CALENDAR_SCOPES = ['https://www.googleapis.com/auth/calendar.events'];
 const DEFAULT_JOB_DURATION_HOURS = 4;
 const TIME_ZONE = 'Europe/Helsinki';
 
+// Google Calendar's built-in numbered event colors (stable across all
+// calendars, no setup needed). Blueberry while waiting on an answer, Basil
+// once it's actually won — a lost lead just gets its event deleted
+// entirely (cancelCalendarEvent), so there's no "red" state to set here.
+const COLOR_ID_PENDING = '9'; // Blueberry (blue)
+const COLOR_ID_CONFIRMED = '10'; // Basil (green)
+
 function getCalendarId(): string | null {
   return process.env.GOOGLE_CALENDAR_ID || null;
 }
@@ -161,6 +168,7 @@ export async function createTentativeLeadEvent(
         summary: `Muutto – ${details.customerName}`,
         description: descriptionLines.join('\n'),
         status: 'tentative',
+        colorId: COLOR_ID_PENDING,
         start: { dateTime: start.toISOString(), timeZone: TIME_ZONE },
         end: { dateTime: end.toISOString(), timeZone: TIME_ZONE },
       },
@@ -180,7 +188,11 @@ export async function confirmCalendarEvent(leadId: string, eventId: string): Pro
   if (!calendarId || !client) return;
 
   try {
-    await client.events.patch({ calendarId, eventId, requestBody: { status: 'confirmed' } });
+    await client.events.patch({
+      calendarId,
+      eventId,
+      requestBody: { status: 'confirmed', colorId: COLOR_ID_CONFIRMED },
+    });
   } catch (error) {
     await logCalendarFailure('confirmCalendarEvent', leadId, error);
   }
