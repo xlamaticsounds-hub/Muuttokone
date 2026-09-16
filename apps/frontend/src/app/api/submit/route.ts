@@ -279,7 +279,20 @@ async function submitLead(data: z.infer<typeof LeadSchema>) {
     // reach the person submitting the form as a 500, on top of every
     // individual step inside already being wrapped to never throw (see the
     // "never throw" comments in google-calendar.ts and discord-bot.ts).
-    notifyNewLead(lead, data, leadSource, { squareMeters, floor, hasElevator, boxCount }).catch((error) => {
+    notifyNewLead(lead, {
+      customerName: data.name || 'Ei nimeä',
+      phone: data.phone ?? null,
+      email: data.email ?? null,
+      requestedDateLabel: data.moving_date || null,
+      sourceLabel: leadSource,
+      priceLabel: null,
+      apartmentSizeLabel: null,
+      squareMeters,
+      floor,
+      hasElevator,
+      boxCount,
+      notes: data.message || null,
+    }).catch((error) => {
       console.error('[submit] notifyNewLead failed:', error);
       logEvent({
         entityType: 'Lead',
@@ -315,6 +328,25 @@ async function submitLead(data: z.infer<typeof LeadSchema>) {
   return { leadId: lead.id, contactId: contact.id };
 }
 
+type NotifyLeadDetails = {
+  customerName: string;
+  phone: string | null;
+  email: string | null;
+  requestedDateLabel: string | null;
+  sourceLabel: string;
+  priceLabel: string | null;
+  apartmentSizeLabel: string | null;
+  squareMeters: number | null;
+  floor: number | null;
+  hasElevator: boolean | null;
+  boxCount: number | null;
+  notes: string | null;
+};
+
+// Shared by both submission paths that create a genuinely new lead —
+// submitLead's first-ever call for a given lead, and submitBooking's
+// calculator "book now" step (which used to call sendDiscordNotification
+// directly and skip this whole workflow entirely, including Calendar).
 async function notifyNewLead(
   lead: {
     id: string;
@@ -323,9 +355,7 @@ async function notifyNewLead(
     toAddress: string | null;
     notes: string | null;
   },
-  data: z.infer<typeof LeadSchema>,
-  leadSource: LeadSource,
-  extra: { squareMeters: number | null; floor: number | null; hasElevator: boolean | null; boxCount: number | null },
+  details: NotifyLeadDetails,
 ) {
   const hallintaUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.muuttokone.fi'}/hallinta/liidit/${lead.id}`;
 
@@ -337,7 +367,7 @@ async function notifyNewLead(
     overlapWarnings = await findOverlappingEvents(lead.id, lead.requestedDate);
     calendarEvent = await createTentativeLeadEvent({
       leadId: lead.id,
-      customerName: data.name || 'Ei nimeä',
+      customerName: details.customerName,
       fromAddress: lead.fromAddress,
       toAddress: lead.toAddress,
       requestedDate: lead.requestedDate,
@@ -348,18 +378,20 @@ async function notifyNewLead(
 
   const posted = await postLeadToDiscord({
     leadId: lead.id,
-    customerName: data.name || 'Ei nimeä',
-    phone: data.phone ?? null,
-    email: data.email ?? null,
+    customerName: details.customerName,
+    phone: details.phone,
+    email: details.email,
     fromAddress: lead.fromAddress,
     toAddress: lead.toAddress,
-    requestedDateLabel: data.moving_date || null,
-    sourceLabel: leadSource,
-    squareMeters: extra.squareMeters,
-    floor: extra.floor,
-    hasElevator: extra.hasElevator,
-    boxCount: extra.boxCount,
-    notes: data.message || null,
+    requestedDateLabel: details.requestedDateLabel,
+    sourceLabel: details.sourceLabel,
+    priceLabel: details.priceLabel,
+    apartmentSizeLabel: details.apartmentSizeLabel,
+    squareMeters: details.squareMeters,
+    floor: details.floor,
+    hasElevator: details.hasElevator,
+    boxCount: details.boxCount,
+    notes: details.notes,
     hallintaUrl,
     overlapWarnings,
     calendarLink: calendarEvent?.htmlLink ?? null,
@@ -483,19 +515,35 @@ async function submitBooking(data: any) {
     data: { price: data.price },
   });
 
-  // Discord Notification
-  const discordFields = [
-    { name: 'Nimi', value: data.contactName || '-', inline: true },
-    { name: 'Puhelin', value: data.contactPhone || '-', inline: true },
-    { name: 'Sähköposti', value: data.contactEmail || '-', inline: true },
-    { name: 'Hinta', value: `${data.price}€`, inline: true },
-    { name: 'Päivä', value: data.date ? new Date(data.date).toLocaleDateString('fi-FI') : '-', inline: true },
-    { name: 'Asunto', value: data.apartmentSize, inline: true },
-    { name: 'Mistä', value: data.addressFrom || '-', inline: false },
-    { name: 'Minne', value: data.addressTo || '-', inline: false },
-  ];
-
-  await sendDiscordNotification('📅 UUSI VARAUS (Muuttolaskuri)', discordFields);
+  // This is the calculator's actual final "book now" step — it always
+  // creates a fresh lead (no update/refinement concept here, unlike
+  // submitLead), so it always gets the full bot + calendar workflow. This
+  // used to call sendDiscordNotification directly instead, which meant the
+  // reaction-driven bot and the calendar event never ran for a real
+  // booking at all, only for the separate quick-quote lead path.
+  // Not awaited — see the matching call in submitLead for why.
+  notifyNewLead(lead, {
+    customerName: data.contactName || 'Ei nimeä',
+    phone: data.contactPhone ?? null,
+    email: data.contactEmail ?? null,
+    requestedDateLabel: data.date ? new Date(data.date).toLocaleDateString('fi-FI') : null,
+    sourceLabel: LeadSource.STEP_FORM,
+    priceLabel: data.price != null ? `${data.price}€` : null,
+    apartmentSizeLabel: data.apartmentSize ?? null,
+    squareMeters: typeof data.squareMeters === 'number' ? data.squareMeters : null,
+    floor: typeof data.floorFrom === 'number' ? data.floorFrom : null,
+    hasElevator: typeof data.elevatorFrom === 'boolean' ? data.elevatorFrom : null,
+    boxCount: typeof data.boxCount === 'number' ? data.boxCount : null,
+    notes: null,
+  }).catch((error) => {
+    console.error('[submit] notifyNewLead (booking) failed:', error);
+    logEvent({
+      entityType: 'Lead',
+      entityId: lead.id,
+      action: 'notify_new_lead.failed',
+      message: error instanceof Error ? error.message : String(error),
+    }).catch(() => {});
+  });
 
   return { leadId: lead.id };
 }

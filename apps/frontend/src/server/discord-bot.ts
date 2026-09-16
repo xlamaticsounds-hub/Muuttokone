@@ -187,6 +187,8 @@ export type LeadMessageDetails = {
   toAddress: string | null;
   requestedDateLabel: string | null;
   sourceLabel: string;
+  priceLabel: string | null;
+  apartmentSizeLabel: string | null;
   squareMeters: number | null;
   floor: number | null;
   hasElevator: boolean | null;
@@ -233,6 +235,8 @@ export async function postLeadToDiscord(
         { name: 'Tyyppi', value: details.sourceLabel, inline: true },
       );
 
+    if (details.priceLabel) embed.addFields({ name: 'Hinta', value: details.priceLabel, inline: true });
+    if (details.apartmentSizeLabel) embed.addFields({ name: 'Asunto', value: details.apartmentSizeLabel, inline: true });
     if (details.squareMeters) embed.addFields({ name: 'Pinta-ala', value: `${details.squareMeters} m²`, inline: true });
     if (details.floor !== null) embed.addFields({ name: 'Kerros', value: `${details.floor}`, inline: true });
     if (details.hasElevator !== null)
