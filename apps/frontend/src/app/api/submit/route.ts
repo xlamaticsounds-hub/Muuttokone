@@ -272,9 +272,22 @@ async function submitLead(data: z.infer<typeof LeadSchema>) {
     // picture. Checking discordMessageId instead means the bot/calendar
     // workflow runs exactly once per lead, on whichever call is genuinely
     // first, and never re-fires on later refinements of the same lead.
-    // Never lets a Discord/Calendar failure block the lead itself — see the
-    // "never throw" comments in google-calendar.ts and discord-bot.ts.
-    await notifyNewLead(lead, data, leadSource, { squareMeters, floor, hasElevator, boxCount });
+    // Deliberately NOT awaited: Discord + Calendar together can take a
+    // couple of seconds, and the person submitting the quote form shouldn't
+    // sit waiting on that. Runs in the background after the response is
+    // already on its way; any failure is caught right here so it can never
+    // reach the person submitting the form as a 500, on top of every
+    // individual step inside already being wrapped to never throw (see the
+    // "never throw" comments in google-calendar.ts and discord-bot.ts).
+    notifyNewLead(lead, data, leadSource, { squareMeters, floor, hasElevator, boxCount }).catch((error) => {
+      console.error('[submit] notifyNewLead failed:', error);
+      logEvent({
+        entityType: 'Lead',
+        entityId: lead.id,
+        action: 'notify_new_lead.failed',
+        message: error instanceof Error ? error.message : String(error),
+      }).catch(() => {});
+    });
   } else {
     // Already posted once — the reaction-driven bot workflow only runs the
     // first time, a further refinement just gets the same lightweight
@@ -364,7 +377,22 @@ async function notifyNewLead(
     idUpdates.calendarEventId = calendarEvent.eventId;
   }
   if (Object.keys(idUpdates).length > 0) {
-    await prisma.lead.update({ where: { id: lead.id }, data: idUpdates });
+    try {
+      await prisma.lead.update({ where: { id: lead.id }, data: idUpdates });
+    } catch (error) {
+      // If this specific write fails, the Discord message (and/or calendar
+      // event) still exists out there with nothing pointing back to this
+      // lead — worth its own specific log line rather than folding into the
+      // generic failure the caller already catches.
+      console.error('[submit] Failed to save discord/calendar ids onto lead:', error);
+      await logEvent({
+        entityType: 'Lead',
+        entityId: lead.id,
+        action: 'notify_new_lead.save_ids_failed',
+        message: error instanceof Error ? error.message : String(error),
+        data: idUpdates,
+      }).catch(() => {});
+    }
   }
 }
 
