@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookUser, ChartLine, DollarSign, Gauge, Mail, Settings, Zap, User, Search, LogOut, Send, FileText, ImageIcon, Truck, Users, Receipt } from 'lucide-react';
+import { BookUser, ChartLine, DollarSign, Gauge, Mail, Settings, Zap, User, Search, LogOut, Send, FileText, ImageIcon, Truck, Users, Receipt, History } from 'lucide-react';
 
 interface AdminLayoutShellProps {
   children: React.ReactNode;
@@ -27,6 +27,7 @@ export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShe
     { name: "Blogi", href: "/hallinta/blogi" },
     { name: "Galleria", href: "/hallinta/galleria" },
     { name: "Analytiikka", href: "/hallinta/analytiikka" },
+    { name: "Lokit", href: "/hallinta/lokit" },
   ];
 
   const settingsLink = { name: "Asetukset", href: "/hallinta/asetukset" };
@@ -117,6 +118,7 @@ export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShe
                     {link.name === "Blogi" && <FileText color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Galleria" && <ImageIcon color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Analytiikka" && <ChartLine color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
+                    {link.name === "Lokit" && <History color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     <span className="text-center text-[10px] tracking-tight">{link.name}</span>
                   </Link>
                 </li>
