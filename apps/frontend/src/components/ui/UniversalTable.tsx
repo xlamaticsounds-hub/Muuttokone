@@ -33,6 +33,17 @@ interface UniversalTableProps<T> {
   emptyMessage?: string;
 }
 
+// A cell can contain its own interactive control (a status <select>, a delete
+// <button>, a <Link>). Those already call stopPropagation() themselves where
+// that matters, but relying on every current and future cell to remember to
+// do that is fragile, especially on touch where tap handling can differ from
+// a mouse click. Guard at the row level too: never treat a tap/click that
+// landed on (or inside) an interactive element as a row click.
+const isInteractiveTarget = (target: EventTarget | null): boolean => {
+  if (!(target instanceof Element)) return false;
+  return !!target.closest("a, button, select, input, textarea, label, [data-stop-row-click]");
+};
+
 export function UniversalTable<T extends { id: string | number }>({
   data,
   columns,
@@ -65,7 +76,10 @@ export function UniversalTable<T extends { id: string | number }>({
           data.map((row) => (
             <div
               key={row.id}
-              onClick={() => onRowClick?.(row)}
+              onClick={(e) => {
+                if (isInteractiveTarget(e.target)) return;
+                onRowClick?.(row);
+              }}
               className={`space-y-2 px-4 py-3 ${
                 onRowClick ? "cursor-pointer active:bg-gray-50 dark:active:bg-gray-800/60" : ""
               }`}
@@ -124,7 +138,10 @@ export function UniversalTable<T extends { id: string | number }>({
                 data.map((row) => (
                   <tr
                     key={row.id}
-                    onClick={() => onRowClick?.(row)}
+                    onClick={(e) => {
+                      if (isInteractiveTarget(e.target)) return;
+                      onRowClick?.(row);
+                    }}
                     className={`group transition-colors hover:bg-gray-50/80 dark:hover:bg-gray-800/50 ${
                       onRowClick ? "cursor-pointer" : ""
                     }`}

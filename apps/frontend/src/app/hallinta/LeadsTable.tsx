@@ -25,7 +25,8 @@ export default function LeadsTable({
       router.refresh();
     } catch (e) {
       console.error('Failed to update status', e);
-      alert('Virhe päivitettäessä tilaa');
+      const detail = e instanceof Error ? e.message : String(e);
+      alert(`Virhe päivitettäessä tilaa: ${detail}`);
     } finally {
       setUpdating(null);
     }
