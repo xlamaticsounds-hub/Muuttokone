@@ -101,6 +101,15 @@ model Lead {
   squareMeters  Float?
   boxCount      Int?
 
+  // Discord-botin liidiviestin tunnisteet — reaktioiden (🔵/✅/❌) yhdistämiseen
+  // takaisin tähän liidiin. Katso src/server/discord-bot.ts.
+  discordMessageId String?
+  discordChannelId String?
+
+  // Google Calendar -tapahtuman tunniste, jos keikalle on luotu (alustava)
+  // kalenterimerkintä. Katso src/server/google-calendar.ts.
+  calendarEventId String?
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?

@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { prisma } from '@/server/db'; // <- make sure you have the hot-reload-safe prisma client here
 import { LeadStatus, LeadSource } from '@prisma/client';
 import { rateLimit } from '@/server/rate-limit';
+import { postLeadToDiscord } from '@/server/discord-bot';
+import { createTentativeLeadEvent, findOverlappingEvents } from '@/server/google-calendar';
 
 // Force Node.js runtime (multipart + File)
 export const runtime = 'nodejs';
@@ -260,29 +262,105 @@ async function submitLead(data: z.infer<typeof LeadSchema>) {
     ip: data.ip ?? null,
   });
 
-  // Send Discord Notification
-  const discordFields = [
-    { name: 'Nimi', value: data.name || 'Ei nimeä', inline: true },
-    { name: 'Puhelin', value: data.phone || 'Ei puhelinta', inline: true },
-    { name: 'Sähköposti', value: data.email || 'Ei sähköpostia', inline: true },
-    { name: 'Mistä', value: data.from_location || '-', inline: true },
-    { name: 'Minne', value: data.to_location || '-', inline: true },
-    { name: 'Muuttopäivä', value: data.moving_date || '-', inline: true },
-    { name: 'Tyyppi', value: leadSource, inline: true },
-  ];
+  if (action === 'lead.create') {
+    // New lead: full bot workflow — tentative calendar event, Discord embed
+    // with status reactions, IDs saved back onto the lead so a later
+    // reaction (or an edit to the moving date) can find its way back here.
+    // Never lets a Discord/Calendar failure block the lead itself — see the
+    // "never throw" comments in google-calendar.ts and discord-bot.ts.
+    await notifyNewLead(lead, data, leadSource, { squareMeters, floor, hasElevator, boxCount });
+  } else {
+    // Existing lead being refined further through a multi-step form. The
+    // reaction-driven bot workflow only runs once, when the lead is first
+    // created — an update just gets the same lightweight heads-up the app
+    // has always sent, without touching the original Discord message or
+    // spawning a second calendar event for the same job.
+    const discordFields = [
+      { name: 'Nimi', value: data.name || 'Ei nimeä', inline: true },
+      { name: 'Puhelin', value: data.phone || 'Ei puhelinta', inline: true },
+      { name: 'Sähköposti', value: data.email || 'Ei sähköpostia', inline: true },
+      { name: 'Mistä', value: data.from_location || '-', inline: true },
+      { name: 'Minne', value: data.to_location || '-', inline: true },
+      { name: 'Muuttopäivä', value: data.moving_date || '-', inline: true },
+      { name: 'Tyyppi', value: leadSource, inline: true },
+    ];
 
-  if (squareMeters) discordFields.push({ name: 'Pinta-ala', value: `${squareMeters} m²`, inline: true });
-  if (floor !== null) discordFields.push({ name: 'Kerros', value: `${floor}`, inline: true });
-  if (hasElevator !== null) discordFields.push({ name: 'Hissi', value: hasElevator ? 'Kyllä' : 'Ei', inline: true });
-  if (boxCount) discordFields.push({ name: 'Laatikot', value: `${boxCount} kpl`, inline: true });
+    if (squareMeters) discordFields.push({ name: 'Pinta-ala', value: `${squareMeters} m²`, inline: true });
+    if (floor !== null) discordFields.push({ name: 'Kerros', value: `${floor}`, inline: true });
+    if (hasElevator !== null) discordFields.push({ name: 'Hissi', value: hasElevator ? 'Kyllä' : 'Ei', inline: true });
+    if (boxCount) discordFields.push({ name: 'Laatikot', value: `${boxCount} kpl`, inline: true });
+    if (data.message) discordFields.push({ name: 'Lisätiedot', value: data.message, inline: false });
 
-  if (data.message) {
-    discordFields.push({ name: 'Lisätiedot', value: data.message, inline: false });
+    await sendDiscordNotification('🚀 Uusi tarjouspyyntö (Päivitys)', discordFields);
   }
 
-  await sendDiscordNotification(`🚀 Uusi tarjouspyyntö (${action === 'lead.create' ? 'Uusi' : 'Päivitys'})`, discordFields);
-
   return { leadId: lead.id, contactId: contact.id };
+}
+
+async function notifyNewLead(
+  lead: {
+    id: string;
+    requestedDate: Date | null;
+    fromAddress: string | null;
+    toAddress: string | null;
+    notes: string | null;
+  },
+  data: z.infer<typeof LeadSchema>,
+  leadSource: LeadSource,
+  extra: { squareMeters: number | null; floor: number | null; hasElevator: boolean | null; boxCount: number | null },
+) {
+  const hallintaUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.muuttokone.fi'}/hallinta/liidit/${lead.id}`;
+
+  let overlapWarnings: string[] = [];
+  let calendarEvent: { eventId: string; htmlLink: string | null } | null = null;
+
+  // Only Calendar-relevant if we actually have a date to put an event on.
+  if (lead.requestedDate) {
+    overlapWarnings = await findOverlappingEvents(lead.id, lead.requestedDate);
+    calendarEvent = await createTentativeLeadEvent({
+      leadId: lead.id,
+      customerName: data.name || 'Ei nimeä',
+      fromAddress: lead.fromAddress,
+      toAddress: lead.toAddress,
+      requestedDate: lead.requestedDate,
+      notes: lead.notes,
+      hallintaUrl,
+    });
+  }
+
+  const posted = await postLeadToDiscord({
+    leadId: lead.id,
+    customerName: data.name || 'Ei nimeä',
+    phone: data.phone ?? null,
+    email: data.email ?? null,
+    fromAddress: lead.fromAddress,
+    toAddress: lead.toAddress,
+    requestedDateLabel: data.moving_date || null,
+    sourceLabel: leadSource,
+    squareMeters: extra.squareMeters,
+    floor: extra.floor,
+    hasElevator: extra.hasElevator,
+    boxCount: extra.boxCount,
+    notes: data.message || null,
+    hallintaUrl,
+    overlapWarnings,
+    calendarLink: calendarEvent?.htmlLink ?? null,
+  });
+
+  // Best-effort: save whatever actually succeeded, so a later Discord
+  // reaction or a moving-date edit can still find what it needs even if the
+  // other integration (Calendar or Discord) wasn't reachable this time.
+  const idUpdates: { discordMessageId?: string; discordChannelId?: string; calendarEventId?: string } = {};
+  if (posted) {
+    idUpdates.discordMessageId = posted.messageId;
+    idUpdates.discordChannelId = posted.channelId;
+  }
+  if (calendarEvent) {
+    idUpdates.calendarEventId = calendarEvent.eventId;
+  }
+  if (Object.keys(idUpdates).length > 0) {
+    await prisma.lead.update({ where: { id: lead.id }, data: idUpdates });
+  }
 }
 
 /**

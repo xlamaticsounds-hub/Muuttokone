@@ -161,12 +161,9 @@ export async function updateLeadStatus(leadId: string, status: LeadStatus) {
     throw new Error('Unauthorized');
   }
 
-  const { prisma } = await import('@/server/db');
-  await prisma.lead.update({
-    where: { id: leadId },
-    data: { status },
-  });
-  
+  const { setLeadStatus } = await import('./repo/leads');
+  await setLeadStatus(leadId, status);
+
   return { success: true };
 }
 
@@ -184,7 +181,10 @@ export async function updateLeadDetails(leadId: string, data: any) {
   // sendQuoteEmail (send-quote.ts) suosii tätä arvoa laskurin hinta-arvion sijaan, kun se on
   // asetettu — juuri sitä varten että laskurin nettisivulla näkyvä ARVIO ja sähköpostitse
   // lähetetty lopullinen TARJOUS voivat olla eri asioita.
-  const existingLead = await prisma.lead.findUnique({ where: { id: leadId }, select: { formData: true } });
+  const existingLead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    select: { formData: true, calendarEventId: true, requestedDate: true },
+  });
   const existingFormData = parseLeadFormData(existingLead?.formData ?? null);
   const confirmedPriceRaw = typeof data.confirmedPrice === 'string' ? data.confirmedPrice.trim() : data.confirmedPrice;
   const updatedFormData = { ...existingFormData };
@@ -231,13 +231,15 @@ export async function updateLeadDetails(leadId: string, data: any) {
     updatedFormData.priceRangeHigh = recomputed.priceRangeHigh;
   }
 
+  const newRequestedDate = data.requestedDate ? new Date(data.requestedDate) : null;
+
   // Basic mapping of fields
   await prisma.lead.update({
     where: { id: leadId },
     data: {
       fromAddress: data.fromAddress,
       toAddress: data.toAddress,
-      requestedDate: data.requestedDate ? new Date(data.requestedDate) : null,
+      requestedDate: newRequestedDate,
       volumeM3: data.volumeM3 ? parseFloat(data.volumeM3) : null,
       squareMeters: data.squareMeters ? parseFloat(data.squareMeters) : null,
       floor: data.floor !== undefined && data.floor !== '' ? parseInt(data.floor) : null,
@@ -247,6 +249,18 @@ export async function updateLeadDetails(leadId: string, data: any) {
       formData: JSON.stringify(updatedFormData),
     },
   });
+
+  // Keep an already-created calendar event in sync if the moving date changed
+  // here — best-effort, same "never throw" rule as the rest of the Discord
+  // bot / Calendar integration (see google-calendar.ts).
+  if (
+    existingLead?.calendarEventId &&
+    newRequestedDate &&
+    newRequestedDate.getTime() !== existingLead.requestedDate?.getTime()
+  ) {
+    const { updateCalendarEventTime } = await import('@/server/google-calendar');
+    await updateCalendarEventTime(leadId, existingLead.calendarEventId, newRequestedDate);
+  }
 
   return { success: true };
 }

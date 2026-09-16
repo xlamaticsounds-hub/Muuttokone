@@ -35,6 +35,14 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // discord.js's WebSocket layer (@discordjs/ws) does an optional, lazily-
+  // resolved `import("zlib-sync")` for compression — a native addon that
+  // isn't installed (it's an optional perf enhancement, discord.js falls
+  // back to no compression without it). The bundler tries to resolve it at
+  // build time anyway and fails the whole build; marking the package
+  // external makes Next leave it as a real Node import resolved at runtime
+  // instead, same as any other server-only dependency with native pieces.
+  serverExternalPackages: ["discord.js"],
   pageExtensions: ["js", "jsx", "ts", "tsx", "md", "mdx"]
   
   
