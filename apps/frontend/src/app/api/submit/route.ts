@@ -262,19 +262,24 @@ async function submitLead(data: z.infer<typeof LeadSchema>) {
     ip: data.ip ?? null,
   });
 
-  if (action === 'lead.create') {
-    // New lead: full bot workflow — tentative calendar event, Discord embed
-    // with status reactions, IDs saved back onto the lead so a later
-    // reaction (or an edit to the moving date) can find its way back here.
+  if (!lead.discordMessageId) {
+    // First time THIS lead is ever posted to Discord — regardless of
+    // whether this particular call was a create or an update. Relying on
+    // action === 'lead.create' here used to miss the muuttolaskuri's actual
+    // final submission: the calculator posts an early "create" as the user
+    // starts, then updates that same lead by id as they fill in more
+    // fields, so the create step often isn't the one carrying the complete
+    // picture. Checking discordMessageId instead means the bot/calendar
+    // workflow runs exactly once per lead, on whichever call is genuinely
+    // first, and never re-fires on later refinements of the same lead.
     // Never lets a Discord/Calendar failure block the lead itself — see the
     // "never throw" comments in google-calendar.ts and discord-bot.ts.
     await notifyNewLead(lead, data, leadSource, { squareMeters, floor, hasElevator, boxCount });
   } else {
-    // Existing lead being refined further through a multi-step form. The
-    // reaction-driven bot workflow only runs once, when the lead is first
-    // created — an update just gets the same lightweight heads-up the app
-    // has always sent, without touching the original Discord message or
-    // spawning a second calendar event for the same job.
+    // Already posted once — the reaction-driven bot workflow only runs the
+    // first time, a further refinement just gets the same lightweight
+    // heads-up the app has always sent, without touching the original
+    // Discord message or spawning a second calendar event for the same job.
     const discordFields = [
       { name: 'Nimi', value: data.name || 'Ei nimeä', inline: true },
       { name: 'Puhelin', value: data.phone || 'Ei puhelinta', inline: true },
