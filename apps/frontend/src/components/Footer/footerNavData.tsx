@@ -1,23 +1,19 @@
 import { FooterMenu } from '@/types/footerMenu';
 
 const footerNavData: FooterMenu[] = [
-  // {
-  //   title: "Palvelut",
-  //   navItems: [
-  //     {
-  //       label: "Kotimuutto",
-  //       route: "/kotimuutto",
-  //     },
-  // // Yritysmuutto page removed
-  // // Future: Pakkauspalvelu, Varastointi
-  //   ],
-  // },
-  // {
-  //   title: "Tietoa meistä",
-  //   navItems: [
-  // // Yritys and Hinnoittelu pages removed
-  //   ],
-  // },
+  {
+    title: 'Palvelut',
+    navItems: [
+      {
+        label: 'Palvelut',
+        route: '/palvelut',
+      },
+      {
+        label: 'Yrityksille',
+        route: '/yrityksille',
+      },
+    ],
+  },
   {
     title: 'Asiakaspalvelu',
     navItems: [

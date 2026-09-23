@@ -6,7 +6,9 @@ import SectionTitle from '@/components/SectionTitle';
 import { useT } from '@/i18n/useT';
 import { faqDictionary } from '@/i18n/homeDictionary';
 
-const faqData = [
+export type FaqItem = { q: string; a: string };
+
+const faqData: FaqItem[] = [
   {
     q: 'Miksi valita meidät?',
     a: 'Olemme vakuutettu ja rekisteröity muuttopalvelu, joka tarjoaa rehellisen, kiinteän hinnan ilman piilokuluja ja nopean vastauksen tarjouspyyntöihin. Asiakkaamme arvostavat ammattitaitoista, joustavaa palveluamme ja selkeää hinnoittelua.',
@@ -33,9 +35,18 @@ const faqData = [
   },
 ];
 
-export default function Faq() {
+export default function Faq({
+  title,
+  subtitle,
+  items,
+}: {
+  title?: string;
+  subtitle?: string;
+  items?: FaqItem[];
+} = {}) {
   const t = useT(faqDictionary);
   const [openId, setOpenId] = useState<number | null>(null);
+  const activeItems = items ?? faqData;
 
   const toggle = (id: number) => {
     setOpenId((prev) => (prev === id ? null : id));
@@ -46,13 +57,13 @@ export default function Faq() {
       <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
         <div className="animate_top mb-15 text-center">
           <SectionTitle
-            title={t('Usein kysytyt kysymykset')}
-            subtitle={t('Vastauksia yleisimpiin kysymyksiin muutostamme ja palveluistamme.')}
+            title={t(title ?? 'Usein kysytyt kysymykset')}
+            subtitle={t(subtitle ?? 'Vastauksia yleisimpiin kysymyksiin muutostamme ja palveluistamme.')}
           />
         </div>
 
         <div className="mx-auto max-w-3xl divide-y divide-black/5 overflow-hidden rounded-2xl border border-black/5 bg-white/85 shadow-sm ring-1 ring-black/5 backdrop-blur dark:divide-white/10 dark:border-white/10 dark:bg-slate-900/80 dark:ring-white/5">
-          {faqData.map((item, index) => {
+          {activeItems.map((item, index) => {
             const isOpen = openId === index;
             return (
               <div

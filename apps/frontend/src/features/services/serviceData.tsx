@@ -14,6 +14,7 @@ const serviceData: Service[] = [
     description:
       'Minimoi liiketoiminnan keskeytykset: IT-laitteet, kalusteet ja arkistot siirtyvät aikataulun mukaan. Iltaisin ja viikonloppuisin tarvittaessa.',
     bgClass: 'hover:bg-primary/5',
+    href: '/yrityksille',
   },
   {
     icon: '/icons/tape.webp',

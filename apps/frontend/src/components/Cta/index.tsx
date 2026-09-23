@@ -5,7 +5,17 @@ import Link from 'next/link';
 import { useT } from '@/i18n/useT';
 import { ctaDictionary } from '@/i18n/homeDictionary';
 
-export default function Cta() {
+export default function Cta({
+  title,
+  description,
+  href,
+  label,
+}: {
+  title?: string;
+  description?: string;
+  href?: string;
+  label?: string;
+} = {}) {
   const t = useT(ctaDictionary);
   return (
     <>
@@ -22,18 +32,18 @@ export default function Cta() {
           <div className="flex flex-wrap gap-8 md:flex-nowrap md:items-center md:justify-between">
             <div className="animate_left lg:w-1/2">
               <h2 className="text-title-lg lg:text-title-xl xl:text-title-xl mb-4 font-semibold text-white">
-                {t('Valmis muuttoon? Aloita tänään!')}
+                {t(title ?? 'Valmis muuttoon? Aloita tänään!')}
               </h2>
               <p className="text-regular text-white">
-                {t('Saat meiltä maksuttoman kartoituksen ja tarjouksen 24 tunnin sisällä. Liity satojen tyytyväisten asiakkaiden joukkoon ja koe stressitön muutto.')}
+                {t(description ?? 'Saat meiltä maksuttoman kartoituksen ja tarjouksen 24 tunnin sisällä. Liity satojen tyytyväisten asiakkaiden joukkoon ja koe stressitön muutto.')}
               </p>
             </div>
             <div className="animate_right shrink-0">
               <Link
-                href="/muuttolaskuri"
+                href={href ?? '/muuttolaskuri'}
                 className="hover:shadow-1 inline-flex rounded-full bg-white px-7.5 py-3 font-medium text-black duration-300 ease-out"
               >
-                {t('Pyydä tarjous')}
+                {t(label ?? 'Pyydä tarjous')}
               </Link>
             </div>
           </div>

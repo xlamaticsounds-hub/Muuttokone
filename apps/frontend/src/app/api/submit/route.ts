@@ -19,6 +19,7 @@ const LeadSchema = z
     name: z.string().optional(),
     email: z.string().nullable().optional(),
     phone: z.string().nullable().optional(),
+    company_name: z.string().nullable().optional(),
     from_location: z.string().nullable().optional(),
     to_location: z.string().nullable().optional(),
     apartment_size: z.string().nullable().optional(),
@@ -174,6 +175,7 @@ async function submitLead(data: z.infer<typeof LeadSchema>) {
     phone: data.phone ?? undefined,
     firstName,
     lastName,
+    companyName: data.company_name ?? undefined,
     // If you collect granular address in other fields, map them in:
     // city: data.from_city ?? null,
     // street: data.from_street ?? null,

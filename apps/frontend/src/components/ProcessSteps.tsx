@@ -1,51 +1,83 @@
 'use client';
 
-import React from 'react';
-import { Calculator, CalendarCheck, Truck, PartyPopper } from 'lucide-react';
+import { Calculator, CalendarCheck, Truck, PartyPopper, ClipboardList, CalendarRange, CheckCircle2, type LucideIcon } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { processStepsDictionary } from '@/i18n/homeDictionary';
 
-const steps = [
+// Icon-nimi (merkkijono) eikä komponenttiviite kulkee propsina — Server Componentista
+// (esim. page.tsx) ei voi välittää funktio-/komponenttiarvoja Client Componentin propseihin,
+// joten kutsuja (esim. businessProcessSteps.tsx) antaa vain nimen ja tämä tiedosto (joka on
+// itse 'use client') resolvoi sen oikeaksi ikonikomponentiksi.
+const iconMap: Record<string, LucideIcon> = {
+  Calculator,
+  CalendarCheck,
+  Truck,
+  PartyPopper,
+  ClipboardList,
+  CalendarRange,
+  CheckCircle2,
+};
+
+export type ProcessStep = {
+  title: string;
+  desc: string;
+  icon: keyof typeof iconMap;
+  highlight?: boolean;
+  href?: string;
+};
+
+const steps: ProcessStep[] = [
   {
     title: 'Laske tarkka hinta muuttolaskurilla',
     desc: 'Täytä tietosi vain muutamassa sekunnissa ja saat tarkan, sitoumuksettoman hinnan heti – ei arvailua, ei piilokuluja, ei odottelua.',
-    icon: Calculator,
+    icon: 'Calculator',
     highlight: true,
     href: '#muuttolaskuri',
   },
   {
     title: 'Sovitaan sinulle sopiva ajankohta',
     desc: 'Käymme yhdessä läpi muuton yksityiskohdat ja varmistamme aikataulun, joka sopii juuri sinulle.',
-    icon: CalendarCheck,
+    icon: 'CalendarCheck',
   },
   {
     title: 'Ammattilaiset hoitavat muuton puolestasi',
     desc: 'Kokenut ja vakuutettu tiimimme pakkaa, kantaa ja kuljettaa tavarasi turvallisesti ja huolellisesti uuteen kotiin.',
-    icon: Truck,
+    icon: 'Truck',
   },
   {
     title: 'Rentoudu – muutto on hoidettu',
     desc: 'Varmistamme, että kaikki on kunnossa viimeistä laatikkoa myöten. Maksat vasta kun työ on tehty sovitusti.',
-    icon: PartyPopper,
+    icon: 'PartyPopper',
   },
 ];
 
-export default function ProcessSteps() {
+export default function ProcessSteps({
+  eyebrow,
+  title,
+  subtitle,
+  steps: customSteps,
+}: {
+  eyebrow?: string;
+  title?: string;
+  subtitle?: string;
+  steps?: ProcessStep[];
+} = {}) {
   const t = useT(processStepsDictionary);
+  const activeSteps = customSteps ?? steps;
   return (
     <section className="py-16 lg:py-24">
       <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
         <div className="mb-10 text-center mx-auto max-w-2xl">
-          <p className="text-primary mb-2 text-sm font-semibold uppercase tracking-wide">{t('Muutto selkokielellä')}</p>
-          <h2 className="text-3xl font-bold text-black/90 dark:text-white sm:text-4xl">{t('Näin etenemme')}</h2>
+          <p className="text-primary mb-2 text-sm font-semibold uppercase tracking-wide">{t(eyebrow ?? 'Muutto selkokielellä')}</p>
+          <h2 className="text-3xl font-bold text-black/90 dark:text-white sm:text-4xl">{t(title ?? 'Näin etenemme')}</h2>
           <p className="text-black/70 dark:text-white/70">
-            {t('Selkeä ja nopea prosessi alusta loppuun – tiedät aina hinnan ja seuraavan askeleen etukäteen. Ei piilokuluja, ei yllätyksiä.')}
+            {t(subtitle ?? 'Selkeä ja nopea prosessi alusta loppuun – tiedät aina hinnan ja seuraavan askeleen etukäteen. Ei piilokuluja, ei yllätyksiä.')}
           </p>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          {steps.map((step, idx) => {
-            const Icon = step.icon;
+          {activeSteps.map((step, idx) => {
+            const Icon = iconMap[step.icon];
             const Wrapper = step.href ? 'a' : 'div';
             return (
               <Wrapper

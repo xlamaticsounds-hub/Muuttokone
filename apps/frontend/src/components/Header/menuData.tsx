@@ -14,6 +14,10 @@ const menuData: Menu[] = [
     route: '/palvelut',
   },
   {
+    label: 'Yrityksille',
+    route: '/yrityksille',
+  },
+  {
     label: 'Blogi',
     route: '/blogi',
   },

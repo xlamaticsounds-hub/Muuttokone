@@ -74,6 +74,14 @@ export const SEOConfigs = {
     canonical: '/palvelut',
   },
 
+  business: {
+    title: 'Yrityksille - Yritysmuutot ja toimistomuutot',
+    description:
+      'Yritysmuutot ilman turhia käyttökatkoksia: IT-laitteet, kalusteet ja arkistot siirtyvät aikataulun mukaan, tarvittaessa iltaisin ja viikonloppuisin. Pyydä maksuton kartoitus.',
+    keywords: ['yritysmuutto', 'toimistomuutto', 'yrityksille', 'toimitilamuutto', 'yrityskuljetukset', 'Helsinki', 'Uusimaa'],
+    canonical: '/yrityksille',
+  },
+
   quote: {
     title: 'Tarjouspyyntö - Pyydä maksuton tarjous',
     description:
