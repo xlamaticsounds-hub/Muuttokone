@@ -20,12 +20,25 @@ const createPrismaMock = (): PrismaClient => {
 
   const storeFilePath = path.join(process.cwd(), '.mock-prisma-store.json');
 
+  // JSON.stringify turns every Date into an ISO string, so anything beyond createdAt/updatedAt
+  // (dueDate, sentAt, serviceDate, requestedDate, publishedAt, ...) came back from disk as a
+  // plain string and crashed the first `.toISOString()` call on it after a dev server restart —
+  // revive any field that looks like an ISO-8601 timestamp, not just the two hardcoded ones, so
+  // this keeps working for every model without needing a field allowlist per model.
+  const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/;
+
   const reviveDates = (rows: any[] = []): MockRecord[] => {
-    return rows.map((row) => ({
-      ...row,
-      createdAt: row?.createdAt ? new Date(row.createdAt) : new Date(),
-      updatedAt: row?.updatedAt ? new Date(row.updatedAt) : new Date(),
-    }));
+    return rows.map((row) => {
+      const revived: MockRecord = { ...row };
+      for (const [key, value] of Object.entries(revived)) {
+        if (typeof value === 'string' && ISO_DATE_RE.test(value)) {
+          (revived as Record<string, unknown>)[key] = new Date(value);
+        }
+      }
+      revived.createdAt = revived.createdAt instanceof Date ? revived.createdAt : new Date();
+      revived.updatedAt = revived.updatedAt instanceof Date ? revived.updatedAt : new Date();
+      return revived;
+    });
   };
 
   const loadStoreFromDisk = (): MockStore => {

@@ -134,6 +134,78 @@ export async function duplicateInvoice(invoiceId: string): Promise<{ id: string 
   return { id: invoice.id };
 }
 
+// Luo uuden, muokattavan laskun erääntyneen laskun pohjalta lisäämällä sille
+// viivästyskorkorivin. Korko lasketaan yksinkertaisena (ei korkoa korolle) päiväkohtaisena
+// korkona alkuperäisen laskun loppusummalle: pääoma × (vuosikorko/100) × päivät/365 —
+// korkolain (633/1982) 4 §:n mukainen laskentatapa. Vuosikorko syötetään käsin sivulla, koska
+// se riippuu Suomen Pankin kulloinkin voimassa olevasta viitekorosta + lakisääteisestä
+// lisästä, eikä sitä pidä kovakoodata (viitekorko muuttuu puolivuosittain).
+export async function createLateFeeInvoice(
+  invoiceId: string,
+  ratePercent: number,
+): Promise<{ id: string; amount: number; days: number }> {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new Error('Unauthorized');
+  }
+
+  if (!Number.isFinite(ratePercent) || ratePercent <= 0) {
+    throw new Error('Anna kelvollinen vuosikorko (%).');
+  }
+
+  const source = await prisma.invoice.findUnique({ where: { id: invoiceId } });
+  if (!source) {
+    throw new Error('Laskua ei löytynyt.');
+  }
+  if (!source.dueDate) {
+    throw new Error('Laskulla ei ole eräpäivää — viivästyskorkoa ei voi laskea.');
+  }
+
+  const now = new Date();
+  const msPerDay = 24 * 60 * 60 * 1000;
+  const days = Math.floor((now.getTime() - source.dueDate.getTime()) / msPerDay);
+  if (days <= 0) {
+    throw new Error('Laskun eräpäivä ei ole vielä ohittunut.');
+  }
+
+  const sourceItems = parseInvoiceItems(source.items);
+  const principal = sourceItems.reduce((sum, item) => sum + item.amount, 0);
+  const rawAmount = principal * (ratePercent / 100) * (days / 365);
+  const amount = Math.round(rawAmount * 100) / 100;
+
+  const dueDateFi = source.dueDate.toLocaleDateString('fi-FI', { day: 'numeric', month: 'long', year: 'numeric' });
+  const lateFeeItem = {
+    description: `Viivästyskorko ${ratePercent} % p.a., ${days} pv (alkuperäinen eräpäivä ${dueDateFi}, lasku #${source.invoiceNumber})`,
+    amount,
+    vatRate: 0, // Viivästyskorko ei ole arvonlisäverollista (AVL 78 §).
+  };
+
+  const invoice = await prisma.invoice.create({
+    data: {
+      contactId: source.contactId,
+      customerName: source.customerName,
+      customerStreet: source.customerStreet,
+      customerPostalCode: source.customerPostalCode,
+      customerCity: source.customerCity,
+      customerEmail: source.customerEmail,
+      items: [...sourceItems, lateFeeItem],
+      dueDate: null,
+      serviceDate: source.serviceDate,
+    },
+  });
+
+  await createLog({
+    entityType: 'Invoice',
+    entityId: invoice.id,
+    action: 'invoice.late_fee_created',
+    message: `Maksumuistutus viivästyskorolla luotu laskusta #${source.invoiceNumber} (${ratePercent} %, ${days} pv, ${amount} €)`,
+    data: { sourceInvoiceId: source.id, sourceInvoiceNumber: source.invoiceNumber, ratePercent, days, amount },
+    actorId: session.user?.email ?? null,
+  });
+
+  return { id: invoice.id, amount, days };
+}
+
 const STATUS_LABELS_FI: Record<InvoiceStatus, string> = {
   DRAFT: 'Luonnos',
   SENT: 'Lähetetty',

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { updateLeadDetails } from '@/server/actions';
+import { sendBookingConfirmationEmail } from '@/server/send-booking-confirmation';
 import { parseLeadFormData, getStoredPrice } from '@/server/lead-format';
 import { Lead, Contact } from '@prisma/client';
 import QuoteEmailPreviewModal from './QuoteEmailPreviewModal';
@@ -18,6 +19,8 @@ export default function LeadDetailActions({
   const [loading, setLoading] = useState(false);
   const [showQuotePreview, setShowQuotePreview] = useState(false);
   const [quoteFeedback, setQuoteFeedback] = useState<{ ok: boolean; message: string } | null>(null);
+  const [sendingConfirmation, setSendingConfirmation] = useState(false);
+  const [confirmationFeedback, setConfirmationFeedback] = useState<{ ok: boolean; message: string } | null>(null);
 
   const alreadySent = lead.status === 'PROPOSAL_SENT' || lead.status === 'WON';
   const pfd = parseLeadFormData(lead.formData);
@@ -27,6 +30,29 @@ export default function LeadDetailActions({
     setShowQuotePreview(false);
     setQuoteFeedback({ ok: true, message: `Tarjous lähetetty osoitteeseen ${sentTo}.` });
     router.refresh();
+  };
+
+  const handleSendConfirmation = async () => {
+    if (!lead.contact.email) return;
+    const confirmed = window.confirm(
+      `Lähetetäänkö varausvahvistus sähköpostitse osoitteeseen ${lead.contact.email}?`,
+    );
+    if (!confirmed) return;
+
+    setSendingConfirmation(true);
+    setConfirmationFeedback(null);
+    try {
+      const result = await sendBookingConfirmationEmail(lead.id);
+      if (result.success) {
+        setConfirmationFeedback({ ok: true, message: `Varausvahvistus lähetetty osoitteeseen ${result.sentTo}.` });
+      } else {
+        setConfirmationFeedback({ ok: false, message: result.message });
+      }
+    } catch (err) {
+      setConfirmationFeedback({ ok: false, message: err instanceof Error ? err.message : 'Lähetys epäonnistui.' });
+    } finally {
+      setSendingConfirmation(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -87,12 +113,27 @@ export default function LeadDetailActions({
         >
           Muokkaa tietoja
         </button>
-        <Link
-          href={`/hallinta/liidit/${lead.id}/kuitti`}
-          className="w-full rounded-md border border-gray-300 bg-white px-4 py-2 text-center text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
-        >
-          Tee kuitti
-        </Link>
+        <div className="flex gap-2">
+          <Link
+            href={`/hallinta/liidit/${lead.id}/kuitti`}
+            className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-center text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+          >
+            Tee kuitti
+          </Link>
+          <button
+            onClick={handleSendConfirmation}
+            disabled={sendingConfirmation || !lead.contact.email}
+            title={!lead.contact.email ? 'Liidillä ei ole sähköpostiosoitetta' : undefined}
+            className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-center text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+          >
+            {sendingConfirmation ? 'Lähetetään...' : 'Lähetä varausvahvistus'}
+          </button>
+        </div>
+        {confirmationFeedback && (
+          <p className={`text-sm ${confirmationFeedback.ok ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+            {confirmationFeedback.message}
+          </p>
+        )}
       </div>
 
       {isEditing && (

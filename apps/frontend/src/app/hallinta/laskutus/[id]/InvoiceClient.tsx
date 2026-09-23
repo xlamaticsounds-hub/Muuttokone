@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Printer, Mail, Download, Pencil, Copy, Receipt } from 'lucide-react';
+import { ArrowLeft, Printer, Mail, Download, Pencil, Copy, Receipt, AlertTriangle } from 'lucide-react';
 import { siteConfig } from '@/config/site';
 import { formatDateFi, formatEuro } from '@/lib/format';
 import { generateViitenumero } from '@/lib/reference-number';
@@ -14,6 +14,7 @@ import type { InvoiceStatus } from '@prisma/client';
 import InvoiceStatusSelector from '../InvoiceStatusSelector';
 import DeleteInvoiceButton from '../DeleteInvoiceButton';
 import ReceiptPreviewModal from './ReceiptPreviewModal';
+import LateFeeModal from './LateFeeModal';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -50,6 +51,7 @@ export default function InvoiceClient({
   const [feedback, setFeedback] = useState<{ ok: boolean; message: string } | null>(null);
   const [receiptFeedback, setReceiptFeedback] = useState<{ ok: boolean; message: string } | null>(null);
   const [showReceiptPreview, setShowReceiptPreview] = useState(false);
+  const [showLateFeeModal, setShowLateFeeModal] = useState(false);
   const [email, setEmail] = useState(recipientEmail || customerEmail || '');
 
   const totals = computeInvoiceTotals(items);
@@ -57,6 +59,7 @@ export default function InvoiceClient({
   const hasZeroVatItem = items.some((item) => item.vatRate === 0);
   const showServiceDate = !!serviceDate && !isSameDate(new Date(serviceDate), new Date(createdAt));
   const emailValid = EMAIL_RE.test(email.trim());
+  const isOverdue = (status === 'UNPAID' || status === 'OVERDUE') && !!dueDate && new Date(dueDate).getTime() < Date.now();
 
   const handleDuplicate = async () => {
     setDuplicating(true);
@@ -194,6 +197,21 @@ export default function InvoiceClient({
         </p>
       )}
 
+      {isOverdue && (
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 print:hidden dark:border-red-900/40 dark:bg-red-900/20">
+          <p className="flex items-center gap-2 text-sm text-red-800 dark:text-red-300">
+            <AlertTriangle className="h-4 w-4 shrink-0" />
+            Lasku on erääntynyt eikä sitä ole merkitty maksetuksi.
+          </p>
+          <button
+            onClick={() => setShowLateFeeModal(true)}
+            className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
+          >
+            Luo maksumuistutus viivästyskorolla
+          </button>
+        </div>
+      )}
+
       <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-sm print:border-0 print:shadow-none dark:border-gray-700 dark:bg-gray-800 print:dark:bg-white print:text-black">
         {/* Header */}
         <div className="mb-8 flex items-start justify-between">
@@ -294,6 +312,16 @@ export default function InvoiceClient({
         email={email.trim()}
         onClose={() => setShowReceiptPreview(false)}
         onSent={handleReceiptSent}
+      />
+    )}
+
+    {showLateFeeModal && dueDate && (
+      <LateFeeModal
+        invoiceId={id}
+        invoiceNumber={invoiceNumber}
+        dueDate={dueDate}
+        items={items}
+        onClose={() => setShowLateFeeModal(false)}
       />
     )}
     </>
