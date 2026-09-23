@@ -110,6 +110,12 @@ model Lead {
   // kalenterimerkintä. Katso src/server/google-calendar.ts.
   calendarEventId String?
 
+  // AI:n luoma yhteenveto tarjous@muuttokone.fi-postilaatikon ja asiakkaan välisestä
+  // sähköpostikeskustelusta: { summary, agreedDates, openQuestions, messageCount, generatedAt }.
+  // Katso src/server/email-summary.ts. Päivittyy joko liidin sivun napista tai
+  // ajastetusta /api/cron/email-summaries-reitistä.
+  emailSummary Json?
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?

@@ -11,8 +11,10 @@ import {
   getPhotoUrls,
   parseLeadFormData,
 } from '@/server/lead-format';
+import { parseEmailSummary } from '@/server/email-summary';
 import StatusSelector from './StatusSelector';
 import LeadDetailActions from './LeadDetailActions';
+import EmailSummarySection from './EmailSummarySection';
 
 export const dynamic = 'force-dynamic';
 
@@ -345,6 +347,12 @@ export default async function LeadDetailPage({
            <LeadDetailActions lead={lead} />
         </div>
       </div>
+
+      <EmailSummarySection
+        leadId={lead.id}
+        customerEmail={lead.contact.email}
+        initialSummary={parseEmailSummary(lead.emailSummary)}
+      />
     </div>
   );
 }
