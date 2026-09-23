@@ -19,6 +19,23 @@ const footerNavData: FooterMenu[] = [
   //   ],
   // },
   {
+    title: 'Palvelualueet',
+    navItems: [
+      {
+        label: 'Muuttopalvelu Espoossa',
+        route: '/muuttopalvelu-espoo',
+      },
+      {
+        label: 'Muuttopalvelu Vantaalla',
+        route: '/muuttopalvelu-vantaa',
+      },
+      {
+        label: 'Muuttopalvelu Tampereella',
+        route: '/muuttopalvelu-tampere',
+      },
+    ],
+  },
+  {
     title: 'Asiakaspalvelu',
     navItems: [
       {

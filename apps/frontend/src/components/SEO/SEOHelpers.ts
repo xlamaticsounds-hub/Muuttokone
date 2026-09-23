@@ -12,6 +12,10 @@ interface SEOProps {
   };
   keywords?: string[] | readonly string[];
   noindex?: boolean;
+  // Path (not full URL) to the equivalent page in each language, for hreflang. Only set
+  // this on pages that actually have a real, fully translated counterpart — pointing
+  // hreflang at an untranslated page tells Google the wrong thing.
+  languageAlternates?: { fi: string; en: string };
 }
 
 export function generateSEOMetadata({
@@ -21,6 +25,7 @@ export function generateSEOMetadata({
   openGraph,
   keywords,
   noindex = false,
+  languageAlternates,
 }: SEOProps): Metadata {
   const siteUrl = process.env.SITE_URL ?? 'https://muuttokone.fi';
 
@@ -30,6 +35,13 @@ export function generateSEOMetadata({
     keywords: keywords?.join(', '),
     alternates: {
       canonical: canonical ? `${siteUrl}${canonical}` : undefined,
+      languages: languageAlternates
+        ? {
+            fi: `${siteUrl}${languageAlternates.fi}`,
+            en: `${siteUrl}${languageAlternates.en}`,
+            'x-default': `${siteUrl}${languageAlternates.fi}`,
+          }
+        : undefined,
     },
     robots: {
       index: !noindex,
@@ -64,6 +76,16 @@ export const SEOConfigs = {
       'Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Koti- ja yritysmuutot, pakkaus, kuljetukset ja kuolinpesätyhjennnykset. Tehokkaat ja ammattitaitoiset tekijät. Pyydä maksuton tarjous!',
     keywords: ['muutto', 'muuttofirma', 'muuttopalvelu', 'Helsinki', 'Uusimaa', 'Espoo', 'Vantaa'],
     canonical: '/',
+    languageAlternates: { fi: '/', en: '/en' },
+  },
+
+  homeEn: {
+    title: 'Home – Reliable Moving Company in Helsinki',
+    description:
+      'Fast, safe and transparent moving in Helsinki and the Uusimaa region. Home and office moves, packing, transport and estate clearances. Request a free quote!',
+    keywords: ['moving company', 'movers', 'moving service', 'Helsinki', 'Uusimaa', 'Espoo', 'Vantaa'],
+    canonical: '/en',
+    languageAlternates: { fi: '/', en: '/en' },
   },
 
   services: {
@@ -117,6 +139,40 @@ export const SEOConfigs = {
       'Laske muuttosi hinta heti – tarkka hinta-arvio sekunneissa, ei piilokuluja. Suomen tarkin muuttolaskuri perustuu oikeaan tavaramäärään, ei arvioihin.',
     keywords: ['muuttolaskuri', 'muuton hinta-arvio', 'muuttohinta laskuri'],
     canonical: '/muuttolaskuri',
+    languageAlternates: { fi: '/muuttolaskuri', en: '/en/muuttolaskuri' },
+  },
+
+  calculatorEn: {
+    title: 'Moving Cost Calculator – Get an Accurate Price Instantly',
+    description:
+      'Calculate your moving price instantly – an accurate estimate in seconds, no hidden fees. Based on your actual amount of belongings, not guesswork.',
+    keywords: ['moving cost calculator', 'moving price estimate', 'moving quote'],
+    canonical: '/en/muuttolaskuri',
+    languageAlternates: { fi: '/muuttolaskuri', en: '/en/muuttolaskuri' },
+  },
+
+  muuttopalveluEspoo: {
+    title: 'Muuttopalvelu Espoossa',
+    description:
+      'Ammattitaitoinen muuttopalvelu Espoossa — kotimuutot, yritysmuutot ja pakkauspalvelu. Kiinteä hinta ilman piilokuluja, pyydä maksuton tarjous.',
+    keywords: ['muuttopalvelu Espoo', 'muuttofirma Espoo', 'muutto Espoo', 'Tapiola', 'Leppävaara', 'Matinkylä'],
+    canonical: '/muuttopalvelu-espoo',
+  },
+
+  muuttopalveluVantaa: {
+    title: 'Muuttopalvelu Vantaalla',
+    description:
+      'Luotettava muuttopalvelu Vantaalla — kotimuutot, yritysmuutot ja pakkauspalvelu. Kiinteä hinta ilman piilokuluja, pyydä maksuton tarjous.',
+    keywords: ['muuttopalvelu Vantaa', 'muuttofirma Vantaa', 'muutto Vantaa', 'Tikkurila', 'Myyrmäki'],
+    canonical: '/muuttopalvelu-vantaa',
+  },
+
+  muuttopalveluTampere: {
+    title: 'Muuttopalvelu Tampereella',
+    description:
+      'Ammattitaitoinen muuttopalvelu Tampereella — kotimuutot, yritysmuutot ja pakkauspalvelu. Kiinteä hinta ilman piilokuluja, pyydä maksuton tarjous.',
+    keywords: ['muuttopalvelu Tampere', 'muuttofirma Tampere', 'muutto Tampere', 'Hervanta', 'Kaleva'],
+    canonical: '/muuttopalvelu-tampere',
   },
 
   terms: {

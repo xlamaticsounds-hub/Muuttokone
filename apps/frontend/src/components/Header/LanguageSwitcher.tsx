@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useLocale, type Locale } from '@/i18n/LocaleContext';
 
 const LANGUAGES: { code: Locale; flag: string; label: string }[] = [
@@ -9,9 +9,22 @@ const LANGUAGES: { code: Locale; flag: string; label: string }[] = [
   { code: 'en', flag: '🇬🇧', label: 'ENGLISH' },
 ];
 
+// Sivut joilla on oikea, erillinen /en-reitti (kokonaan käännetty sisältö) — vain nämä
+// navigoidaan URL:n vaihdolla. Muilla sivuilla (ei vielä käännetty kokonaan) kielenvaihto
+// pysyy nykyisellä evästepohjaisella tavalla samalla sivulla, ettei linkitetä /en-URL:ia
+// jonka sisältö olisikin suomeksi.
+const TRANSLATED_ROUTES: Record<string, string> = {
+  '/': '/en',
+  '/muuttolaskuri': '/en/muuttolaskuri',
+};
+const TRANSLATED_ROUTES_REVERSE: Record<string, string> = Object.fromEntries(
+  Object.entries(TRANSLATED_ROUTES).map(([fi, en]) => [en, fi]),
+);
+
 export default function LanguageSwitcher({ className = '' }: { className?: string }) {
   const { locale, setLocale } = useLocale();
   const router = useRouter();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const current = LANGUAGES.find((l) => l.code === locale) ?? LANGUAGES[0];
@@ -25,8 +38,25 @@ export default function LanguageSwitcher({ className = '' }: { className?: strin
   }, []);
 
   const choose = (code: Locale) => {
-    setLocale(code);
     setOpen(false);
+
+    if (code === 'en') {
+      const enPath = TRANSLATED_ROUTES[pathname];
+      if (enPath) {
+        setLocale('en');
+        router.push(enPath);
+        return;
+      }
+    } else {
+      const fiPath = TRANSLATED_ROUTES_REVERSE[pathname];
+      if (fiPath) {
+        setLocale('fi');
+        router.push(fiPath);
+        return;
+      }
+    }
+
+    setLocale(code);
     // Server Components (e.g. Footer, homepage sections) only pick up the new
     // locale cookie on a fresh request — refresh so they re-render translated too.
     router.refresh();

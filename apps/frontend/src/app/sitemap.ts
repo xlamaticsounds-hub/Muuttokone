@@ -20,6 +20,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 1.0,
+      alternates: { languages: { fi: `${base}/`, en: `${base}/en` } },
+    },
+    {
+      url: `${base}/en`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.9,
+      alternates: { languages: { fi: `${base}/`, en: `${base}/en` } },
     },
     {
       url: `${base}/palvelut`,
@@ -38,6 +46,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
+      alternates: { languages: { fi: `${base}/muuttolaskuri`, en: `${base}/en/muuttolaskuri` } },
+    },
+    {
+      url: `${base}/en/muuttolaskuri`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.7,
+      alternates: { languages: { fi: `${base}/muuttolaskuri`, en: `${base}/en/muuttolaskuri` } },
     },
     {
       url: `${base}/blogi`,
@@ -56,6 +72,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.6,
+    },
+    {
+      url: `${base}/muuttopalvelu-espoo`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${base}/muuttopalvelu-vantaa`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.7,
+    },
+    {
+      url: `${base}/muuttopalvelu-tampere`,
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: 0.7,
     },
     {
       url: `${base}/usein-kysytyt-kysymykset`,
