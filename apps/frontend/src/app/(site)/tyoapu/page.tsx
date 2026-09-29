@@ -6,7 +6,7 @@ import ProcessSteps from '@/components/ProcessSteps';
 import Faq from '@/components/Faq';
 import Cta from '@/components/Cta';
 import TyoapuQuoteForm from '@/features/tyoapu/TyoapuQuoteForm';
-import { tyoapuCategories, tyoapuFaqData, tyoapuProcessSteps } from '@/features/tyoapu/tyoapuData';
+import { startingPrices, tyoapuCategories, tyoapuFaqData, tyoapuProcessSteps } from '@/features/tyoapu/tyoapuData';
 import { cases } from '@/features/references/referenceData';
 
 export const metadata: Metadata = generateSEOMetadata({
@@ -128,6 +128,35 @@ export default function TyoapuPage() {
         </div>
       </section>
 
+      {/* Starting prices */}
+      <section className="pt-10 lg:pt-14">
+        <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
+          <div className="rounded-2xl border-2 border-primary/30 bg-gradient-to-r from-primary/10 via-white to-white p-6 shadow-md sm:p-8 dark:from-primary/20 dark:via-slate-900 dark:to-slate-900">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
+              <div className="flex items-start gap-4 lg:max-w-md">
+                <div className="bg-primary flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white">
+                  <BadgeEuro className="h-7 w-7" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-black/90 dark:text-white">Suosituimmat asennukset</h2>
+                </div>
+              </div>
+              <ul className="grid flex-1 grid-cols-2 gap-3 sm:grid-cols-4">
+                {startingPrices.map((item) => (
+                  <li
+                    key={item.title}
+                    className="rounded-xl bg-white p-4 text-center shadow-sm ring-1 ring-black/5 dark:bg-slate-800 dark:ring-white/10"
+                  >
+                    <p className="text-primary text-xl font-bold">{item.price}</p>
+                    <p className="mt-1 text-sm font-semibold text-black/80 dark:text-white/80">{item.title}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Categories */}
       {tyoapuCategories.map((category, index) => {
         const Icon = categoryIcons[category.id] ?? Wrench;
@@ -155,6 +184,11 @@ export default function TyoapuPage() {
                   >
                     <h3 className="mb-2 text-lg font-bold text-black/90 dark:text-white">{item.title}</h3>
                     <p className="text-sm leading-relaxed text-black/70 dark:text-white/70">{item.desc}</p>
+                    {item.price && (
+                      <p className="mt-3 inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                        {item.price}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>

@@ -7,7 +7,7 @@ export type TyoapuCategory = {
   id: string;
   title: string;
   intro: string;
-  items: { title: string; desc: string }[];
+  items: { title: string; desc: string; price?: string }[];
 };
 
 export const tyoapuCategories: TyoapuCategory[] = [
@@ -16,8 +16,8 @@ export const tyoapuCategories: TyoapuCategory[] = [
     title: 'Kodin asennukset',
     intro: 'Kodinkoneet, televisiot ja kalusteet paikoilleen — ilman omia työkaluja ja selkäkipuja.',
     items: [
-      { title: 'TV:n asennus seinälle', desc: 'Seinätelineen kiinnitys, television nosto paikalleen ja johtojen siisti piilotus.' },
-      { title: 'Pesukoneen ja astianpesukoneen asennus', desc: 'Kone paikalleen ja kytkentä valmiisiin vesi- ja viemäriliitäntöihin, vanha kone pois.' },
+      { title: 'TV:n asennus seinälle', desc: 'Seinätelineen kiinnitys, television nosto paikalleen ja johtojen siisti piilotus.', price: 'alk. 59 €' },
+      { title: 'Pesukoneen ja astianpesukoneen asennus', desc: 'Kone paikalleen ja kytkentä valmiisiin vesi- ja viemäriliitäntöihin. Vanhan koneen poisvienti alk. 29 €.', price: 'alk. 49 €' },
       { title: 'Kalusteiden kokoaminen', desc: 'Kaapit, sängyt, hyllyt ja työpöydät koottuna ja tarvittaessa seinään kiinnitettynä.' },
       { title: 'Hyllyt, taulut ja verhotangot', desc: 'Kiinnitykset oikeilla tulpilla seinämateriaalin mukaan, suoraan ja tukevasti.' },
     ],
@@ -65,6 +65,16 @@ export const tyoapuCategories: TyoapuCategory[] = [
   },
 ];
 
+// Alkaen-hinnat ovat halvimman kokoluokan / perusasennuksen oikeita hintoja, jotka
+// jokainen saa (esim. pieni TV) — ei harkinnanvaraisia poikkeushintoja. Lopullinen hinta
+// sovitaan aina asiakkaan kanssa etukäteen.
+export const startingPrices: { title: string; price: string }[] = [
+  { title: 'TV seinälle', price: 'alk. 59 €' },
+  { title: 'Pesukoneen asennus', price: 'alk. 49 €' },
+  { title: 'Astianpesukoneen asennus', price: 'alk. 49 €' },
+  { title: 'Vanhan koneen poisvienti', price: 'alk. 29 €' },
+];
+
 export const tyoapuProcessSteps: ProcessStep[] = [
   {
     title: 'Kerro tarpeesi',
@@ -93,7 +103,7 @@ export const tyoapuProcessSteps: ProcessStep[] = [
 export const tyoapuFaqData: FaqItem[] = [
   {
     q: 'Paljonko työapu maksaa?',
-    a: 'Hinta riippuu työstä. Voimme sopia kiinteän hinnan, jolloin tiedät kokonaissumman etukäteen, tai tuntiveloituksen, joka sopii töihin joiden kestoa on vaikea arvioida. Pyydä tarjous, niin kerromme vaihtoehdot.',
+    a: 'Hinta riippuu työstä. Voimme sopia kiinteän hinnan, jolloin tiedät kokonaissumman etukäteen, tai tuntiveloituksen, joka sopii töihin joiden kestoa on vaikea arvioida. Esimerkiksi TV:n seinäasennus alkaa 59 eurosta ja pesukoneen asennus 49 eurosta. Lopullinen hinta sovitaan aina etukäteen, joten laskussa ei tule yllätyksiä.',
   },
   {
     q: 'Saanko kotitalousvähennyksen?',
