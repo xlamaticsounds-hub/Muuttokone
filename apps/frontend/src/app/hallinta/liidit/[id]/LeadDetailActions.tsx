@@ -4,10 +4,11 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { updateLeadDetails } from '@/server/actions';
-import { sendBookingConfirmationEmail } from '@/server/send-booking-confirmation';
+import { createInvoiceFromLead } from '@/server/invoice-actions';
 import { parseLeadFormData, getStoredPrice } from '@/server/lead-format';
 import { Lead, Contact } from '@prisma/client';
 import QuoteEmailPreviewModal from './QuoteEmailPreviewModal';
+import BookingConfirmationPreviewModal from './BookingConfirmationPreviewModal';
 
 export default function LeadDetailActions({
   lead
@@ -19,7 +20,9 @@ export default function LeadDetailActions({
   const [loading, setLoading] = useState(false);
   const [showQuotePreview, setShowQuotePreview] = useState(false);
   const [quoteFeedback, setQuoteFeedback] = useState<{ ok: boolean; message: string } | null>(null);
-  const [sendingConfirmation, setSendingConfirmation] = useState(false);
+  const [showConfirmationPreview, setShowConfirmationPreview] = useState(false);
+  const [creatingInvoice, setCreatingInvoice] = useState(false);
+  const [invoiceError, setInvoiceError] = useState<string | null>(null);
   const [confirmationFeedback, setConfirmationFeedback] = useState<{ ok: boolean; message: string } | null>(null);
 
   const alreadySent = lead.status === 'PROPOSAL_SENT' || lead.status === 'WON';
@@ -32,27 +35,21 @@ export default function LeadDetailActions({
     router.refresh();
   };
 
-  const handleSendConfirmation = async () => {
-    if (!lead.contact.email) return;
-    const confirmed = window.confirm(
-      `Lähetetäänkö varausvahvistus sähköpostitse osoitteeseen ${lead.contact.email}?`,
-    );
-    if (!confirmed) return;
-
-    setSendingConfirmation(true);
-    setConfirmationFeedback(null);
+  const handleCreateInvoice = async () => {
+    setCreatingInvoice(true);
+    setInvoiceError(null);
     try {
-      const result = await sendBookingConfirmationEmail(lead.id);
-      if (result.success) {
-        setConfirmationFeedback({ ok: true, message: `Varausvahvistus lähetetty osoitteeseen ${result.sentTo}.` });
-      } else {
-        setConfirmationFeedback({ ok: false, message: result.message });
-      }
+      const { id } = await createInvoiceFromLead(lead.id);
+      router.push(`/hallinta/laskutus/${id}/muokkaa`);
     } catch (err) {
-      setConfirmationFeedback({ ok: false, message: err instanceof Error ? err.message : 'Lähetys epäonnistui.' });
-    } finally {
-      setSendingConfirmation(false);
+      setInvoiceError(err instanceof Error ? err.message : 'Laskun luonti epäonnistui.');
+      setCreatingInvoice(false);
     }
+  };
+
+  const handleConfirmationSent = (sentTo: string) => {
+    setShowConfirmationPreview(false);
+    setConfirmationFeedback({ ok: true, message: `Varausvahvistus lähetetty osoitteeseen ${sentTo}.` });
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -113,7 +110,7 @@ export default function LeadDetailActions({
         >
           Muokkaa tietoja
         </button>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 gap-2">
           <Link
             href={`/hallinta/liidit/${lead.id}/kuitti`}
             className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-center text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
@@ -121,14 +118,26 @@ export default function LeadDetailActions({
             Tee kuitti
           </Link>
           <button
-            onClick={handleSendConfirmation}
-            disabled={sendingConfirmation || !lead.contact.email}
-            title={!lead.contact.email ? 'Liidillä ei ole sähköpostiosoitetta' : undefined}
+            onClick={handleCreateInvoice}
+            disabled={creatingInvoice}
+            title="Luo laskuluonnos liidin asiakastiedoista, palvelusta ja hinnasta"
             className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-center text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
           >
-            {sendingConfirmation ? 'Lähetetään...' : 'Lähetä varausvahvistus'}
+            {creatingInvoice ? 'Luodaan...' : 'Tee lasku'}
+          </button>
+          <button
+            onClick={() => {
+              setConfirmationFeedback(null);
+              setShowConfirmationPreview(true);
+            }}
+            disabled={!lead.contact.email}
+            title={!lead.contact.email ? 'Liidillä ei ole sähköpostiosoitetta' : undefined}
+            className="col-span-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-center text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+          >
+            Esikatsele varausvahvistus
           </button>
         </div>
+        {invoiceError && <p className="text-sm text-red-600 dark:text-red-400">{invoiceError}</p>}
         {confirmationFeedback && (
           <p className={`text-sm ${confirmationFeedback.ok ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
             {confirmationFeedback.message}
@@ -307,6 +316,14 @@ export default function LeadDetailActions({
           leadId={lead.id}
           onClose={() => setShowQuotePreview(false)}
           onSent={handleQuoteSent}
+        />
+      )}
+
+      {showConfirmationPreview && (
+        <BookingConfirmationPreviewModal
+          leadId={lead.id}
+          onClose={() => setShowConfirmationPreview(false)}
+          onSent={handleConfirmationSent}
         />
       )}
     </>

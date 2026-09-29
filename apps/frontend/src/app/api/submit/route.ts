@@ -5,6 +5,7 @@ import { prisma } from '@/server/db'; // <- make sure you have the hot-reload-sa
 import { LeadStatus, LeadSource } from '@prisma/client';
 import { rateLimit } from '@/server/rate-limit';
 import { postLeadToDiscord } from '@/server/discord-bot';
+import { sendDiscordNotification } from '@/server/discord-webhook';
 import { createTentativeLeadEvent, findOverlappingEvents } from '@/server/google-calendar';
 
 // Force Node.js runtime (multipart + File)
@@ -731,39 +732,6 @@ export async function POST(request: NextRequest) {
       { success: false, message: 'Internal server error', error: errorMessage },
       { status: 500 },
     );
-  }
-}
-
-/* ===================== Notifications ===================== */
-
-async function sendDiscordNotification(title: string, fields: { name: string; value: string; inline?: boolean }[]) {
-  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
-  
-  if (!webhookUrl) {
-    console.warn('DISCORD_WEBHOOK_URL is not defined. Skipping notification.');
-    return;
-  }
-
-  try {
-    await fetch(webhookUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        embeds: [
-          {
-            title: title,
-            color: 5814783, // #58b9ff (Primary Blue-ish)
-            fields: fields,
-            timestamp: new Date().toISOString(),
-            footer: {
-              text: 'Muuttokone Lead System',
-            },
-          },
-        ],
-      }),
-    });
-  } catch (error) {
-    console.error('Failed to send Discord notification:', error);
   }
 }
 

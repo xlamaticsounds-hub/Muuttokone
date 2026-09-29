@@ -1,0 +1,25 @@
+name: Overdue Invoices Cron
+
+# Merkitsee erääntyneet laskut tilaan "Maksu myöhässä" ja ilmoittaa niistä Discordiin.
+# Vaatii GitHubin repo-secretit APP_URL (esim. https://muuttokone.fi) ja CRON_SECRET
+# (sama arvo kuin palvelimen CRON_SECRET-ympäristömuuttuja).
+on:
+  schedule:
+    - cron: '0 6 * * *' # joka päivä klo 06 UTC (09 Suomen kesäaikaa)
+  workflow_dispatch: {}
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call /api/cron/overdue-invoices
+        run: |
+          status=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -X POST "${{ secrets.APP_URL }}/api/cron/overdue-invoices" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          echo "HTTP status: $status"
+          cat /tmp/response.json
+          if [ "$status" -ge 300 ]; then
+            echo "Cron call failed with status $status"
+            exit 1
+          fi

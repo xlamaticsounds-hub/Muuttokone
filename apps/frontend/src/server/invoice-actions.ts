@@ -4,8 +4,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/server/auth';
 import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
-import { parseInvoiceItems, type InvoiceLineItem } from '@/lib/invoice';
+import { buildLateFeeItem, parseInvoiceItems, type InvoiceLineItem } from '@/lib/invoice';
 import type { InvoiceStatus } from '@prisma/client';
+import { getPackageLabel, getServiceLabel, getStoredPrice, parseLeadFormData } from '@/server/lead-format';
 
 export type CreateInvoiceInput = {
   contactId: string | null;
@@ -102,6 +103,63 @@ export async function updateInvoice(invoiceId: string, input: UpdateInvoiceInput
   return { id: invoice.id };
 }
 
+// Luo laskuluonnoksen liidin tiedoista (asiakas, osoite, sähköposti, palvelu, hinta ja
+// muuttopäivä suorituspäiväksi), jotta mitään ei tarvitse kirjoittaa uudelleen käsin.
+// Summa otetaan vahvistetusta hinnasta tai laskurin tarkasta hinnasta — jos hinta on vain
+// haarukka (esim. "99–129"), summa jätetään nollaksi ja täytetään muokkaussivulla.
+export async function createInvoiceFromLead(leadId: string): Promise<{ id: string }> {
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    throw new Error('Unauthorized');
+  }
+
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, include: { contact: true } });
+  if (!lead) {
+    throw new Error('Liidiä ei löytynyt.');
+  }
+
+  const pfd = parseLeadFormData(lead.formData);
+  const { confirmed, exact } = getStoredPrice(pfd);
+  const confirmedNumber = confirmed !== null ? Number(confirmed.replace(/[\s€]/g, '').replace(',', '.')) : NaN;
+  const amount = Number.isFinite(confirmedNumber) && confirmedNumber > 0 ? confirmedNumber : exact ?? 0;
+
+  const service = [getServiceLabel(pfd) ?? 'Muutto', getPackageLabel(pfd)].filter(Boolean).join(' · ');
+  const route = [lead.fromAddress, lead.toAddress].filter(Boolean).join(' → ');
+  const description = route ? `${service}: ${route}` : service;
+
+  const contact = lead.contact;
+  const customerName =
+    [contact.firstName, contact.lastName].filter(Boolean).join(' ') || contact.companyName || 'Nimetön asiakas';
+
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + 14);
+
+  const invoice = await prisma.invoice.create({
+    data: {
+      contactId: contact.id,
+      customerName,
+      customerStreet: contact.street,
+      customerPostalCode: contact.postalCode,
+      customerCity: contact.city,
+      customerEmail: contact.email,
+      items: [{ description, amount, vatRate: 0.255 }],
+      dueDate,
+      serviceDate: lead.requestedDate,
+    },
+  });
+
+  await createLog({
+    entityType: 'Lead',
+    entityId: leadId,
+    action: 'lead.invoice_created',
+    message: `Laskuluonnos #${invoice.invoiceNumber} luotu liidistä`,
+    data: { invoiceId: invoice.id, invoiceNumber: invoice.invoiceNumber, amount },
+    actorId: session.user?.email ?? null,
+  });
+
+  return { id: invoice.id };
+}
+
 // Luo uuden, muokattavan (lähettämättömän) laskun jo lähetetyn laskun tiedoista.
 // Tarkoitus: lähetettyä laskua ei saa enää muokata, mutta samat tiedot halutaan
 // usein pohjaksi seuraavalle laskulle ilman että kukaan kirjoittaa koko laskua
@@ -117,6 +175,12 @@ export async function duplicateInvoice(invoiceId: string): Promise<{ id: string 
     throw new Error('Laskua ei löytynyt.');
   }
 
+  // Alkuperäinen eräpäivä on kopioitaessa yleensä jo mennyt — säilytetään sama maksuaika
+  // (esim. 14 pv) laskettuna tästä päivästä.
+  const dueDate = source.dueDate
+    ? new Date(Date.now() + Math.max(0, source.dueDate.getTime() - source.createdAt.getTime()))
+    : null;
+
   const invoice = await prisma.invoice.create({
     data: {
       contactId: source.contactId,
@@ -126,7 +190,7 @@ export async function duplicateInvoice(invoiceId: string): Promise<{ id: string 
       customerCity: source.customerCity,
       customerEmail: source.customerEmail,
       items: parseInvoiceItems(source.items),
-      dueDate: source.dueDate,
+      dueDate,
       serviceDate: source.serviceDate,
     },
   });
@@ -134,15 +198,14 @@ export async function duplicateInvoice(invoiceId: string): Promise<{ id: string 
   return { id: invoice.id };
 }
 
-// Luo uuden, muokattavan laskun erääntyneen laskun pohjalta lisäämällä sille
-// viivästyskorkorivin. Korko lasketaan yksinkertaisena (ei korkoa korolle) päiväkohtaisena
-// korkona alkuperäisen laskun loppusummalle: pääoma × (vuosikorko/100) × päivät/365 —
-// korkolain (633/1982) 4 §:n mukainen laskentatapa. Vuosikorko syötetään käsin sivulla, koska
+// Luo uuden laskun erääntyneen laskun pohjalta lisäämällä sille viivästyskorkorivin
+// (laskenta: lib/invoice.ts:buildLateFeeItem). Vuosikorko syötetään käsin sivulla, koska
 // se riippuu Suomen Pankin kulloinkin voimassa olevasta viitekorosta + lakisääteisestä
 // lisästä, eikä sitä pidä kovakoodata (viitekorko muuttuu puolivuosittain).
 export async function createLateFeeInvoice(
   invoiceId: string,
   ratePercent: number,
+  dueDate: string | null = null, // ISO-päivämäärä uudelle laskulle
 ): Promise<{ id: string; amount: number; days: number }> {
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -161,24 +224,16 @@ export async function createLateFeeInvoice(
     throw new Error('Laskulla ei ole eräpäivää — viivästyskorkoa ei voi laskea.');
   }
 
-  const now = new Date();
-  const msPerDay = 24 * 60 * 60 * 1000;
-  const days = Math.floor((now.getTime() - source.dueDate.getTime()) / msPerDay);
+  const sourceItems = parseInvoiceItems(source.items);
+  const { item: lateFeeItem, days, amount } = buildLateFeeItem({
+    items: sourceItems,
+    dueDate: source.dueDate,
+    ratePercent,
+    invoiceNumber: source.invoiceNumber,
+  });
   if (days <= 0) {
     throw new Error('Laskun eräpäivä ei ole vielä ohittunut.');
   }
-
-  const sourceItems = parseInvoiceItems(source.items);
-  const principal = sourceItems.reduce((sum, item) => sum + item.amount, 0);
-  const rawAmount = principal * (ratePercent / 100) * (days / 365);
-  const amount = Math.round(rawAmount * 100) / 100;
-
-  const dueDateFi = source.dueDate.toLocaleDateString('fi-FI', { day: 'numeric', month: 'long', year: 'numeric' });
-  const lateFeeItem = {
-    description: `Viivästyskorko ${ratePercent} % p.a., ${days} pv (alkuperäinen eräpäivä ${dueDateFi}, lasku #${source.invoiceNumber})`,
-    amount,
-    vatRate: 0, // Viivästyskorko ei ole arvonlisäverollista (AVL 78 §).
-  };
 
   const invoice = await prisma.invoice.create({
     data: {
@@ -188,8 +243,9 @@ export async function createLateFeeInvoice(
       customerPostalCode: source.customerPostalCode,
       customerCity: source.customerCity,
       customerEmail: source.customerEmail,
+      sourceInvoiceId: source.id,
       items: [...sourceItems, lateFeeItem],
-      dueDate: null,
+      dueDate: dueDate ? new Date(dueDate) : null,
       serviceDate: source.serviceDate,
     },
   });
@@ -212,6 +268,7 @@ const STATUS_LABELS_FI: Record<InvoiceStatus, string> = {
   UNPAID: 'Ei maksettu',
   PAID: 'Maksettu',
   OVERDUE: 'Maksu myöhässä',
+  SUPERSEDED: 'Korvattu muistutuksella',
 };
 
 export async function updateInvoiceStatus(invoiceId: string, status: InvoiceStatus) {

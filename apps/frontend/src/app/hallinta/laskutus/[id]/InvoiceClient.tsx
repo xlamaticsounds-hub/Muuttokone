@@ -7,16 +7,18 @@ import { ArrowLeft, Printer, Mail, Download, Pencil, Copy, Receipt, AlertTriangl
 import { siteConfig } from '@/config/site';
 import { formatDateFi, formatEuro } from '@/lib/format';
 import { generateViitenumero } from '@/lib/reference-number';
-import { computeInvoiceTotals, isSameDate, type InvoiceLineItem } from '@/lib/invoice';
-import { sendInvoiceEmail } from '@/server/send-invoice';
+import { computeInvoiceTotals, isInvoiceOverdue, isSameDate, type InvoiceLineItem } from '@/lib/invoice';
 import { duplicateInvoice } from '@/server/invoice-actions';
 import type { InvoiceStatus } from '@prisma/client';
 import InvoiceStatusSelector from '../InvoiceStatusSelector';
 import DeleteInvoiceButton from '../DeleteInvoiceButton';
 import ReceiptPreviewModal from './ReceiptPreviewModal';
 import LateFeeModal from './LateFeeModal';
+import InvoiceSendPreviewModal from './InvoiceSendPreviewModal';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+type InvoiceLink = { id: string; invoiceNumber: number };
 
 export default function InvoiceClient({
   id,
@@ -31,6 +33,8 @@ export default function InvoiceClient({
   serviceDate,
   sentAt,
   status,
+  sourceInvoice,
+  reminders,
 }: {
   id: string;
   invoiceNumber: number;
@@ -44,9 +48,11 @@ export default function InvoiceClient({
   serviceDate: string | null;
   sentAt: string | null;
   status: InvoiceStatus;
+  sourceInvoice: InvoiceLink | null; // tämä lasku on maksumuistutus tälle laskulle
+  reminders: InvoiceLink[]; // tästä laskusta tehdyt maksumuistutukset
 }) {
   const router = useRouter();
-  const [sending, setSending] = useState(false);
+  const [showSendPreview, setShowSendPreview] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const [feedback, setFeedback] = useState<{ ok: boolean; message: string } | null>(null);
   const [receiptFeedback, setReceiptFeedback] = useState<{ ok: boolean; message: string } | null>(null);
@@ -59,7 +65,7 @@ export default function InvoiceClient({
   const hasZeroVatItem = items.some((item) => item.vatRate === 0);
   const showServiceDate = !!serviceDate && !isSameDate(new Date(serviceDate), new Date(createdAt));
   const emailValid = EMAIL_RE.test(email.trim());
-  const isOverdue = (status === 'UNPAID' || status === 'OVERDUE') && !!dueDate && new Date(dueDate).getTime() < Date.now();
+  const isOverdue = isInvoiceOverdue(status, dueDate ? new Date(dueDate) : null);
 
   const handleDuplicate = async () => {
     setDuplicating(true);
@@ -72,26 +78,10 @@ export default function InvoiceClient({
     }
   };
 
-  const handleSend = async () => {
-    if (!emailValid) return;
-    const confirmed = window.confirm(`Lähetetäänkö lasku sähköpostitse osoitteeseen ${email.trim()}?`);
-    if (!confirmed) return;
-
-    setSending(true);
-    setFeedback(null);
-    try {
-      const result = await sendInvoiceEmail(id, email.trim());
-      if (result.success) {
-        setFeedback({ ok: true, message: `Lasku lähetetty osoitteeseen ${result.sentTo}.` });
-        router.refresh();
-      } else {
-        setFeedback({ ok: false, message: result.message });
-      }
-    } catch (err) {
-      setFeedback({ ok: false, message: err instanceof Error ? err.message : 'Lähetys epäonnistui.' });
-    } finally {
-      setSending(false);
-    }
+  const handleInvoiceSent = (sentTo: string) => {
+    setShowSendPreview(false);
+    setFeedback({ ok: true, message: `Lasku lähetetty osoitteeseen ${sentTo}.` });
+    router.refresh();
   };
 
   const handleReceiptSent = (sentTo: string) => {
@@ -174,13 +164,16 @@ export default function InvoiceClient({
             Esikatsele kuitti
           </button>
           <button
-            onClick={handleSend}
-            disabled={sending || !emailValid}
+            onClick={() => {
+              setFeedback(null);
+              setShowSendPreview(true);
+            }}
+            disabled={!emailValid}
             title={!emailValid ? 'Anna kelvollinen sähköpostiosoite' : undefined}
             className="flex items-center gap-2 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-100"
           >
             <Mail className="h-4 w-4" />
-            {sending ? 'Lähetetään...' : sentAt ? 'Lähetä uudelleen' : 'Lähetä lasku sähköpostitse'}
+            {sentAt ? 'Esikatsele ja lähetä uudelleen' : 'Esikatsele ja lähetä lasku'}
           </button>
         </div>
       </div>
@@ -197,6 +190,34 @@ export default function InvoiceClient({
         </p>
       )}
 
+      {(sourceInvoice || reminders.length > 0) && (
+        <div className="mb-4 rounded-lg border border-purple-200 bg-purple-50 px-4 py-3 text-sm text-purple-900 print:hidden dark:border-purple-900/40 dark:bg-purple-900/20 dark:text-purple-200">
+          {sourceInvoice && (
+            <p>
+              Tämä on maksumuistutus laskulle{' '}
+              <Link href={`/hallinta/laskutus/${sourceInvoice.id}`} className="font-medium underline">
+                #{sourceInvoice.invoiceNumber}
+              </Link>
+              .{status === 'DRAFT' && ' Kun muistutus lähetetään, alkuperäinen lasku merkitään korvatuksi.'}
+            </p>
+          )}
+          {reminders.length > 0 && (
+            <p>
+              Tästä laskusta tehty maksumuistutus:{' '}
+              {reminders.map((r, i) => (
+                <span key={r.id}>
+                  {i > 0 && ', '}
+                  <Link href={`/hallinta/laskutus/${r.id}`} className="font-medium underline">
+                    #{r.invoiceNumber}
+                  </Link>
+                </span>
+              ))}
+              {status === 'SUPERSEDED' && ' — seuraa maksua muistutuksesta.'}
+            </p>
+          )}
+        </div>
+      )}
+
       {isOverdue && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 print:hidden dark:border-red-900/40 dark:bg-red-900/20">
           <p className="flex items-center gap-2 text-sm text-red-800 dark:text-red-300">
@@ -207,7 +228,7 @@ export default function InvoiceClient({
             onClick={() => setShowLateFeeModal(true)}
             className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
           >
-            Luo maksumuistutus viivästyskorolla
+            Esikatsele maksumuistutus viivästyskorolla
           </button>
         </div>
       )}
@@ -303,6 +324,21 @@ export default function InvoiceClient({
       </div>
     </div>
 
+    {showSendPreview && (
+      <InvoiceSendPreviewModal
+        invoiceId={id}
+        invoiceNumber={invoiceNumber}
+        customerName={customerName}
+        items={items}
+        dueDate={dueDate}
+        email={email.trim()}
+        resend={!!sentAt}
+        reminder={!!sourceInvoice}
+        onClose={() => setShowSendPreview(false)}
+        onSent={handleInvoiceSent}
+      />
+    )}
+
     {showReceiptPreview && (
       <ReceiptPreviewModal
         invoiceId={id}
@@ -319,6 +355,8 @@ export default function InvoiceClient({
       <LateFeeModal
         invoiceId={id}
         invoiceNumber={invoiceNumber}
+        customerName={customerName}
+        email={email.trim()}
         dueDate={dueDate}
         items={items}
         onClose={() => setShowLateFeeModal(false)}

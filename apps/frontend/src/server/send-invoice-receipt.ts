@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/server/auth';
 import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
+import { isSmtpConfigured, sendMail, SMTP_NOT_CONFIGURED_MESSAGE } from '@/server/mailer';
 import { computeInvoiceTotals, formatAddress, parseInvoiceItems } from '@/lib/invoice';
 import { renderReceiptPdf } from '@/server/pdf/receipt-pdf';
 import { renderInvoiceReceiptEmailHtml } from '@/lib/receipt-invoice-email';
@@ -41,8 +42,8 @@ async function sendReceiptForInvoiceInner(invoiceId: string, email: string): Pro
     return { success: false, message: 'Kirjaudu sisään lähettääksesi kuitin.' };
   }
 
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
-    return { success: false, message: 'Sähköpostiasetuksia (SMTP_HOST/SMTP_USER/SMTP_PASSWORD) ei ole vielä määritetty palvelimelle.' };
+  if (!isSmtpConfigured()) {
+    return { success: false, message: SMTP_NOT_CONFIGURED_MESSAGE };
   }
 
   const recipientEmail = email.trim();
@@ -95,23 +96,8 @@ async function sendReceiptForInvoiceInner(invoiceId: string, email: string): Pro
     paymentMethod: 'Lasku',
   });
 
-  const senderName = process.env.QUOTE_EMAIL_FROM_NAME || 'Muuttokone.fi';
-
-  const { default: nodemailer } = await import('nodemailer');
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: false,
-    requireTLS: true,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
-    },
-  });
-
   try {
-    await transporter.sendMail({
-      from: `"${senderName}" <${process.env.SMTP_USER}>`,
+    await sendMail({
       to: recipientEmail,
       subject: `Kuitti laskuusi nro ${invoice.invoiceNumber} — Muuttokone.fi`,
       html,

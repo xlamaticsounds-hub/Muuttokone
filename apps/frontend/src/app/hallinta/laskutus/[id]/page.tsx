@@ -14,7 +14,11 @@ export default async function InvoicePage({
 
   const invoice = await prisma.invoice.findUnique({
     where: { id },
-    include: { contact: true },
+    include: {
+      contact: true,
+      sourceInvoice: { select: { id: true, invoiceNumber: true } },
+      reminders: { select: { id: true, invoiceNumber: true }, orderBy: { createdAt: 'asc' } },
+    },
   });
 
   if (!invoice) {
@@ -41,6 +45,8 @@ export default async function InvoicePage({
       serviceDate={invoice.serviceDate ? invoice.serviceDate.toISOString() : null}
       sentAt={invoice.sentAt ? invoice.sentAt.toISOString() : null}
       status={invoice.status}
+      sourceInvoice={invoice.sourceInvoice}
+      reminders={invoice.reminders}
     />
   );
 }
