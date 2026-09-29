@@ -20,10 +20,73 @@
 import { calendar, calendar_v3 } from '@googleapis/calendar';
 import { GoogleAuth } from 'google-auth-library';
 import { createLog } from '@/server/repo/logs';
+import { setLeadCalendarEventId } from '@/server/repo/leads';
+import type { LeadStatus } from '@prisma/client';
 
 const CALENDAR_SCOPES = ['https://www.googleapis.com/auth/calendar.events'];
 const DEFAULT_JOB_DURATION_HOURS = 4;
 const TIME_ZONE = 'Europe/Helsinki';
+// Aloitusaika kun asiakas ei ole ilmoittanut toivottua kellonaikaa.
+const DEFAULT_START_TIME = '09:00';
+
+// Tapahtuman kuvauksen viimeinen rivi — vaihdetaan vahvistusriviin kun liidi voitetaan.
+const PENDING_NOTE =
+  '(Alustava merkintä — vahvistuu kun liidi merkitään voitetuksi Discordissa. Kesto on oletusarvoinen arvio.)';
+const PENDING_NOTE_RE = /^\(Alustava merkintä.*$/m;
+const CONFIRMED_NOTE = '✅ Vahvistettu — liidi merkitty voitetuksi.';
+
+// Europe/Helsinki-aikavyöhykkeen ero UTC:hen (ms) annettuna hetkenä — huomioi kesäajan.
+function helsinkiOffsetMs(timestamp: number): number {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: TIME_ZONE,
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).formatToParts(new Date(timestamp));
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
+  const asUtc = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second'));
+  return asUtc - timestamp;
+}
+
+// Suomen seinäkelloaika (esim. 5.10.2026 klo 12:00) → oikea hetki (Date).
+function helsinkiWallTime(year: number, month: number, day: number, hour: number, minute: number): Date {
+  const guess = Date.UTC(year, month - 1, day, hour, minute);
+  return new Date(guess - helsinkiOffsetMs(guess));
+}
+
+/**
+ * Kalenteritapahtuman alkuhetki. Lomakkeet ja hallinnan muokkaus tallentavat muuttopäivän
+ * pelkkänä päivänä (<input type="date"> → UTC-keskiyö), jolloin sellaisenaan käytettynä
+ * tapahtuma alkoi Suomessa klo 2–3 yöllä. Päivämäärä yhdistetään siksi asiakkaan toivomaan
+ * kellonaikaan (laskurin "Toivottu kellonaika") tai oletukseen klo 9.00 Suomen aikaa.
+ */
+export function calendarEventStart(requestedDate: Date, preferredTime?: string | null): Date {
+  const isDateOnly =
+    requestedDate.getUTCHours() === 0 && requestedDate.getUTCMinutes() === 0 && requestedDate.getUTCSeconds() === 0;
+  if (!isDateOnly) return requestedDate;
+
+  const timeRe = /^(\d{1,2}):(\d{2})/;
+  const match = timeRe.exec(preferredTime ?? '') ?? timeRe.exec(DEFAULT_START_TIME)!;
+  const hour = Math.min(23, Number(match[1]));
+  const minute = Math.min(59, Number(match[2]));
+  return helsinkiWallTime(
+    requestedDate.getUTCFullYear(),
+    requestedDate.getUTCMonth() + 1,
+    requestedDate.getUTCDate(),
+    hour,
+    minute,
+  );
+}
+
+// Suomen vuorokauden alku sille päivälle, jolle tapahtuma osuu.
+function helsinkiDayStart(date: Date): Date {
+  const [y, m, d] = new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE }).format(date).split('-').map(Number);
+  return helsinkiWallTime(y, m, d, 0, 0);
+}
 
 // Google Calendar's built-in numbered event colors (stable across all
 // calendars, no setup needed). Blueberry while waiting on an answer, Basil
@@ -80,6 +143,7 @@ export type LeadEventDetails = {
   fromAddress: string | null;
   toAddress: string | null;
   requestedDate: Date;
+  preferredTime?: string | null; // "HH:MM" — laskurin toivottu kellonaika
   notes: string | null;
   hallintaUrl: string;
 };
@@ -94,10 +158,9 @@ export async function findOverlappingEvents(leadId: string, date: Date): Promise
   const client = getCalendarClient();
   if (!calendarId || !client) return [];
 
-  const dayStart = new Date(date);
-  dayStart.setHours(0, 0, 0, 0);
-  const dayEnd = new Date(date);
-  dayEnd.setHours(23, 59, 59, 999);
+  // Suomen vuorokausi, ei palvelimen (UTC) — muuten päivän rajat heittävät 2–3 tuntia.
+  const dayStart = helsinkiDayStart(calendarEventStart(date));
+  const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000 - 1);
 
   try {
     const res = await client.events.list({
@@ -147,18 +210,21 @@ export async function createTentativeLeadEvent(
     return null;
   }
 
-  const start = details.requestedDate;
+  const start = calendarEventStart(details.requestedDate, details.preferredTime);
   const end = new Date(start.getTime() + DEFAULT_JOB_DURATION_HOURS * 60 * 60 * 1000);
 
   const descriptionLines = [
     `Asiakas: ${details.customerName}`,
     details.fromAddress ? `Mistä: ${details.fromAddress}` : null,
     details.toAddress ? `Minne: ${details.toAddress}` : null,
+    details.preferredTime
+      ? `Toivottu kellonaika: ${details.preferredTime}`
+      : `Kellonaika: ei ilmoitettu (merkitty klo ${DEFAULT_START_TIME})`,
     details.notes ? `Lisätiedot: ${details.notes}` : null,
     '',
     `Liidi hallintapaneelissa: ${details.hallintaUrl}`,
     '',
-    '(Alustava merkintä — vahvistuu kun liidi merkitään voitetuksi Discordissa. Kesto on oletusarvoinen arvio.)',
+    PENDING_NOTE,
   ].filter((line): line is string => line !== null);
 
   try {
@@ -188,10 +254,22 @@ export async function confirmCalendarEvent(leadId: string, eventId: string): Pro
   if (!calendarId || !client) return;
 
   try {
+    // Pelkkä status/väri ei riitä: kuvaukseen jäi muuten teksti "Alustava merkintä —
+    // vahvistuu kun…", vaikka liidi oli jo vahvistettu Discordissa.
+    const existing = await client.events.get({ calendarId, eventId });
+    const oldDescription = existing.data.description ?? '';
+    const description = PENDING_NOTE_RE.test(oldDescription)
+      ? oldDescription.replace(PENDING_NOTE_RE, CONFIRMED_NOTE)
+      : oldDescription.includes(CONFIRMED_NOTE)
+        ? oldDescription
+        : `${oldDescription}
+
+${CONFIRMED_NOTE}`.trim();
+
     await client.events.patch({
       calendarId,
       eventId,
-      requestBody: { status: 'confirmed', colorId: COLOR_ID_CONFIRMED },
+      requestBody: { status: 'confirmed', colorId: COLOR_ID_CONFIRMED, description },
     });
   } catch (error) {
     await logCalendarFailure('confirmCalendarEvent', leadId, error);
@@ -214,11 +292,17 @@ export async function cancelCalendarEvent(leadId: string, eventId: string): Prom
 }
 
 /** Keeps the calendar event in sync if a lead's moving date is edited later. */
-export async function updateCalendarEventTime(leadId: string, eventId: string, newStart: Date): Promise<void> {
+export async function updateCalendarEventTime(
+  leadId: string,
+  eventId: string,
+  newRequestedDate: Date,
+  preferredTime?: string | null,
+): Promise<void> {
   const calendarId = getCalendarId();
   const client = getCalendarClient();
   if (!calendarId || !client) return;
 
+  const newStart = calendarEventStart(newRequestedDate, preferredTime);
   const newEnd = new Date(newStart.getTime() + DEFAULT_JOB_DURATION_HOURS * 60 * 60 * 1000);
 
   try {
@@ -232,5 +316,23 @@ export async function updateCalendarEventTime(leadId: string, eventId: string, n
     });
   } catch (error) {
     await logCalendarFailure('updateCalendarEventTime', leadId, error);
+  }
+}
+
+/**
+ * Pitää kalenterin samassa tilassa kuin liidin: voitettu → vahvistettu (vihreä),
+ * hävitty → tapahtuma poistetaan. Kutsutaan sekä Discord-reaktiosta että hallinnan
+ * tilavalitsimesta, jotta kalenteri ei riipu siitä kummasta tilaa muutettiin.
+ */
+export async function syncCalendarWithLeadStatus(
+  lead: { id: string; calendarEventId: string | null },
+  status: LeadStatus,
+): Promise<void> {
+  if (!lead.calendarEventId) return;
+  if (status === 'WON') {
+    await confirmCalendarEvent(lead.id, lead.calendarEventId);
+  } else if (status === 'LOST') {
+    await cancelCalendarEvent(lead.id, lead.calendarEventId);
+    await setLeadCalendarEventId(lead.id, null);
   }
 }

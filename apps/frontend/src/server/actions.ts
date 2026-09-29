@@ -162,7 +162,12 @@ export async function updateLeadStatus(leadId: string, status: LeadStatus) {
   }
 
   const { setLeadStatus } = await import('./repo/leads');
-  await setLeadStatus(leadId, status);
+  const lead = await setLeadStatus(leadId, status);
+
+  // Sama kalenterisynkronointi kuin Discord-reaktiossa — ennen tätä hallinnasta
+  // voitetuksi/hävityksi merkitty liidi jätti kalenteritapahtuman alustavaksi.
+  const { syncCalendarWithLeadStatus } = await import('@/server/google-calendar');
+  await syncCalendarWithLeadStatus(lead, status);
 
   return { success: true };
 }
@@ -259,7 +264,8 @@ export async function updateLeadDetails(leadId: string, data: any) {
     newRequestedDate.getTime() !== existingLead.requestedDate?.getTime()
   ) {
     const { updateCalendarEventTime } = await import('@/server/google-calendar');
-    await updateCalendarEventTime(leadId, existingLead.calendarEventId, newRequestedDate);
+    const preferredTime = typeof existingFormData.preferredTime === 'string' ? existingFormData.preferredTime : null;
+    await updateCalendarEventTime(leadId, existingLead.calendarEventId, newRequestedDate, preferredTime);
   }
 
   return { success: true };

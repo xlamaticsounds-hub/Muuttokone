@@ -16,13 +16,9 @@
 
 import { Client, GatewayIntentBits, Partials, EmbedBuilder, Events, ChannelType } from 'discord.js';
 import type { LeadStatus } from '@prisma/client';
-import {
-  setLeadStatus,
-  setLeadCalendarEventId,
-  findLeadByDiscordMessageId,
-} from '@/server/repo/leads';
+import { setLeadStatus, findLeadByDiscordMessageId } from '@/server/repo/leads';
 import { createLog } from '@/server/repo/logs';
-import { confirmCalendarEvent, cancelCalendarEvent } from '@/server/google-calendar';
+import { syncCalendarWithLeadStatus } from '@/server/google-calendar';
 
 const REACTION_STATUS_MAP: Record<string, LeadStatus> = {
   '🔵': 'CONTACTED',
@@ -138,14 +134,7 @@ async function handleReactionAdd(reaction: any, user: any) {
       data: { emoji, newStatus },
     });
 
-    if (lead.calendarEventId) {
-      if (newStatus === 'WON') {
-        await confirmCalendarEvent(lead.id, lead.calendarEventId);
-      } else if (newStatus === 'LOST') {
-        await cancelCalendarEvent(lead.id, lead.calendarEventId);
-        await setLeadCalendarEventId(lead.id, null);
-      }
-    }
+    await syncCalendarWithLeadStatus(lead, newStatus);
 
     // Reflect the new status on the message itself, so it's clear at a
     // glance which reaction "won" without hovering over the reaction list.

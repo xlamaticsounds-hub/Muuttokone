@@ -344,6 +344,7 @@ type NotifyLeadDetails = {
   hasElevator: boolean | null;
   boxCount: number | null;
   notes: string | null;
+  preferredTime?: string | null; // laskurin "Toivottu kellonaika" (HH:MM)
 };
 
 // Shared by both submission paths that create a genuinely new lead —
@@ -374,6 +375,7 @@ async function notifyNewLead(
       fromAddress: lead.fromAddress,
       toAddress: lead.toAddress,
       requestedDate: lead.requestedDate,
+      preferredTime: details.preferredTime ?? null,
       notes: lead.notes,
       hallintaUrl,
     });
@@ -539,7 +541,10 @@ async function submitBooking(data: any) {
     customerName: data.contactName || 'Ei nimeä',
     phone: data.contactPhone ?? null,
     email: data.contactEmail ?? null,
-    requestedDateLabel: data.date ? new Date(data.date).toLocaleDateString('fi-FI') : null,
+    requestedDateLabel: data.date
+      ? `${new Date(data.date).toLocaleDateString('fi-FI', { timeZone: 'UTC' })}${data.preferredTime ? ` klo ${data.preferredTime}` : ''}`
+      : null,
+    preferredTime: typeof data.preferredTime === 'string' ? data.preferredTime : null,
     sourceLabel: LeadSource.STEP_FORM,
     priceLabel: data.price != null ? `${data.price}€` : null,
     apartmentSizeLabel: data.apartmentSize ?? null,
