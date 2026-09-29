@@ -38,6 +38,16 @@ const serviceData: Service[] = [
     bgClass: 'hover:bg-primary/5',
   },
   {
+    icon: '/icons/it.webp',
+    title: 'Työapu ja asennukset',
+    description:
+      'TV seinälle, pesukone paikalleen, kalusteet koottuna, IT-apu, pihatyöt ja kantoapu. Kiinteä hinta tai tuntiveloitus – kotiin, mökille ja yritykseen.',
+    bgClass: 'hover:bg-primary/5',
+    href: '/tyoapu',
+    featured: true,
+    highlights: ['TV:n asennus', 'Pesukoneen asennus', 'Kalusteiden kokoaminen', 'IT-apu', 'Pihatyöt', 'Kantoapu'],
+  },
+  {
     icon: '/icons/turva.webp',
     title: 'Kuljetukset',
     description:

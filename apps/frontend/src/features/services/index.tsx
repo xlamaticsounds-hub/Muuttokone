@@ -2,6 +2,7 @@
 
 import SectionTitle from '@/components/SectionTitle';
 import ServiceItem from '@/features/services/ServiceItem';
+import FeaturedServiceCard from '@/features/services/FeaturedServiceCard';
 import type { Service } from '@/types/service';
 import CallCta from './CallCta';
 import { useT } from '@/i18n/useT';
@@ -20,7 +21,10 @@ export default function Services({ title, subtitle, items = [] }: ServicesProps)
     ...service,
     title: tData(service.title),
     description: tData(service.description),
+    highlights: service.highlights?.map((h) => tData(h)),
   }));
+  const featuredItems = translatedItems.filter((service) => service.featured);
+  const gridItems = translatedItems.filter((service) => !service.featured);
   return (
     <>
       <section
@@ -34,8 +38,17 @@ export default function Services({ title, subtitle, items = [] }: ServicesProps)
             <p className="mt-2 text-black/70 dark:text-white/70">{subtitle || t('Tarjoamme kattavat muuttopalvelut kotitalouksille ja yrityksille Helsingissä ja Uudellamaalla.')}</p>
           </div>
 
+          {featuredItems.map((service) => (
+            <FeaturedServiceCard
+              key={service.title}
+              service={service}
+              badgeLabel={tData('Uutta')}
+              readMoreLabel={tData('Lue lisää')}
+            />
+          ))}
+
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {translatedItems.map((service, index) => (
+            {gridItems.map((service, index) => (
               <ServiceItem key={index} service={service} index={index} />
             ))}
           </div>

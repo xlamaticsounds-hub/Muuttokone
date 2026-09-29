@@ -82,6 +82,27 @@ export const SEOConfigs = {
     canonical: '/yrityksille',
   },
 
+  tyoapu: {
+    title: 'Työapu - Asennukset, IT-apu, pihatyöt ja kantoapu',
+    description:
+      'Lisäkädet kotiin ja yritykseen: TV:n ja pesukoneen asennus, kalusteiden kokoaminen, IT-apu, kaivuutyöt, porealtaan asennus ja kantoapu. Kiinteä hinta tai tuntiveloitus.',
+    keywords: [
+      'työapu',
+      'tv:n asennus',
+      'pesukoneen asennus',
+      'kalusteiden kokoaminen',
+      'it-apu',
+      'porealtaan asennus',
+      'kaivuutyöt',
+      'kantoapu',
+      'apumies',
+      'Helsinki',
+      'Espoo',
+      'Vantaa',
+    ],
+    canonical: '/tyoapu',
+  },
+
   quote: {
     title: 'Tarjouspyyntö - Pyydä maksuton tarjous',
     description:

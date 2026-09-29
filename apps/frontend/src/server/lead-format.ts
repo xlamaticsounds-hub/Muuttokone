@@ -7,6 +7,8 @@ export const SERVICE_TYPE_LABELS: Record<string, string> = {
   moving: 'Muutto',
   transport: 'Kuljetus',
   recycling: 'Kierrätys',
+  yritysmuutto: 'Yritysmuutto',
+  tyoapu: 'Työapu',
 };
 
 export const PACKAGE_LABELS: Record<string, string> = {
@@ -84,7 +86,11 @@ export function parseLeadFormData(formData: unknown): Record<string, unknown> {
 }
 
 export function getServiceLabel(pfd: Record<string, unknown>): string | null {
-  return typeof pfd.serviceType === 'string' ? SERVICE_TYPE_LABELS[pfd.serviceType] ?? pfd.serviceType : null;
+  // Laskurin liideillä tyyppi on juuritasolla (serviceType), /api/submit-lomakkeiden
+  // (yrityssivu, työapu) liideillä payload.service_type:ssa.
+  const payload = pfd.payload && typeof pfd.payload === 'object' ? (pfd.payload as Record<string, unknown>) : null;
+  const raw = typeof pfd.serviceType === 'string' ? pfd.serviceType : payload?.service_type;
+  return typeof raw === 'string' ? SERVICE_TYPE_LABELS[raw] ?? raw : null;
 }
 
 export function getPackageLabel(pfd: Record<string, unknown>): string | null {

@@ -23,6 +23,31 @@ export const cases: ReferenceCase[] = [
     badge: 'B2B',
   },
   {
+    title: 'Ravintolan terassikalusteet kesäksi ja talveksi',
+    body: 'Keväällä 40 tuolia, 12 pöytää, aurinkovarjot ja lämmittimet varastosta terassille ja aseteltuna valmiiksi ennen aukeamista. Syksyllä samat takaisin talvisäilytykseen puhdistettuina ja pinottuina. Molemmat siirrot aamulla ennen lounasta.',
+    badge: 'B2B',
+  },
+  {
+    title: 'Myymälän sesonkituotteet varastosta hyllyyn',
+    body: 'Joulusesongin somisteet, esittelytelineet ja kausituotteet kuljetettiin varastosta myymälään ennen kampanjan alkua ja palautettiin tammikuussa. Toteutus aamulla ennen myymälän aukeamista, ettei asiakaspalvelu häiriintynyt.',
+    badge: 'B2B',
+  },
+  {
+    title: 'Viikoittainen kuljetus varastosta toimipisteisiin',
+    body: 'Sovittu ajo kerran viikossa: tavarat noudetaan varastolta ja toimitetaan kahteen toimipisteeseen kannettuna perille asti. Sama kuljettaja joka viikko, joten reitit ja toimituspaikat ovat tuttuja eikä erillistä ohjeistusta tarvita.',
+    badge: 'B2B',
+  },
+  {
+    title: 'Porealtaan asennus yritysasiakkaalle Espoossa',
+    body: 'Elokuussa 2026 kaivoimme yritysasiakkaalle kuopan ja asensimme porealtaan paikoilleen. Työ valmistui muutamassa tunnissa.',
+    badge: 'Työapu',
+  },
+  {
+    title: '75 tuuman television nouto ja seinäasennus Helsingissä',
+    body: 'Asiakas osti 75-tuumaisen television verkkokaupasta. Noudimme sen noutopisteestä, kannoimme kotiin ja asensimme betoniseinälle valmiiksi katsottavaksi — asiakkaan ei tarvinnut itse kuljettaa, kantaa eikä asentaa mitään.',
+    badge: 'Työapu',
+  },
+  {
     title: 'Kuolinpesätyhjennnys Helsingissä',
     body: 'Kokonainen asunto tyhjennetty hienotunteisesti. Tavarat lajiteltu – kierrätys, lahjoitus ja kaatopaikka-ajo hoidettu saman päivän aikana.',
     badge: 'Kuolinpesä',

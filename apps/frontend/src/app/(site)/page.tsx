@@ -12,7 +12,6 @@ import CalculatorIntro from '@/components/CalculatorIntro';
 import ProcessSteps from '@/components/ProcessSteps';
 import PricingPreview from '@/components/PricingPreview';
 import Faq from '@/components/Faq';
-import ServiceAreaChecker from '@/features/service-area/ServiceAreaChecker';
 import type { Service } from '@/types/service';
 import staticServiceData from '@/features/services/serviceData';
 import { generateSEOMetadata, SEOConfigs } from '@/components/SEO/SEOHelpers';
@@ -55,7 +54,6 @@ export default async function Home() {
         </div>
       </section>
       <PricingPreview />
-      <ServiceAreaChecker />
       <Faq />
       <ServicesDivider />
       <Services

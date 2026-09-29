@@ -135,6 +135,17 @@ export const servicesDictionary: Record<string, string> = {
 };
 
 export const servicesDataDictionary: Record<string, string> = {
+  'Työapu ja asennukset': 'Handyman help and installations',
+  'TV seinälle, pesukone paikalleen, kalusteet koottuna, IT-apu, pihatyöt ja kantoapu. Kiinteä hinta tai tuntiveloitus – kotiin, mökille ja yritykseen.':
+    'TV wall mounting, washing machine installation, furniture assembly, IT help, yard work and carrying help. Fixed price or hourly rate – for homes, cottages and businesses.',
+  'TV:n asennus': 'TV mounting',
+  'Pesukoneen asennus': 'Washing machine installation',
+  'Kalusteiden kokoaminen': 'Furniture assembly',
+  'IT-apu': 'IT help',
+  'Pihatyöt': 'Yard work',
+  'Kantoapu': 'Carrying help',
+  'Uutta': 'New',
+  'Lue lisää': 'Read more',
   'Kotimuutto': 'Home moving',
   'Ovelta ovelle -palvelu, jossa huolehdimme kaikesta kantamisesta ja kuljetuksesta. Selkeä hinnoittelu ilman piilokuluja – tiedät etukäteen mitä maksat.':
     'A door-to-door service where we take care of all the carrying and transport. Clear pricing with no hidden fees – you know upfront what you pay.',

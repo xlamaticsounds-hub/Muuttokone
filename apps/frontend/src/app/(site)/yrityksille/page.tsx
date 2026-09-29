@@ -1,6 +1,23 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Laptop, Armchair, Archive, Recycle, Warehouse, ShieldCheck, UserRound, CalendarClock } from 'lucide-react';
+import {
+  Laptop,
+  Armchair,
+  Archive,
+  Recycle,
+  Warehouse,
+  ShieldCheck,
+  UserRound,
+  CalendarClock,
+  Sun,
+  Truck,
+  Tent,
+  Store,
+  Building2,
+  Repeat,
+  PackageCheck,
+  ArrowLeftRight,
+} from 'lucide-react';
 import { generateSEOMetadata, SEOConfigs } from '@/components/SEO/SEOHelpers';
 import ProcessSteps from '@/components/ProcessSteps';
 import Faq from '@/components/Faq';
@@ -62,6 +79,59 @@ const businessServices = [
     icon: Recycle,
     title: 'Kierrätys',
     desc: 'Käytöstä poistuvat kalusteet ja laitteet kierrätetään tai toimitetaan hyötykäyttöön.',
+  },
+];
+
+// Esimerkkejä muista kuin muuttotöistä — näyttää että kalustoa ja käsipareja voi tilata
+// mihin tahansa yrityksen tavaransiirtotarpeeseen, myös toistuvasti.
+const customServices = [
+  {
+    icon: Sun,
+    title: 'Terassikalusteiden kausisiirrot',
+    desc: 'Keväällä kalusteet, varjot ja lämmittimet varastosta terassille ja paikoilleen aseteltuna, syksyllä takaisin talvisäilytykseen.',
+    who: 'Ravintolat, kahvilat ja hotellit',
+  },
+  {
+    icon: Truck,
+    title: 'Tavaroiden poisvienti',
+    desc: 'Vanhat kalusteet, laitteet ja varastoon kertynyt tavara kannetaan ulos ja viedään kierrätykseen tai jäteasemalle.',
+    who: 'Toimistot, liikkeet ja varastot',
+  },
+  {
+    icon: Tent,
+    title: 'Tapahtumat ja messut',
+    desc: 'Messuosastot, pöydät, tuolit ja tekniikka paikalle ennen tapahtumaa ja takaisin sen jälkeen — myös iltaisin ja viikonloppuisin.',
+    who: 'Tapahtumajärjestäjät ja näytteilleasettajat',
+  },
+  {
+    icon: Store,
+    title: 'Myymälän kausivaihdot',
+    desc: 'Joulu- ja kampanjasomisteet, esittelytelineet ja kausituotteet varastosta myymälään ja takaisin sesongin mukaan.',
+    who: 'Kaupat ja liikeketjut',
+  },
+  {
+    icon: ArrowLeftRight,
+    title: 'Sisäiset kalustesiirrot',
+    desc: 'Työpisteiden uudelleenjärjestely, kerrosten väliset siirrot ja neuvotteluhuoneiden muutokset ilman koko toimiston muuttoa.',
+    who: 'Toimistot ja julkiset tilat',
+  },
+  {
+    icon: PackageCheck,
+    title: 'Noudot ja toimitukset',
+    desc: 'Hankitut kalusteet noudetaan liikkeestä, huutokaupasta tai toiselta toimipisteeltä ja kannetaan perille paikoilleen.',
+    who: 'Yritykset, jotka kalustavat tai laajentavat',
+  },
+  {
+    icon: Building2,
+    title: 'Kiinteistöjen tyhjennykset',
+    desc: 'Kellari- ja ullakkovarastojen, liiketilojen ja asuntojen tyhjennykset ennen remonttia tai uutta vuokralaista.',
+    who: 'Isännöitsijät ja kiinteistöyhtiöt',
+  },
+  {
+    icon: Repeat,
+    title: 'Säännölliset kuljetukset',
+    desc: 'Sovittu toistuva ajo, esimerkiksi viikoittain varastosta toimipisteisiin — sama tuttu tiimi joka kerta.',
+    who: 'Useamman toimipisteen yritykset',
   },
 ];
 
@@ -142,6 +212,51 @@ export default function YrityksillePage() {
               );
             })}
           </div>
+        </div>
+      </section>
+
+      {/* Custom services */}
+      <section className="bg-gray-1 py-16 lg:py-24 dark:bg-bg-color-dark">
+        <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
+          <div className="mb-12 max-w-2xl">
+            <p className="text-primary mb-2 text-sm font-semibold uppercase tracking-wide">Räätälöidyt palvelut</p>
+            <h2 className="text-3xl font-bold text-black/90 dark:text-white sm:text-4xl">
+              Räätälöidyt palvelut yrityksesi käyttöön
+            </h2>
+            <p className="mt-3 text-black/70 dark:text-white/70">
+              Emme hoida vain muuttoja. Kun tavaraa pitää siirtää, kantaa tai viedä pois, suunnittelemme toteutuksen
+              teidän tarpeidenne ja aikataulunne mukaan — kertaluonteisesti tai toistuvasti. Tässä muutama esimerkki:
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {customServices.map((service) => {
+              const Icon = service.icon;
+              return (
+                <div
+                  key={service.title}
+                  className="flex flex-col rounded-2xl border border-black/5 bg-white/90 p-6 shadow-sm ring-1 ring-black/5 dark:border-white/10 dark:bg-slate-900/80 dark:ring-white/5"
+                >
+                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="mb-2 text-lg font-bold text-black/90 dark:text-white">{service.title}</h3>
+                  <p className="mb-4 text-sm leading-relaxed text-black/70 dark:text-white/70">{service.desc}</p>
+                  <p className="mt-auto text-xs font-semibold text-primary">{service.who}</p>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-8 text-black/70 dark:text-white/70">
+            Eikö tarpeenne löydy listalta?{' '}
+            <Link href="#tarjous" className="font-semibold text-primary hover:underline">
+              Kertokaa siitä lomakkeella
+            </Link>
+            , niin räätälöimme ratkaisun ja tarjouksen juuri teille. Katso myös{' '}
+            <Link href="/tyoapu" className="font-semibold text-primary hover:underline">
+              työapu ja asennukset
+            </Link>
+            {' '}— esimerkiksi IT-laitteiden asennukset, kaivuutyöt ja kantoapu.
+          </p>
         </div>
       </section>
 
