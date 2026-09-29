@@ -4,7 +4,7 @@ import ToasterContext from '@/app/context/ToastContext';
 import Footer from '@/components/Footer';
 import ScrollToTop from '@/components/ScrollToTop';
 import React from 'react';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { Providers } from './providers';
 import { siteConfig } from '@/config/site';
 import { LOCALE_COOKIE, type Locale } from '@/i18n/LocaleContext';
@@ -19,7 +19,12 @@ export default async function SiteLayout({
 }>) {
   const cookieStore = await cookies();
   const localeCookie = cookieStore.get(LOCALE_COOKIE)?.value;
-  const initialLocale: Locale = localeCookie === 'en' ? 'en' : 'fi';
+  // x-locale (set by proxy.ts from the URL) is authoritative on routes that have a real
+  // /en counterpart, so Header/Footer render correctly even on a fresh, cookie-less visit
+  // (e.g. a search crawler hitting /en directly). The cookie remains the fallback for
+  // pages without a dedicated /en route, keeping the switcher's in-place toggle working.
+  const headerLocale = (await headers()).get('x-locale');
+  const initialLocale: Locale = headerLocale === 'en' || localeCookie === 'en' ? 'en' : 'fi';
 
   return (
     <>

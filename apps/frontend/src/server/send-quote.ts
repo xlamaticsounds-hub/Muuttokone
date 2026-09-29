@@ -5,6 +5,7 @@ import { LeadStatus } from '@prisma/client';
 import { authOptions } from '@/server/auth';
 import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
+import { isSmtpConfigured, sendMail, SMTP_NOT_CONFIGURED_MESSAGE } from '@/server/mailer';
 import {
   getInventoryEntries,
   getWasteTypeLabels,
@@ -86,8 +87,8 @@ async function sendQuoteEmailInner(leadId: string, customMessage: string | null)
     return { success: false, message: 'Kirjaudu sisään lähettääksesi tarjouksen.' };
   }
 
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
-    return { success: false, message: 'Sähköpostiasetuksia (SMTP_HOST/SMTP_USER/SMTP_PASSWORD) ei ole vielä määritetty palvelimelle.' };
+  if (!isSmtpConfigured()) {
+    return { success: false, message: SMTP_NOT_CONFIGURED_MESSAGE };
   }
 
   const lead = await prisma.lead.findUnique({ where: { id: leadId }, include: { contact: true } });
@@ -130,27 +131,8 @@ async function sendQuoteEmailInner(leadId: string, customMessage: string | null)
       : priceLow !== null && priceHigh !== null
         ? ` — ${priceLow}–${priceHigh} €`
         : '';
-  const senderName = process.env.QUOTE_EMAIL_FROM_NAME || 'Muuttokone.fi';
-
-  // Ladataan nodemailer vasta täällä (ei moduulin huipulla) jotta puuttuvat SMTP-asetukset
-  // eivät kaada koko sovellusta buildissa/importissa — vain tätä toimintoa kutsuttaessa.
-  // Lähetetään suoraan tarjous@muuttokone.fi -postilaatikon kautta (Zoner SMTP), ei kolmannen
-  // osapuolen palvelun kautta — ei vaadi erillistä domain-vahvistusta koska osoite on jo oma.
-  const { default: nodemailer } = await import('nodemailer');
-  const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT || 587),
-    secure: false,
-    requireTLS: true,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
-    },
-  });
-
   try {
-    await transporter.sendMail({
-      from: `"${senderName}" <${process.env.SMTP_USER}>`,
+    await sendMail({
       to: lead.contact.email,
       subject: `Tarjouksesi Muuttokone.fi:ltä${subjectPrice}`,
       html,

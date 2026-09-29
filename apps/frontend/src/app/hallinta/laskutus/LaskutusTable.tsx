@@ -3,12 +3,12 @@
 import Link from 'next/link';
 import { Invoice } from '@prisma/client';
 import { formatDateFi, formatEuro } from '@/lib/format';
-import { computeInvoiceTotals, parseInvoiceItems } from '@/lib/invoice';
+import { computeInvoiceTotals, daysOverdue, isInvoiceOverdue, parseInvoiceItems } from '@/lib/invoice';
 import { UniversalTable, Column } from '@/components/ui/UniversalTable';
 import InvoiceStatusSelector from './InvoiceStatusSelector';
 import DeleteInvoiceButton from './DeleteInvoiceButton';
 
-type InvoiceRow = Invoice & { description: string; totalGross: number };
+type InvoiceRow = Invoice & { description: string; totalGross: number; overdueDays: number | null };
 
 export default function LaskutusTable({ invoices }: { invoices: Invoice[] }) {
   const rows: InvoiceRow[] = invoices.map((invoice) => {
@@ -18,6 +18,7 @@ export default function LaskutusTable({ invoices }: { invoices: Invoice[] }) {
       ...invoice,
       description: items.map((i) => i.description).join(', '),
       totalGross: totals.gross,
+      overdueDays: isInvoiceOverdue(invoice.status, invoice.dueDate) ? daysOverdue(invoice.dueDate!) : null,
     };
   });
 
@@ -51,6 +52,18 @@ export default function LaskutusTable({ invoices }: { invoices: Invoice[] }) {
       cell: (invoice) => (
         <Link href={`/hallinta/laskutus/${invoice.id}`} className="text-gray-500 dark:text-gray-400">
           {formatDateFi(invoice.createdAt)}
+        </Link>
+      ),
+    },
+    {
+      header: 'Eräpäivä',
+      cell: (invoice) => (
+        <Link
+          href={`/hallinta/laskutus/${invoice.id}`}
+          className={invoice.overdueDays !== null ? 'font-medium text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}
+        >
+          {invoice.dueDate ? formatDateFi(invoice.dueDate) : '-'}
+          {invoice.overdueDays !== null && ` (${invoice.overdueDays} pv myöhässä)`}
         </Link>
       ),
     },

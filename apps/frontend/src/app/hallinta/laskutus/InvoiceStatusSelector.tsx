@@ -45,6 +45,8 @@ export default function InvoiceStatusSelector({
         return 'bg-green-100 text-green-800 ring-green-600/20 dark:bg-green-900/30 dark:text-green-400';
       case 'OVERDUE':
         return 'bg-red-100 text-red-800 ring-red-600/20 dark:bg-red-900/30 dark:text-red-400';
+      case 'SUPERSEDED':
+        return 'bg-purple-100 text-purple-800 ring-purple-600/20 dark:bg-purple-900/30 dark:text-purple-400';
       default:
         return 'bg-gray-100 text-gray-800 ring-gray-600/20 dark:bg-gray-800 dark:text-gray-400';
     }
@@ -63,6 +65,7 @@ export default function InvoiceStatusSelector({
         <option value="UNPAID">Ei maksettu</option>
         <option value="PAID">Maksettu</option>
         <option value="OVERDUE">Maksu myöhässä</option>
+        <option value="SUPERSEDED">Korvattu muistutuksella</option>
       </select>
       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-current opacity-50">
         <svg className="h-3.5 w-3.5 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">

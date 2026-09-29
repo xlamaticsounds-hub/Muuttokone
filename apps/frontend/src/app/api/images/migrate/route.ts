@@ -71,6 +71,8 @@ export async function POST(req: NextRequest) {
     
     console.log(`🔍 Discovered ${images.length} images in ${publicPath}`);
 
+    const results: string[] = [];
+
     for (const imgPath of images) {
       const fileName = path.basename(imgPath);
       const ext = path.extname(imgPath).toLowerCase();
