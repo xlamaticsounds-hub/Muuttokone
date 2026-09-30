@@ -4,7 +4,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/server/auth';
 import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
-import { buildLateFeeItem, parseInvoiceItems, type InvoiceLineItem } from '@/lib/invoice';
+import { buildLateFeeItem, buildReminderFeeItem, parseInvoiceItems, type InvoiceLineItem } from '@/lib/invoice';
 import type { InvoiceStatus } from '@prisma/client';
 import { getPackageLabel, getServiceLabel, getStoredPrice, parseLeadFormData } from '@/server/lead-format';
 
@@ -206,6 +206,7 @@ export async function createLateFeeInvoice(
   invoiceId: string,
   ratePercent: number,
   dueDate: string | null = null, // ISO-päivämäärä uudelle laskulle
+  reminderFee: number | null = null, // kiinteä muistutusmaksu euroina, esim. 5
 ): Promise<{ id: string; amount: number; days: number }> {
   const session = await getServerSession(authOptions);
   if (!session) {
@@ -214,6 +215,9 @@ export async function createLateFeeInvoice(
 
   if (!Number.isFinite(ratePercent) || ratePercent <= 0) {
     throw new Error('Anna kelvollinen vuosikorko (%).');
+  }
+  if (reminderFee !== null && (!Number.isFinite(reminderFee) || reminderFee < 0)) {
+    throw new Error('Anna kelvollinen muistutusmaksu (€).');
   }
 
   const source = await prisma.invoice.findUnique({ where: { id: invoiceId } });
@@ -235,6 +239,11 @@ export async function createLateFeeInvoice(
     throw new Error('Laskun eräpäivä ei ole vielä ohittunut.');
   }
 
+  const newItems = [...sourceItems, lateFeeItem];
+  if (reminderFee) {
+    newItems.push(buildReminderFeeItem(reminderFee));
+  }
+
   const invoice = await prisma.invoice.create({
     data: {
       contactId: source.contactId,
@@ -244,7 +253,7 @@ export async function createLateFeeInvoice(
       customerCity: source.customerCity,
       customerEmail: source.customerEmail,
       sourceInvoiceId: source.id,
-      items: [...sourceItems, lateFeeItem],
+      items: newItems,
       dueDate: dueDate ? new Date(dueDate) : null,
       serviceDate: source.serviceDate,
     },
@@ -254,8 +263,8 @@ export async function createLateFeeInvoice(
     entityType: 'Invoice',
     entityId: invoice.id,
     action: 'invoice.late_fee_created',
-    message: `Maksumuistutus viivästyskorolla luotu laskusta #${source.invoiceNumber} (${ratePercent} %, ${days} pv, ${amount} €)`,
-    data: { sourceInvoiceId: source.id, sourceInvoiceNumber: source.invoiceNumber, ratePercent, days, amount },
+    message: `Maksumuistutus viivästyskorolla luotu laskusta #${source.invoiceNumber} (${ratePercent} %, ${days} pv, ${amount} €${reminderFee ? `, muistutusmaksu ${reminderFee} €` : ''})`,
+    data: { sourceInvoiceId: source.id, sourceInvoiceNumber: source.invoiceNumber, ratePercent, days, amount, reminderFee: reminderFee ?? null },
     actorId: session.user?.email ?? null,
   });
 

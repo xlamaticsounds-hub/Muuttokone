@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { X, Send } from 'lucide-react';
 import { createLateFeeInvoice } from '@/server/invoice-actions';
 import { sendInvoiceEmail } from '@/server/send-invoice';
-import { buildLateFeeItem, computeInvoiceTotals, daysOverdue, type InvoiceLineItem } from '@/lib/invoice';
+import { buildLateFeeItem, buildReminderFeeItem, computeInvoiceTotals, daysOverdue, type InvoiceLineItem } from '@/lib/invoice';
 import { renderInvoiceEmailHtml } from '@/lib/invoice-email';
 import { formatEuro } from '@/lib/format';
 
@@ -40,6 +40,7 @@ export default function LateFeeModal({
   const originalDueFi = new Date(dueDate).toLocaleDateString('fi-FI', { day: 'numeric', month: 'long', year: 'numeric' });
 
   const [rate, setRate] = useState('');
+  const [reminderFee, setReminderFee] = useState('5');
   const [newDueDate, setNewDueDate] = useState(defaultDueDate);
   const [email, setEmail] = useState(initialEmail);
   const [customMessage, setCustomMessage] = useState(
@@ -54,6 +55,8 @@ export default function LateFeeModal({
 
   const ratePercent = parseFloat(rate.replace(',', '.'));
   const rateValid = Number.isFinite(ratePercent) && ratePercent > 0;
+  const reminderFeeAmount = reminderFee.trim() === '' ? 0 : parseFloat(reminderFee.replace(',', '.'));
+  const reminderFeeValid = Number.isFinite(reminderFeeAmount) && reminderFeeAmount >= 0;
   const emailValid = EMAIL_RE.test(email.trim());
 
   const lateFee = useMemo(
@@ -66,6 +69,9 @@ export default function LateFeeModal({
   const previewHtml = useMemo(() => {
     if (!lateFee) return '';
     const newItems = [...items, lateFee.item];
+    if (reminderFeeValid && reminderFeeAmount > 0) {
+      newItems.push(buildReminderFeeItem(reminderFeeAmount));
+    }
     const body = renderInvoiceEmailHtml({
       customerName,
       invoiceNumber: '(annetaan luotaessa)',
@@ -77,17 +83,17 @@ export default function LateFeeModal({
       reminder: true,
     });
     return `<!doctype html><html><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /></head><body style="margin:0;background:#f9fafb;">${body}</body></html>`;
-  }, [lateFee, items, customerName, newDueDate, customMessage]);
+  }, [lateFee, items, customerName, newDueDate, customMessage, reminderFeeValid, reminderFeeAmount]);
 
   const createInvoice = async () => {
     if (createdId) return createdId;
-    const { id } = await createLateFeeInvoice(invoiceId, ratePercent, newDueDate || null);
+    const { id } = await createLateFeeInvoice(invoiceId, ratePercent, newDueDate || null, reminderFeeValid && reminderFeeAmount > 0 ? reminderFeeAmount : null);
     setCreatedId(id);
     return id;
   };
 
   const handleSend = async () => {
-    if (!rateValid || !emailValid) return;
+    if (!rateValid || !emailValid || !reminderFeeValid) return;
     setBusy('send');
     setError(null);
     let id: string;
@@ -113,7 +119,7 @@ export default function LateFeeModal({
   };
 
   const handleCreateDraft = async () => {
-    if (!rateValid) return;
+    if (!rateValid || !reminderFeeValid) return;
     setBusy('draft');
     setError(null);
     try {
@@ -140,7 +146,7 @@ export default function LateFeeModal({
           <div className="flex max-h-[50vh] w-full flex-col gap-4 overflow-y-auto border-b border-gray-200 p-6 sm:max-h-none sm:w-80 sm:border-b-0 sm:border-r dark:border-gray-700">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Lasku #{invoiceNumber} on ollut erääntyneenä <strong>{days} päivää</strong>. Uudelle laskulle tulevat
-              alkuperäiset rivit ({formatEuro(principal)} €) sekä viivästyskorkorivi.
+              alkuperäiset rivit ({formatEuro(principal)} €), viivästyskorkorivi ja tarvittaessa muistutusmaksu.
             </p>
 
             <div>
@@ -169,6 +175,29 @@ export default function LateFeeModal({
                 <span className="text-gray-500 dark:text-gray-400"> ({days} pv × {ratePercent.toLocaleString('fi-FI')} % p.a.)</span>
               </div>
             )}
+
+            <div>
+              <label className="mb-1 block text-xs font-medium uppercase text-gray-500">Muistutusmaksu (€)</label>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={reminderFee}
+                onChange={(e) => setReminderFee(e.target.value)}
+                placeholder="Esim. 5"
+                disabled={!!createdId}
+                className="w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm disabled:opacity-50 dark:border-gray-600 dark:text-white"
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Perintälain (513/1999) 10 c §:n mukainen kuluttajan maksumuistutuksen enimmäismäärä on 5 €. Jätä
+                tyhjäksi tai nollaksi, jos et halua lisätä muistutusmaksua.
+              </p>
+              {reminderFeeValid && reminderFeeAmount > 0 && (
+                <div className="mt-2 rounded-md bg-gray-50 px-3 py-2 text-sm dark:bg-gray-900/50">
+                  <span className="text-gray-500 dark:text-gray-400">Muistutusmaksu: </span>
+                  <span className="font-semibold text-gray-900 dark:text-white">{formatEuro(reminderFeeAmount)} €</span>
+                </div>
+              )}
+            </div>
 
             <div>
               <label className="mb-1 block text-xs font-medium uppercase text-gray-500">Uusi eräpäivä</label>
@@ -211,8 +240,16 @@ export default function LateFeeModal({
               )}
               <button
                 onClick={handleSend}
-                disabled={busy !== null || !rateValid || !emailValid}
-                title={!rateValid ? 'Anna kelvollinen vuosikorko' : !emailValid ? 'Anna kelvollinen sähköpostiosoite' : undefined}
+                disabled={busy !== null || !rateValid || !emailValid || !reminderFeeValid}
+                title={
+                  !rateValid
+                    ? 'Anna kelvollinen vuosikorko'
+                    : !reminderFeeValid
+                      ? 'Anna kelvollinen muistutusmaksu'
+                      : !emailValid
+                        ? 'Anna kelvollinen sähköpostiosoite'
+                        : undefined
+                }
                 className="flex items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Send className="h-4 w-4" />
@@ -221,7 +258,7 @@ export default function LateFeeModal({
               {!createdId && (
                 <button
                   onClick={handleCreateDraft}
-                  disabled={busy !== null || !rateValid}
+                  disabled={busy !== null || !rateValid || !reminderFeeValid}
                   className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
                 >
                   {busy === 'draft' ? 'Luodaan...' : 'Luo muokattavaksi, älä lähetä'}

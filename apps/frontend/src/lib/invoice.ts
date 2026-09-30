@@ -52,6 +52,7 @@ export function parseInvoiceItems(json: unknown): InvoiceLineItem[] {
 // (633/1982) 4 §:n mukainen laskentatapa.
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const LATE_FEE_PREFIX = 'Viivästyskorko ';
+const REMINDER_FEE_DESCRIPTION = 'Muistutusmaksu';
 
 // Montako täyttä päivää eräpäivästä on kulunut. Eräpäivänä itsenään lasku ei ole vielä
 // myöhässä (0), vaan vasta seuraavana päivänä (1).
@@ -71,6 +72,16 @@ export function isLateFeeItem(item: InvoiceLineItem): boolean {
   return item.vatRate === 0 && item.description.startsWith(LATE_FEE_PREFIX);
 }
 
+export function isReminderFeeItem(item: InvoiceLineItem): boolean {
+  return item.vatRate === 0 && item.description === REMINDER_FEE_DESCRIPTION;
+}
+
+// Kiinteä muistutusmaksu (esim. 5 €, perintälain 10 c §:n kuluttajakatto) — ei
+// arvonlisäverollinen, samasta syystä kuin viivästyskorko (AVL 78 §).
+export function buildReminderFeeItem(amount: number): InvoiceLineItem {
+  return { description: REMINDER_FEE_DESCRIPTION, amount, vatRate: 0 };
+}
+
 export function buildLateFeeItem(params: {
   items: InvoiceLineItem[];
   dueDate: Date;
@@ -80,8 +91,11 @@ export function buildLateFeeItem(params: {
 }): { item: InvoiceLineItem; days: number; amount: number } {
   const { items, dueDate, ratePercent, invoiceNumber, now = new Date() } = params;
   const days = daysOverdue(dueDate, now);
-  // Aiemman muistutuksen viivästyskorkorivi ei kasvata pääomaa — ei korkoa korolle.
-  const principal = items.filter((item) => !isLateFeeItem(item)).reduce((sum, item) => sum + item.amount, 0);
+  // Aiemman muistutuksen viivästyskorko- ja muistutusmaksurivit eivät kasvata pääomaa —
+  // ei korkoa korolle eikä korkoa maksulle.
+  const principal = items
+    .filter((item) => !isLateFeeItem(item) && !isReminderFeeItem(item))
+    .reduce((sum, item) => sum + item.amount, 0);
   const amount = Math.round(principal * (ratePercent / 100) * (days / 365) * 100) / 100;
   const dueDateFi = dueDate.toLocaleDateString('fi-FI', { day: 'numeric', month: 'long', year: 'numeric' });
 
