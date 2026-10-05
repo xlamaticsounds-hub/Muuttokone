@@ -188,7 +188,7 @@ export async function updateLeadDetails(leadId: string, data: any) {
   // lähetetty lopullinen TARJOUS voivat olla eri asioita.
   const existingLead = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: { formData: true, calendarEventId: true, requestedDate: true },
+    select: { formData: true, calendarEventId: true, requestedDate: true, contactId: true },
   });
   const existingFormData = parseLeadFormData(existingLead?.formData ?? null);
   const confirmedPriceRaw = typeof data.confirmedPrice === 'string' ? data.confirmedPrice.trim() : data.confirmedPrice;
@@ -254,6 +254,17 @@ export async function updateLeadDetails(leadId: string, data: any) {
       formData: JSON.stringify(updatedFormData),
     },
   });
+
+  if (existingLead?.contactId && typeof data.customerName === 'string') {
+    const customerName = data.customerName.trim();
+    await prisma.contact.update({
+      where: { id: existingLead.contactId },
+      data: {
+        firstName: customerName.split(' ')[0] || null,
+        lastName: customerName.split(' ').slice(1).join(' ') || null,
+      },
+    });
+  }
 
   // Keep an already-created calendar event in sync if the moving date changed
   // here — best-effort, same "never throw" rule as the rest of the Discord

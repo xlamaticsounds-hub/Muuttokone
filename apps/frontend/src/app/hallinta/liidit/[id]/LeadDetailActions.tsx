@@ -151,6 +151,14 @@ export default function LeadDetailActions({
           <div className="w-full max-w-2xl rounded-lg bg-white p-6 shadow-xl dark:bg-gray-800">
             <h2 className="mb-4 text-xl font-bold dark:text-white">Muokkaa liidiä</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-500 uppercase">Asiakkaan nimi</label>
+                <input
+                  name="customerName"
+                  defaultValue={[lead.contact.firstName, lead.contact.lastName].filter(Boolean).join(' ')}
+                  className="mt-1 w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:text-white"
+                />
+              </div>
               <div className="rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/30">
                 <label className="block text-xs font-medium text-blue-700 uppercase dark:text-blue-300">
                   Vahvistettu hinta (€) — ohittaa laskurin arvion sähköpostitse lähetettävässä tarjouksessa
