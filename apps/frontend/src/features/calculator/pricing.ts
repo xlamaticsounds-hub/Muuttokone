@@ -390,6 +390,26 @@ const EXPECTED_HANDLING_MINUTES: Record<CalculatorData['apartmentSize'], number>
   '4h+': 270,
   office: 170,
 };
+// v2.6: vähimmäiskäsittelyaika (min) VAIN täyden palvelun muutolle (serviceType 'moving' +
+// 'full_service') ja vain 4h+. Asiakkaiden tavaralistat ovat isoissa asunnoissa usein
+// puutteellisia (puuttuu kaappeja, pöytiä, kodinkoneita), jolloin listan mukainen aika
+// (esim. 170 min) antaisi liian halvan hinnan. Laskutettu käsittelyaika =
+//   max(MIN, tehokkuuskertoimen jälkeinen listan aika + (MIN - EXPECTED_HANDLING_MINUTES))
+// eli puuttuvien tavaroiden varaus (345 - 270 = 75 min) lisätään listan aikaan, ja alle jäävä
+// lista nostetaan minimiin. Lista ei koskaan laske hintaa; raskaampi lista maksaa enemmän.
+// Kalibroitu markkinaan (kilpailijoiden laskurit, reitti Helsinki-Vantaa 19 km, 5. krs hissillä ->
+// katutaso ilman hissiä, 4 huonetta ~90 m², la): Muutto365 vähän/tavallinen/paljon tavaraa
+// 959 / 1 106 / 1 362 €, Pnt2Pnt 3 miestä 940-997 €, Kengurut/Muuttomiehet 3 miestä
+// 169-179 €/h x 6-7 h = 1 010-1 250 €. Meillä: tyypillinen 1 124 €, raskas ~1 320 €,
+// Heidi T. -liidi (117 tavaraa, 77 laatikkoa, puutteellinen lista) 1 124 €.
+// 1h/2h/3h/office, kantoapu, kuljettaja+auto, kuljetus ja kierrätys eivät käytä tätä.
+const MIN_HANDLING_MINUTES: Partial<Record<CalculatorData['apartmentSize'], number>> = {
+  '4h+': 345,
+};
+// Tiukka vähimmäishinta ALENNUSTEN JÄLKEEN (vain 4h+) — päivä-/kuukausialennus ei voi viedä alle.
+const FULL_SERVICE_HARD_MIN_PRICE: Partial<Record<CalculatorData['apartmentSize'], number>> = {
+  '4h+': 899,
+};
 const EXCESS_HANDLING_EFFICIENCY = 0.55; // ylimenevästä osasta laskutetaan vain tämä osuus
 
 function applyCrewEfficiency(rawHandlingMinutes: number, apartmentSize: CalculatorData['apartmentSize']): number {
@@ -417,10 +437,17 @@ const COORDINATION_TIME_HOURS = 0.25;
 // (esim. Muuttohelposti/Avainmuutto 2h-minimit ~170-264 €, MuuttoPAVU 3h-minimi 357 €) -
 // nämä asettuvat niiden alle tai samalle tasolle, ja on vahvistettu kannattavaksi tämän
 // yrityksen todellisella (kevyellä, ei-alv-velvollisella) kulurakenteella.
+// HUOM v2.7: 3h-minimi (599 €) on omistajan päätöksellä tämän kalibroinnin yläpuolella.
 const FULL_SERVICE_MIN_PRICE: Partial<Record<CalculatorData['apartmentSize'], number>> = {
   '1h': 189,
   '2h': 299,
-  '3h': 500,
+  // v2.7: 3h-minimi nostettu 500 -> 599 € (etusivun Kolmio+-kortti "alkaen 599 €", ks. PricingPreview.tsx)
+  '3h': 599,
+  // v2.6: tavaralistapohjainen hinta jäi 4h+ muutoilla selvästi liian alas (esim. 117 tavaraa,
+  // 77 laatikkoa, 5. krs hissillä, 19 km: laskettu 647 € vs. todellinen työ ~6-7 h = 1000-1200 €).
+  // Katalogin minuuttiarvot eivät kata ison muuton kiinteitä aikoja (auton lastaus/sidonta,
+  // hissijonot, edestakaiset kierrokset), joten 4h+ saa oman vähimmäishinnan.
+  '4h+': 899,
 };
 
 // Muuttosiivouksen ("needsCleaning") kiinteä lisähinta asunnon koon mukaan — siivous ei
@@ -604,6 +631,17 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
       const efficiencyRatio = handlingMinutes / rawHandlingMinutes;
       normalCarryMinutes *= efficiencyRatio;
       heavyCarryMinutes *= efficiencyRatio;
+    }
+    // Puuttuvien tavaroiden varaus + vähimmäisaika (vain 4h+ täysi palvelu, ks. MIN_HANDLING_MINUTES).
+    const minHandling =
+      serviceType === 'moving' && movingPackage === 'full_service' ? MIN_HANDLING_MINUTES[apartmentSize] : undefined;
+    if (minHandling) {
+      const unlistedAllowance = minHandling - EXPECTED_HANDLING_MINUTES[apartmentSize];
+      const billedHandling = Math.max(minHandling, handlingMinutes + unlistedAllowance);
+      const billedRatio = handlingMinutes > 0 ? billedHandling / handlingMinutes : 0;
+      handlingMinutes = billedHandling;
+      normalCarryMinutes *= billedRatio;
+      heavyCarryMinutes *= billedRatio;
     }
   }
 
@@ -965,7 +1003,12 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
   }
   const subtotal = movingSubtotal + extrasCost;
   const normalPriceTotal = subtotal;
-  const { total, dateDiscountAmount } = applyDateDiscount(normalPriceTotal);
+  let { total, dateDiscountAmount } = applyDateDiscount(normalPriceTotal);
+  const hardMin = FULL_SERVICE_HARD_MIN_PRICE[apartmentSize];
+  if (hardMin && total < hardMin) {
+    total = hardMin;
+    dateDiscountAmount = Math.max(0, normalPriceTotal - total);
+  }
   const vat = total - (total / (1 + PRICING_CONSTANTS.vatRate));
 
   // 5. Laadunvarmistus: vertaa tavaramäärän tilavuutta asunnon kokoon (ei muuta hintaa)
@@ -974,7 +1017,9 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
 
   // 6. Hintahaarukka — leveys riippuu automaattisesta laadunvarmistuksesta, ei käyttäjän syötteestä
   const rangeWidth = inventoryWarning ? PRICING_CONSTANTS.priceRangeWarning : PRICING_CONSTANTS.priceRangeNormal;
-  const priceRangeLow = round5(total * (1 - rangeWidth));
+  // Tiukka vähimmäishinta (4h+) pätee myös haarukan alapäähän — asiakkaalle ei näytetä
+  // koskaan alle vähimmäishinnan olevaa lukua.
+  const priceRangeLow = Math.max(round5(total * (1 - rangeWidth)), hardMin ?? 0);
   const priceRangeHigh = round5(total * (1 + rangeWidth));
 
   // 7. Vaikeustaso lasketaan jaetussa lohkossa ennen Kuljetus-haaraa (ks. yllä).
@@ -1000,7 +1045,8 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
     vat,
     total,
     normalPriceTotal,
-    dateDiscountFraction: dateDiscount.discount,
+    // Tosiasiallinen alennus: pienempi kuin päiväalennus jos tiukka vähimmäishinta esti alennuksen.
+    dateDiscountFraction: normalPriceTotal > 0 ? dateDiscountAmount / normalPriceTotal : dateDiscount.discount,
     dateDiscountAmount,
     dateDiscountLabel: dateDiscount.label,
     dateDiscountEmoji: dateDiscount.emoji,
