@@ -183,6 +183,8 @@ export type LeadMessageDetails = {
   hasElevator: boolean | null;
   boxCount: number | null;
   notes: string | null;
+  // 'vuokraus' = Muuttolaatikot-sivun tilaus (toimitusosoite ja -päivä, ei muuttoa)
+  serviceKind?: 'muutto' | 'vuokraus';
   hallintaUrl: string;
   overlapWarnings: string[];
   calendarLink: string | null;
@@ -211,16 +213,17 @@ export async function postLeadToDiscord(
       return null;
     }
 
+    const isRental = details.serviceKind === 'vuokraus';
     const embed = new EmbedBuilder()
-      .setTitle('🚀 Uusi tarjouspyyntö')
+      .setTitle(isRental ? '📦 Uusi vuokraus' : '🚀 Uusi tarjouspyyntö')
       .setColor(STATUS_COLOR.NEW)
       .addFields(
         { name: 'Nimi', value: details.customerName || 'Ei nimeä', inline: true },
         { name: 'Puhelin', value: details.phone || 'Ei puhelinta', inline: true },
         { name: 'Sähköposti', value: details.email || 'Ei sähköpostia', inline: true },
-        { name: 'Mistä', value: details.fromAddress || '-', inline: true },
-        { name: 'Minne', value: details.toAddress || '-', inline: true },
-        { name: 'Muuttopäivä', value: details.requestedDateLabel || '-', inline: true },
+        { name: isRental ? 'Toimitusosoite' : 'Mistä', value: details.fromAddress || '-', inline: true },
+        ...(isRental ? [] : [{ name: 'Minne', value: details.toAddress || '-', inline: true }]),
+        { name: isRental ? 'Toimituspäivä' : 'Muuttopäivä', value: details.requestedDateLabel || '-', inline: true },
         { name: 'Tyyppi', value: details.sourceLabel, inline: true },
       );
 

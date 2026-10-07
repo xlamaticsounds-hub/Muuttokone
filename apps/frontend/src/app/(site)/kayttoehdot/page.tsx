@@ -1,5 +1,9 @@
 import type { Metadata } from 'next';
 import { generateSEOMetadata, SEOConfigs } from '@/components/SEO/SEOHelpers';
+import { RENTAL_DELIVERY, formatPricePerDay, getAvailableRentalItems } from '@/features/vuokraus/rental';
+
+// Vuokrausehdot luetaan rental.ts:stä: uusi vuokrattava tuote ilmestyy tähän automaattisesti.
+const rentalItems = getAvailableRentalItems();
 
 export const metadata: Metadata = generateSEOMetadata({
   ...SEOConfigs.terms,
@@ -70,7 +74,26 @@ export default function TermsOfService() {
               Mahdolliset huomautukset palvelusta tai havaituista vahingoista on tehtävä kirjallisesti 7 vuorokauden kuluessa palvelun suorittamisesta.
             </p>
 
-            <h2 className="text-xl font-semibold text-black dark:text-white mt-6 mb-4">8. Sovellettava laki</h2>
+            <h2 className="text-xl font-semibold text-black dark:text-white mt-6 mb-4">8. Vuokraus</h2>
+            <p>Vuokrattaviin tuotteisiin (muun muassa muuttolaatikot, ks. Muuttolaatikot-sivu) sovelletaan lisäksi seuraavia ehtoja:</p>
+            <ul className="list-disc pl-5 mb-4 space-y-2">
+              <li>Hinnat sisältävät arvonlisäveron. Vuokra lasketaan toimituspäivästä noutopäivään.</li>
+              {rentalItems.map((item) => (
+                <li key={item.id}>
+                  {item.title}: {formatPricePerDay(item.pricePerDay)} / kpl / vuorokausi. Vähimmäisvuokraus on {item.qty.min} kpl ja{' '}
+                  {item.days.min} vuorokautta, enintään {item.qty.max} kpl.
+                  {item.lostFee ? ` Kadonneesta tai rikkoutuneesta tuotteesta veloitetaan ${item.lostFee} € / kpl.` : ''}
+                </li>
+              ))}
+              <li>
+                Toimitus kotiovelle ja nouto pääkaupunkiseudulla ovat ilmaiset, kun tuotteet vuokrataan muuton yhteydessä tai kun
+                vuokran arvo on vähintään {RENTAL_DELIVERY.freeFromRental} €. Muissa tapauksissa toimituksesta ja noudosta
+                veloitetaan yhteensä {RENTAL_DELIVERY.feeBothWays} €.
+              </li>
+              <li>Tuotteet palautetaan tyhjinä sovittuna noutopäivänä. Vuokra jatkuu, kunnes tuotteet on noudettu.</li>
+            </ul>
+
+            <h2 className="text-xl font-semibold text-black dark:text-white mt-6 mb-4">9. Sovellettava laki</h2>
             <p>
               Sopimukseen sovelletaan Suomen lakia. Mahdolliset erimielisyydet pyritään ratkaisemaan ensisijaisesti neuvottelemalla.
             </p>

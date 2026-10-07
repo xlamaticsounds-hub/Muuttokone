@@ -201,4 +201,27 @@ export const calculatorDictionary: Record<string, string> = {
   'Takaisin': 'Back',
   'Siirry varaukseen': 'Continue to booking',
   'Seuraava': 'Next',
+
+  // Box rental add-on (Muuttolaatikot vuokralle)
+  'Muuttolaatikot vuokralle': 'Moving boxes for rent',
+  '0,19 €/laatikko/vrk – ilmainen kotiinkuljetus muuton yhteydessä':
+    '€0.19 per box per day – free home delivery with your move',
+  'Montako laatikkoa?': 'How many boxes?',
+  'Vähennä laatikoita': 'Fewer boxes',
+  'Lisää laatikoita': 'More boxes',
+  'kpl': 'pcs',
+  'vrk': 'days',
+  'Listasi mukaan': 'Based on your list',
+  'Suositus asunnon koon mukaan': 'Recommended for your home size',
+  'Suosittelemme noin yhtä laatikkoa asuinneliötä kohti.': 'We recommend about one box per square metre of living space.',
+  'Vuokra-aika': 'Rental period',
+  'Toimitamme laatikot noin viikkoa ennen muuttoa ja noudamme ne tyhjinä muuton jälkeen. Vuokra lasketaan toimituksesta noutoon – tarkat päivät sovitaan kanssasi.':
+    'We deliver the boxes about a week before the move and collect them empty after the move. The rental is counted from delivery to pickup – exact dates are agreed with you.',
+  'Toimitus ja nouto kotiovelle': 'Delivery and pickup at your door',
+  'Laatikot yhteensä': 'Boxes total',
+  'Hinnat sisältävät ALV:n. Toimitus pääkaupunkiseudulle. Lisätään hinta-arvioon.':
+    'Prices include VAT. Delivery within the Helsinki metropolitan area. Added to your price estimate.',
+  'Laatikkovuokra (ei alennusta)': 'Box rental (no discount)',
+  'Laatikkovuokra': 'Box rental',
+  'Laatikoiden toimitus ja nouto': 'Box delivery and pickup',
 };

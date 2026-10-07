@@ -6,6 +6,7 @@ export const headerDictionary: Record<string, string> = {
   'Etusivu': 'Home',
   'Muuttolaskuri': 'Moving Calculator',
   'Palvelut': 'Services',
+  'Muuttolaatikot': 'Moving boxes',
   'Blogi': 'Blog',
   'Yhteystiedot': 'Contact',
 };
@@ -61,6 +62,32 @@ export const pricingPreviewDictionary: Record<string, string> = {
   'Perheasunnot ja omakotitalot. Täyden palvelun muutto.': 'Family homes and houses. A full-service move.',
   '3-4 muuttomiestä': '3–4 movers',
   'Koko päivä': 'Full day',
+  '📦 Laatikot vuokralle 0,19 €/vrk': '📦 Box rental €0.19/day',
+};
+
+export const boxRentalDictionary: Record<string, string> = {
+  'Uusi palvelu': 'New service',
+  'Muuttolaatikot vuokralle': 'Moving boxes for rent',
+  'Älä osta pahvilaatikoita, jotka päätyvät roskiin. Vuokraa kestävät, pinottavat muuttolaatikot – toimitamme kotiovelle ja noudamme tyhjinä muuton jälkeen.':
+    "Don't buy cardboard boxes that end up in the bin. Rent sturdy, stackable moving boxes – we deliver to your door and collect them empty after the move.",
+  'Lisää laatikot muuttoon': 'Add boxes to your move',
+  'Vuokraa vain laatikot': 'Rent only boxes',
+  'Toimitusalue': 'Delivery area',
+  'Hinnat sisältävät ALV:n. Toimitus pääkaupunkiseudulle.': 'Prices include VAT. Delivery within the Helsinki metropolitan area.',
+  'laatikko / vuorokausi': 'per box per day',
+  'toimitus ja nouto kotiovelle muuton yhteydessä': 'delivery and pickup at your door with your move',
+  'toimitus ja nouto yhteensä ilman muuttoa – ilmainen, kun vuokra on vähintään':
+    'delivery and pickup in total without a move – free when the rental is at least',
+  'Valitse laatikot': 'Choose your boxes',
+  'Lisää laatikot lisäpalveluna muuttolaskuriin. Laskuri ehdottaa määrän tavaralistasi tai asunnon koon mukaan.':
+    'Add the boxes as an extra service in the moving calculator. The calculator suggests a quantity based on your item list or home size.',
+  'Toimitamme kotiovelle': 'We deliver to your door',
+  'Laatikot tulevat sovittuna päivänä noin viikkoa ennen muuttoa.': 'The boxes arrive on an agreed day, about a week before the move.',
+  'Pakkaa ja muuta': 'Pack and move',
+  'Samanlaiset pinottavat laatikot kulkevat suoraan muuttoautoon, joten muutto sujuu nopeammin.':
+    'Identical stackable boxes go straight onto the moving truck, so the move goes faster.',
+  'Noudamme tyhjät laatikot': 'We collect the empty boxes',
+  'Haemme laatikot uudesta kodistasi. Vuokra lasketaan toimituksesta noutoon.': 'We pick the boxes up from your new home. The rental is counted from delivery to pickup.',
 };
 
 export const processStepsDictionary: Record<string, string> = {
@@ -119,6 +146,14 @@ export const faqDictionary: Record<string, string> = {
   'Mitä tapahtuu, jos tavarani vaurioituu muutossa?': 'What happens if my items are damaged during the move?',
   'Ilmoita havaitsemastasi vahingosta meille kirjallisesti 7 vuorokauden kuluessa muutosta. Lakisääteinen tiekuljetus- ja vastuuvakuutuksemme korvaa vakuutusehtojen mukaisesti vahingot, jotka aiheutuvat huolimattomuudestamme kuljetuksen aikana. Vakuutus ei kata vahinkoja, jotka johtuvat asiakkaan itse pakkaamien tavaroiden puutteellisesta pakkauksesta.':
     'Report any damage you notice to us in writing within 7 days of the move. Our statutory road transport and liability insurance compensates, per its terms, for damage caused by our negligence during transport. The insurance does not cover damage resulting from inadequate packing of items packed by the customer.',
+
+  'Voinko vuokrata muuttolaatikot teiltä?': 'Can I rent moving boxes from you?',
+  'Kyllä. Vuokraamme kestäviä, pinottavia muuttolaatikoita 0,19 €/laatikko/vuorokausi (sis. ALV). Toimitus kotiovelle ja nouto ovat ilmaiset, kun vuokraat laatikot muuton yhteydessä. Ilman muuttoa ne ovat ilmaiset, kun vuokran arvo on vähintään 100 € (esim. 38 laatikkoa 14 vuorokaudeksi), muuten toimitus ja nouto maksavat yhteensä 39 € pääkaupunkiseudulla. Lisää laatikot muuttolaskurin lisäpalveluista tai vuokraa pelkät laatikot Muuttolaatikot-sivulta.':
+    'Yes. We rent out sturdy, stackable moving boxes for €0.19 per box per day (incl. VAT). Delivery to your door and pickup are free when you rent the boxes together with a move. Without a move they are free when the rental is worth at least €100 (e.g. 38 boxes for 14 days); otherwise delivery and pickup cost €39 in total in the Helsinki metropolitan area. Add the boxes under the extra services in the moving calculator, or rent just the boxes on the Moving boxes page.',
+
+  'Kuinka monta muuttolaatikkoa tarvitsen?': 'How many moving boxes do I need?',
+  'Nyrkkisääntönä noin yksi laatikko asuinneliötä kohti: yksiö 25–30, kaksio 45–55, kolmio 65–75 ja neliö tai suurempi noin 90 laatikkoa. Muuttolaskuri ehdottaa määrän tavaralistasi tai asunnon koon mukaan, ja voit muokata sitä vapaasti.':
+    'As a rule of thumb, about one box per square metre of living space: studio 25–30, 2-room 45–55, 3-room 65–75 and 4-room or larger about 90 boxes. The moving calculator suggests a number based on your item list or home size, and you can adjust it freely.',
 
   'Kuinka pitkälle etukäteen muutto kannattaa varata?': 'How far in advance should I book my move?',
   'Suosittelemme varaamaan vähintään 1–2 viikkoa etukäteen, erityisesti kuun vaihteen ja kesäkuukausien aikana kysynnän ollessa suurimmillaan. Tarvittaessa autamme myös kiireellisissä, lyhyellä varoitusajalla tehtävissä muutoissa.':

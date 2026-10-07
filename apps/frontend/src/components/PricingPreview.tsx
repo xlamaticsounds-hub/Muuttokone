@@ -16,6 +16,10 @@ export default function PricingPreview() {
             <span className="text-primary">{t('🔥 Muutot alk. 189€')}</span>
             <span className="hidden h-1 w-1 rounded-full bg-gray-300 sm:block"></span>
             <span>{t('5 km sisältyy hintaan')}</span>
+            <span className="hidden h-1 w-1 rounded-full bg-gray-300 sm:block"></span>
+            <a href="#laatikkovuokra" className="text-primary hover:underline">
+              {t('📦 Laatikot vuokralle 0,19 €/vrk')}
+            </a>
           </p>
         </div>
 

@@ -9,7 +9,11 @@ const faqs = [
   },
   {
     q: 'Sisältyykö pakkausmateriaali hintaan?',
-    a: 'Perus pakkausmateriaalit voidaan tuoda lisäpalveluna. Suojaukset (peitteet, kutistekalvo) sisältyvät aina.',
+    a: 'Suojaukset (peitteet, kutistekalvo) sisältyvät aina. Muuttolaatikoita voit vuokrata meiltä 0,19 €/laatikko/vuorokausi – toimitus ja nouto ovat ilmaiset, kun vuokraat laatikot muuton yhteydessä. Muut pakkausmateriaalit voidaan tuoda lisäpalveluna.',
+  },
+  {
+    q: 'Paljonko muuttolaatikoiden vuokra maksaa?',
+    a: 'Vuokra on 0,19 €/laatikko/vuorokausi (sis. ALV), vähintään 20 ja enintään 150 laatikkoa sekä vähintään 7 vuorokautta. Esimerkiksi 50 laatikkoa 14 vuorokaudeksi maksaa 133 €. Toimitus ja nouto pääkaupunkiseudulla ovat ilmaiset, kun vuokraat laatikot muuton yhteydessä tai kun vuokran arvo on vähintään 100 €. Muuten toimitus ja nouto maksavat yhteensä 39 €. Lisää laatikot muuttolaskurin lisäpalveluihin tai vuokraa ne Muuttolaatikot-sivulta.',
   },
   {
     q: 'Miten hinnoittelette?',

@@ -22,6 +22,14 @@ const faqData: FaqItem[] = [
     a: 'Muuttolaskuri antaa sinulle tarkan, kiinteän hinta-arvion vain muutamassa sekunnissa antamiesi tietojen perusteella – ei tarvitse odottaa puhelinsoittoa tai sähköpostia. Näet suoraan arvioidun työajan, tarvittavan kaluston ja hinnan haarukan, ja voit verrata eri palvelupaketteja ennen päätöksentekoa.',
   },
   {
+    q: 'Voinko vuokrata muuttolaatikot teiltä?',
+    a: 'Kyllä. Vuokraamme kestäviä, pinottavia muuttolaatikoita 0,19 €/laatikko/vuorokausi (sis. ALV). Toimitus kotiovelle ja nouto ovat ilmaiset, kun vuokraat laatikot muuton yhteydessä. Ilman muuttoa ne ovat ilmaiset, kun vuokran arvo on vähintään 100 € (esim. 38 laatikkoa 14 vuorokaudeksi), muuten toimitus ja nouto maksavat yhteensä 39 € pääkaupunkiseudulla. Lisää laatikot muuttolaskurin lisäpalveluista tai vuokraa pelkät laatikot Muuttolaatikot-sivulta.',
+  },
+  {
+    q: 'Kuinka monta muuttolaatikkoa tarvitsen?',
+    a: 'Nyrkkisääntönä noin yksi laatikko asuinneliötä kohti: yksiö 25–30, kaksio 45–55, kolmio 65–75 ja neliö tai suurempi noin 90 laatikkoa. Muuttolaskuri ehdottaa määrän tavaralistasi tai asunnon koon mukaan, ja voit muokata sitä vapaasti.',
+  },
+  {
     q: 'Sisältyykö muuttooni vakuutus?',
     a: 'Kyllä, kaikkiin täyspalvelumuuttoihimme sisältyy muuttovakuutus, joka kattaa tavaroidesi kuljetuksen aikana sattuvat vahingot. Vakuutus on automaattisesti mukana hinnassa, eikä siitä tarvitse maksaa erikseen.',
   },

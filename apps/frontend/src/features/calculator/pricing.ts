@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { BOX_RENTAL, calculateBoxRental, type BoxRentalBreakdown } from './boxRental';
 
 // v2.1-kalibrointi: minuutit kuvaavat tavaran OSUUTTA koko muuton kestoon, ei sen
 // yksittäistä siirtoaikaa. Ammattimuuttaja kantaa useita tavaroita per kierros, käyttää
@@ -242,6 +243,12 @@ export const CalculatorSchema = z.object({
   services: z.array(z.string()).default([]),
   selectedWasteTypes: z.array(z.string()).default([]), // Kierrätys-jätetyypit
 
+  // Muuttolaatikoiden vuokra (vain Muutto) — hinnoittelu boxRental.ts:ssä, lisätään hintaan
+  // calculateMovingPrice():n lopussa. Vanhat liidit joilla näitä kenttiä ei ole saavat oletukset.
+  needsBoxRental: z.boolean().default(false),
+  boxRentalCount: z.number().default(0),
+  boxRentalDays: z.number().default(BOX_RENTAL.defaultDays),
+
   // Timing
   date: z.date().optional(),
   preferredTime: z.string().optional(), // Toivottu kellonaika (esim. "09:00") — ei vaikuta hintaan, vain tiedoksi
@@ -271,6 +278,10 @@ export interface PriceBreakdown {
   priceRangeLow: number;
   priceRangeHigh: number;
   inventoryWarning?: string;
+  // Vain kun laatikkovuokra on valittu (Muutto): total sisältää vuokran, moveTotal on muuton
+  // hinta ilman sitä. Vuokraan ei sovelleta päiväalennusta eikä muuton vähimmäishintoja.
+  boxRental?: BoxRentalBreakdown;
+  moveTotal?: number;
   difficultyLevel: 'easy' | 'medium' | 'hard';
   estimatedDurationHours: number;
   details: {
@@ -524,9 +535,10 @@ function carrySideExtra(
 }
 
 /**
- * Calculates the moving price based on the provided data.
+ * Calculates the moving price based on the provided data (without box rental).
+ * Use calculateMovingPrice() — it adds the optional box rental on top of this.
  */
-export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
+function calculatePriceWithoutBoxRental(data: CalculatorData): PriceBreakdown {
   const {
     serviceType = 'moving',
     movingPackage = 'full_service',
@@ -1082,5 +1094,38 @@ export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
         base: baseImpact,
       },
     },
+  };
+}
+
+/**
+ * Calculates the price based on the provided data, including the optional box rental.
+ *
+ * Laatikkovuokra (vain Muutto) lisätään valmiin muuttohinnan päälle erillisenä kiinteänä
+ * tuotehintana: sille ei sovelleta muuttopäivän alennusta eikä muuton vähimmäishintoja, ja
+ * hintahaarukkaan se lisätään tarkkana summana (haarukka kuvaa vain muuton epävarmuutta).
+ * Kun vuokraa ei ole valittu, tulos on täsmälleen sama kuin calculatePriceWithoutBoxRental().
+ */
+export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
+  const base = calculatePriceWithoutBoxRental(data);
+  if (!data.needsBoxRental || data.serviceType !== 'moving') return base;
+
+  const rental = calculateBoxRental({ count: data.boxRentalCount, days: data.boxRentalDays, withMove: true });
+  if (!rental) return base;
+
+  // Pyöristys senttiin: liukulukusumma (esim. 1124.06 + 204.82) ei saa näkyä hintana sähköposteissa/hallinnassa.
+  const total = Math.round((base.total + rental.total) * 100) / 100;
+  const vat = total - total / (1 + PRICING_CONSTANTS.vatRate);
+  // Haarukan päät pyöristetään ylös lähimpään 5 €:oon, jotta alaraja ei jää alle todellisen summan.
+  const ceil5 = (value: number) => Math.ceil(value / 5) * 5;
+
+  return {
+    ...base,
+    total,
+    vat,
+    subtotal: total - vat,
+    priceRangeLow: ceil5(base.priceRangeLow + rental.total),
+    priceRangeHigh: ceil5(base.priceRangeHigh + rental.total),
+    moveTotal: base.total,
+    boxRental: rental,
   };
 }

@@ -7,6 +7,7 @@ import { rateLimit } from '@/server/rate-limit';
 import { postLeadToDiscord } from '@/server/discord-bot';
 import { sendDiscordNotification } from '@/server/discord-webhook';
 import { createTentativeLeadEvent, findOverlappingEvents } from '@/server/google-calendar';
+import { BOX_RENTAL, calculateBoxRental, describeBoxRental } from '@/features/calculator/boxRental';
 
 // Force Node.js runtime (multipart + File)
 export const runtime = 'nodejs';
@@ -295,6 +296,10 @@ async function submitLead(data: z.infer<typeof LeadSchema>) {
       hasElevator,
       boxCount,
       notes: data.message || null,
+      // Muuttolaatikot-sivun tilaus: toivottu aikaikkuna (HH:MM) kalenteriin ja päivä nimetään toimituspäiväksi
+      preferredTime:
+        typeof data.preferred_time === 'string' && /^\d{2}:\d{2}$/.test(data.preferred_time) ? data.preferred_time : null,
+      serviceKind: data.service_type === 'vuokraus' ? 'vuokraus' : 'muutto',
     }).catch((error) => {
       console.error('[submit] notifyNewLead failed:', error);
       logEvent({
@@ -345,6 +350,8 @@ type NotifyLeadDetails = {
   boxCount: number | null;
   notes: string | null;
   preferredTime?: string | null; // laskurin "Toivottu kellonaika" (HH:MM)
+  // 'vuokraus' = Muuttolaatikot-sivun tilaus: päivä on toimituspäivä eikä muuttopäivä (Discord + kalenteri)
+  serviceKind?: 'muutto' | 'vuokraus';
 };
 
 // Shared by both submission paths that create a genuinely new lead —
@@ -376,6 +383,7 @@ async function notifyNewLead(
       toAddress: lead.toAddress,
       requestedDate: lead.requestedDate,
       preferredTime: details.preferredTime ?? null,
+      serviceKind: details.serviceKind,
       notes: lead.notes,
       hallintaUrl,
     });
@@ -407,6 +415,7 @@ async function notifyNewLead(
     hasElevator: details.hasElevator,
     boxCount: details.boxCount,
     notes: details.notes,
+    serviceKind: details.serviceKind,
     hallintaUrl,
     overlapWarnings,
     calendarLink: calendarEvent?.htmlLink ?? null,
@@ -505,7 +514,21 @@ async function submitBooking(data: any) {
   });
 
   const requestedDate = toDateOrNull(data.date);
-  
+
+  // Laatikkovuokra (lisäpalvelu) näkyy liidin muistiinpanoissa, Discordissa ja kalenteritapahtuman
+  // kuvauksessa, jotta toimitus ja nouto osataan sopia. Hinta (data.price) sisältää jo vuokran.
+  const boxRentalText =
+    data.needsBoxRental === true && data.serviceType === 'moving'
+      ? describeBoxRental(
+          calculateBoxRental({
+            count: Number(data.boxRentalCount),
+            days: Number(data.boxRentalDays) || BOX_RENTAL.defaultDays,
+            withMove: true,
+          }),
+        )
+      : null;
+  const boxRentalLine = boxRentalText ? `📦 ${boxRentalText}` : null;
+
   const lead = await prisma.lead.create({
     data: {
       contact: { connect: { id: contact.id } },
@@ -515,7 +538,7 @@ async function submitBooking(data: any) {
       requestedDate,
       fromAddress: data.addressFrom,
       toAddress: data.addressTo,
-      notes: `Hinta-arvio: ${data.price}€`,
+      notes: `Hinta-arvio: ${data.price}€${boxRentalLine ? `\n${boxRentalLine}` : ''}`,
       floor: data.floorFrom,
       hasElevator: data.elevatorFrom,
       boxCount: data.boxCount,
@@ -552,7 +575,7 @@ async function submitBooking(data: any) {
     floor: typeof data.floorFrom === 'number' ? data.floorFrom : null,
     hasElevator: typeof data.elevatorFrom === 'boolean' ? data.elevatorFrom : null,
     boxCount: typeof data.boxCount === 'number' ? data.boxCount : null,
-    notes: null,
+    notes: boxRentalLine,
   }).catch((error) => {
     console.error('[submit] notifyNewLead (booking) failed:', error);
     logEvent({

@@ -11,6 +11,7 @@ import Calculator from '@/features/calculator/Calculator';
 import CalculatorIntro from '@/components/CalculatorIntro';
 import ProcessSteps from '@/components/ProcessSteps';
 import PricingPreview from '@/components/PricingPreview';
+import BoxRentalSection from '@/components/BoxRentalSection';
 import Faq from '@/components/Faq';
 import type { Service } from '@/types/service';
 import staticServiceData from '@/features/services/serviceData';
@@ -54,6 +55,7 @@ export default async function Home() {
         </div>
       </section>
       <PricingPreview />
+      <BoxRentalSection />
       <Faq />
       <ServicesDivider />
       <Services

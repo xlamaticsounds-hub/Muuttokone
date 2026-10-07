@@ -1,7 +1,7 @@
 import { siteConfig } from '@/config/site';
 
 interface StructuredDataProps {
-  type: 'LocalBusiness' | 'Organization' | 'Service' | 'MovingCompany' | 'BlogPosting' | 'FAQPage';
+  type: 'LocalBusiness' | 'Organization' | 'Service' | 'MovingCompany' | 'BlogPosting' | 'FAQPage' | 'Product' | 'BreadcrumbList';
   data?: any;
 }
 
@@ -161,6 +161,11 @@ export default async function StructuredData({ type, data }: StructuredDataProps
             },
           })),
         };
+
+      // Valmiiksi rakennettu schema.org-data (ks. features/vuokraus/productSchema.ts)
+      case 'Product':
+      case 'BreadcrumbList':
+        return data;
 
       default:
         return baseOrganization;

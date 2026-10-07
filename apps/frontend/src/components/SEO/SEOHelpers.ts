@@ -125,6 +125,22 @@ export const SEOConfigs = {
     canonical: '/tyoapu',
   },
 
+  muuttolaatikot: {
+    title: 'Muuttolaatikot vuokralle Helsingissä, Espoossa ja Vantaalla',
+    description:
+      'Vuokraa kestävät muuttolaatikot 0,19 €/laatikko/vrk. Toimitus ja nouto ilmaiseksi muuton yhteydessä tai kun vuokra on vähintään 100 €. Toimitus pääkaupunkiseudulle.',
+    keywords: [
+      'muuttolaatikot vuokraus',
+      'muuttolaatikon vuokra',
+      'vuokraa muuttolaatikot',
+      'muuttolaatikot Helsinki',
+      'muuttolaatikot Espoo',
+      'muuttolaatikot Vantaa',
+      'muuttolaatikko vuokra hinta',
+    ],
+    canonical: '/muuttolaatikot',
+  },
+
   quote: {
     title: 'Tarjouspyyntö - Pyydä maksuton tarjous',
     description:

@@ -144,6 +144,8 @@ export type LeadEventDetails = {
   toAddress: string | null;
   requestedDate: Date;
   preferredTime?: string | null; // "HH:MM" — laskurin toivottu kellonaika
+  // 'vuokraus' = Muuttolaatikot-sivun tilaus: tapahtuma on laatikoiden/tuotteiden toimitus, ei muutto
+  serviceKind?: 'muutto' | 'vuokraus';
   notes: string | null;
   hallintaUrl: string;
 };
@@ -213,10 +215,11 @@ export async function createTentativeLeadEvent(
   const start = calendarEventStart(details.requestedDate, details.preferredTime);
   const end = new Date(start.getTime() + DEFAULT_JOB_DURATION_HOURS * 60 * 60 * 1000);
 
+  const isRental = details.serviceKind === 'vuokraus';
   const descriptionLines = [
     `Asiakas: ${details.customerName}`,
-    details.fromAddress ? `Mistä: ${details.fromAddress}` : null,
-    details.toAddress ? `Minne: ${details.toAddress}` : null,
+    details.fromAddress ? `${isRental ? 'Toimitusosoite' : 'Mistä'}: ${details.fromAddress}` : null,
+    !isRental && details.toAddress ? `Minne: ${details.toAddress}` : null,
     details.preferredTime
       ? `Toivottu kellonaika: ${details.preferredTime}`
       : `Kellonaika: ei ilmoitettu (merkitty klo ${DEFAULT_START_TIME})`,
@@ -231,7 +234,7 @@ export async function createTentativeLeadEvent(
     const res = await client.events.insert({
       calendarId,
       requestBody: {
-        summary: `Muutto – ${details.customerName}`,
+        summary: `${isRental ? 'Vuokraus (toimitus)' : 'Muutto'} – ${details.customerName}`,
         description: descriptionLines.join('\n'),
         status: 'tentative',
         colorId: COLOR_ID_PENDING,

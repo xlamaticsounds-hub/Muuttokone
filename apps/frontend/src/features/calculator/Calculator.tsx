@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 import { motion, AnimatePresence } from 'framer-motion';
 import { calculateMovingPrice, CalculatorData, PriceBreakdown, FURNITURE_CATALOG, INCLUDED_DISTANCE_KM, RECYCLING_WASTE_TYPES } from './pricing';
+import { BOX_RENTAL, BOX_RENTAL_SUGGESTED_COUNT, calculateBoxRental, formatEuro, suggestBoxCount } from './boxRental';
 import toast from 'react-hot-toast';
 import { Loader2, ArrowRight, ArrowLeft, Calculator as CalcIcon, Calendar, CheckCircle2, ChevronDown, Search, Camera, X } from 'lucide-react';
 import Honeypot from '@/components/Forms/Honeypot';
@@ -73,6 +74,9 @@ export default function Calculator() {
     needsCleaning: false,
     services: [],
     selectedWasteTypes: [],
+    needsBoxRental: false,
+    boxRentalCount: 0,
+    boxRentalDays: BOX_RENTAL.defaultDays,
     contactName: '',
     contactEmail: '',
     contactPhone: '',
@@ -430,6 +434,34 @@ export default function Calculator() {
     const item = FURNITURE_CATALOG.find((f) => f.id === id);
     return item?.category === 'Laatikot ja pakkaukset' ? sum + qty : sum;
   }, 0);
+
+  // Muuttolaatikoiden vuokra (lisäpalvelu, vain Muutto). Oletusmäärä tulee tavaralistan
+  // laatikoista tai asunnon koon suosituksesta; hinta lasketaan boxRental.ts:ssä.
+  const boxRentalSizeSuggestion = BOX_RENTAL_SUGGESTED_COUNT[formData.apartmentSize];
+  const boxRentalListCount = derivedBoxCount >= BOX_RENTAL.minBoxes ? Math.min(derivedBoxCount, BOX_RENTAL.maxBoxes) : 0;
+  const boxRentalPreview = formData.needsBoxRental
+    ? calculateBoxRental({ count: formData.boxRentalCount, days: formData.boxRentalDays, withMove: true })
+    : null;
+
+  const clampBoxCount = (n: number) => Math.min(BOX_RENTAL.maxBoxes, Math.max(BOX_RENTAL.minBoxes, Math.round(n) || 0));
+
+  const toggleBoxRental = () => {
+    setFormData((prev) =>
+      prev.needsBoxRental
+        ? { ...prev, needsBoxRental: false }
+        : {
+            ...prev,
+            needsBoxRental: true,
+            boxRentalCount:
+              prev.boxRentalCount >= BOX_RENTAL.minBoxes ? prev.boxRentalCount : suggestBoxCount(prev.apartmentSize, derivedBoxCount),
+            boxRentalDays: prev.boxRentalDays >= BOX_RENTAL.minDays ? prev.boxRentalDays : BOX_RENTAL.defaultDays,
+          },
+    );
+  };
+
+  const stepBoxRentalCount = (delta: number) => {
+    setFormData((prev) => ({ ...prev, boxRentalCount: clampBoxCount(prev.boxRentalCount + delta) }));
+  };
 
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1358,6 +1390,153 @@ export default function Calculator() {
                       <p className="text-xs text-gray-500">{t('Vanhan asunnon loppusiivous')}</p>
                     </div>
                   </div>
+
+                  {/* Muuttolaatikoiden vuokra — vain Muutto (hinnoittelu: boxRental.ts) */}
+                  {formData.serviceType === 'moving' && (
+                    <div
+                      id="laatikkovuokra-lisapalvelu"
+                      className={`md:col-span-2 rounded-2xl border-2 transition-all ${
+                        formData.needsBoxRental ? 'border-primary bg-primary/5' : 'border-gray-100 dark:border-gray-800'
+                      }`}
+                    >
+                      <div
+                        role="checkbox"
+                        aria-checked={formData.needsBoxRental}
+                        tabIndex={0}
+                        onClick={toggleBoxRental}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            toggleBoxRental();
+                          }
+                        }}
+                        className="p-6 cursor-pointer flex items-center gap-4"
+                      >
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${formData.needsBoxRental ? 'border-primary bg-primary' : 'border-gray-300'}`}>
+                          {formData.needsBoxRental && <span className="text-white text-xs">✓</span>}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-bold">📦 {t('Muuttolaatikot vuokralle')}</h4>
+                          <p className="text-xs text-gray-500">
+                            {t('0,19 €/laatikko/vrk – ilmainen kotiinkuljetus muuton yhteydessä')}
+                          </p>
+                        </div>
+                      </div>
+
+                      {formData.needsBoxRental && (
+                        <div className="px-6 pb-6 space-y-5 border-t border-primary/10 pt-5">
+                          <div>
+                            <label className="block text-xs font-bold uppercase text-gray-400 mb-2">{t('Montako laatikkoa?')}</label>
+                            <div className="flex flex-wrap items-center gap-3">
+                              <div className="flex items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => stepBoxRentalCount(-BOX_RENTAL.boxStep)}
+                                  disabled={formData.boxRentalCount <= BOX_RENTAL.minBoxes}
+                                  aria-label={t('Vähennä laatikoita')}
+                                  className="w-10 h-10 rounded-full border-2 border-gray-200 dark:border-gray-700 flex items-center justify-center text-lg font-bold disabled:opacity-30 hover:border-primary hover:text-primary transition-all"
+                                >
+                                  -
+                                </button>
+                                <input
+                                  type="number"
+                                  min={BOX_RENTAL.minBoxes}
+                                  max={BOX_RENTAL.maxBoxes}
+                                  inputMode="numeric"
+                                  aria-label={t('Montako laatikkoa?')}
+                                  value={formData.boxRentalCount || ''}
+                                  onChange={(e) =>
+                                    updateField('boxRentalCount', Math.min(BOX_RENTAL.maxBoxes, Math.max(0, parseInt(e.target.value, 10) || 0)))
+                                  }
+                                  onBlur={() => updateField('boxRentalCount', clampBoxCount(formData.boxRentalCount))}
+                                  className="w-24 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none text-center font-bold"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => stepBoxRentalCount(BOX_RENTAL.boxStep)}
+                                  disabled={formData.boxRentalCount >= BOX_RENTAL.maxBoxes}
+                                  aria-label={t('Lisää laatikoita')}
+                                  className="w-10 h-10 rounded-full border-2 border-gray-200 dark:border-gray-700 flex items-center justify-center text-lg font-bold disabled:opacity-30 hover:border-primary hover:text-primary transition-all"
+                                >
+                                  +
+                                </button>
+                                <span className="text-sm text-gray-500">{t('kpl')}</span>
+                              </div>
+
+                              <div className="flex flex-wrap gap-2">
+                                {boxRentalListCount > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => updateField('boxRentalCount', boxRentalListCount)}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all ${
+                                      formData.boxRentalCount === boxRentalListCount ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-primary'
+                                    }`}
+                                  >
+                                    {t('Listasi mukaan')}: {boxRentalListCount}
+                                  </button>
+                                )}
+                                {boxRentalSizeSuggestion !== boxRentalListCount && (
+                                  <button
+                                    type="button"
+                                    onClick={() => updateField('boxRentalCount', boxRentalSizeSuggestion)}
+                                    className={`px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all ${
+                                      formData.boxRentalCount === boxRentalSizeSuggestion ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-primary'
+                                    }`}
+                                  >
+                                    {t('Suositus asunnon koon mukaan')}: {boxRentalSizeSuggestion}
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-2">{t('Suosittelemme noin yhtä laatikkoa asuinneliötä kohti.')}</p>
+                          </div>
+
+                          <div>
+                            <label className="block text-xs font-bold uppercase text-gray-400 mb-2">{t('Vuokra-aika')}</label>
+                            <div className="flex flex-wrap gap-2">
+                              {BOX_RENTAL.dayOptions.map((days) => (
+                                <button
+                                  key={days}
+                                  type="button"
+                                  onClick={() => updateField('boxRentalDays', days)}
+                                  className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
+                                    formData.boxRentalDays === days ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 dark:border-gray-700 hover:border-primary'
+                                  }`}
+                                >
+                                  {days} {t('vrk')}
+                                </button>
+                              ))}
+                            </div>
+                            <p className="text-xs text-gray-400 mt-2">
+                              {t('Toimitamme laatikot noin viikkoa ennen muuttoa ja noudamme ne tyhjinä muuton jälkeen. Vuokra lasketaan toimituksesta noutoon – tarkat päivät sovitaan kanssasi.')}
+                            </p>
+                          </div>
+
+                          {boxRentalPreview && (
+                            <div className="rounded-xl bg-white dark:bg-gray-900 border border-primary/20 p-4 space-y-2 text-sm">
+                              <div className="flex justify-between gap-4">
+                                <span className="text-gray-500">
+                                  {boxRentalPreview.count} {t('kpl')} × {boxRentalPreview.days} {t('vrk')} × {boxRentalPreview.ratePerBoxPerDay.toLocaleString('fi-FI', { minimumFractionDigits: 2 })} €
+                                </span>
+                                <span className="font-bold whitespace-nowrap">{formatEuro(boxRentalPreview.rentalCost)}</span>
+                              </div>
+                              <div className="flex justify-between gap-4">
+                                <span className="text-gray-500">{t('Toimitus ja nouto kotiovelle')}</span>
+                                <span className={`font-bold whitespace-nowrap ${boxRentalPreview.deliveryFree ? 'text-green-600' : ''}`}>
+                                  {boxRentalPreview.deliveryFree ? t('Ilmainen') : formatEuro(boxRentalPreview.deliveryCost)}
+                                </span>
+                              </div>
+                              <div className="flex justify-between gap-4 border-t border-gray-100 dark:border-gray-800 pt-2 font-bold">
+                                <span>{t('Laatikot yhteensä')}</span>
+                                <span className="whitespace-nowrap">{formatEuro(boxRentalPreview.total)}</span>
+                              </div>
+                              <p className="text-xs text-gray-400">{t('Hinnat sisältävät ALV:n. Toimitus pääkaupunkiseudulle. Lisätään hinta-arvioon.')}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1480,6 +1659,12 @@ export default function Calculator() {
                       </span>
                       <span className="font-bold text-green-700 dark:text-green-300">-{Math.round(priceResult.dateDiscountAmount)}€</span>
                     </div>
+                    {priceResult.boxRental && (
+                      <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                        <span className="text-gray-500">{t('Laatikkovuokra (ei alennusta)')}</span>
+                        <span className="font-bold">+{formatEuro(priceResult.boxRental.total)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between p-3 rounded-xl bg-primary/5">
                       <span className="font-semibold">{t('Lopullinen arvio')}</span>
                       <span className="font-bold">{priceResult.priceRangeLow}–{priceResult.priceRangeHigh}€</span>
@@ -1534,6 +1719,22 @@ export default function Calculator() {
                       <span>{t('Yhteensä (ennen muuttopäivän alennusta)')}</span>
                       <span>{Math.round(priceResult.normalPriceTotal)}€</span>
                     </div>
+                    {priceResult.boxRental && (
+                      <>
+                        <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                          <span className="text-gray-500">
+                            {t('Laatikkovuokra')} ({priceResult.boxRental.count} {t('kpl')} × {priceResult.boxRental.days} {t('vrk')})
+                          </span>
+                          <span className="font-bold">{formatEuro(priceResult.boxRental.rentalCost)}</span>
+                        </div>
+                        <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                          <span className="text-gray-500">{t('Laatikoiden toimitus ja nouto')}</span>
+                          <span className={`font-bold ${priceResult.boxRental.deliveryFree ? 'text-green-600' : ''}`}>
+                            {priceResult.boxRental.deliveryFree ? t('Ilmainen') : formatEuro(priceResult.boxRental.deliveryCost)}
+                          </span>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
 

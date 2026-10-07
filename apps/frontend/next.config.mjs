@@ -21,6 +21,9 @@ const nextConfig = {
       { source: "/services", destination: "/palvelut", permanent: true },
       { source: "/contact", destination: "/yhteystiedot", permanent: true },
 
+      // /vuokraa -> /muuttolaatikot (poista tämä, jos /vuokraa-sivusta tehdään myöhemmin yleinen vuokrausyhteenveto)
+      { source: "/vuokraa", destination: "/muuttolaatikot", permanent: true },
+
       // Finnish aliases
       { source: "/blog", destination: "/blogi", permanent: true },
       { source: "/blog/:path*", destination: "/blogi/:path*", permanent: true },

@@ -1,4 +1,5 @@
 import { FURNITURE_CATALOG, RECYCLING_WASTE_TYPES, CalculatorSchema, calculateMovingPrice } from '@/features/calculator/pricing';
+import { BOX_RENTAL, calculateBoxRental, describeBoxRental } from '@/features/calculator/boxRental';
 
 // Shared between the hallinta lead detail page and the quote email sender — both need to
 // turn a lead's raw formData JSON (calculator ids like "sofa_3": 2) into human-readable text.
@@ -9,6 +10,7 @@ export const SERVICE_TYPE_LABELS: Record<string, string> = {
   recycling: 'Kierrätys',
   yritysmuutto: 'Yritysmuutto',
   tyoapu: 'Työapu',
+  vuokraus: 'Vuokraus',
 };
 
 export const PACKAGE_LABELS: Record<string, string> = {
@@ -69,6 +71,16 @@ export function getExtraServices(data: unknown): string[] {
   }
   if (record.needsPacking) extras.push('Pakkauspalvelu (pakkaamme tavarat)');
   if (record.needsCleaning) extras.push('Muuttosiivous');
+  if (record.needsBoxRental === true && (record.serviceType === undefined || record.serviceType === 'moving')) {
+    const rental = describeBoxRental(
+      calculateBoxRental({
+        count: Number(record.boxRentalCount),
+        days: Number(record.boxRentalDays) || BOX_RENTAL.defaultDays,
+        withMove: true,
+      }),
+    );
+    if (rental) extras.push(rental);
+  }
   if (Array.isArray(record.additionalStops) && record.additionalStops.length > 0) {
     extras.push(`${record.additionalStops.length} välipysähdystä`);
   }

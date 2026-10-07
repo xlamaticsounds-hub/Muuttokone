@@ -9,6 +9,10 @@ const footerNavData: FooterMenu[] = [
         route: '/palvelut',
       },
       {
+        label: 'Muuttolaatikot',
+        route: '/muuttolaatikot',
+      },
+      {
         label: 'Työapu',
         route: '/tyoapu',
       },
@@ -32,6 +36,18 @@ const footerNavData: FooterMenu[] = [
       {
         label: 'Muuttopalvelu Tampereella',
         route: '/muuttopalvelu-tampere',
+      },
+      {
+        label: 'Muuttolaatikot Helsingissä',
+        route: '/muuttolaatikot/helsinki',
+      },
+      {
+        label: 'Muuttolaatikot Espoossa',
+        route: '/muuttolaatikot/espoo',
+      },
+      {
+        label: 'Muuttolaatikot Vantaalla',
+        route: '/muuttolaatikot/vantaa',
       },
     ],
   },
