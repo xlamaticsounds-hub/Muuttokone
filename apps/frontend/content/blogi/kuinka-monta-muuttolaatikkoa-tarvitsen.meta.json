@@ -5,7 +5,9 @@
   "metaTitle": "Kuinka monta muuttolaatikkoa tarvitsen? | Muuttokone.fi",
   "metaDescription": "Nyrkkisääntö on noin yksi muuttolaatikko asuinneliötä kohti. Katso määrä asunnon koon ja huoneiden mukaan sekä vertailu: vuokra vai pahvilaatikko.",
   "category": "Muuttovinkit",
-  "tags": ["Muistilista"],
-  "featuredImage": "(lisää kansikuva hallinnassa)",
+  "tags": [
+    "Muistilista"
+  ],
+  "featuredImage": "/images/webp/muuttolaatikot/muuttolaatikko.webp",
   "content": "kuinka-monta-muuttolaatikkoa-tarvitsen.md"
 }

@@ -23,7 +23,7 @@ export function buildRentalProductSchema(
     '@type': 'Product',
     name: `${item.title} – vuokra`,
     description: `${item.description} Vuokra ${price.replace('.', ',')} € / kpl / vuorokausi (sis. ALV), ${item.qty.min}–${item.qty.max} kpl, vuokra-aika ${item.days.min}–${item.days.max} vuorokautta.`,
-    image: [`${siteUrl}${options.imagePath ?? '/icons/boxguy.webp'}`],
+    image: [`${siteUrl}${options.imagePath ?? item.image ?? '/icons/boxguy.webp'}`],
     brand: { '@type': 'Brand', name: 'Muuttokone.fi' },
     offers: {
       '@type': 'Offer',

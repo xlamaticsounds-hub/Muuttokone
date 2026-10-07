@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import toast from 'react-hot-toast';
 import Honeypot from '@/components/Forms/Honeypot';
 import GdprConsentCheckbox from '@/components/Forms/GdprConsentCheckbox';
@@ -265,6 +266,9 @@ export default function RentalOrderForm() {
                   >
                     {isOn && <span className="text-xs text-white">✓</span>}
                   </div>
+                  {item.image && (
+                    <Image src={item.image} alt="" width={72} height={48} className="hidden h-12 w-[72px] shrink-0 rounded-lg bg-white object-contain sm:block" />
+                  )}
                   <div className="flex-1">
                     <h4 className="font-bold text-black dark:text-white">
                       {item.emoji} {item.title}

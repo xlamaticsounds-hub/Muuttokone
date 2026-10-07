@@ -6,7 +6,9 @@ import StructuredData from '@/components/SEO/StructuredData';
 import ProcessSteps from '@/components/ProcessSteps';
 import Faq from '@/components/Faq';
 import Cta from '@/components/Cta';
+import Image from 'next/image';
 import RentalOrderForm from '@/features/vuokraus/RentalOrderForm';
+import RentalHeroImage from '@/features/vuokraus/RentalHeroImage';
 import { vuokrausFaqData, vuokrausProcessSteps } from '@/features/vuokraus/vuokrausData';
 import { RENTAL_DELIVERY, formatPricePerDay, getAvailableRentalItems } from '@/features/vuokraus/rental';
 import { BOX_CITIES } from '@/features/vuokraus/boxCityData';
@@ -17,6 +19,7 @@ export const metadata: Metadata = generateSEOMetadata({
   openGraph: {
     title: SEOConfigs.muuttolaatikot.title,
     description: SEOConfigs.muuttolaatikot.description,
+    image: '/images/webp/muuttolaatikot/muuttolaatikko.webp',
     type: 'website',
   },
 });
@@ -64,6 +67,7 @@ export default function MuuttolaatikotPage() {
       {/* Hero */}
       <section className="bg-primary relative overflow-hidden py-20 lg:py-28">
         <div className="relative z-10 mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
+          <div className="grid items-center gap-10 lg:grid-cols-2">
           <div className="max-w-2xl">
             <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/80">Muuttolaatikot</p>
             <h1 className="mb-5 text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
@@ -87,6 +91,8 @@ export default function MuuttolaatikotPage() {
                 Katso hinnat
               </Link>
             </div>
+          </div>
+          <RentalHeroImage />
           </div>
         </div>
       </section>
@@ -129,7 +135,18 @@ export default function MuuttolaatikotPage() {
                 key={item.id}
                 className="flex w-full flex-col rounded-2xl border border-black/5 bg-white/80 p-6 shadow-sm ring-1 ring-black/5 backdrop-blur md:w-[calc(50%-12px)] lg:w-[calc(33.333%-16px)] dark:border-white/10 dark:bg-slate-900/70 dark:ring-white/5"
               >
-                <div className="mb-3 text-4xl">{item.emoji}</div>
+                {item.image ? (
+                  <Image
+                    src={item.image}
+                    alt={item.imageAlt ?? item.title}
+                    width={1200}
+                    height={800}
+                    sizes="(min-width: 1024px) 400px, 90vw"
+                    className="mb-4 h-auto w-full rounded-xl bg-white"
+                  />
+                ) : (
+                  <div className="mb-3 text-4xl">{item.emoji}</div>
+                )}
                 <h3 className="text-xl font-semibold text-black/90 dark:text-white">{item.title}</h3>
                 {!item.inStock && (
                   <p className="mt-1 inline-block self-start rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">

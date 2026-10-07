@@ -7,6 +7,7 @@ import StructuredData from '@/components/SEO/StructuredData';
 import Faq from '@/components/Faq';
 import Cta from '@/components/Cta';
 import RentalOrderForm from '@/features/vuokraus/RentalOrderForm';
+import RentalHeroImage from '@/features/vuokraus/RentalHeroImage';
 import { BOX_CITIES, getBoxCity, getBoxCityFaq, getBoxCitySeo } from '@/features/vuokraus/boxCityData';
 import { buildBreadcrumbSchema, buildRentalProductSchema } from '@/features/vuokraus/productSchema';
 import { BOX_ITEM_ID, RENTAL_DELIVERY, formatPricePerDay, getRentalItem } from '@/features/vuokraus/rental';
@@ -27,7 +28,7 @@ export async function generateMetadata({ params }: CityParams): Promise<Metadata
   const seo = getBoxCitySeo(city);
   return generateSEOMetadata({
     ...seo,
-    openGraph: { title: seo.title, description: seo.description, type: 'website' },
+    openGraph: { title: seo.title, description: seo.description, image: '/images/webp/muuttolaatikot/muuttolaatikko.webp', type: 'website' },
   });
 }
 
@@ -57,6 +58,7 @@ export default async function MuuttolaatikotKaupunkiPage({ params }: CityParams)
       {/* Hero */}
       <section className="bg-primary relative overflow-hidden py-20 lg:py-28">
         <div className="relative z-10 mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
+          <div className="grid items-center gap-10 lg:grid-cols-2">
           <div className="max-w-2xl">
             <p className="mb-3 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-white/80">
               <MapPin className="h-4 w-4" /> {city.name}
@@ -71,6 +73,8 @@ export default async function MuuttolaatikotKaupunkiPage({ params }: CityParams)
                 Laske myös muuton hinta
               </Link>
             </div>
+          </div>
+          <RentalHeroImage />
           </div>
         </div>
       </section>

@@ -10,6 +10,7 @@
 //     id: 'tekstiilipesuri',            // pysyvä tunniste (tallentuu liidille), älä vaihda myöhemmin
 //     title: 'Tekstiilipesuri',
 //     emoji: '🧽',
+//     image: '/images/webp/.../tekstiilipesuri.webp',  // valinnainen tuotekuva
 //     description: 'Sohvien, mattojen ja verhoilujen syväpesuun.',
 //     details: ['Pesuaine mukana', 'Käyttöohje mukana'],
 //     pricePerDay: 29,                  // € / kpl / vrk, sis. ALV
@@ -25,6 +26,8 @@ export interface RentalItem {
   id: string;
   title: string;
   emoji: string;
+  image?: string; // tuotekuva (polku public-kansiosta)
+  imageAlt?: string;
   description: string;
   details: string[]; // luettelo tuotekortilla
   pricePerDay: number; // € / kpl / vuorokausi, sis. ALV
@@ -63,8 +66,10 @@ export const RENTAL_ITEMS: RentalItem[] = [
     id: BOX_ITEM_ID,
     title: 'Muuttolaatikot',
     emoji: '📦',
+    image: '/images/webp/muuttolaatikot/muuttolaatikko.webp',
+    imageAlt: 'Musta muovinen muuttolaatikko, jossa kädensijat ja Muuttokone.fi-logo',
     description: 'Kestävät, pinottavat muuttolaatikot pakkaamiseen. Toimitamme kotiovelle ja noudamme tyhjinä muuton jälkeen.',
-    details: ['Samanlaiset laatikot pinoutuvat siististi ja nopeuttavat lastausta', 'Ei pahvijätettä – palautat laatikot meille'],
+    details: ['Kädensijat helpottavat kantamista', 'Samanlaiset laatikot pinoutuvat siististi ja nopeuttavat lastausta', 'Ei pahvijätettä – palautat laatikot meille'],
     pricePerDay: 0.19,
     qty: { min: 20, max: 150, step: 5, default: 50 },
     days: { min: 7, max: 60, default: 14, options: [7, 14, 21, 28] },
