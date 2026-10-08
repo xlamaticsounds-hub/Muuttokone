@@ -285,6 +285,7 @@ export interface PriceBreakdown {
   difficultyLevel: 'easy' | 'medium' | 'hard';
   estimatedDurationHours: number;
   details: {
+    extraDestinationCount?: number; // Muutto: montako lisäkohdetta hinnassa on mukana
     distanceKm: number;
     laborHours: number;
     laborRate: number;
@@ -306,6 +307,7 @@ export interface PriceBreakdown {
       baseTimeHours: number; // COORDINATION_TIME_HOURS — kiinteä koordinointiaika
     };
     impactBreakdown: {
+      extraDestinations?: number; // Lisäkohteiden vaikutus, € (vain Muutto, kun lisäkohteita on)
       items: number; // Tavaramäärän (käsittelyajan) vaikutus, €
       floors: number; // Kerrosten/hissin vaikutus, €
       carryDistance: number; // Kantomatkan vaikutus, €
@@ -485,6 +487,12 @@ const CUSTOM_ITEM_MINUTES_EACH = 5;
 // resurssin (1 kuljettaja + pakettiauto/kuorma-auto), joten sama työ ei saa maksaa
 // kahta eri hintaa riippuen siitä kummalta välilehdeltä sen tilaa. Kilpailijavertailu
 // (Avainmuutto: 87,90 €/h 1 kuljettaja, 119,20 €/h 2 kuljettajaa, alv sis.) tukee tätä tasoa.
+// Muuton lisäkohteet (useampi kohdeosoite): jokainen lisäkohde lisää työaikaa (ajo kohteesta toiseen,
+// purku, kantomatkat) tällä määrällä, laskutettuna kyseisen palvelupaketin tuntihinnalla. Reitin
+// pituus (km) huomioidaan erikseen etäisyydessä — laskuri laskee sen automaattisesti kaikkien osoitteiden välillä.
+export const EXTRA_DESTINATION_MINUTES = 30;
+export const MAX_EXTRA_DESTINATIONS = 4;
+
 const EXTRA_STOP_MINUTES = 15; // ylimääräisen välipysähdyksen lastaus/purku-aika
 const DRIVER_COUNT_EFFICIENCY: Record<'1' | '2', number> = { '1': 1.0, '2': 0.65 };
 const SECOND_DRIVER_RATE_ADDON = 30; // €/h, 2. kuljettajan lisähinta (89 + 30 = 119 €/h, ks. yllä)
@@ -1097,6 +1105,51 @@ function calculatePriceWithoutBoxRental(data: CalculatorData): PriceBreakdown {
   };
 }
 
+/** Muuton lisäkohteet: ei-tyhjät lisäosoitteet (enintään MAX_EXTRA_DESTINATIONS). */
+export function countExtraDestinations(data: Pick<CalculatorData, 'serviceType' | 'additionalStops'>): number {
+  if (data.serviceType !== 'moving') return 0;
+  const filled = (data.additionalStops ?? []).filter((stop) => typeof stop === 'string' && stop.trim().length > 0).length;
+  return Math.min(filled, MAX_EXTRA_DESTINATIONS);
+}
+
+/**
+ * Lisää muuttohintaan useamman kohdeosoitteen työaikalisän (vain Muutto). Lisäkohteet hinnoitellaan
+ * muuton tuntihinnalla ja niihin sovelletaan muuttopäivän alennusta kuten muuhunkin muuttotyöhön;
+ * vähimmäishinnat (jotka on jo sovellettu) eivät "nielaise" lisäkohteen hintaa. Ilman lisäkohteita
+ * tulos on täsmälleen sama kuin calculatePriceWithoutBoxRental().
+ */
+function applyExtraDestinations(base: PriceBreakdown, data: CalculatorData): PriceBreakdown {
+  const count = countExtraDestinations(data);
+  if (count === 0) return base;
+
+  const hours = (count * EXTRA_DESTINATION_MINUTES) / 60;
+  const normalExtra = Math.round(hours * base.details.laborRate * 100) / 100;
+  const discount = getDateDiscount(data.date).discount;
+  const discountAmount = Math.round(normalExtra * discount * 100) / 100;
+  const total = Math.round((base.total + normalExtra - discountAmount) * 100) / 100;
+  const vat = total - total / (1 + PRICING_CONSTANTS.vatRate);
+  const ceil5 = (value: number) => Math.ceil(value / 5) * 5;
+  const extraAfterDiscount = normalExtra - discountAmount;
+
+  return {
+    ...base,
+    total,
+    vat,
+    subtotal: total - vat,
+    normalPriceTotal: base.normalPriceTotal + normalExtra,
+    dateDiscountAmount: base.dateDiscountAmount + discountAmount,
+    priceRangeLow: ceil5(base.priceRangeLow + extraAfterDiscount),
+    priceRangeHigh: ceil5(base.priceRangeHigh + extraAfterDiscount),
+    estimatedDurationHours: base.estimatedDurationHours + hours,
+    details: {
+      ...base.details,
+      laborHours: base.details.laborHours + hours,
+      extraDestinationCount: count,
+      impactBreakdown: { ...base.details.impactBreakdown, extraDestinations: normalExtra },
+    },
+  };
+}
+
 /**
  * Calculates the price based on the provided data, including the optional box rental.
  *
@@ -1106,7 +1159,7 @@ function calculatePriceWithoutBoxRental(data: CalculatorData): PriceBreakdown {
  * Kun vuokraa ei ole valittu, tulos on täsmälleen sama kuin calculatePriceWithoutBoxRental().
  */
 export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
-  const base = calculatePriceWithoutBoxRental(data);
+  const base = applyExtraDestinations(calculatePriceWithoutBoxRental(data), data);
   if (!data.needsBoxRental || data.serviceType !== 'moving') return base;
 
   const rental = calculateBoxRental({ count: data.boxRentalCount, days: data.boxRentalDays, withMove: true });

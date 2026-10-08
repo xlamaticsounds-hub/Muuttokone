@@ -4,7 +4,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 import { motion, AnimatePresence } from 'framer-motion';
-import { calculateMovingPrice, CalculatorData, PriceBreakdown, FURNITURE_CATALOG, INCLUDED_DISTANCE_KM, RECYCLING_WASTE_TYPES } from './pricing';
+import { calculateMovingPrice, CalculatorData, PriceBreakdown, FURNITURE_CATALOG, INCLUDED_DISTANCE_KM, RECYCLING_WASTE_TYPES, MAX_EXTRA_DESTINATIONS, EXTRA_DESTINATION_MINUTES } from './pricing';
 import { BOX_RENTAL, BOX_RENTAL_SUGGESTED_COUNT, calculateBoxRental, formatEuro, suggestBoxCount } from './boxRental';
 import toast from 'react-hot-toast';
 import { Loader2, ArrowRight, ArrowLeft, Calculator as CalcIcon, Calendar, CheckCircle2, ChevronDown, Search, Camera, X } from 'lucide-react';
@@ -219,32 +219,49 @@ export default function Calculator() {
     }
   }, [currentStep]); // Also re-init if we return to step 0
 
-  // Calculate distance automatically using Google Maps Distance Matrix API
+  // Calculate distance automatically using Google Maps Distance Matrix API.
+  // Muutossa useamman kohdeosoitteen reitti lasketaan osoitteiden välisten osuuksien summana
+  // (lähtö -> kohde -> lisäkohde 1 -> ...). Muilla palveluilla vain lähtö -> kohde.
+  const routeStopsKey = formData.serviceType === 'moving'
+    ? formData.additionalStops.map((s) => s.trim()).filter(Boolean).slice(0, MAX_EXTRA_DESTINATIONS).join('|')
+    : '';
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const google = (window as any).google;
     if (!google || !google.maps || !formData.addressFrom || !formData.addressTo) return;
 
-    const service = new google.maps.DistanceMatrixService();
+    // Pieni viive: ei kutsuta Googlea jokaisesta näppäinpainalluksesta (varsinkin useampi osoite kerrallaan).
+    const timer = setTimeout(() => {
+      const service = new google.maps.DistanceMatrixService();
+      const stops = routeStopsKey ? routeStopsKey.split('|') : [];
+      const chain = [formData.addressFrom, formData.addressTo, ...stops];
 
-    service.getDistanceMatrix({
-      origins: [formData.addressFrom],
-      destinations: [formData.addressTo],
-      travelMode: google.maps.TravelMode.DRIVING,
-      unitSystem: google.maps.UnitSystem.METRIC,
-    }, (response: any, status: any) => {
-      if (status === google.maps.DistanceMatrixStatus.OK && response.rows[0].elements[0].status === google.maps.DistanceMatrixElementStatus.OK) {
-        const distanceInMeters = response.rows[0].elements[0].distance.value;
-        const distanceInKm = Math.round(distanceInMeters / 1000);
+      service.getDistanceMatrix({
+        origins: chain.slice(0, -1),
+        destinations: chain.slice(1),
+        travelMode: google.maps.TravelMode.DRIVING,
+        unitSystem: google.maps.UnitSystem.METRIC,
+      }, (response: any, status: any) => {
+        if (status !== google.maps.DistanceMatrixStatus.OK) {
+          console.warn('Distance Matrix API error:', status);
+          return;
+        }
+        // Osuus i: osoite i -> osoite i+1 on matriisin lävistäjällä
+        let meters = 0;
+        for (let i = 0; i < chain.length - 1; i++) {
+          const element = response.rows[i]?.elements[i];
+          if (!element || element.status !== google.maps.DistanceMatrixElementStatus.OK) return;
+          meters += element.distance.value;
+        }
+        const distanceInKm = Math.round(meters / 1000);
         // Only update if distance is reasonable (between 1km and 500km)
         if (distanceInKm >= 1 && distanceInKm <= 500) {
           updateField('distanceKm', distanceInKm);
         }
-      } else if (status !== google.maps.DistanceMatrixStatus.OK) {
-        console.warn('Distance Matrix API error:', status);
-      }
-    });
-  }, [formData.addressFrom, formData.addressTo]);
+      });
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [formData.addressFrom, formData.addressTo, routeStopsKey]);
 
   const handleNext = () => {
     // Validate service step
@@ -849,24 +866,32 @@ export default function Calculator() {
                     )}
                   </div>
 
-                  {formData.serviceType === 'transport' && (
+                  {(formData.serviceType === 'transport' || formData.serviceType === 'moving') && (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <label className="block text-sm font-semibold">{t('Välipysähdykset (valinnainen)')}</label>
-                        <button
-                          type="button"
-                          onClick={addStop}
-                          className="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full hover:bg-primary/20 transition-all"
-                        >
-                          {t('+ Lisää välipysähdys')}
-                        </button>
+                        <label className="block text-sm font-semibold">
+                          {formData.serviceType === 'moving' ? t('Lisäkohteet (valinnainen)') : t('Välipysähdykset (valinnainen)')}
+                        </label>
+                        {(formData.serviceType !== 'moving' || formData.additionalStops.length < MAX_EXTRA_DESTINATIONS) && (
+                          <button
+                            type="button"
+                            onClick={addStop}
+                            className="text-xs font-bold text-primary bg-primary/10 px-3 py-1.5 rounded-full hover:bg-primary/20 transition-all"
+                          >
+                            {formData.serviceType === 'moving' ? t('+ Lisää kohdeosoite') : t('+ Lisää välipysähdys')}
+                          </button>
+                        )}
                       </div>
                       {formData.additionalStops.map((stop, index) => (
                         <div key={index} className="flex items-center gap-2">
                           <input
                             type="text"
                             className="flex-1 px-5 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none transition-all"
-                            placeholder={locale === 'en' ? `Stop ${index + 1} address` : `Välipysähdys ${index + 1} osoite`}
+                            placeholder={
+                              formData.serviceType === 'moving'
+                                ? (locale === 'en' ? `Destination ${index + 2} address` : `Kohde ${index + 2} osoite`)
+                                : (locale === 'en' ? `Stop ${index + 1} address` : `Välipysähdys ${index + 1} osoite`)
+                            }
                             value={stop}
                             onChange={(e) => updateStop(index, e.target.value)}
                           />
@@ -881,7 +906,9 @@ export default function Calculator() {
                       ))}
                       {formData.additionalStops.length > 0 && (
                         <p className="text-xs text-gray-400">
-                          {t('Muista huomioida välipysähdysten lisäämä matka alla olevassa etäisyysarviossa.')}
+                          {formData.serviceType === 'moving'
+                            ? `${t('Jokainen lisäkohde lisää työaikaa')} (${EXTRA_DESTINATION_MINUTES} min) ${t('ja reitin pituutta – hinta päivittyy automaattisesti.')}`
+                            : t('Muista huomioida välipysähdysten lisäämä matka alla olevassa etäisyysarviossa.')}
                         </p>
                       )}
                     </div>
@@ -1709,6 +1736,14 @@ export default function Calculator() {
                           {formData.serviceType === 'transport' ? t('Välipysähdysten vaikutus') : t('Lisäpalveluiden vaikutus')}
                         </span>
                         <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.extras)}€</span>
+                      </div>
+                    )}
+                    {(priceResult.details.impactBreakdown.extraDestinations ?? 0) > 0 && (
+                      <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                        <span className="text-gray-500">
+                          {t('Lisäkohteet')} ({priceResult.details.extraDestinationCount} {t('kpl')})
+                        </span>
+                        <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.extraDestinations ?? 0)}€</span>
                       </div>
                     )}
                     <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">

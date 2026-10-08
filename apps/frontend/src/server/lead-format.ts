@@ -82,7 +82,13 @@ export function getExtraServices(data: unknown): string[] {
     if (rental) extras.push(rental);
   }
   if (Array.isArray(record.additionalStops) && record.additionalStops.length > 0) {
-    extras.push(`${record.additionalStops.length} välipysähdystä`);
+    if (record.serviceType === 'moving') {
+      // Muutossa lisäosoitteet ovat lisäkohteita (useampi kohdeosoite) — näytetään osoitteet myös
+      const stops = record.additionalStops.filter((s): s is string => typeof s === 'string' && s.trim().length > 0);
+      if (stops.length > 0) extras.push(`Lisäkohteet (${stops.length}): ${stops.map((s) => s.trim()).join('; ')}`);
+    } else {
+      extras.push(`${record.additionalStops.length} välipysähdystä`);
+    }
   }
   return extras;
 }

@@ -224,4 +224,11 @@ export const calculatorDictionary: Record<string, string> = {
   'Laatikkovuokra (ei alennusta)': 'Box rental (no discount)',
   'Laatikkovuokra': 'Box rental',
   'Laatikoiden toimitus ja nouto': 'Box delivery and pickup',
+
+  // Multiple destinations (moving)
+  'Lisäkohteet (valinnainen)': 'Additional destinations (optional)',
+  '+ Lisää kohdeosoite': '+ Add destination address',
+  'Jokainen lisäkohde lisää työaikaa': 'Each additional destination adds working time',
+  'ja reitin pituutta – hinta päivittyy automaattisesti.': 'and route length – the price updates automatically.',
+  'Lisäkohteet': 'Additional destinations',
 };

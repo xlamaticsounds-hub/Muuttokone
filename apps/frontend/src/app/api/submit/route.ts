@@ -8,6 +8,7 @@ import { postLeadToDiscord } from '@/server/discord-bot';
 import { sendDiscordNotification } from '@/server/discord-webhook';
 import { createTentativeLeadEvent, findOverlappingEvents } from '@/server/google-calendar';
 import { BOX_RENTAL, calculateBoxRental, describeBoxRental } from '@/features/calculator/boxRental';
+import { MAX_EXTRA_DESTINATIONS } from '@/features/calculator/pricing';
 
 // Force Node.js runtime (multipart + File)
 export const runtime = 'nodejs';
@@ -529,6 +530,19 @@ async function submitBooking(data: any) {
       : null;
   const boxRentalLine = boxRentalText ? `📦 ${boxRentalText}` : null;
 
+  // Useampi kohdeosoite (lisäkohteet): osoitteet muistiinpanoihin, Discordiin ja kalenteriin, koska
+  // Lead.toAddress sisältää vain ensimmäisen kohteen.
+  const extraDestinations =
+    data.serviceType === 'moving' && Array.isArray(data.additionalStops)
+      ? data.additionalStops
+          .filter((stop: unknown): stop is string => typeof stop === 'string' && stop.trim().length > 0)
+          .map((stop: string) => stop.trim())
+          .slice(0, MAX_EXTRA_DESTINATIONS)
+      : [];
+  const extraDestinationsLine =
+    extraDestinations.length > 0 ? `📍 Lisäkohteet (${extraDestinations.length}): ${extraDestinations.join('; ')}` : null;
+  const extraNotes = [boxRentalLine, extraDestinationsLine].filter((line): line is string => Boolean(line)).join('\n');
+
   const lead = await prisma.lead.create({
     data: {
       contact: { connect: { id: contact.id } },
@@ -538,7 +552,7 @@ async function submitBooking(data: any) {
       requestedDate,
       fromAddress: data.addressFrom,
       toAddress: data.addressTo,
-      notes: `Hinta-arvio: ${data.price}€${boxRentalLine ? `\n${boxRentalLine}` : ''}`,
+      notes: `Hinta-arvio: ${data.price}€${extraNotes ? `\n${extraNotes}` : ''}`,
       floor: data.floorFrom,
       hasElevator: data.elevatorFrom,
       boxCount: data.boxCount,
@@ -575,7 +589,7 @@ async function submitBooking(data: any) {
     floor: typeof data.floorFrom === 'number' ? data.floorFrom : null,
     hasElevator: typeof data.elevatorFrom === 'boolean' ? data.elevatorFrom : null,
     boxCount: typeof data.boxCount === 'number' ? data.boxCount : null,
-    notes: boxRentalLine,
+    notes: extraNotes || null,
   }).catch((error) => {
     console.error('[submit] notifyNewLead (booking) failed:', error);
     logEvent({
