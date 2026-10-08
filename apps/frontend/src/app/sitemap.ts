@@ -1,8 +1,13 @@
 import type { MetadataRoute } from 'next';
 import { prisma } from '@/server/db';
 
+// Sivukartta muodostetaan pyynnön hetkellä eikä buildissa: buildissa ei ole tietokantaa eikä
+// SITE_URL-ympäristömuuttujaa, jolloin sivukarttaan tuli www-tön osoite (joka ohjautuu www:hen)
+// ja kaikki blogiartikkelit puuttuivat.
+export const dynamic = 'force-dynamic';
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = process.env.SITE_URL ?? 'https://muuttokone.fi';
+  const base = process.env.SITE_URL ?? 'https://www.muuttokone.fi';
 
   let posts: { slug: string; publishedAt: Date | null; updatedAt: Date }[] = [];
   try {
