@@ -42,6 +42,13 @@ const STEPS = [
   { id: 'booking', title: 'Varaus' },
 ];
 
+// Toivottu kellonaika valitaan listasta 15 minuutin välein klo 7.00–20.00. Arvo on aina "HH:MM",
+// jota kalenteri ja liidin muistiinpanot käyttävät sellaisenaan.
+const PREFERRED_TIME_OPTIONS = Array.from({ length: (20 - 7) * 4 + 1 }, (_, i) => {
+  const minutes = 7 * 60 + i * 15;
+  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
+});
+
 export default function Calculator() {
   const { locale } = useLocale();
   const t = useT(calculatorDictionary);
@@ -1586,30 +1593,35 @@ export default function Calculator() {
                 </div>
 
                 <div className="max-w-xs sm:max-w-sm mx-auto flex flex-col sm:flex-row gap-3">
+                  {/* Otsikot ovat vierekkäin yhtä korkeat (päivän otsikko rivittyy kahdelle riville),
+                      jotta kentät asettuvat samalle tasolle. */}
                   <div className="flex-1">
-                    <label className="block text-xs font-bold uppercase text-gray-400 mb-2 text-center">
+                    <label className="block text-xs font-bold uppercase text-gray-400 mb-2 text-center sm:flex sm:min-h-8 sm:items-end sm:justify-center">
                       {t('Muuttopäivä (vaikuttaa hintaan)')}
                     </label>
                     <input
                       type="date"
-                      className="w-full px-5 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none text-center"
+                      className="w-full h-12 px-5 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none text-center"
                       value={formatDateInput(formData.date)}
                       onChange={(e) => updateField('date', e.target.value ? new Date(e.target.value) : undefined)}
                     />
                   </div>
                   <div className="flex-1">
-                    <label className="block text-xs font-bold uppercase text-gray-400 mb-2 text-center">
+                    <label className="block text-xs font-bold uppercase text-gray-400 mb-2 text-center sm:flex sm:min-h-8 sm:items-end sm:justify-center">
                       {t('Toivottu kellonaika')}
                     </label>
-                    <input
-                      type="time"
-                      step={3600}
-                      placeholder="12:00"
-                      className="w-full px-5 py-3 rounded-xl border border-gray-200 dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none text-center"
+                    <select
+                      className="w-full h-12 px-5 rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 focus:ring-2 focus:ring-primary outline-none text-center [text-align-last:center]"
                       value={formData.preferredTime || ''}
                       onChange={(e) => updateField('preferredTime', e.target.value || undefined)}
-                    />
-                    <p className="mt-1 text-[11px] text-gray-400 text-center">{t('Esim. 12:00 — tunnin tarkkuudella')}</p>
+                    >
+                      <option value="">{t('Valitse aika')}</option>
+                      {PREFERRED_TIME_OPTIONS.map((time) => (
+                        <option key={time} value={time}>
+                          {locale === 'en' ? time : time.replace(':', '.')}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
                 {!formData.date && (

@@ -148,6 +148,8 @@ export const calculatorDictionary: Record<string, string> = {
   '✅ Ei piilokuluja': '✅ No hidden costs',
   '📋 Hinta-arvio ei sido sinua': '📋 The estimate is not binding',
   'Muuttopäivä (vaikuttaa hintaan)': 'Moving date (affects price)',
+  'Toivottu kellonaika': 'Preferred time',
+  'Valitse aika': 'Choose a time',
   'Valitse päivä nähdäksesi voiko ajankohta tuoda alennusta.': 'Select a date to see if it could bring a discount.',
   'Arvioitu muuttosi': 'Your estimated move',
   'sis. ALV': 'incl. VAT',
