@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import { generateSEOMetadata, SEOConfigs } from '@/components/SEO/SEOHelpers';
 import StructuredData from '@/components/SEO/StructuredData';
+import { generalFaqData } from '@/components/Faq/faqData';
 
-const faqs = [
+const pageFaqs = [
   {
     q: 'Kuinka nopeasti saamme tarjouksen?',
     a: 'Useimmiten saman arkipäivän aikana. Kiireisissä tapauksissa soitamme heti lomakkeen lähetyksen jälkeen.',
@@ -27,6 +28,13 @@ const faqs = [
     q: 'Voinko muuttaa aikataulua?',
     a: 'Usein onnistuu jopa 48h varoitusajalla. Ilmoitathan muutoksesta heti, niin järjestämme kaluston uudelleen.',
   },
+];
+
+// Etusivu näyttää vain osan yleisistä kysymyksistä ja linkittää tänne, joten koko lista on tässä.
+// Laatikkovuokran perusesittely jätetään pois, koska "Paljonko muuttolaatikoiden vuokra maksaa?" kattaa sen.
+const faqs = [
+  ...pageFaqs,
+  ...generalFaqData.filter((item) => item.q !== 'Voinko vuokrata muuttolaatikot teiltä?'),
 ];
 
 export const metadata: Metadata = generateSEOMetadata({

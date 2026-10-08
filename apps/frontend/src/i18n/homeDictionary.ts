@@ -29,9 +29,9 @@ export const heroDictionary: Record<string, string> = {
   'Luotettava apusi': 'Your Reliable Helper',
   'Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Ammattitaitoiset ja tehokkaat muuttopalvelut yksityis- ja yritysasiakkaille. Ei piilokuluja, vain rehellinen hinnoittelu.':
     'A fast, safe, and transparent move in Helsinki and Uusimaa. Professional, efficient moving services for private and business customers. No hidden fees, just honest pricing.',
-  'Laske muuttolaskurilla ja saat kiinteän hinnan jo muutamassa sekunnissa – ei arvailua, ei piilokuluja, vain tarkka hinta etukäteen.':
-    'Use the moving calculator and get a fixed price in just seconds – no guessing, no hidden fees, just an accurate price upfront.',
+  'Laske hinta': 'Get a price',
   'Maksuton kartoitus ja neuvonta': 'Free assessment and advice',
+  'Kiinteä hinta heti': 'Fixed price instantly',
   'Vakuutettu ja rekisteröity': 'Insured and registered',
   'Nopea vastaus': 'Fast response',
   'kotimuutossa': 'home moving',
@@ -62,7 +62,35 @@ export const pricingPreviewDictionary: Record<string, string> = {
   'Perheasunnot ja omakotitalot. Täyden palvelun muutto.': 'Family homes and houses. A full-service move.',
   '3-4 muuttomiestä': '3–4 movers',
   'Koko päivä': 'Full day',
-  '📦 Laatikot vuokralle 0,19 €/vrk': '📦 Box rental €0.19/day',
+  'Vuokrattava muuttolaatikko': 'Rentable moving box',
+  'Muuttolaatikot vuokralle': 'Moving boxes for rent',
+  '/ laatikko / vrk': 'per box per day',
+  'Toimitus ja nouto ilmaiseksi muuton yhteydessä. Lisää laatikot laskurin lisäpalveluista.':
+    "Free delivery and pickup with your move. Add the boxes under the calculator's extra services.",
+  'Katso laatikot': 'See the boxes',
+};
+
+export const servicesGridDictionary: Record<string, string> = {
+  'Palvelumme': 'Our services',
+  'Tarjoamme kattavat muuttopalvelut kotitalouksille ja yrityksille Helsingissä ja Uudellamaalla.':
+    'We offer comprehensive moving services for households and businesses in Helsinki and Uusimaa.',
+  'Kotimuutto': 'Home moving',
+  'Ovelta ovelle, kiinteä hinta etukäteen.': 'Door to door, fixed price upfront.',
+  'Yritysmuutto': 'Business moving',
+  'Toimistot ja liiketilat aikataulussa.': 'Offices and business premises on schedule.',
+  'Muuttolaatikot': 'Moving boxes',
+  'Vuokralle {rate}/vrk, toimitus kotiovelle.': 'For rent at {rate}/day, delivered to your door.',
+  'Työapu ja asennukset': 'Handyman help and installations',
+  'TV, pesukone, kalusteet ja IT-apu.': 'TV, washing machine, furniture and IT help.',
+  'Pakkauspalvelu': 'Packing service',
+  'Pakkaamme keittiöt ja hauraat esineet.': 'We pack kitchens and fragile items.',
+  'Muuttosiivous': 'Move-out cleaning',
+  'Luovutussiivous samalla kertaa.': 'Handover cleaning in the same go.',
+  'Kuolinpesän tyhjennys': 'Estate clearance',
+  'Hienovaraisesti, kierrätys hoidettuna.': 'Handled with care, recycling included.',
+  'Kuljetukset': 'Transport',
+  'Kaatopaikka-ajot ja yksittäiset kuljetukset.': 'Dump runs and one-off transports.',
+  'Kaikki palvelut': 'All services',
 };
 
 export const boxRentalDictionary: Record<string, string> = {
@@ -125,6 +153,7 @@ export const muuttolaskuriPageDictionary: Record<string, string> = {
 export const faqDictionary: Record<string, string> = {
   'Usein kysytyt kysymykset': 'Frequently asked questions',
   'Vastauksia yleisimpiin kysymyksiin muutostamme ja palveluistamme.': 'Answers to the most common questions about our moves and services.',
+  'Katso kaikki kysymykset': 'See all questions',
 
   'Miksi valita meidät?': 'Why choose us?',
   'Olemme vakuutettu ja rekisteröity muuttopalvelu, joka tarjoaa rehellisen, kiinteän hinnan ilman piilokuluja ja nopean vastauksen tarjouspyyntöihin. Asiakkaamme arvostavat ammattitaitoista, joustavaa palveluamme ja selkeää hinnoittelua.':
@@ -215,6 +244,7 @@ export const ctaDictionary: Record<string, string> = {
   'Saat meiltä maksuttoman kartoituksen ja tarjouksen 24 tunnin sisällä. Liity satojen tyytyväisten asiakkaiden joukkoon ja koe stressitön muutto.':
     'Get a free assessment and quote from us within 24 hours. Join hundreds of satisfied customers and experience a stress-free move.',
   'Pyydä tarjous': 'Request a quote',
+  'Laske hinta': 'Get a price',
 };
 
 export const contactDictionary: Record<string, string> = {

@@ -1,18 +1,16 @@
 'use client';
 
 import SlideOnReveal from '@/components/SlideOnReveal';
-import Link from 'next/link';
 import { useSiteConfig } from '@/app/context/SiteConfigContext';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocale } from '@/i18n/LocaleContext';
 import { useT } from '@/i18n/useT';
-import { heroDictionary, headerDictionary } from '@/i18n/homeDictionary';
+import { heroDictionary } from '@/i18n/homeDictionary';
 
 export default function HeroContent({ content }: { content?: any }) {
   const siteConfig = useSiteConfig();
   const { locale } = useLocale();
   const t = useT(heroDictionary);
-  const tHeader = useT(headerDictionary);
   // Typing effect state
   const baseTexts = content?.typingTexts || [
     'kotimuutossa',
@@ -91,17 +89,15 @@ export default function HeroContent({ content }: { content?: any }) {
             <p className="text-regular text-black/70 sm:text-lg dark:text-white/80">
               {content?.description || t('Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Ammattitaitoiset ja tehokkaat muuttopalvelut yksityis- ja yritysasiakkaille. Ei piilokuluja, vain rehellinen hinnoittelu.')}
             </p>
-            <p className="text-regular text-primary mt-3 font-semibold sm:text-lg">
-              {t('Laske muuttolaskurilla ja saat kiinteän hinnan jo muutamassa sekunnissa – ei arvailua, ei piilokuluja, vain tarkka hinta etukäteen.')}
-            </p>
 
             <div className="mt-8 flex flex-col-reverse gap-5 sm:flex-row">
-              <Link
-                href="/muuttolaskuri"
+              {/* Laskuri on heti herosta seuraava osio, joten painike vierittää sinne eikä avaa uutta sivua. */}
+              <a
+                href="#muuttolaskuri"
                 className="bg-primary text-regular hover:shadow-1 inline-flex w-fit rounded-full px-7.5 py-3 leading-7 font-medium text-white transition-all duration-300 hover:bg-primary/90 hover:shadow-lg ease-in-out"
               >
-                {tHeader('Muuttolaskuri')}
-              </Link>
+                {t('Laske hinta')}
+              </a>
               {/*Below the button insert VASTAUS TULEE AUTOMAATTISESTI*/}
 
               <span className="flex flex-col">
@@ -118,6 +114,9 @@ export default function HeroContent({ content }: { content?: any }) {
             </div>
 
             <div className="mt-6 flex flex-wrap gap-4 text-sm font-medium text-black/70 dark:text-white/70">
+              <span className="flex items-center gap-2">
+                <span className="text-green-500">✅</span> {t('Kiinteä hinta heti')}
+              </span>
               <span className="flex items-center gap-2">
                 <span className="text-green-500">✅</span> {t('Vakuutettu ja rekisteröity')}
               </span>

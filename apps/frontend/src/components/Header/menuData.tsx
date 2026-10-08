@@ -1,13 +1,17 @@
 import { Menu } from '@/types/menu';
 
+// Etusivu ja Muuttolaskuri näkyvät vain mobiilivalikossa: tietokoneen yläpalkissa etusivulle vie
+// logo ja muuttolaskuriin sininen painike.
 const menuData: Menu[] = [
   {
     label: 'Etusivu',
     route: '/',
+    mobileOnly: true,
   },
   {
     label: 'Muuttolaskuri',
     route: '/muuttolaskuri',
+    mobileOnly: true,
   },
   {
     label: 'Palvelut',

@@ -108,9 +108,9 @@ const Header = () => {
               </button>
 
               <nav className="fixed top-0 left-0 z-999 flex h-screen w-full items-center justify-center bg-white/95 text-center backdrop-blur-xs lg:static lg:h-auto lg:w-max lg:bg-transparent lg:backdrop-blur-none dark:bg-black/95 lg:dark:bg-transparent">
-                <ul className="items-center space-y-3 lg:flex lg:space-y-0 lg:space-x-3 xl:space-x-5 2xl:space-x-6">
+                <ul className="items-center space-y-3 lg:flex lg:space-y-0 lg:space-x-5 xl:space-x-8">
                   {updatedMenuData.map((item, index) => (
-                    <li key={index} className="menu-item">
+                    <li key={index} className={`menu-item${item.mobileOnly ? ' lg:hidden' : ''}`}>
                       <Link
                         href={item.route}
                         onClick={closeMenu}
