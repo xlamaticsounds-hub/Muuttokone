@@ -18,7 +18,7 @@ import { Client, GatewayIntentBits, Partials, EmbedBuilder, Events, ChannelType 
 import type { LeadStatus } from '@prisma/client';
 import { setLeadStatus, findLeadByDiscordMessageId } from '@/server/repo/leads';
 import { createLog } from '@/server/repo/logs';
-import { syncCalendarWithLeadStatus } from '@/server/google-calendar';
+import { recreateConfirmedLeadEvent, syncCalendarWithLeadStatus } from '@/server/google-calendar';
 
 const REACTION_STATUS_MAP: Record<string, LeadStatus> = {
   '🔵': 'CONTACTED',
@@ -125,6 +125,19 @@ async function handleReactionAdd(reaction: any, user: any) {
       return;
     }
 
+    // Toteutunut muutto on kumppaniraportin ja palkkion peruste — vanhaan viestiin lisätty
+    // reaktio ei saa palauttaa sitä takaisin vahvistetuksi. Muutos tehdään hallinnasta.
+    if (lead.status === 'COMPLETED') {
+      await createLog({
+        entityType: 'Lead',
+        entityId: lead.id,
+        action: 'discord.reaction_ignored_completed',
+        message: `Reaktio (${emoji}) ohitettiin: liidi on jo merkitty toteutuneeksi. Muuta tilaa hallintapaneelista.`,
+        data: { emoji },
+      }).catch(() => {});
+      return;
+    }
+
     await setLeadStatus(lead.id, newStatus);
     await createLog({
       entityType: 'Lead',
@@ -135,6 +148,10 @@ async function handleReactionAdd(reaction: any, user: any) {
     });
 
     await syncCalendarWithLeadStatus(lead, newStatus);
+    // Peruttu/hävitty poisti kalenterimerkinnän — ✅ (vahvistettu) luo sen uudelleen, kuten hallinnassa.
+    if (newStatus === 'WON' && !lead.calendarEventId && lead.requestedDate) {
+      await recreateConfirmedLeadEvent(lead.id);
+    }
 
     // Reflect the new status on the message itself, so it's clear at a
     // glance which reaction "won" without hovering over the reaction list.
@@ -185,6 +202,8 @@ export type LeadMessageDetails = {
   notes: string | null;
   // 'vuokraus' = Muuttolaatikot-sivun tilaus (toimitusosoite ja -päivä, ei muuttoa)
   serviceKind?: 'muutto' | 'vuokraus';
+  // Kumppanin alennuskoodilla tullut liidi — näytetään omana kenttänään heti hinnan perässä
+  discountField?: { name: string; value: string } | null;
   hallintaUrl: string;
   overlapWarnings: string[];
   calendarLink: string | null;
@@ -228,6 +247,7 @@ export async function postLeadToDiscord(
       );
 
     if (details.priceLabel) embed.addFields({ name: 'Hinta', value: details.priceLabel, inline: true });
+    if (details.discountField) embed.addFields({ ...details.discountField, inline: true });
     if (details.apartmentSizeLabel) embed.addFields({ name: 'Asunto', value: details.apartmentSizeLabel, inline: true });
     if (details.squareMeters) embed.addFields({ name: 'Pinta-ala', value: `${details.squareMeters} m²`, inline: true });
     if (details.floor !== null) embed.addFields({ name: 'Kerros', value: `${details.floor}`, inline: true });

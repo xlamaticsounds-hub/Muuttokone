@@ -121,7 +121,14 @@ export async function createInvoiceFromLead(leadId: string): Promise<{ id: strin
   const pfd = parseLeadFormData(lead.formData);
   const { confirmed, exact } = getStoredPrice(pfd);
   const confirmedNumber = confirmed !== null ? Number(confirmed.replace(/[\s€]/g, '').replace(',', '.')) : NaN;
-  const amount = Number.isFinite(confirmedNumber) && confirmedNumber > 0 ? confirmedNumber : exact ?? 0;
+  // Toteutuneen muuton lopullinen hinta (Merkitse toteutuneeksi) on ensisijainen — vain tilassa
+  // COMPLETED, ettei kumotun toteutumisen vanha hinta ohita myöhemmin vahvistettua.
+  const amount =
+    lead.status === 'COMPLETED' && lead.finalPrice != null && lead.finalPrice > 0
+      ? lead.finalPrice
+      : Number.isFinite(confirmedNumber) && confirmedNumber > 0
+        ? confirmedNumber
+        : exact ?? 0;
 
   const service = [getServiceLabel(pfd) ?? 'Muutto', getPackageLabel(pfd)].filter(Boolean).join(' · ');
   const route = [lead.fromAddress, lead.toAddress].filter(Boolean).join(' → ');

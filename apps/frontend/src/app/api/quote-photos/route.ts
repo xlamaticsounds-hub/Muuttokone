@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadImage } from '@/server/storage';
-import { rateLimit } from '@/server/rate-limit';
+import { rateLimitAndRecord } from '@/server/rate-limit';
+import { clientIpFromHeaders, isPrivateIp } from '@/server/request-ip';
 
 // Force Node.js runtime (multipart + File)
 export const runtime = 'nodejs';
@@ -12,19 +13,19 @@ const MAX_FILE_SIZE_BYTES = 8 * 1024 * 1024; // 8 MB
 // ennen kuin liidiä edes on olemassa. Siksi validointi ja rajoitus tehdään tässä eikä
 // luoteta client-puolen pakkaukseen (joku voisi kutsua reittiä suoraan ohi selaimen).
 export async function POST(request: NextRequest) {
-  const forwardedFor =
-    request.headers.get('x-forwarded-for') ||
-    request.headers.get('x-real-ip') ||
-    request.headers.get('x-client-ip');
-  const requestIp = forwardedFor ? String(forwardedFor).split(',')[0].trim() : 'unknown';
+  // IP x-forwarded-for-listan oikeasta päästä (Railwayn lisäämä) — alkupää on väärennettävissä.
+  const requestIp = clientIpFromHeaders(request.headers);
 
-  try {
-    await rateLimit(requestIp, 'quote_photo_upload', 20, 15);
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Liikaa pyyntöjä.' },
-      { status: 429 },
-    );
+  // Paikallinen kehitys ei rajoitu; tuotannossa Railway antaa aina julkisen IP:n.
+  if (requestIp && !isPrivateIp(requestIp)) {
+    try {
+      await rateLimitAndRecord(requestIp, 'quote_photo_upload', 20, 15);
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : 'Liikaa pyyntöjä.' },
+        { status: 429 },
+      );
+    }
   }
 
   try {

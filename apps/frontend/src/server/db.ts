@@ -77,14 +77,40 @@ const createPrismaMock = (): PrismaClient => {
     updatedAt: new Date(),
   });
 
+  // Prisman yleisimmät kenttäoperaattorit (liidilistan suodattimet, kumppaniraportin
+  // kuukausirajaus). Muut ehdot (relaatiosuodattimet, OR/AND) ohitetaan kuten ennenkin.
+  const OPERATORS = new Set(['equals', 'not', 'in', 'notIn', 'gt', 'gte', 'lt', 'lte']);
+  const comparable = (v: unknown) => (v instanceof Date ? v.getTime() : v);
+  const sameValue = (a: unknown, b: unknown) => (comparable(a) ?? null) === (comparable(b) ?? null);
+  const matchesOperators = (current: unknown, cond: Record<string, any>): boolean => {
+    const keys = Object.keys(cond);
+    if (keys.length === 0 || !keys.every((k) => OPERATORS.has(k))) return true;
+    return keys.every((op) => {
+      const v = cond[op];
+      const a = comparable(current) as any;
+      const b = comparable(v) as any;
+      switch (op) {
+        case 'equals': return sameValue(current, v);
+        case 'not': return v !== null && typeof v === 'object' && !(v instanceof Date) ? true : !sameValue(current, v);
+        case 'in': return Array.isArray(v) && v.some((x) => sameValue(current, x));
+        case 'notIn': return Array.isArray(v) && !v.some((x) => sameValue(current, x));
+        case 'gt': return a != null && a > b;
+        case 'gte': return a != null && a >= b;
+        case 'lt': return a != null && a < b;
+        case 'lte': return a != null && a <= b;
+        default: return true;
+      }
+    });
+  };
+
   const applyWhere = (rows: MockRecord[], where?: Record<string, any>) => {
     if (!where) return rows;
     return rows.filter((row) => {
       return Object.entries(where).every(([key, value]) => {
         const current = row[key];
+        if (value instanceof Date) return sameValue(current, value);
         if (value && typeof value === 'object') {
-          if (Array.isArray(value.notIn)) return !value.notIn.includes(current);
-          return true;
+          return Array.isArray(value) ? true : matchesOperators(current, value);
         }
         return current === value;
       });
@@ -112,6 +138,25 @@ const createPrismaMock = (): PrismaClient => {
 
   const getRows = (model: string) => {
     if (!store[model]) store[model] = [];
+    // Sama oletuskoodi kuin oikeassa kannassa (migraatio 20261009120000_discount_codes lisää
+    // sen), jotta muuttolaskurin alennusta voi kokeilla paikallisesti heti.
+    if (model === 'discountCode' && store[model].length === 0) {
+      store[model].push({
+        id: 'dc_kiinteistomaailma',
+        code: 'KIINTEISTOMAAILMA',
+        partner: 'Kiinteistömaailma',
+        office: null,
+        agentName: null,
+        discountPercent: 10,
+        commissionPercent: 5,
+        active: true,
+        validFrom: null,
+        validUntil: null,
+        tags: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+    }
     return store[model];
   };
 
@@ -122,8 +167,13 @@ const createPrismaMock = (): PrismaClient => {
   const expandInclude = (model: string, row: MockRecord, include?: Record<string, any>): MockRecord => {
     if (!include || !row) return row;
 
-    if (model === 'lead' && include.contact) {
-      return { ...row, contact: getRows('contact').find((c) => c.id === row.contactId) ?? null };
+    if (model === 'lead' && (include.contact || include.discount)) {
+      const expanded: MockRecord = { ...row };
+      if (include.contact) expanded.contact = getRows('contact').find((c) => c.id === row.contactId) ?? null;
+      if (include.discount) {
+        expanded.discount = getRows('discountCode').find((d) => d.id === row.discountCodeId) ?? null;
+      }
+      return expanded;
     }
 
     if (model === 'contact' && (include._count || include.leads)) {
@@ -155,6 +205,7 @@ const createPrismaMock = (): PrismaClient => {
             if (op === 'findMany') {
               let result = applyWhere(rows, args?.where);
               result = applyOrderBy(result, args?.orderBy);
+              if (typeof args?.skip === 'number') result = result.slice(args.skip);
               if (typeof args?.take === 'number') result = result.slice(0, args.take);
               return result.map((row) => expandInclude(model, row, args?.include));
             }
@@ -177,7 +228,8 @@ const createPrismaMock = (): PrismaClient => {
               const data = args?.data ?? {};
               if (model === 'lead') {
                 const contactId = data.contact?.connect?.id ?? data.contactId ?? null;
-                const record = { ...base, ...data, contactId, contact: undefined } as MockRecord;
+                const discountCodeId = data.discount?.connect?.id ?? data.discountCodeId ?? null;
+                const record = { ...base, ...data, contactId, discountCodeId, contact: undefined, discount: undefined } as MockRecord;
                 rows.unshift(record);
                 saveStoreToDisk();
                 return record;

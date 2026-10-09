@@ -233,4 +233,23 @@ export const calculatorDictionary: Record<string, string> = {
   'Jokainen lisäkohde lisää työaikaa': 'Each additional destination adds working time',
   'ja reitin pituutta – hinta päivittyy automaattisesti.': 'and route length – the price updates automatically.',
   'Lisäkohteet': 'Additional destinations',
+
+  // Partner discount code (e.g. Kiinteistömaailma) — PartnerDiscountCode.tsx
+  'Alennuskoodi': 'Discount code',
+  'Käytä': 'Apply',
+  'Poista': 'Remove',
+  'Tarkistetaan...': 'Checking...',
+  'Esim. kiinteistönvälittäjältä saatu koodi': 'E.g. a code from your real estate agent',
+  'Hinta ilman etua': 'Price without the discount',
+  'Hinta edun jälkeen': 'Price with the discount',
+  'Etu koskee muuttoa. Muuttosiivous, laatikkovuokra ja kierrätysmaksut hinnoitellaan ilman etua.':
+    'The discount applies to the move. Moving cleaning, box rental and disposal fees are priced without it.',
+  'on mukana tarjouspyynnössäsi.': 'is included in your quote request.',
+  // Server messages from /api/discount-code
+  'Syötä alennuskoodi.': 'Enter a discount code.',
+  'Alennuskoodia ei löytynyt. Tarkista koodi.': 'Discount code not found. Please check the code.',
+  'Alennuskoodi ei ole enää voimassa.': 'This discount code is no longer valid.',
+  'Alennuskoodi ei ole vielä voimassa.': 'This discount code is not valid yet.',
+  'Liian monta pyyntöä. Yritä myöhemmin uudelleen.': 'Too many attempts. Please try again later.',
+  'Koodin tarkistus epäonnistui. Yritä hetken päästä uudelleen.': 'Checking the code failed. Please try again shortly.',
 };

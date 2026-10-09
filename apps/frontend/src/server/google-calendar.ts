@@ -332,10 +332,46 @@ export async function syncCalendarWithLeadStatus(
   status: LeadStatus,
 ): Promise<void> {
   if (!lead.calendarEventId) return;
-  if (status === 'WON') {
+  if (status === 'WON' || status === 'COMPLETED') {
     await confirmCalendarEvent(lead.id, lead.calendarEventId);
-  } else if (status === 'LOST') {
+  } else if (status === 'LOST' || status === 'CANCELLED') {
     await cancelCalendarEvent(lead.id, lead.calendarEventId);
     await setLeadCalendarEventId(lead.id, null);
+  }
+}
+
+/**
+ * Peruttu/hävitty liidi palautettiin vahvistetuksi, mutta sen kalenterimerkintä poistettiin
+ * perumisen yhteydessä (calendarEventId = null) — luodaan uusi ja vahvistetaan se heti.
+ * Never throws, kuten muutkin kalenteritoiminnot.
+ */
+export async function recreateConfirmedLeadEvent(leadId: string): Promise<void> {
+  try {
+    const { prisma } = await import('@/server/db');
+    const lead = await prisma.lead.findUnique({ where: { id: leadId }, include: { contact: true } });
+    if (!lead || !lead.requestedDate || lead.calendarEventId) return;
+
+    const { parseLeadFormData } = await import('@/server/lead-format');
+    const pfd = parseLeadFormData(lead.formData);
+    const payload = pfd.payload && typeof pfd.payload === 'object' ? (pfd.payload as Record<string, unknown>) : {};
+    const preferredTime =
+      typeof pfd.preferredTime === 'string' ? pfd.preferredTime : typeof payload.preferred_time === 'string' ? payload.preferred_time : null;
+
+    const created = await createTentativeLeadEvent({
+      leadId: lead.id,
+      customerName: [lead.contact.firstName, lead.contact.lastName].filter(Boolean).join(' ') || 'Ei nimeä',
+      fromAddress: lead.fromAddress,
+      toAddress: lead.toAddress,
+      requestedDate: lead.requestedDate,
+      preferredTime,
+      serviceKind: payload.service_type === 'vuokraus' ? 'vuokraus' : 'muutto',
+      notes: lead.notes,
+      hallintaUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.muuttokone.fi'}/hallinta/liidit/${lead.id}`,
+    });
+    if (!created) return;
+    await setLeadCalendarEventId(lead.id, created.eventId);
+    await confirmCalendarEvent(lead.id, created.eventId);
+  } catch (error) {
+    await logCalendarFailure('recreateConfirmedLeadEvent', leadId, error);
   }
 }

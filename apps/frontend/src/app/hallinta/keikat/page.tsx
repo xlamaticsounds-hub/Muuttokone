@@ -1,11 +1,13 @@
 import { prisma } from '@/server/db';
 import { Lead, Contact, LeadStatus } from '@prisma/client';
 import KeikatTable from './KeikatTable';
+import { INACTIVE_JOB_STATUSES } from '@/lib/lead-status';
 
 export const dynamic = 'force-dynamic';
 
 const PAGE_SIZE = 25;
-const INACTIVE_STATUSES: LeadStatus[] = ['LOST', 'ARCHIVED'];
+// Perutut ja toteutuneet eivät ole enää tulevia keikkoja (ks. lib/lead-status.ts).
+const INACTIVE_STATUSES: LeadStatus[] = INACTIVE_JOB_STATUSES;
 const ACTIVE_WHERE = {
   status: {
     notIn: INACTIVE_STATUSES,

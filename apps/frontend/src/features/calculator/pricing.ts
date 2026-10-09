@@ -278,6 +278,9 @@ export interface PriceBreakdown {
   priceRangeLow: number;
   priceRangeHigh: number;
   inventoryWarning?: string;
+  // Muuttosiivouksen ja kierrätyksen jätemaksujen osuus totalista päiväalennuksen jälkeen (€).
+  // Kumppanialennus (discount.ts) ei koske näitä eikä laatikkovuokraa, vain itse muuttoa.
+  addOnsTotal: number;
   // Vain kun laatikkovuokra on valittu (Muutto): total sisältää vuokran, moveTotal on muuton
   // hinta ilman sitä. Vuokraan ei sovelleta päiväalennusta eikä muuton vähimmäishintoja.
   boxRental?: BoxRentalBreakdown;
@@ -319,6 +322,7 @@ export interface PriceBreakdown {
 }
 
 export const INCLUDED_DISTANCE_KM = 5;
+export const VAT_RATE = 0.255; // 25.5% VAT
 
 const PRICING_CONSTANTS = {
   ratePerKm: 0.79,
@@ -329,7 +333,7 @@ const PRICING_CONSTANTS = {
   carryingHelpRate: 89.9, // €/h
   driverWithVehicleMinimum: 184, // €
   carryingHelpMinimum: 180, // €
-  vatRate: 0.255, // 25.5% VAT
+  vatRate: VAT_RATE,
   // Kerroskertoimet (sovelletaan vain kun hissiä ei ole) — ks. v2-speksi
   floorFactorPerLevel: 0.12,
   heavyFloorFactorPerLevel: 0.18,
@@ -499,6 +503,12 @@ const SECOND_DRIVER_RATE_ADDON = 30; // €/h, 2. kuljettajan lisähinta (89 + 3
 
 function round5(value: number): number {
   return Math.round(value / 5) * 5;
+}
+
+// Lisäpalvelun (siivous, jätemaksut) osuus päiväalennuksen jälkeisestä totalista — sama suhde
+// kuin koko hinnalla, joten myös 4h+ tiukan vähimmäishinnan korotus jakautuu oikein.
+function addOnShare(addOnCost: number, total: number, normalPriceTotal: number): number {
+  return addOnCost > 0 && normalPriceTotal > 0 ? (addOnCost * total) / normalPriceTotal : 0;
 }
 
 function floorFactor(floor: number, hasElevator: boolean): number {
@@ -744,6 +754,7 @@ function calculatePriceWithoutBoxRental(data: CalculatorData): PriceBreakdown {
       dateDiscountEmoji: dateDiscount.emoji,
       priceRangeLow: round5(total * (1 - PRICING_CONSTANTS.priceRangeNormal)),
       priceRangeHigh: round5(total * (1 + PRICING_CONSTANTS.priceRangeNormal)),
+      addOnsTotal: 0,
       difficultyLevel,
       estimatedDurationHours: totalLaborHours,
       details: {
@@ -816,6 +827,7 @@ function calculatePriceWithoutBoxRental(data: CalculatorData): PriceBreakdown {
       dateDiscountEmoji: dateDiscount.emoji,
       priceRangeLow: round5(totalR * (1 - PRICING_CONSTANTS.priceRangeNormal)),
       priceRangeHigh: round5(totalR * (1 + PRICING_CONSTANTS.priceRangeNormal)),
+      addOnsTotal: addOnShare(disposalCost, totalR, normalPriceTotalR),
       difficultyLevel,
       estimatedDurationHours: totalLaborHoursR,
       details: {
@@ -914,6 +926,7 @@ function calculatePriceWithoutBoxRental(data: CalculatorData): PriceBreakdown {
       dateDiscountEmoji: dateDiscount.emoji,
       priceRangeLow: round5(total * (1 - PRICING_CONSTANTS.priceRangeNormal)),
       priceRangeHigh: round5(total * (1 + PRICING_CONSTANTS.priceRangeNormal)),
+      addOnsTotal: addOnShare(cleaningCost, total, normalPriceTotal),
       difficultyLevel,
       estimatedDurationHours: totalLaborHours,
       details: {
@@ -975,6 +988,7 @@ function calculatePriceWithoutBoxRental(data: CalculatorData): PriceBreakdown {
       dateDiscountEmoji: dateDiscount.emoji,
       priceRangeLow: round5(total * (1 - PRICING_CONSTANTS.priceRangeNormal)),
       priceRangeHigh: round5(total * (1 + PRICING_CONSTANTS.priceRangeNormal)),
+      addOnsTotal: addOnShare(cleaningCost, total, normalPriceTotal),
       difficultyLevel: 'medium',
       estimatedDurationHours: totalLaborHours,
       details: {
@@ -1072,6 +1086,7 @@ function calculatePriceWithoutBoxRental(data: CalculatorData): PriceBreakdown {
     dateDiscountEmoji: dateDiscount.emoji,
     priceRangeLow,
     priceRangeHigh,
+    addOnsTotal: addOnShare(extrasCost, total, normalPriceTotal),
     inventoryWarning,
     difficultyLevel,
     estimatedDurationHours: totalLaborHours,

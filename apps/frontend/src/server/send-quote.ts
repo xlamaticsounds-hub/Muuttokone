@@ -14,6 +14,7 @@ import {
   getPackageLabel,
   getStoredPrice,
   parseLeadFormData,
+  partnerDiscountNote,
 } from '@/server/lead-format';
 import { renderQuoteEmailHtml, type QuoteEmailParams } from '@/lib/quote-email';
 
@@ -30,7 +31,10 @@ export async function getQuoteEmailPreviewData(
     throw new Error('Unauthorized');
   }
 
-  const lead = await prisma.lead.findUnique({ where: { id: leadId }, include: { contact: true } });
+  const lead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    include: { contact: true, discount: { select: { partner: true } } },
+  });
   if (!lead) {
     throw new Error('Liidiä ei löytynyt.');
   }
@@ -53,6 +57,7 @@ export async function getQuoteEmailPreviewData(
     items: getInventoryEntries(pfd),
     wasteTypes: getWasteTypeLabels(pfd),
     extras: getExtraServices(pfd),
+    partnerDiscountNote: partnerDiscountNote(lead, lead.discountPartner ?? lead.discount?.partner ?? null, priceConfirmed === null),
   };
 }
 
@@ -91,7 +96,10 @@ async function sendQuoteEmailInner(leadId: string, customMessage: string | null)
     return { success: false, message: SMTP_NOT_CONFIGURED_MESSAGE };
   }
 
-  const lead = await prisma.lead.findUnique({ where: { id: leadId }, include: { contact: true } });
+  const lead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    include: { contact: true, discount: { select: { partner: true } } },
+  });
   if (!lead) {
     return { success: false, message: 'Liidiä ei löytynyt.' };
   }
@@ -123,6 +131,7 @@ async function sendQuoteEmailInner(leadId: string, customMessage: string | null)
     wasteTypes,
     extras,
     customMessage,
+    partnerDiscountNote: partnerDiscountNote(lead, lead.discountPartner ?? lead.discount?.partner ?? null, priceConfirmed === null),
   });
 
   const subjectPrice =
@@ -145,7 +154,11 @@ async function sendQuoteEmailInner(leadId: string, customMessage: string | null)
     };
   }
 
-  await prisma.lead.update({ where: { id: leadId }, data: { status: LeadStatus.PROPOSAL_SENT } });
+  // Toteutunut muutto ei palaa tarjousvaiheeseen, vaikka tarjous lähetettäisiin uudelleen
+  // (muuten se putoaisi kumppaniraportilta).
+  if (lead.status !== LeadStatus.COMPLETED) {
+    await prisma.lead.update({ where: { id: leadId }, data: { status: LeadStatus.PROPOSAL_SENT } });
+  }
 
   await createLog({
     entityType: 'Lead',

@@ -1,6 +1,7 @@
 import { prisma } from '@/server/db';
 import { Lead, Contact } from '@prisma/client';
 import LeadsTable from '../LeadsTable';
+import { INACTIVE_JOB_STATUSES } from '@/lib/lead-status';
 
 export const dynamic = 'force-dynamic'; // Ensure we always get fresh data
 
@@ -39,7 +40,7 @@ export default async function DashboardPage() {
         }),
         prisma.lead.findMany({
           where: {
-            status: { notIn: ['LOST', 'ARCHIVED'] },
+            status: { notIn: INACTIVE_JOB_STATUSES },
             // gte excludes NULL requestedDate automatically, and keeps only
             // today-or-later so old, never-cleaned-up leads don't show up here.
             requestedDate: { gte: startOfToday },
@@ -54,8 +55,8 @@ export default async function DashboardPage() {
           take: RECENT_CONTACTS_LIMIT,
         }),
         prisma.lead.count(),
-        prisma.lead.count({ where: { status: { notIn: ['LOST', 'ARCHIVED'] } } }),
-        prisma.lead.count({ where: { status: 'WON' } }),
+        prisma.lead.count({ where: { status: { notIn: INACTIVE_JOB_STATUSES } } }),
+        prisma.lead.count({ where: { status: { in: ['WON', 'COMPLETED'] } } }),
         prisma.contact.count(),
       ]);
   } catch (error) {

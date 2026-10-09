@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import { prisma } from '@/server/db';
 import { Lead, Contact, LeadStatus } from '@prisma/client';
+import { LEAD_STATUS_LABELS, LEAD_STATUS_PILL_CLASSES } from '@/lib/lead-status';
 
 export const dynamic = 'force-dynamic';
 
+// Tilojen nimet ja värit: lib/lead-status.ts (sama kuin liidilistassa).
 const STATUS_ORDER: LeadStatus[] = [
   'NEW',
   'QUALIFIED',
@@ -11,30 +13,13 @@ const STATUS_ORDER: LeadStatus[] = [
   'SCHEDULED',
   'PROPOSAL_SENT',
   'WON',
+  'COMPLETED',
+  'CANCELLED',
   'LOST',
 ];
 
-const STATUS_LABELS: Record<LeadStatus, string> = {
-  NEW: 'Uusi',
-  QUALIFIED: 'Kelpuutettu',
-  CONTACTED: 'Oltu yhteydessä',
-  SCHEDULED: 'Aikataulutettu',
-  PROPOSAL_SENT: 'Tarjous lähetetty',
-  WON: 'Voitettu',
-  LOST: 'Hävitty',
-  ARCHIVED: 'Arkistoitu',
-};
-
-const STATUS_COLORS: Record<LeadStatus, string> = {
-  NEW: 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400',
-  QUALIFIED: 'bg-teal-50 text-teal-700 dark:bg-teal-900/20 dark:text-teal-400',
-  CONTACTED: 'bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
-  SCHEDULED: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400',
-  PROPOSAL_SENT: 'bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400',
-  WON: 'bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400',
-  LOST: 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400',
-  ARCHIVED: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
-};
+const STATUS_LABELS = LEAD_STATUS_LABELS;
+const STATUS_COLORS = LEAD_STATUS_PILL_CLASSES;
 
 type LeadWithContact = Lead & { contact: Contact };
 
@@ -106,6 +91,9 @@ export default async function DiilitPage() {
                     >
                       <p className="font-medium text-gray-900 dark:text-white">
                         {lead.contact.firstName || '-'} {lead.contact.lastName || ''}
+                        {lead.discountCode && (
+                          <span className="ml-1.5 text-xs" title={`Alennuskoodi ${lead.discountCode}`}>🏠</span>
+                        )}
                       </p>
                       <p className="mt-0.5 truncate text-xs text-gray-500 dark:text-gray-400">
                         {lead.fromAddress || '-'} {'->'} {lead.toAddress || '-'}

@@ -161,13 +161,39 @@ export async function updateLeadStatus(leadId: string, status: LeadStatus) {
     throw new Error('Unauthorized');
   }
 
-  const { setLeadStatus } = await import('./repo/leads');
-  const lead = await setLeadStatus(leadId, status);
+  // Toteutuneeksi merkitään vain lopullisen hinnan kanssa (lead-completion-actions.ts), jotta
+  // kumppaniraportin completedAt + finalPrice ovat aina olemassa.
+  if (status === 'COMPLETED') {
+    throw new Error('Käytä "Merkitse toteutuneeksi" -toimintoa, jossa annetaan lopullinen hinta.');
+  }
+
+  const { prisma } = await import('@/server/db');
+  const previous = await prisma.lead.findUnique({ where: { id: leadId }, select: { status: true } });
+  // Pois toteutuneesta (esim. vahingossa merkitty): completedAt/finalPrice säilyvät historiana,
+  // mutta kuukausiraportti ja hallinta käyttävät niitä vain tilassa COMPLETED. Säilynyt
+  // completedAt estää tuplapalkkion jos liidi merkitään uudelleen toteutuneeksi (ks.
+  // lead-completion-actions.ts).
+  const lead = await prisma.lead.update({ where: { id: leadId }, data: { status } });
+
+  if (previous && previous.status !== status) {
+    await createLog({
+      entityType: 'Lead',
+      entityId: leadId,
+      action: 'lead.status_changed',
+      message: `Tila vaihdettu hallinnassa: ${previous.status} -> ${status}`,
+      data: { from: previous.status, to: status },
+      actorId: session.user?.email ?? null,
+    });
+  }
 
   // Sama kalenterisynkronointi kuin Discord-reaktiossa — ennen tätä hallinnasta
   // voitetuksi/hävityksi merkitty liidi jätti kalenteritapahtuman alustavaksi.
-  const { syncCalendarWithLeadStatus } = await import('@/server/google-calendar');
+  const { syncCalendarWithLeadStatus, recreateConfirmedLeadEvent } = await import('@/server/google-calendar');
   await syncCalendarWithLeadStatus(lead, status);
+  // Peruttu/hävitty poisti kalenterimerkinnän — vahvistetuksi palautettaessa luodaan uusi.
+  if (status === 'WON' && !lead.calendarEventId && lead.requestedDate) {
+    await recreateConfirmedLeadEvent(lead.id);
+  }
 
   return { success: true };
 }
@@ -188,7 +214,7 @@ export async function updateLeadDetails(leadId: string, data: any) {
   // lähetetty lopullinen TARJOUS voivat olla eri asioita.
   const existingLead = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: { formData: true, calendarEventId: true, requestedDate: true, contactId: true },
+    select: { formData: true, calendarEventId: true, requestedDate: true, contactId: true, discountPercent: true },
   });
   const existingFormData = parseLeadFormData(existingLead?.formData ?? null);
   const confirmedPriceRaw = typeof data.confirmedPrice === 'string' ? data.confirmedPrice.trim() : data.confirmedPrice;
@@ -228,13 +254,21 @@ export async function updateLeadDetails(leadId: string, data: any) {
 
   // Jos muokatut kentät riittävät hinnan uudelleenlaskentaan (liidi tuli alunperin
   // muuttolaskurista, formData sisältää mm. furnitureItems/distanceKm), päivitetään myös
-  // laskurin näyttämä hinta-arvio vastaamaan uusia tietoja.
-  const recomputed = recomputeLeadPrice(updatedFormData);
+  // laskurin näyttämä hinta-arvio vastaamaan uusia tietoja. Kumppanikoodilla tulleen liidin
+  // alennus lasketaan uudelleen samalla varaushetken prosentilla, ettei se katoa muokatessa.
+  const recomputed = recomputeLeadPrice(updatedFormData, existingLead?.discountPercent ?? null);
   if (recomputed) {
     updatedFormData.price = recomputed.price;
     updatedFormData.priceRangeLow = recomputed.priceRangeLow;
     updatedFormData.priceRangeHigh = recomputed.priceRangeHigh;
   }
+  const discountPrices = recomputed?.discount
+    ? {
+        priceBeforeDiscount: recomputed.discount.priceBeforeDiscount,
+        discountAmount: recomputed.discount.discountAmount,
+        priceAfterDiscount: recomputed.discount.priceAfterDiscount,
+      }
+    : {};
 
   const newRequestedDate = data.requestedDate ? new Date(data.requestedDate) : null;
 
@@ -252,6 +286,7 @@ export async function updateLeadDetails(leadId: string, data: any) {
       boxCount: data.boxCount ? parseInt(data.boxCount) : null,
       notes: data.notes,
       formData: JSON.stringify(updatedFormData),
+      ...discountPrices,
     },
   });
 

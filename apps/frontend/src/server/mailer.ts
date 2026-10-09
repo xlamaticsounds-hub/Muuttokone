@@ -9,6 +9,7 @@ export type MailAttachment = { filename: string; content: Buffer; contentType: s
 
 export type OutgoingMail = {
   to: string;
+  cc?: string; // esim. kumppaniraportin kopio meille
   subject: string;
   html: string;
   attachments?: MailAttachment[];
@@ -31,6 +32,7 @@ export async function sendMail(mail: OutgoingMail): Promise<void> {
   const mailOptions = {
     from: `"${senderName}" <${process.env.SMTP_USER}>`,
     to: mail.to,
+    ...(mail.cc && { cc: mail.cc }),
     subject: mail.subject,
     html: mail.html,
     attachments: mail.attachments,

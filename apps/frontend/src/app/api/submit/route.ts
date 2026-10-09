@@ -3,12 +3,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/server/db'; // <- make sure you have the hot-reload-safe prisma client here
 import { LeadStatus, LeadSource } from '@prisma/client';
-import { rateLimit } from '@/server/rate-limit';
+import { rateLimitAndRecord } from '@/server/rate-limit';
+import { clientIpFromHeaders, isPrivateIp } from '@/server/request-ip';
 import { postLeadToDiscord } from '@/server/discord-bot';
 import { sendDiscordNotification } from '@/server/discord-webhook';
 import { createTentativeLeadEvent, findOverlappingEvents } from '@/server/google-calendar';
 import { BOX_RENTAL, calculateBoxRental, describeBoxRental } from '@/features/calculator/boxRental';
 import { MAX_EXTRA_DESTINATIONS } from '@/features/calculator/pricing';
+import { discountLabel } from '@/features/calculator/discount';
+import { lookupDiscountCode } from '@/server/discount-codes';
+import { recomputeLeadPrice } from '@/server/lead-format';
 
 // Force Node.js runtime (multipart + File)
 export const runtime = 'nodejs';
@@ -353,6 +357,8 @@ type NotifyLeadDetails = {
   preferredTime?: string | null; // laskurin "Toivottu kellonaika" (HH:MM)
   // 'vuokraus' = Muuttolaatikot-sivun tilaus: päivä on toimituspäivä eikä muuttopäivä (Discord + kalenteri)
   serviceKind?: 'muutto' | 'vuokraus';
+  // Kumppanin alennuskoodilla tullut liidi (esim. "🏠 Kiinteistömaailma-koodi")
+  discountField?: { name: string; value: string } | null;
 };
 
 // Shared by both submission paths that create a genuinely new lead —
@@ -417,6 +423,7 @@ async function notifyNewLead(
     boxCount: details.boxCount,
     notes: details.notes,
     serviceKind: details.serviceKind,
+    discountField: details.discountField ?? null,
     hallintaUrl,
     overlapWarnings,
     calendarLink: calendarEvent?.htmlLink ?? null,
@@ -541,21 +548,72 @@ async function submitBooking(data: any) {
       : [];
   const extraDestinationsLine =
     extraDestinations.length > 0 ? `📍 Lisäkohteet (${extraDestinations.length}): ${extraDestinations.join('; ')}` : null;
-  const extraNotes = [boxRentalLine, extraDestinationsLine].filter((line): line is string => Boolean(line)).join('\n');
+
+  // Alennuskoodi tarkistetaan ja hinta lasketaan aina palvelimella samalla funktiolla kuin
+  // laskurissa — selaimen lähettämään hintaan (data.price) ei luoteta. Ilman koodia tulos on
+  // sama kuin laskurin näyttämä hinta.
+  // Koodin tarkistuksen virhe ei saa kaataa varausta — liidi tallennetaan ilman alennusta ja
+  // koodi jätetään muistiinpanoihin käsin tarkistettavaksi.
+  let codeLookupFailed = false;
+  const discountLookup = data.discountCode
+    ? await lookupDiscountCode(data.discountCode).catch((error) => {
+        console.error('[submit] Alennuskoodin tarkistus epäonnistui:', error);
+        codeLookupFailed = true;
+        return null;
+      })
+    : null;
+  const discountRecord = discountLookup?.check.ok ? discountLookup.record : null;
+  const priced = recomputeLeadPrice(data, discountRecord?.discountPercent ?? null);
+  const partnerDiscount = priced?.discount ?? null;
+
+  const discountLine = discountRecord
+    ? partnerDiscount
+      ? `🏠 ${discountLabel(discountRecord.partner, discountRecord.discountPercent)} (koodi ${discountRecord.code}): ${partnerDiscount.priceBeforeDiscount} € - ${partnerDiscount.discountAmount} € = ${partnerDiscount.priceAfterDiscount} €`
+      : `🏠 ${discountRecord.partner}-koodi ${discountRecord.code} — hintaa ei voitu laskea palvelimella, laske alennus käsin`
+    : null;
+  // Asiakas yritti koodia joka ei kelvannut — näkyviin, ettei asiakas luule saaneensa alennusta.
+  const rejectedCodeLine = codeLookupFailed
+    ? `⚠️ Alennuskoodia "${String(data.discountCode).slice(0, 64)}" ei voitu tarkistaa — tarkista ja laske alennus käsin`
+    : discountLookup && !discountLookup.check.ok && discountLookup.code
+      ? `⚠️ Alennuskoodi "${discountLookup.code.slice(0, 64)}" ei kelvannut: ${discountLookup.check.message}`
+      : null;
+  const extraNotes = [discountLine, rejectedCodeLine, boxRentalLine, extraDestinationsLine]
+    .filter((line): line is string => Boolean(line))
+    .join('\n');
+
+  const priceNote = priced
+    ? `Hinta-arvio: ${priced.price}€`
+    : `Hinta-arvio: ${data.price}€ (selaimen arvio, ei tarkistettu palvelimella)`;
 
   const lead = await prisma.lead.create({
     data: {
       contact: { connect: { id: contact.id } },
       status: LeadStatus.SCHEDULED,
       source: LeadSource.STEP_FORM,
-      formData: JSON.stringify(data),
+      formData: JSON.stringify({
+        ...data,
+        ...(priced && { price: priced.price, priceRangeLow: priced.priceRangeLow, priceRangeHigh: priced.priceRangeHigh }),
+        discountCode: discountRecord?.code,
+      }),
       requestedDate,
       fromAddress: data.addressFrom,
       toAddress: data.addressTo,
-      notes: `Hinta-arvio: ${data.price}€${extraNotes ? `\n${extraNotes}` : ''}`,
+      notes: `${priceNote}${extraNotes ? `\n${extraNotes}` : ''}`,
       floor: data.floorFrom,
       hasElevator: data.elevatorFrom,
       boxCount: data.boxCount,
+      ...(discountRecord && {
+        discount: { connect: { id: discountRecord.id } },
+        discountCode: discountRecord.code,
+        discountPartner: discountRecord.partner,
+        discountOffice: discountRecord.office,
+        discountAgentName: discountRecord.agentName,
+        discountPercent: discountRecord.discountPercent,
+        commissionPercent: discountRecord.commissionPercent,
+        priceBeforeDiscount: partnerDiscount?.priceBeforeDiscount ?? null,
+        discountAmount: partnerDiscount?.discountAmount ?? null,
+        priceAfterDiscount: partnerDiscount?.priceAfterDiscount ?? null,
+      }),
     },
   });
 
@@ -564,8 +622,31 @@ async function submitBooking(data: any) {
     entityId: lead.id,
     action: 'lead.booking',
     message: 'Booking created via /muuttolaskuri',
-    data: { price: data.price },
+    data: { price: priced?.price ?? null, clientPrice: data.price ?? null, discountCode: discountRecord?.code ?? null },
   });
+
+  if (!priced) {
+    await logEvent({
+      entityType: 'Lead',
+      entityId: lead.id,
+      action: 'lead.price_recompute_failed',
+      message: 'Hinnan uudelleenlaskenta palvelimella epäonnistui — liidille jäi selaimen arvio.',
+      data: { clientPrice: data.price ?? null },
+    }).catch(() => {});
+  } else if (typeof data.price === 'number') {
+    // Selain lähettää hinnan ennen kumppanialennusta; yli euron ero kertoo vanhentuneesta
+    // laskurikoodista selaimessa tai muokatusta pyynnöstä.
+    const serverTotal = partnerDiscount ? partnerDiscount.priceBeforeDiscount : priced.price;
+    if (Math.abs(serverTotal - data.price) > 1) {
+      await logEvent({
+        entityType: 'Lead',
+        entityId: lead.id,
+        action: 'lead.price_mismatch',
+        message: `Selaimen hinta ${data.price}€ poikkeaa palvelimen laskemasta ${serverTotal}€ — tallennettiin palvelimen hinta.`,
+        data: { clientPrice: data.price, serverPrice: serverTotal },
+      }).catch(() => {});
+    }
+  }
 
   // This is the calculator's actual final "book now" step — it always
   // creates a fresh lead (no update/refinement concept here, unlike
@@ -583,7 +664,24 @@ async function submitBooking(data: any) {
       : null,
     preferredTime: typeof data.preferredTime === 'string' ? data.preferredTime : null,
     sourceLabel: LeadSource.STEP_FORM,
-    priceLabel: data.price != null ? `${data.price}€` : null,
+    priceLabel: priced
+      ? partnerDiscount
+        ? `${priced.price}€ (ennen alennusta ${partnerDiscount.priceBeforeDiscount}€)`
+        : `${priced.price}€`
+      : data.price != null
+        ? `${data.price}€ (selaimen arvio)`
+        : null,
+    discountField: discountRecord
+      ? {
+          name: `🏠 ${discountRecord.partner}-koodi`,
+          value: [
+            `${discountRecord.code} · -${discountRecord.discountPercent} %${partnerDiscount ? ` (-${partnerDiscount.discountAmount} €)` : ''}`,
+            [discountRecord.office, discountRecord.agentName].filter(Boolean).join(' / '),
+          ]
+            .filter(Boolean)
+            .join('\n'),
+        }
+      : null,
     apartmentSizeLabel: data.apartmentSize ?? null,
     squareMeters: typeof data.squareMeters === 'number' ? data.squareMeters : null,
     floor: typeof data.floorFrom === 'number' ? data.floorFrom : null,
@@ -644,22 +742,25 @@ async function submitMessage(data: z.infer<typeof MessageSchema>) {
 
 /* ===================== HTTP Handlers ===================== */
 
-export async function POST(request: NextRequest) {
-  const forwardedForRateLimit =
-    request.headers.get('x-forwarded-for') ||
-    request.headers.get('x-real-ip') ||
-    request.headers.get('x-client-ip');
-  const requestIp = forwardedForRateLimit
-    ? String(forwardedForRateLimit).split(',')[0].trim()
-    : 'unknown';
+// Lähetyksiä samasta IP:stä 15 minuutissa. Väljä, jotta esim. välitystoimisto, jossa usea
+// käyttää samaa nettiyhteyttä, ei törmää rajaan — pysäyttää silti botit ja kiusanteon.
+const SUBMIT_LIMIT = 10;
+const SUBMIT_WINDOW_MINUTES = 15;
 
-  try {
-    await rateLimit(requestIp, 'submit');
-  } catch (error) {
-    return NextResponse.json(
-      { success: false, message: error instanceof Error ? error.message : 'Liikaa pyyntöjä.' },
-      { status: 429 },
-    );
+export async function POST(request: NextRequest) {
+  // IP x-forwarded-for-listan oikeasta päästä (Railwayn lisäämä) — alkupää on väärennettävissä.
+  const requestIp = clientIpFromHeaders(request.headers);
+
+  // Paikallinen kehitys (::1, 127.0.0.1) ei rajoitu; tuotannossa Railway antaa aina julkisen IP:n.
+  if (requestIp && !isPrivateIp(requestIp)) {
+    try {
+      await rateLimitAndRecord(requestIp, 'submit', SUBMIT_LIMIT, SUBMIT_WINDOW_MINUTES);
+    } catch (error) {
+      return NextResponse.json(
+        { success: false, message: error instanceof Error ? error.message : 'Liikaa pyyntöjä.' },
+        { status: 429 },
+      );
+    }
   }
 
   try {
@@ -698,7 +799,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Attach server IP & UA for leads
-    const ip = requestIp !== 'unknown' ? requestIp : undefined;
+    const ip = requestIp ?? undefined;
     const ua = request.headers.get('user-agent') || undefined;
 
     if (

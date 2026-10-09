@@ -15,6 +15,10 @@ import { parseEmailSummary } from '@/server/email-summary';
 import StatusSelector from './StatusSelector';
 import LeadDetailActions from './LeadDetailActions';
 import EmailSummarySection from './EmailSummarySection';
+import LeadCompletionCard from './LeadCompletionCard';
+import { completeTargetFor } from '../complete-target';
+import { sentReportsContainingLead } from '@/server/partner-reports';
+import { formatHelsinkiDate } from '@/lib/helsinki-time';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,6 +33,7 @@ export default async function LeadDetailPage({
     where: { id },
     include: {
       contact: true,
+      discount: true,
     },
   });
 
@@ -76,31 +81,70 @@ export default async function LeadDetailPage({
     });
   };
 
+  const completeTarget = completeTargetFor(lead);
+  // Lähetetyt kumppaniraportit joissa tämä muutto on (palkkio jo laskutettu)
+  const reportedIn = lead.discountCode ? await sentReportsContainingLead(lead.id).catch(() => []) : [];
+
   return (
     <div className="space-y-6">
       {/* Header / Navigation */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-4">
           <Link
             href="/hallinta/liidit"
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
-          <div>
+          <div className="min-w-0">
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
               {lead.contact.firstName} {lead.contact.lastName}
             </h1>
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <span>ID: {lead.id}</span>
+            <div className="flex flex-wrap items-center gap-x-2 text-sm text-gray-500">
+              {lead.discountCode && (
+                <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-bold text-green-800 dark:bg-green-900/20 dark:text-green-300">
+                  🏠 {lead.discountPartner ?? lead.discount?.partner ?? 'Kumppani'}-koodi
+                </span>
+              )}
+              <span className="break-all">ID: {lead.id}</span>
               <span>•</span>
               <span>Luotu {formatDate(lead.createdAt)}</span>
             </div>
           </div>
         </div>
-        
-        <StatusSelector leadId={lead.id} initialStatus={lead.status} />
+
+        <StatusSelector leadId={lead.id} initialStatus={lead.status} completeTarget={completeTarget} />
       </div>
+
+      <LeadCompletionCard
+        leadId={lead.id}
+        status={lead.status}
+        completedAt={lead.completedAt ? lead.completedAt.toISOString() : null}
+        finalPrice={lead.finalPrice}
+        completeTarget={completeTarget}
+        reportedIn={
+          reportedIn.length > 0
+            ? reportedIn.map((r) => `${r.partner} ${r.periodLabel}`)
+            : lead.partnerReportedAt
+              ? [`lähetetty ${formatHelsinkiDate(lead.partnerReportedAt)}`]
+              : []
+        }
+        partner={
+          lead.discountCode
+            ? {
+                partner: lead.discountPartner ?? lead.discount?.partner ?? 'Kumppani',
+                code: lead.discountCode,
+                office: lead.discountPartner ? lead.discountOffice : lead.discount?.office ?? null,
+                agentName: lead.discountPartner ? lead.discountAgentName : lead.discount?.agentName ?? null,
+                discountPercent: lead.discountPercent,
+                discountAmount: lead.discountAmount,
+                priceBeforeDiscount: lead.priceBeforeDiscount,
+                priceAfterDiscount: lead.priceAfterDiscount,
+                commissionPercent: lead.commissionPercent,
+              }
+            : null
+        }
+      />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left Column: Contact & Move Info */}

@@ -1,5 +1,6 @@
 import { FURNITURE_CATALOG, RECYCLING_WASTE_TYPES, CalculatorSchema, calculateMovingPrice } from '@/features/calculator/pricing';
 import { BOX_RENTAL, calculateBoxRental, describeBoxRental } from '@/features/calculator/boxRental';
+import { computePartnerDiscount, discountLabel, type PartnerDiscount } from '@/features/calculator/discount';
 
 // Shared between the hallinta lead detail page and the quote email sender — both need to
 // turn a lead's raw formData JSON (calculator ids like "sofa_3": 2) into human-readable text.
@@ -115,22 +116,46 @@ export function getPackageLabel(pfd: Record<string, unknown>): string | null {
   return typeof pfd.movingPackage === 'string' ? PACKAGE_LABELS[pfd.movingPackage] ?? pfd.movingPackage : null;
 }
 
-// Laskee liidin hinta-arvion uudelleen tallennetun formData:n pohjalta — käytetään kun
-// hallinnassa muokataan hintaan vaikuttavia kenttiä (kokoluokka, kerros, hissi) jälkikäteen,
-// jotta laskurin näyttämä arvio ei jää vanhentuneeksi. Palauttaa null jos formData ei sisällä
-// tarpeeksi laskuripohjaisia kenttiä (esim. yhteydenottolomakkeelta tullut liidi ei ole koskaan
-// käynyt muuttolaskurin kautta) — silloin olemassa oleva hinta jätetään koskematta.
+export type RecomputedLeadPrice = {
+  price: number;
+  priceRangeLow: number;
+  priceRangeHigh: number;
+  // Vain kun liidillä on voimassa ollut kumppanikoodi: price ja haarukka ovat jo alennettuja.
+  discount: PartnerDiscount | null;
+};
+
+// Laskee liidin hinta-arvion uudelleen formData:n pohjalta — käytetään sekä laskurin varausta
+// tallennettaessa (selaimen lähettämään hintaan ei luoteta) että kun hallinnassa muokataan
+// hintaan vaikuttavia kenttiä jälkikäteen. Palauttaa null jos formData ei sisällä tarpeeksi
+// laskuripohjaisia kenttiä (esim. yhteydenottolomakkeelta tullut liidi ei ole koskaan käynyt
+// muuttolaskurin kautta) — silloin olemassa oleva hinta jätetään koskematta.
+// discountPercent = liidille tallennettu kumppanialennus (Lead.discountPercent), jottei
+// alennus katoa kun liidiä muokataan.
 export function recomputeLeadPrice(
   pfd: Record<string, unknown>,
-): { price: number; priceRangeLow: number; priceRangeHigh: number } | null {
+  discountPercent: number | null = null,
+): RecomputedLeadPrice | null {
   try {
-    const input = {
-      ...pfd,
-      date: typeof pfd.date === 'string' || pfd.date instanceof Date ? new Date(pfd.date as string) : undefined,
+    // Yhteystiedot eivät vaikuta hintaan, mutta esim. tyhjä contactEmail kaataisi skeeman
+    // email-tarkistuksen; null-arvot (JSON) eivät kelpaa skeeman optional-kenttiin.
+    const { contactName, contactEmail, contactPhone, ...priceFields } = pfd;
+    const input: Record<string, unknown> = Object.fromEntries(
+      Object.entries(priceFields).filter(([, value]) => value !== null),
+    );
+    const date = typeof pfd.date === 'string' || pfd.date instanceof Date ? new Date(pfd.date as string) : undefined;
+    input.date = date && !Number.isNaN(date.getTime()) ? date : undefined;
+
+    const result = calculateMovingPrice(CalculatorSchema.parse(input));
+    if (!discountPercent || discountPercent <= 0) {
+      return { price: result.total, priceRangeLow: result.priceRangeLow, priceRangeHigh: result.priceRangeHigh, discount: null };
+    }
+    const discount = computePartnerDiscount(result, discountPercent);
+    return {
+      price: discount.priceAfterDiscount,
+      priceRangeLow: result.priceRangeLow - discount.discountAmount,
+      priceRangeHigh: result.priceRangeHigh - discount.discountAmount,
+      discount,
     };
-    const parsed = CalculatorSchema.parse(input);
-    const result = calculateMovingPrice(parsed);
-    return { price: result.total, priceRangeLow: result.priceRangeLow, priceRangeHigh: result.priceRangeHigh };
   } catch {
     return null;
   }
@@ -157,4 +182,51 @@ export function getStoredPrice(pfd: Record<string, unknown>): {
     low: typeof pfd.priceRangeLow === 'number' ? pfd.priceRangeLow : null,
     high: typeof pfd.priceRangeHigh === 'number' ? pfd.priceRangeHigh : null,
   };
+}
+
+/** "1 124,50 €" / "1124.5" / 648 -> 1124.5 (senteiksi pyöristettynä). null jos ei kelpaa. */
+export function parseEuroAmount(input: unknown): number | null {
+  if (typeof input === 'number') return Number.isFinite(input) ? Math.round(input * 100) / 100 : null;
+  if (typeof input !== 'string') return null;
+  const cleaned = input.replace(/[\s €]/g, '').replace(',', '.');
+  if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return null;
+  return Math.round(Number(cleaned) * 100) / 100;
+}
+
+/**
+ * "Merkitse toteutuneeksi" -lomakkeen oletushinta: ihmisen vahvistama kiinteä hinta, muuten
+ * kumppanialennuksen jälkeinen hinta, muuten laskurin arvio. Jo toteutuneella liidillä sen
+ * tallennettu lopullinen hinta. Haarukkaa (esim. "99–129") ei voi käyttää oletuksena.
+ */
+export function defaultFinalPrice(lead: {
+  status: string;
+  finalPrice: number | null;
+  priceAfterDiscount: number | null;
+  formData: unknown;
+}): number | null {
+  // Kumotun toteutumisen vanha hinta ei ohita myöhemmin vahvistettua hintaa.
+  if (lead.status === 'COMPLETED' && lead.finalPrice != null) return lead.finalPrice;
+  const { confirmed, exact } = getStoredPrice(parseLeadFormData(lead.formData));
+  const confirmedAmount = confirmed !== null ? parseEuroAmount(confirmed) : null;
+  if (confirmedAmount !== null && confirmedAmount > 0) return confirmedAmount;
+  if (lead.priceAfterDiscount != null) return lead.priceAfterDiscount;
+  return exact !== null ? Math.round(exact) : null;
+}
+
+/**
+ * Tarjous- ja vahvistussähköpostin huomautus kumppanikoodilla tulleelle liidille, esim.
+ * "Hinnassa on huomioitu Kiinteistömaailma-etu -10 % (-72 €)." Summa näytetään vain laskurin
+ * arviolle — ihmisen vahvistamaan hintaan etu on jo laskettu, eikä summaa tiedetä.
+ */
+export function partnerDiscountNote(
+  lead: { discountCode: string | null; discountPercent: number | null; discountAmount: number | null },
+  partner: string | null,
+  withAmount: boolean,
+): string | null {
+  // discountAmount puuttuu jos palvelin ei saanut laskettua hintaa varauksessa — silloin
+  // tallennettu hinta on alentamaton, eikä asiakkaalle saa väittää edun olevan mukana.
+  if (!lead.discountCode || !lead.discountPercent || lead.discountAmount == null) return null;
+  const label = discountLabel(partner || 'Kumppani', lead.discountPercent);
+  const amount = withAmount && lead.discountAmount ? ` (-${lead.discountAmount} €)` : '';
+  return `Hinnassa on huomioitu ${label}${amount}.`;
 }

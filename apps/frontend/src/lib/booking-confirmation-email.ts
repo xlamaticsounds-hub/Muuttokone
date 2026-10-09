@@ -1,4 +1,4 @@
-import type { QuoteEmailParams } from '@/lib/quote-email';
+import { renderPartnerDiscountNote, type QuoteEmailParams } from '@/lib/quote-email';
 
 // Sama HTML-pako kuin quote-email.ts:ssä.
 function esc(value: unknown): string {
@@ -68,6 +68,7 @@ export function renderBookingConfirmationHtml(params: BookingConfirmationEmailPa
       <p style="margin:0 0 4px;font-size:13px;letter-spacing:0.04em;text-transform:uppercase;color:#9ca3af;">Hinta</p>
       <p style="margin:0;font-size:32px;font-weight:800;">${priceHtml}</p>
       <p style="margin:8px 0 0;font-size:13px;color:#9ca3af;">${esc(priceSubtext)}</p>
+      ${renderPartnerDiscountNote(params.partnerDiscountNote)}
     </div>
 
     ${customMessage && customMessage.trim() ? `

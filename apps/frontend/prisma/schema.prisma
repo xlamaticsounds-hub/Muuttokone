@@ -18,9 +18,11 @@ enum LeadStatus {
   CONTACTED
   SCHEDULED
   PROPOSAL_SENT
-  WON
+  WON // = vahvistettu (Discordin ✅ vahvistaa myös kalenterimerkinnän)
   LOST
   ARCHIVED
+  COMPLETED // Toteutunut — muutto tehty; completedAt + finalPrice asetetaan samalla
+  CANCELLED // Peruttu vahvistuksen jälkeen (LOST = ei koskaan vahvistunut)
 }
 
 enum LeadSource {
@@ -41,6 +43,11 @@ enum InvoiceStatus {
   PAID
   OVERDUE
   SUPERSEDED // Korvattu lähetetyllä maksumuistutuksella — ei enää maksettavana
+}
+
+enum PartnerReportStatus {
+  DRAFT // luotu ja esikatselu lähetetty meille — ei vielä kumppanille
+  SENT // hyväksytty hallinnassa ja lähetetty kumppanille
 }
 
 /**
@@ -117,6 +124,32 @@ model Lead {
   // ajastetusta /api/cron/email-summaries-reitistä.
   emailSummary Json?
 
+  // Kumppanin alennuskoodi (esim. Kiinteistömaailma). discountCode on käytetty koodi tekstinä,
+  // prosentit tallennetaan varaushetken arvoina, jottei koodin myöhempi muokkaus muuta jo
+  // tehtyjä kauppoja. Hinnat € sis. alv, laskettu palvelimella (src/features/calculator/discount.ts).
+  discountCodeId      String?
+  discount            DiscountCode? @relation(fields: [discountCodeId], references: [id], onDelete: SetNull)
+  discountCode        String?
+  discountPartner     String? // kumppani varaushetkellä — kuukausiraportti valitsee tämän mukaan
+  discountOffice      String?
+  discountAgentName   String?
+  discountPercent     Float?
+  commissionPercent   Float?
+  priceBeforeDiscount Float?
+  discountAmount      Float?
+  priceAfterDiscount  Float?
+
+  // Toteutunut muutto (status COMPLETED): milloin merkitty ja lopullinen laskutettu hinta
+  // (€ sis. alv, voi poiketa arviosta). Kumppanin välityspalkkio lasketaan finalPrice:sta.
+  // Säilyvät historiana jos toteutuminen kumotaan, mutta niitä käytetään vain tilassa COMPLETED.
+  completedAt DateTime?
+  finalPrice  Float?
+  // Milloin muutto lähti kumppanille hyväksytyssä kuukausiraportissa (palkkio laskutettu).
+  // Jos toteutuminen kumotaan ja merkitään uudelleen, alkuperäinen completedAt säilyy, ettei
+  // muutto päädy myöhemmän kuun raporttiin ja palkkio maksettaisi kahdesti.
+  partnerReportedAt DateTime?
+  partnerReportId   String?
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
@@ -125,6 +158,60 @@ model Lead {
   @@index([contactId])
   @@index([status])
   @@index([source])
+  @@index([discountCodeId])
+  @@index([completedAt])
+}
+
+/// Kumppanien alennuskoodit. Uudet koodit (myös toimipaikka- ja välittäjäkohtaiset) lisätään
+/// hallintapaneelista ilman koodimuutoksia.
+model DiscountCode {
+  id                String    @id @default(cuid())
+  code              String    @unique // aina normalizeDiscountCode()-muodossa (isot kirjaimet)
+  partner           String // esim. "Kiinteistömaailma"
+  office            String? // toimipaikka, esim. "Mankkaa"
+  agentName         String? // välittäjän nimi
+  discountPercent   Float     @default(10)
+  commissionPercent Float     @default(5) // kumppanille maksettava välityspalkkio, % alv 0 -hinnasta
+  active            Boolean   @default(true)
+  validFrom         DateTime?
+  validUntil        DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  leads Lead[]
+}
+
+/// Kumppanin kuukausiraportin vastaanottajat, muokattavissa hallinnasta (/hallinta/raportit).
+/// partner = DiscountCode.partner (esim. "Kiinteistömaailma").
+model PartnerSettings {
+  id            String   @id @default(cuid())
+  partner       String   @unique
+  reportEmail   String? // kumppanin osoite, johon hyväksytty raportti lähetetään
+  reportCcEmail String? // meidän osoite: esikatselu + kopio lähetetystä raportista
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+/// Kumppanin kuukausiraportti (välityspalkkio toteutuneista muutoista). data on rivien
+/// tilannekuva luontihetkellä: hyväksyntä lähettää täsmälleen esikatsellun version.
+/// Ks. src/lib/partner-report.ts ja src/server/partner-reports.ts.
+model PartnerReport {
+  id            String              @id @default(cuid())
+  partner       String
+  periodYear    Int
+  periodMonth   Int // 1–12, kalenterikuukausi Suomen aikaa
+  status        PartnerReportStatus @default(DRAFT)
+  data          Json
+  previewSentAt DateTime?
+  previewSentTo String?
+  sentAt        DateTime?
+  sentTo        String?
+  sentCc        String?
+  approvedBy    String?
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@unique([partner, periodYear, periodMonth])
 }
 
 model Invoice {

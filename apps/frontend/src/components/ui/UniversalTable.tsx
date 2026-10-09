@@ -20,7 +20,7 @@ export interface TablePagination {
   totalPages: number;
   total: number;
   pageSize: number;
-  /** Prev/Next links are built as `${basePath}?page=N`. */
+  /** Prev/Next links are built as `${basePath}?page=N` (or `&page=N` if basePath already has a query). */
   basePath: string;
 }
 
@@ -39,6 +39,9 @@ interface UniversalTableProps<T> {
 // do that is fragile, especially on touch where tap handling can differ from
 // a mouse click. Guard at the row level too: never treat a tap/click that
 // landed on (or inside) an interactive element as a row click.
+// Suodattimet (esim. /hallinta/liidit?tila=COMPLETED) säilyvät sivua vaihdettaessa.
+const pageHref = (basePath: string, page: number) => `${basePath}${basePath.includes("?") ? "&" : "?"}page=${page}`;
+
 const isInteractiveTarget = (target: EventTarget | null): boolean => {
   if (!(target instanceof Element)) return false;
   return !!target.closest("a, button, select, input, textarea, label, [data-stop-row-click]");
@@ -177,7 +180,7 @@ export function UniversalTable<T extends { id: string | number }>({
           <div className="flex gap-2">
             {pagination.page > 1 ? (
               <Link
-                href={`${pagination.basePath}?page=${pagination.page - 1}`}
+                href={pageHref(pagination.basePath, pagination.page - 1)}
                 className="rounded border border-gray-300 px-3 py-1.5 font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
               >
                 Edellinen
@@ -189,7 +192,7 @@ export function UniversalTable<T extends { id: string | number }>({
             )}
             {pagination.page < pagination.totalPages ? (
               <Link
-                href={`${pagination.basePath}?page=${pagination.page + 1}`}
+                href={pageHref(pagination.basePath, pagination.page + 1)}
                 className="rounded border border-gray-300 px-3 py-1.5 font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
               >
                 Seuraava

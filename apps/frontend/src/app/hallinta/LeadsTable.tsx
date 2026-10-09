@@ -1,12 +1,16 @@
 'use client';
 
-import { Lead, Contact, LeadStatus } from '@prisma/client';
+import { LeadStatus } from '@prisma/client';
 import { updateLeadStatus } from '@/server/actions';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { UniversalTable, Column, TablePagination } from '@/components/ui/UniversalTable';
+import { LEAD_STATUS_LABELS, LEAD_STATUS_PILL_CLASSES, statusOptionsFor } from '@/lib/lead-status';
+import { formatEuro } from '@/lib/format';
+import CompleteLeadDialog from './liidit/CompleteLeadDialog';
+import { completeTargetFor, type CompleteLeadTarget, type LeadForCompletion } from './liidit/complete-target';
 
-type LeadWithContact = Lead & { contact: Contact };
+type LeadWithContact = LeadForCompletion;
 
 export default function LeadsTable({
   leads,
@@ -17,11 +21,17 @@ export default function LeadsTable({
 }) {
   const router = useRouter();
   const [updating, setUpdating] = useState<string | null>(null);
+  const [completing, setCompleting] = useState<CompleteLeadTarget | null>(null);
 
-  const handleStatusChange = async (leadId: string, newStatus: string) => {
-    setUpdating(leadId);
+  const handleStatusChange = async (lead: LeadWithContact, newStatus: LeadStatus) => {
+    // Toteutuneeksi vain lopullisen hinnan kanssa (kumppaniraportti ja palkkio)
+    if (newStatus === 'COMPLETED') {
+      setCompleting(completeTargetFor(lead));
+      return;
+    }
+    setUpdating(lead.id);
     try {
-      await updateLeadStatus(leadId, newStatus as LeadStatus);
+      await updateLeadStatus(lead.id, newStatus);
       router.refresh();
     } catch (e) {
       console.error('Failed to update status', e);
@@ -56,6 +66,11 @@ export default function LeadsTable({
           <div className="font-medium text-gray-900 dark:text-gray-100">
             {lead.contact.firstName} {lead.contact.lastName}
           </div>
+          {lead.discountCode && (
+            <span className="mt-0.5 inline-block rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-bold text-green-800 dark:bg-green-900/20 dark:text-green-300">
+              🏠 {lead.discountPartner ?? lead.discount?.partner ?? 'Kumppani'}-koodi
+            </span>
+          )}
           <div className="text-xs text-gray-500">{lead.contact.phone}</div>
           <div className="text-xs text-gray-500 opacity-75">{lead.contact.email}</div>
         </div>
@@ -88,31 +103,25 @@ export default function LeadsTable({
     {
       header: 'Tila',
       cell: (lead) => (
-        <select
-          disabled={updating === lead.id}
-          value={lead.status}
-          onChange={(e) => handleStatusChange(lead.id, e.target.value)}
-          onClick={(e) => e.stopPropagation()} // Prevent row click
-          className={`h-7 cursor-pointer rounded-full border-0 px-2.5 py-0 text-xs font-semibold shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-blue-500 disabled:opacity-50
-            ${
-              lead.status === 'NEW'
-                ? 'bg-green-50 text-green-700 ring-green-600/20 dark:bg-green-900/20 dark:text-green-400 dark:ring-green-500/30'
-                : lead.status === 'CONTACTED'
-                ? 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-900/20 dark:text-blue-400 dark:ring-blue-500/30'
-                : lead.status === 'WON'
-                ? 'bg-purple-50 text-purple-700 ring-purple-600/20 dark:bg-purple-900/20 dark:text-purple-400 dark:ring-purple-500/30'
-                : lead.status === 'LOST'
-                ? 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-900/20 dark:text-red-400 dark:ring-red-500/30'
-                : 'bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700'
-            }`}
-        >
-          <option value="NEW">Uusi</option>
-          <option value="CONTACTED">Oltu yhteydessä</option>
-          <option value="PROPOSAL_SENT">Tarjous lähetetty</option>
-          <option value="WON">Voitettu</option>
-          <option value="LOST">Hävitty</option>
-          <option value="ARCHIVED">Arkistoitu</option>
-        </select>
+        <div className="flex flex-col items-start gap-1">
+          <select
+            disabled={updating === lead.id}
+            value={lead.status}
+            onChange={(e) => handleStatusChange(lead, e.target.value as LeadStatus)}
+            onClick={(e) => e.stopPropagation()} // Prevent row click
+            aria-label="Liidin tila"
+            className={`h-9 cursor-pointer rounded-full border-0 px-3 py-0 text-xs font-semibold shadow-sm ring-1 ring-inset focus:ring-2 focus:ring-blue-500 disabled:opacity-50 sm:h-7 sm:px-2.5 ${LEAD_STATUS_PILL_CLASSES[lead.status]}`}
+          >
+            {statusOptionsFor(lead.status).map((s) => (
+              <option key={s} value={s}>
+                {LEAD_STATUS_LABELS[s]}
+              </option>
+            ))}
+          </select>
+          {lead.status === 'COMPLETED' && lead.finalPrice != null && (
+            <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">{formatEuro(lead.finalPrice)} €</span>
+          )}
+        </div>
       ),
     },
     {
@@ -133,7 +142,18 @@ export default function LeadsTable({
         columns={columns}
         onRowClick={(lead) => router.push(`/hallinta/liidit/${lead.id}`)}
         pagination={pagination}
+        emptyMessage="Ei liidejä näillä suodattimilla."
       />
+      {completing && (
+        <CompleteLeadDialog
+          target={completing}
+          onClose={() => setCompleting(null)}
+          onSaved={() => {
+            setCompleting(null);
+            router.refresh();
+          }}
+        />
+      )}
     </div>
   );
 }

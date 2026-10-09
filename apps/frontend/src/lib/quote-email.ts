@@ -51,7 +51,15 @@ export type QuoteEmailParams = {
   // Hallinnan vapaasti kirjoittama lisäteksti (esim. selitys hinnasta) — näkyy asiakkaalle
   // hintalaatikon alla omana kappaleenaan. Tyhjänä koko lohko jätetään pois sähköpostista.
   customMessage: string | null;
+  // Kumppanikoodilla tulleen liidin huomautus hintalaatikossa, esim. "Hinnassa on huomioitu
+  // Kiinteistömaailma-etu -10 % (-72 €)." Ks. lead-format.ts:partnerDiscountNote.
+  partnerDiscountNote?: string | null;
 };
+
+/** Hintalaatikon (tumma tausta) kumppanietu-rivi — sama tarjouksessa ja varausvahvistuksessa. */
+export function renderPartnerDiscountNote(note: string | null | undefined): string {
+  return note ? `<p style="margin:12px 0 0;font-size:14px;font-weight:600;color:#86efac;">🏠 ${esc(note)}</p>` : '';
+}
 
 export function renderQuoteEmailHtml(params: QuoteEmailParams): string {
   const {
@@ -85,6 +93,7 @@ export function renderQuoteEmailHtml(params: QuoteEmailParams): string {
       <p style="margin:0 0 4px;font-size:13px;letter-spacing:0.04em;text-transform:uppercase;color:#9ca3af;">${esc(priceLabel)}</p>
       <p style="margin:0;font-size:32px;font-weight:800;">${priceHtml}</p>
       <p style="margin:8px 0 0;font-size:13px;color:#9ca3af;">${esc(priceSubtext)}</p>
+      ${renderPartnerDiscountNote(params.partnerDiscountNote)}
     </div>
 
     ${customMessage && customMessage.trim() ? `

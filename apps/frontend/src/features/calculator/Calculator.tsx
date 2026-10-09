@@ -6,6 +6,8 @@ import Script from 'next/script';
 import { motion, AnimatePresence } from 'framer-motion';
 import { calculateMovingPrice, CalculatorData, PriceBreakdown, FURNITURE_CATALOG, INCLUDED_DISTANCE_KM, RECYCLING_WASTE_TYPES, MAX_EXTRA_DESTINATIONS, EXTRA_DESTINATION_MINUTES } from './pricing';
 import { BOX_RENTAL, BOX_RENTAL_SUGGESTED_COUNT, calculateBoxRental, formatEuro, suggestBoxCount } from './boxRental';
+import { computePartnerDiscount } from './discount';
+import { DiscountCodeField, partnerLabel, usePartnerDiscountCode } from './PartnerDiscountCode';
 import toast from 'react-hot-toast';
 import { Loader2, ArrowRight, ArrowLeft, Calculator as CalcIcon, Calendar, CheckCircle2, ChevronDown, Search, Camera, X } from 'lucide-react';
 import Honeypot from '@/components/Forms/Honeypot';
@@ -90,6 +92,9 @@ export default function Calculator() {
   });
 
   const searchParams = useSearchParams();
+  // Kumppanin alennuskoodi — ?koodi=KIINTEISTOMAAILMA täyttää ja tarkistaa koodin heti
+  // (välittäjät jakavat suoran linkin tai QR-koodin).
+  const partnerCode = usePartnerDiscountCode(searchParams.get('koodi'));
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
@@ -106,6 +111,14 @@ export default function Calculator() {
   const [toPredictions, setToPredictions] = useState<{description: string; place_id: string}[]>([]);
 
   const priceResult = useMemo(() => calculateMovingPrice(formData), [formData]);
+  // Sama laskenta kuin palvelimella (api/submit): näytetty hinta = tallennettava hinta.
+  const partnerDiscount = useMemo(
+    () => (partnerCode.applied ? computePartnerDiscount(priceResult, partnerCode.applied.discountPercent) : null),
+    [priceResult, partnerCode.applied],
+  );
+  const discountShift = partnerDiscount?.discountAmount ?? 0;
+  const displayRangeLow = priceResult.priceRangeLow - discountShift;
+  const displayRangeHigh = priceResult.priceRangeHigh - discountShift;
 
   // Step content height varies a lot (e.g. inventory step vs. quote step). Without this,
   // the browser keeps the same absolute scroll position when switching steps, which can
@@ -525,6 +538,8 @@ export default function Calculator() {
             status: 'NEW_BOOKING',
             gdpr_consent: gdprConsent,
             company: honeypot,
+            // Palvelin tarkistaa koodin uudelleen ja laskee alennetun hinnan itse.
+            discountCode: partnerCode.applied?.code,
           }
         })
       });
@@ -1644,12 +1659,22 @@ export default function Calculator() {
                 <div className="bg-primary text-white p-6 sm:p-8 rounded-3xl shadow-xl shadow-primary/20 relative overflow-hidden">
                    <div className="relative z-10">
                       <p className="text-primary-foreground/80 font-medium mb-1">{t('Arvioitu muuttosi')}</p>
-                      <div className="flex items-end gap-2">
-                        <span className="text-4xl sm:text-5xl font-black">
+                      {partnerDiscount && (
+                        <p className="text-lg font-bold text-white/60 line-through" aria-label={t('Hinta ilman etua')}>
                           {priceResult.priceRangeLow}–{priceResult.priceRangeHigh}€
+                        </p>
+                      )}
+                      <div className="flex flex-wrap items-end gap-x-2">
+                        <span className="text-4xl sm:text-5xl font-black">
+                          {displayRangeLow}–{displayRangeHigh}€
                         </span>
                         <span className="text-xl font-bold mb-2">{t('sis. ALV')}</span>
                       </div>
+                      {partnerDiscount && partnerCode.applied && (
+                        <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-bold">
+                          🏠 {partnerLabel(partnerCode.applied, locale)}
+                        </span>
+                      )}
                       <div className="mt-6 grid grid-cols-2 gap-4 border-t border-white/20 pt-6">
                         <div>
                           <p className="text-xs uppercase font-bold text-white/60 mb-1">{t('Arvioitu kesto')}</p>
@@ -1686,6 +1711,14 @@ export default function Calculator() {
                    <CalcIcon className="absolute -bottom-10 -right-10 w-64 h-64 text-white/10 rotate-12" />
                 </div>
 
+                <DiscountCodeField
+                  state={partnerCode}
+                  discount={partnerDiscount}
+                  hasAddOns={priceResult.addOnsTotal > 0 || Boolean(priceResult.boxRental)}
+                  locale={locale}
+                  t={t}
+                />
+
                 {priceResult.dateDiscountAmount > 0 && (
                   <div className="grid gap-3">
                     <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
@@ -1704,9 +1737,15 @@ export default function Calculator() {
                         <span className="font-bold">+{formatEuro(priceResult.boxRental.total)}</span>
                       </div>
                     )}
+                    {partnerDiscount && partnerCode.applied && (
+                      <div className="flex justify-between p-3 rounded-xl bg-green-50 dark:bg-green-900/20">
+                        <span className="text-green-700 dark:text-green-300">🏠 {partnerLabel(partnerCode.applied, locale)}</span>
+                        <span className="font-bold text-green-700 dark:text-green-300">-{partnerDiscount.discountAmount}€</span>
+                      </div>
+                    )}
                     <div className="flex justify-between p-3 rounded-xl bg-primary/5">
                       <span className="font-semibold">{t('Lopullinen arvio')}</span>
-                      <span className="font-bold">{priceResult.priceRangeLow}–{priceResult.priceRangeHigh}€</span>
+                      <span className="font-bold">{displayRangeLow}–{displayRangeHigh}€</span>
                     </div>
                   </div>
                 )}
@@ -1873,6 +1912,11 @@ export default function Calculator() {
                   <p className="text-gray-500">
                     {formData.serviceType === 'transport' ? t('Valitse kuljetuspäivä') : t('Valitse muuttopäivä')} {t('ja jätä yhteystietosi.')}
                   </p>
+                  {partnerDiscount && partnerCode.applied && (
+                    <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-green-50 px-4 py-1.5 text-sm font-semibold text-green-800 dark:bg-green-900/20 dark:text-green-300">
+                      🏠 {partnerLabel(partnerCode.applied, locale)} {t('on mukana tarjouspyynnössäsi.')}
+                    </p>
+                  )}
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-6">

@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
+    "test": "vitest run",
     "format": "prettier --write \"**/*.{js,ts,tsx,json,css,md}\""
   },
   "prisma": {
@@ -71,7 +72,8 @@
     "prettier-plugin-tailwindcss": "^0.7.2",
     "prisma": "^7.2.0",
     "tailwindcss": "^4.1.18",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.0.3"
   },
   "optionalDependencies": {
     "sharp": "^0.34.5"

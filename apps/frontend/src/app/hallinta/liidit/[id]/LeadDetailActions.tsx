@@ -87,6 +87,11 @@ export default function LeadDetailActions({
           ) : (
             <span className="text-gray-500 dark:text-gray-400">Ei hintaa vielä asetettu.</span>
           )}
+          {lead.discountCode && (lead.discountPercent ?? 0) > 0 && lead.discountAmount != null && confirmedPrice === null && (
+            <span className="mt-1 block text-xs font-semibold text-green-700 dark:text-green-400">
+              🏠 Arvio sisältää kumppanikoodin -{lead.discountPercent} % edun
+            </span>
+          )}
         </div>
         <button
           onClick={() => setShowQuotePreview(true)}
@@ -174,6 +179,14 @@ export default function LeadDetailActions({
                 <p className="mt-1 text-xs text-blue-600 dark:text-blue-400">
                   Kiinteä hinta (esim. 450) tai haarukka (esim. 99-129). Jätä tyhjäksi jos haluat että sähköpostissa näkyy laskurin arvioima hintahaarukka.
                 </p>
+                {lead.discountCode && (lead.discountPercent ?? 0) > 0 && (
+                  <p className="mt-1 text-xs font-semibold text-green-700 dark:text-green-400">
+                    🏠 Asiakkaalla on kumppanikoodi {lead.discountCode} (-{lead.discountPercent} %): anna hinta, josta etu on jo vähennetty.
+                    {lead.discountAmount != null
+                      ? ' Laskurin arvio sisältää edun valmiiksi.'
+                      : ' Laskurin arviosta etua EI ole vähennetty (hintaa ei saatu laskettua varauksessa).'}
+                  </p>
+                )}
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>

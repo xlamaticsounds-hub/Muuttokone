@@ -35,3 +35,15 @@ export async function logAction(ip: string, action: string, message: string, ent
     },
   });
 }
+/**
+ * Tarkistaa rajan JA kirjaa tämän pyynnön lokiin, jotta seuraava tarkistus näkee sen.
+ * Pelkkä rateLimit() ei kirjaa mitään: jos samannimistä actionia ei kirjata muualla, raja ei
+ * koskaan laukea (näin kävi /api/submit- ja /api/quote-photos-reiteillä). Lokikirjauksen
+ * epäonnistuminen ei estä pyyntöä.
+ */
+export async function rateLimitAndRecord(ip: string, action: string, limit: number, windowMinutes: number) {
+  await rateLimit(ip, action, limit, windowMinutes);
+  await logAction(ip, action, 'Rajoitettu julkinen pyyntö').catch((error) => {
+    console.error(`[rate-limit] Pyynnön kirjaus epäonnistui (${action})`, error);
+  });
+}

@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   try {
     leads = await prisma.lead.findMany({
       where: {
-        status: { notIn: ['LOST', 'ARCHIVED'] },
+        status: { notIn: ['LOST', 'ARCHIVED', 'CANCELLED'] },
         contact: { email: { not: null } },
       },
       select: { id: true },

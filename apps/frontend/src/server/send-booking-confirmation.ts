@@ -13,6 +13,7 @@ import {
   getPackageLabel,
   getStoredPrice,
   parseLeadFormData,
+  partnerDiscountNote,
 } from '@/server/lead-format';
 import { renderBookingConfirmationHtml, bookingConfirmationSubject } from '@/lib/booking-confirmation-email';
 
@@ -53,7 +54,10 @@ async function sendBookingConfirmationEmailInner(
     return { success: false, message: SMTP_NOT_CONFIGURED_MESSAGE };
   }
 
-  const lead = await prisma.lead.findUnique({ where: { id: leadId }, include: { contact: true } });
+  const lead = await prisma.lead.findUnique({
+    where: { id: leadId },
+    include: { contact: true, discount: { select: { partner: true } } },
+  });
   if (!lead) {
     return { success: false, message: 'Liidiä ei löytynyt.' };
   }
@@ -85,6 +89,7 @@ async function sendBookingConfirmationEmailInner(
     wasteTypes,
     extras,
     customMessage,
+    partnerDiscountNote: partnerDiscountNote(lead, lead.discountPartner ?? lead.discount?.partner ?? null, priceConfirmed === null),
   });
 
   try {
