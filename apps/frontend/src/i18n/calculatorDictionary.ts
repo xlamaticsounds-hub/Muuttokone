@@ -166,16 +166,6 @@ export const calculatorDictionary: Record<string, string> = {
   'Normaalihinta': 'Regular price',
   'Lopullinen arvio': 'Final estimate',
   'Sisältää': 'Includes',
-  'Mistä hinta muodostuu': 'How the price is calculated',
-  'Tavaramäärän vaikutus': 'Impact of item quantity',
-  'Kerrosten ja hissin vaikutus': 'Impact of floors and elevator',
-  'Kantomatkan vaikutus': 'Impact of carry distance',
-  'Kuljetusmatkan vaikutus': 'Impact of transport distance',
-  'Muuttomatkan vaikutus': 'Impact of moving distance',
-  'Välipysähdysten vaikutus': 'Impact of additional stops',
-  'Lisäpalveluiden vaikutus': 'Impact of extra services',
-  'Koordinointiaika (kiinteä, auton valmistelu ja paperityöt)': 'Coordination time (fixed, vehicle setup and paperwork)',
-  'Yhteensä (ennen muuttopäivän alennusta)': 'Total (before moving-day discount)',
   'tavaraa yhteensä': 'items total',
   'm³ arvioitu tilavuus': 'm³ estimated volume',
   'h arvioitu työaika': 'h estimated labor time',
@@ -198,6 +188,17 @@ export const calculatorDictionary: Record<string, string> = {
     "We'll send you the final quote by email — no binding commitment yet. We won't charge anything until you've accepted the quote.",
   'Lähetetään pyyntöä...': 'Sending request...',
   'Lähetä tarjouspyyntö': 'Send quote request',
+
+  // Muuttolaatikoiden tarjousikkuna (BoxRentalOfferModal)
+  'Tarvitsetko muuttolaatikoita?': 'Do you need moving boxes?',
+  'Määrä on valittu valmiiksi asuntosi koon mukaan. Voit muuttaa sitä.':
+    'We have pre-selected an amount based on the size of your home. You can change it.',
+  'Määrä on valittu valmiiksi tavaralistasi mukaan. Voit muuttaa sitä.':
+    'We have pre-selected an amount based on your item list. You can change it.',
+  'Ei kiitos': 'No thanks',
+  'Lisää tilaukseen': 'Add to order',
+  'Sulje': 'Close',
+  'Muuttolaatikot': 'Moving boxes',
 
   // Nav buttons
   'Takaisin': 'Back',
@@ -232,7 +233,6 @@ export const calculatorDictionary: Record<string, string> = {
   '+ Lisää kohdeosoite': '+ Add destination address',
   'Jokainen lisäkohde lisää työaikaa': 'Each additional destination adds working time',
   'ja reitin pituutta – hinta päivittyy automaattisesti.': 'and route length – the price updates automatically.',
-  'Lisäkohteet': 'Additional destinations',
 
   // Partner discount code (e.g. Kiinteistömaailma) — PartnerDiscountCode.tsx
   'Alennuskoodi': 'Discount code',

@@ -30,7 +30,6 @@ export const BOX_RENTAL = {
   minDays: BOX_ITEM.days.min,
   maxDays: BOX_ITEM.days.max,
   defaultDays: BOX_ITEM.days.default, // noin viikko ennen muuttoa + viikko muuton jälkeen
-  dayOptions: BOX_ITEM.days.options as readonly number[],
   deliveryFeeBothWays: RENTAL_DELIVERY.feeBothWays, // € — toimitus + nouto yhteensä (pk-seutu)
   freeDeliveryMinRental: RENTAL_DELIVERY.freeFromRental, // € — ilmainen ilman muuttoa tämän vuokran jälkeen
   lostBoxFee: BOX_ITEM.lostFee ?? 0, // € / kadonnut tai rikkoutunut laatikko

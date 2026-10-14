@@ -15,7 +15,7 @@
 //     details: ['Pesuaine mukana', 'Käyttöohje mukana'],
 //     pricePerDay: 29,                  // € / kpl / vrk, sis. ALV
 //     qty: { min: 1, max: 2, step: 1, default: 1 },
-//     days: { min: 1, max: 7, default: 1, options: [1, 2, 3] },
+//     days: { min: 1, max: 7, default: 1 },  // vuokra-aika valitaan liukusäätimellä min–max
 //     lostFee: 400,                     // € / kpl jos kadonnut tai rikki (valinnainen)
 //     selectedByDefault: false,
 //     available: true,                  // false = piilotettu sivulta ja lomakkeelta
@@ -32,7 +32,7 @@ export interface RentalItem {
   details: string[]; // luettelo tuotekortilla
   pricePerDay: number; // € / kpl / vuorokausi, sis. ALV
   qty: { min: number; max: number; step: number; default: number };
-  days: { min: number; max: number; default: number; options: number[] };
+  days: { min: number; max: number; default: number }; // vuokra-aika valitaan liukusäätimellä päivän tarkkuudella
   lostFee?: number; // € / kpl jos kadonnut tai rikki
   /** Pikavalinnat määrälle, esim. asunnon koon mukaan. */
   qtyHints?: { label: string; qty: number; apartmentSize?: string }[];
@@ -72,13 +72,13 @@ export const RENTAL_ITEMS: RentalItem[] = [
     details: ['Kädensijat helpottavat kantamista', 'Samanlaiset laatikot pinoutuvat siististi ja nopeuttavat lastausta', 'Ei pahvijätettä – palautat laatikot meille'],
     pricePerDay: 0.19,
     qty: { min: 20, max: 150, step: 5, default: 50 },
-    days: { min: 7, max: 60, default: 14, options: [7, 14, 21, 28] },
+    days: { min: 5, max: 60, default: 14 },
     lostFee: 12,
     qtyHints: [
-      { label: 'Yksiö', qty: 30, apartmentSize: '1h' },
+      { label: 'Yksiö', qty: 25, apartmentSize: '1h' },
       { label: 'Kaksio', qty: 50, apartmentSize: '2h' },
-      { label: 'Kolmio', qty: 70, apartmentSize: '3h' },
-      { label: 'Neliö tai isompi', qty: 90, apartmentSize: '4h+' },
+      { label: 'Kolmio', qty: 75, apartmentSize: '3h' },
+      { label: 'Neliö tai isompi', qty: 100, apartmentSize: '4h+' },
     ],
     selectedByDefault: true,
     available: true,

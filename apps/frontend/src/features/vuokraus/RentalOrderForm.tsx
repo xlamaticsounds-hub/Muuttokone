@@ -17,16 +17,11 @@ import {
   isDeliveryAreaPostalCode,
   type RentalItem,
 } from './rental';
+import RentalDaysSlider from './RentalDaysSlider';
 
 const inputClass =
   'focus:ring-primary focus:border-primary w-full rounded-lg border border-gray-300 px-4 py-3 focus:ring-2 focus:outline-hidden dark:border-gray-700 dark:bg-black dark:text-white';
 const labelClass = 'mb-2 block text-sm font-medium text-black dark:text-white';
-const chipClass = (active: boolean) =>
-  `rounded-full border-2 px-4 py-1.5 text-sm font-bold transition-all ${
-    active
-      ? 'border-primary bg-primary/10 text-primary'
-      : 'border-gray-200 text-gray-700 hover:border-primary dark:border-gray-700 dark:text-gray-200'
-  }`;
 
 const TIME_WINDOWS = [
   { value: '', label: 'Ei väliä' },
@@ -343,19 +338,15 @@ export default function RentalOrderForm() {
                     </div>
 
                     <div>
-                      <span className="mb-2 block text-xs font-bold uppercase text-gray-400">Vuokra-aika</span>
-                      <div className="flex flex-wrap gap-2">
-                        {item.days.options.map((d) => (
-                          <button
-                            key={d}
-                            type="button"
-                            onClick={() => setDays((prev) => ({ ...prev, [item.id]: d }))}
-                            className={chipClass(days[item.id] === d)}
-                          >
-                            {d} vrk
-                          </button>
-                        ))}
-                      </div>
+                      <RentalDaysSlider
+                        id={`rental-days-${item.id}`}
+                        label="Vuokra-aika"
+                        unit="vrk"
+                        value={days[item.id] ?? item.days.default}
+                        min={item.days.min}
+                        max={item.days.max}
+                        onChange={(d) => setDays((prev) => ({ ...prev, [item.id]: d }))}
+                      />
                       <p className="mt-2 text-xs text-gray-400">
                         Vuokra lasketaan toimituksesta noutoon ja jatkuu, kunnes noudamme tuotteet.
                       </p>

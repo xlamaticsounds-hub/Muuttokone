@@ -6,6 +6,8 @@ import Script from 'next/script';
 import { motion, AnimatePresence } from 'framer-motion';
 import { calculateMovingPrice, CalculatorData, PriceBreakdown, FURNITURE_CATALOG, INCLUDED_DISTANCE_KM, RECYCLING_WASTE_TYPES, MAX_EXTRA_DESTINATIONS, EXTRA_DESTINATION_MINUTES } from './pricing';
 import { BOX_RENTAL, BOX_RENTAL_SUGGESTED_COUNT, calculateBoxRental, formatEuro, suggestBoxCount } from './boxRental';
+import BoxRentalOfferModal from './BoxRentalOfferModal';
+import RentalDaysSlider from '@/features/vuokraus/RentalDaysSlider';
 import { computePartnerDiscount } from './discount';
 import { DiscountCodeField, partnerLabel, usePartnerDiscountCode } from './PartnerDiscountCode';
 import toast from 'react-hot-toast';
@@ -44,12 +46,9 @@ const STEPS = [
   { id: 'booking', title: 'Varaus' },
 ];
 
-// Toivottu kellonaika valitaan listasta 15 minuutin välein klo 7.00–20.00. Arvo on aina "HH:MM",
-// jota kalenteri ja liidin muistiinpanot käyttävät sellaisenaan.
-const PREFERRED_TIME_OPTIONS = Array.from({ length: (20 - 7) * 4 + 1 }, (_, i) => {
-  const minutes = 7 * 60 + i * 15;
-  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`;
-});
+// Toivottu kellonaika valitaan listasta tasatunteina klo 7.00–20.00, joten minuutteja ei voi valita.
+// Arvo on aina "HH:MM", jota kalenteri ja liidin muistiinpanot käyttävät sellaisenaan.
+const PREFERRED_TIME_OPTIONS = Array.from({ length: 20 - 7 + 1 }, (_, i) => `${String(7 + i).padStart(2, '0')}:00`);
 
 export default function Calculator() {
   const { locale } = useLocale();
@@ -100,6 +99,9 @@ export default function Calculator() {
   const [isBooked, setIsBooked] = useState(false);
   const [gdprConsent, setGdprConsent] = useState(false);
   const [honeypot, setHoneypot] = useState('');
+  // Muuttolaatikoiden tarjousikkuna: avautuu kerran tavaralistan jälkeen, ks. handleNext.
+  const [boxOfferOpen, setBoxOfferOpen] = useState(false);
+  const [boxOfferSeen, setBoxOfferSeen] = useState(false);
 
   // Autocomplete Refs
   const fromRef = useRef<HTMLInputElement>(null);
@@ -309,6 +311,12 @@ export default function Calculator() {
       toast.error(t('Täytä molemmat osoitteet'));
       return;
     }
+    // Muuttolaatikot tarjotaan kerran heti tavaralistan jälkeen, kun asiakas on ilmoittanut tavaroita
+    // eikä ole jo valinnut laatikkovuokraa lisäpalveluista.
+    if (formData.serviceType === 'moving' && currentStep === 4 && hasDeclaredItems && !formData.needsBoxRental && !boxOfferSeen) {
+      setBoxOfferOpen(true);
+      return;
+    }
     const maxStep = formData.serviceType === 'moving' ? 6 : 5;
     setCurrentStep((prev) => Math.min(prev + 1, maxStep));
   };
@@ -498,6 +506,26 @@ export default function Calculator() {
 
   const stepBoxRentalCount = (delta: number) => {
     setFormData((prev) => ({ ...prev, boxRentalCount: clampBoxCount(prev.boxRentalCount + delta) }));
+  };
+
+  // Tarjousikkunan valmiiksi täytetty määrä: tavaralistan laatikot, jos niitä on tarpeeksi,
+  // muuten asunnon koon mukainen suositus (rental.ts: qtyHints).
+  const hasDeclaredItems = totalFurniturePieces > 0 || formData.customItems.some((item) => item.qty > 0);
+  const boxOfferCountSource: 'list' | 'size' = derivedBoxCount >= BOX_RENTAL.minBoxes ? 'list' : 'size';
+  const advanceFromInventory = () => {
+    const maxStep = formData.serviceType === 'moving' ? 6 : 5;
+    setCurrentStep((prev) => Math.min(prev + 1, maxStep));
+  };
+  const addBoxRentalFromOffer = (count: number, days: number) => {
+    setFormData((prev) => ({ ...prev, needsBoxRental: true, boxRentalCount: clampBoxCount(count), boxRentalDays: days }));
+    setBoxOfferSeen(true);
+    setBoxOfferOpen(false);
+    advanceFromInventory();
+  };
+  const declineBoxRentalOffer = () => {
+    setBoxOfferSeen(true);
+    setBoxOfferOpen(false);
+    advanceFromInventory();
   };
 
   const handleBooking = async (e: React.FormEvent) => {
@@ -1541,21 +1569,15 @@ export default function Calculator() {
                           </div>
 
                           <div>
-                            <label className="block text-xs font-bold uppercase text-gray-400 mb-2">{t('Vuokra-aika')}</label>
-                            <div className="flex flex-wrap gap-2">
-                              {BOX_RENTAL.dayOptions.map((days) => (
-                                <button
-                                  key={days}
-                                  type="button"
-                                  onClick={() => updateField('boxRentalDays', days)}
-                                  className={`px-4 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
-                                    formData.boxRentalDays === days ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200 dark:border-gray-700 hover:border-primary'
-                                  }`}
-                                >
-                                  {days} {t('vrk')}
-                                </button>
-                              ))}
-                            </div>
+                            <RentalDaysSlider
+                              id="calculator-box-rental-days"
+                              label={t('Vuokra-aika')}
+                              unit={t('vrk')}
+                              value={formData.boxRentalDays}
+                              min={BOX_RENTAL.minDays}
+                              max={BOX_RENTAL.maxDays}
+                              onChange={(days) => updateField('boxRentalDays', days)}
+                            />
                             <p className="text-xs text-gray-400 mt-2">
                               {t('Toimitamme laatikot noin viikkoa ennen muuttoa ja noudamme ne tyhjinä muuton jälkeen. Vuokra lasketaan toimituksesta noutoon – tarkat päivät sovitaan kanssasi.')}
                             </p>
@@ -1762,65 +1784,21 @@ export default function Calculator() {
                   </div>
                 </div>
 
-                {(formData.serviceType === 'moving' || formData.serviceType === 'transport') && (
+                {priceResult.boxRental && (
                   <div className="grid gap-3">
-                    <h3 className="font-bold text-sm uppercase tracking-wide text-gray-400">{t('Mistä hinta muodostuu')}</h3>
+                    <h3 className="font-bold text-sm uppercase tracking-wide text-gray-400">{t('Muuttolaatikot')}</h3>
                     <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                      <span className="text-gray-500">{t('Tavaramäärän vaikutus')}</span>
-                      <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.items)}€</span>
-                    </div>
-                    <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                      <span className="text-gray-500">{t('Kerrosten ja hissin vaikutus')}</span>
-                      <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.floors)}€</span>
+                      <span className="text-gray-500">
+                        {t('Laatikkovuokra')} ({priceResult.boxRental.count} {t('kpl')} × {priceResult.boxRental.days} {t('vrk')})
+                      </span>
+                      <span className="font-bold">{formatEuro(priceResult.boxRental.rentalCost)}</span>
                     </div>
                     <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                      <span className="text-gray-500">{t('Kantomatkan vaikutus')}</span>
-                      <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.carryDistance)}€</span>
+                      <span className="text-gray-500">{t('Laatikoiden toimitus ja nouto')}</span>
+                      <span className={`font-bold ${priceResult.boxRental.deliveryFree ? 'text-green-600' : ''}`}>
+                        {priceResult.boxRental.deliveryFree ? t('Ilmainen') : formatEuro(priceResult.boxRental.deliveryCost)}
+                      </span>
                     </div>
-                    <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                      <span className="text-gray-500">{formData.serviceType === 'transport' ? t('Kuljetusmatkan vaikutus') : t('Muuttomatkan vaikutus')}</span>
-                      <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.distance)}€</span>
-                    </div>
-                    {priceResult.details.impactBreakdown.extras > 0 && (
-                      <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                        <span className="text-gray-500">
-                          {formData.serviceType === 'transport' ? t('Välipysähdysten vaikutus') : t('Lisäpalveluiden vaikutus')}
-                        </span>
-                        <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.extras)}€</span>
-                      </div>
-                    )}
-                    {(priceResult.details.impactBreakdown.extraDestinations ?? 0) > 0 && (
-                      <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                        <span className="text-gray-500">
-                          {t('Lisäkohteet')} ({priceResult.details.extraDestinationCount} {t('kpl')})
-                        </span>
-                        <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.extraDestinations ?? 0)}€</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                      <span className="text-gray-500">{t('Koordinointiaika (kiinteä, auton valmistelu ja paperityöt)')}</span>
-                      <span className="font-bold">{Math.round(priceResult.details.impactBreakdown.base)}€</span>
-                    </div>
-                    <div className="flex justify-between p-3 rounded-xl bg-primary/5 font-semibold">
-                      <span>{t('Yhteensä (ennen muuttopäivän alennusta)')}</span>
-                      <span>{Math.round(priceResult.normalPriceTotal)}€</span>
-                    </div>
-                    {priceResult.boxRental && (
-                      <>
-                        <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                          <span className="text-gray-500">
-                            {t('Laatikkovuokra')} ({priceResult.boxRental.count} {t('kpl')} × {priceResult.boxRental.days} {t('vrk')})
-                          </span>
-                          <span className="font-bold">{formatEuro(priceResult.boxRental.rentalCost)}</span>
-                        </div>
-                        <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                          <span className="text-gray-500">{t('Laatikoiden toimitus ja nouto')}</span>
-                          <span className={`font-bold ${priceResult.boxRental.deliveryFree ? 'text-green-600' : ''}`}>
-                            {priceResult.boxRental.deliveryFree ? t('Ilmainen') : formatEuro(priceResult.boxRental.deliveryCost)}
-                          </span>
-                        </div>
-                      </>
-                    )}
                   </div>
                 )}
 
@@ -2029,6 +2007,19 @@ export default function Calculator() {
         )}
       </div>
     </div>
+    <AnimatePresence>
+      {boxOfferOpen && (
+        <BoxRentalOfferModal
+          key="box-rental-offer"
+          initialCount={suggestBoxCount(formData.apartmentSize, derivedBoxCount)}
+          initialDays={formData.boxRentalDays >= BOX_RENTAL.minDays ? formData.boxRentalDays : BOX_RENTAL.defaultDays}
+          countSource={boxOfferCountSource}
+          onAdd={addBoxRentalFromOffer}
+          onDecline={declineBoxRentalOffer}
+          onClose={() => setBoxOfferOpen(false)}
+        />
+      )}
+    </AnimatePresence>
     </>
   );
 }
