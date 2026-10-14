@@ -14,7 +14,7 @@ const menuData: Menu[] = [
     mobileOnly: true,
   },
   {
-    label: 'Palvelut',
+    label: 'Muuttopalvelut',
     route: '/palvelut',
   },
   {

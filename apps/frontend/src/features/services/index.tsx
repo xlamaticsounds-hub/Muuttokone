@@ -12,9 +12,12 @@ interface ServicesProps {
   title?: string;
   subtitle?: string;
   items?: Service[];
+  /** Palvelut-sivulla otsikko on sivun pääotsikko (h1), muualla h2. */
+  headingLevel?: 'h1' | 'h2';
 }
 
-export default function Services({ title, subtitle, items = [] }: ServicesProps) {
+export default function Services({ title, subtitle, items = [], headingLevel = 'h2' }: ServicesProps) {
+  const Heading = headingLevel;
   const t = useT(servicesDictionary);
   const tData = useT(servicesDataDictionary);
   const translatedItems = items.map((service) => ({
@@ -33,8 +36,8 @@ export default function Services({ title, subtitle, items = [] }: ServicesProps)
       >
         <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
           <div className="mb-12 text-center">
-            <p className="text-primary mb-2 text-sm font-semibold uppercase tracking-wide">{t('Palvelut')}</p>
-            <h2 className="text-3xl font-bold text-black/90 dark:text-white sm:text-4xl">{title || t('Palvelumme')}</h2>
+            <p className="text-primary mb-2 text-sm font-semibold uppercase tracking-wide">{t('Helsinki ja Uusimaa')}</p>
+            <Heading className="text-3xl font-bold text-black/90 dark:text-white sm:text-4xl">{title || t('Muuttopalvelut')}</Heading>
             <p className="mt-2 text-black/70 dark:text-white/70">{subtitle || t('Tarjoamme kattavat muuttopalvelut kotitalouksille ja yrityksille Helsingissä ja Uudellamaalla.')}</p>
           </div>
 

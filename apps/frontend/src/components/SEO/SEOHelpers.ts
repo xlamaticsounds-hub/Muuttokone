@@ -89,7 +89,7 @@ export const SEOConfigs = {
   },
 
   services: {
-    title: 'Palvelut - Muuttopalvelumme',
+    title: 'Muuttopalvelut Helsingissä ja Uudellamaalla',
     description:
       'Kattavat muuttopalvelut Helsingissä ja Uudellamaalla: kotimuutto, yritysmuutto, pakkauspalvelut, kuljetukset, kuolinpesätyhjennnykset ja siivous.',
     keywords: ['muuttopalvelut', 'kotimuutto', 'yritysmuutto', 'pakkaus', 'kuljetukset', 'kuolinpesätyhjennnys', 'siivous', 'Helsinki', 'Uusimaa'],

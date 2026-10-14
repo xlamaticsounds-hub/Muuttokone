@@ -44,7 +44,7 @@ export default function ServicesGrid({ title, subtitle }: { title?: string; subt
       <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
         <div className="mb-10">
           <SectionTitle
-            title={t(title ?? 'Palvelumme')}
+            title={t(title ?? 'Muuttopalvelut')}
             subtitle={t(
               subtitle ?? 'Tarjoamme kattavat muuttopalvelut kotitalouksille ja yrityksille Helsingissä ja Uudellamaalla.',
             )}

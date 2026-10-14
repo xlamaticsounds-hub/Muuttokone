@@ -17,17 +17,20 @@ const normalizeHomeSections = (sections: any) => {
       };
     }
 
-    if (section?.id === 'services' && typeof section?.props?.subtitle === 'string') {
-      return {
-        ...section,
-        props: {
-          ...section.props,
-          subtitle: section.props.subtitle.replace(
-            'kotitalouksille ja yrityksille koko Suomessa.',
-            'kotitalouksille ja yrityksille Helsingissä ja Uudellamaalla.'
-          ),
-        },
-      };
+    if (section?.id === 'services' && section?.props) {
+      const props = { ...section.props };
+      if (typeof props.subtitle === 'string') {
+        props.subtitle = props.subtitle.replace(
+          'kotitalouksille ja yrityksille koko Suomessa.',
+          'kotitalouksille ja yrityksille Helsingissä ja Uudellamaalla.'
+        );
+      }
+      // Hakukoneita varten palveluosion otsikko on "Muuttopalvelut", vaikka tietokantaan olisi
+      // tallennettu vanha "Palvelumme" tai "Palvelut".
+      if (props.title === 'Palvelumme' || props.title === 'Palvelut') {
+        props.title = 'Muuttopalvelut';
+      }
+      return { ...section, props };
     }
 
     return section;

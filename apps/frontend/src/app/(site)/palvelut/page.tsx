@@ -31,7 +31,8 @@ export default async function Page() {
   return (
     <>
       <Services
-        title="Palvelumme"
+        title="Muuttopalvelut"
+        headingLevel="h1"
         subtitle="Luotettavat ja monipuoliset muuttopalvelut koteihin ja yrityksille Helsingissä ja Uudellamaalla."
         items={items}
       />

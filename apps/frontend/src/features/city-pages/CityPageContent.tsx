@@ -83,9 +83,9 @@ export default function CityPageContent({ city }: { city: CityData }) {
             ))}
           </div>
           <p className="mt-6 text-sm text-black/60 dark:text-white/60">
-            Palvelumme kattavat kotimuutot, yritysmuutot, pakkauspalvelun ja kuljetukset — katso{' '}
+            Muuttopalvelumme kattavat kotimuutot, yritysmuutot, pakkauspalvelun ja kuljetukset — katso{' '}
             <Link href="/palvelut" className="font-semibold text-primary hover:underline">
-              kaikki palvelumme
+              kaikki muuttopalvelut
             </Link>
             .
           </p>

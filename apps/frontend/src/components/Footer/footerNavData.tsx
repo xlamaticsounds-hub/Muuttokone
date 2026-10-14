@@ -5,7 +5,7 @@ const footerNavData: FooterMenu[] = [
     title: 'Palvelut',
     navItems: [
       {
-        label: 'Palvelut',
+        label: 'Muuttopalvelut',
         route: '/palvelut',
       },
       {

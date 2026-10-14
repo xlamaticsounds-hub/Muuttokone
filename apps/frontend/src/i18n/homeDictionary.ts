@@ -5,7 +5,7 @@ export const headerDictionary: Record<string, string> = {
   'Soita': 'Call',
   'Etusivu': 'Home',
   'Muuttolaskuri': 'Moving Calculator',
-  'Palvelut': 'Services',
+  'Muuttopalvelut': 'Moving services',
   'Muuttolaatikot': 'Moving boxes',
   'Blogi': 'Blog',
   'Yhteystiedot': 'Contact',
@@ -71,7 +71,7 @@ export const pricingPreviewDictionary: Record<string, string> = {
 };
 
 export const servicesGridDictionary: Record<string, string> = {
-  'Palvelumme': 'Our services',
+  'Muuttopalvelut': 'Moving services',
   'Tarjoamme kattavat muuttopalvelut kotitalouksille ja yrityksille Helsingissä ja Uudellamaalla.':
     'We offer comprehensive moving services for households and businesses in Helsinki and Uusimaa.',
   'Kotimuutto': 'Home moving',
@@ -190,8 +190,8 @@ export const faqDictionary: Record<string, string> = {
 };
 
 export const servicesDictionary: Record<string, string> = {
-  'Palvelut': 'Services',
-  'Palvelumme': 'Our services',
+  'Helsinki ja Uusimaa': 'Helsinki and Uusimaa',
+  'Muuttopalvelut': 'Moving services',
   'Tarjoamme kattavat muuttopalvelut kotitalouksille ja yrityksille Helsingissä ja Uudellamaalla.':
     'We offer comprehensive moving services for households and businesses in Helsinki and Uusimaa.',
   'Tarvitsetko yhdistelmäpalvelun tai räätälöidyn ratkaisun? Soita tai täytä lomake.':
