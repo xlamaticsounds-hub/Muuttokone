@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   Laptop,
   Armchair,
@@ -143,22 +144,54 @@ export default function YrityksillePage() {
       {/* Hero */}
       <section className="bg-primary relative overflow-hidden py-20 lg:py-28">
         <div className="relative z-10 mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
-          <div className="max-w-2xl">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/80">Yrityksille</p>
-            <h1 className="mb-5 text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
-              Yritysmuutto, joka ei keskeytä työtänne
-            </h1>
-            <p className="mb-8 text-lg text-white/90">
-              IT-laitteet, kalusteet ja arkistot siirtyvät aikataulun mukaan — tarvittaessa iltaisin ja
-              viikonloppuisin. Yksi yhteyshenkilö hoitaa kaiken alusta loppuun.
-            </p>
-            <Link
-              href="#tarjous"
-              className="hover:shadow-1 inline-flex rounded-full bg-white px-7.5 py-3 font-medium text-black duration-300 ease-out"
-            >
-              Pyydä maksuton kartoitus
-            </Link>
+          <div className="flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
+            {/* Logo: puhelimella tekstin yläpuolella, isoilla näytöillä oikealla. logo-transparent.png,
+                koska muissa logotiedostoissa on kermanvärinen tausta joka näkyisi sinisellä. */}
+            <div className="relative w-fit lg:order-last lg:shrink-0">
+              <div className="pointer-events-none absolute inset-0 m-auto h-3/4 w-3/4 rounded-full bg-white/20 blur-3xl" />
+              <Image
+                src="/images/logo/logo-transparent.png"
+                alt="Muuttokone.fi"
+                width={649}
+                height={485}
+                priority
+                sizes="(min-width: 1280px) 384px, (min-width: 1024px) 320px, 224px"
+                className="relative w-48 sm:w-56 lg:w-80 xl:w-96"
+              />
+            </div>
+            <div className="max-w-2xl">
+              <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/80">Yrityksille</p>
+              <h1 className="mb-5 text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
+                Yritysmuutto, joka ei keskeytä työtänne
+              </h1>
+              <p className="mb-8 text-lg text-white/90">
+                IT-laitteet, kalusteet ja arkistot siirtyvät aikataulun mukaan — tarvittaessa iltaisin ja
+                viikonloppuisin. Yksi yhteyshenkilö hoitaa kaiken alusta loppuun.
+              </p>
+              <Link
+                href="#tarjous"
+                className="hover:shadow-1 inline-flex rounded-full bg-white px-7.5 py-3 font-medium text-black duration-300 ease-out"
+              >
+                Pyydä maksuton kartoitus
+              </Link>
+            </div>
           </div>
+        </div>
+      </section>
+
+      {/* Quote form */}
+      <section id="tarjous" className="scroll-mt-20 bg-gray-1 py-16 lg:py-24 dark:bg-bg-color-dark">
+        <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
+          <div className="mb-10 text-center">
+            <p className="text-primary mb-2 text-sm font-semibold uppercase tracking-wide">Tarjouspyyntö</p>
+            <h2 className="text-3xl font-bold text-black/90 dark:text-white sm:text-4xl">
+              Pyydä maksuton kartoitus
+            </h2>
+            <p className="mt-2 text-black/70 dark:text-white/70">
+              Täytä lomake, niin olemme yhteydessä sopiaksemme kartoituksesta ja tarjouksesta.
+            </p>
+          </div>
+          <BusinessQuoteForm />
         </div>
       </section>
 
@@ -190,7 +223,7 @@ export default function YrityksillePage() {
       <section className="py-16 lg:py-24">
         <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
           <div className="mb-12 text-center">
-            <p className="text-primary mb-2 text-sm font-semibold uppercase tracking-wide">Palvelut yrityksille</p>
+            <p className="text-primary mb-2 text-sm font-semibold uppercase tracking-wide">Muuttopalvelut yrityksille</p>
             <h2 className="text-3xl font-bold text-black/90 dark:text-white sm:text-4xl">
               Kaikki yritysmuuton osa-alueet yhdeltä toimijalta
             </h2>
@@ -309,22 +342,6 @@ export default function YrityksillePage() {
         subtitle="Vastauksia yleisimpiin kysymyksiin toimisto- ja yritysmuutoista."
         items={businessFaqData}
       />
-
-      {/* Quote form */}
-      <section id="tarjous" className="scroll-mt-20 bg-gray-1 py-16 lg:py-24 dark:bg-bg-color-dark">
-        <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
-          <div className="mb-10 text-center">
-            <p className="text-primary mb-2 text-sm font-semibold uppercase tracking-wide">Tarjouspyyntö</p>
-            <h2 className="text-3xl font-bold text-black/90 dark:text-white sm:text-4xl">
-              Pyydä maksuton kartoitus
-            </h2>
-            <p className="mt-2 text-black/70 dark:text-white/70">
-              Täytä lomake, niin olemme yhteydessä sopiaksemme kartoituksesta ja tarjouksesta.
-            </p>
-          </div>
-          <BusinessQuoteForm />
-        </div>
-      </section>
 
       <Cta
         title="Suunnitteletteko yritysmuuttoa?"
