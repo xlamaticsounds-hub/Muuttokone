@@ -46,6 +46,24 @@ export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShe
     };
   }, [userMenuRef]);
 
+  // Älä jätä taustaa scrollauslukkoon jos ikkuna suurenee työpöytäkokoon
+  // mobiilivetolaatikon ollessa auki (hampurilaisnappi piilotetaan lg:-rajalta ylöspäin,
+  // jolloin käyttäjä ei enää näkisi tapaa sulkea sitä).
+  useEffect(() => {
+    function handleResize() {
+      if (window.innerWidth >= 1024) setSidebarOpen(false);
+    }
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = sidebarOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [sidebarOpen]);
+
   const getPageTitle = (path: string) => {
     const allLinks = [...links, settingsLink];
     const link = allLinks.find(l => l.href === path);
@@ -61,8 +79,15 @@ export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShe
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-slate-900">
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-[45] bg-black/50 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+          aria-hidden="true"
+        />
+      )}
       <aside
-        className={`absolute left-0 top-0 z-50 flex h-screen w-[76px] flex-col overflow-y-hidden bg-blue-500 duration-300 ease-linear dark:bg-slate-800 lg:static lg:w-[84px] lg:translate-x-0 ${
+        className={`absolute left-0 top-0 z-50 flex h-screen w-64 flex-col overflow-y-hidden bg-blue-500 shadow-xl duration-300 ease-linear dark:bg-slate-800 lg:static lg:w-[84px] lg:translate-x-0 lg:shadow-none ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -105,7 +130,8 @@ export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShe
                 <li key={link.name} className="w-full">
                   <Link
                     href={link.href}
-                    className={`group flex h-16 flex-col items-center justify-center gap-1 rounded-md px-1.5 py-2 text-[11px] font-semibold leading-tight text-white/90 duration-200 hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
+                    onClick={() => setSidebarOpen(false)}
+                    className={`group flex h-12 w-full flex-row items-center justify-start gap-3 rounded-md px-3 py-2 text-sm font-semibold leading-tight text-white/90 duration-200 hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white lg:h-16 lg:flex-col lg:items-center lg:justify-center lg:gap-1 lg:px-1.5 lg:py-2 lg:text-[11px] ${
                       pathname === link.href ? "bg-white/15 shadow-[0_0_0_1px_rgba(255,255,255,0.22)]" : ""
                     }`}
                   >
@@ -121,7 +147,7 @@ export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShe
                     {link.name === "Galleria" && <ImageIcon color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Analytiikka" && <ChartLine color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Lokit" && <History color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
-                    <span className="text-center text-[10px] tracking-tight">{link.name}</span>
+                    <span className="text-left text-sm tracking-tight lg:text-center lg:text-[10px]">{link.name}</span>
                   </Link>
                 </li>
               ))}
@@ -134,12 +160,13 @@ export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShe
                 <li className="w-full">
                   <Link
                     href={settingsLink.href}
-                    className={`group flex h-16 flex-col items-center justify-center gap-1 rounded-md px-1.5 py-2 text-[11px] font-semibold leading-tight text-white/90 duration-200 hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white ${
+                    onClick={() => setSidebarOpen(false)}
+                    className={`group flex h-12 w-full flex-row items-center justify-start gap-3 rounded-md px-3 py-2 text-sm font-semibold leading-tight text-white/90 duration-200 hover:bg-white/15 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white lg:h-16 lg:flex-col lg:items-center lg:justify-center lg:gap-1 lg:px-1.5 lg:py-2 lg:text-[11px] ${
                       pathname === settingsLink.href ? "bg-white/15 shadow-[0_0_0_1px_rgba(255,255,255,0.22)]" : ""
                     }`}
                   >
                     <Settings color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />
-                    <span className="text-center text-[10px] tracking-tight">{settingsLink.name}</span>
+                    <span className="text-left text-sm tracking-tight lg:text-center lg:text-[10px]">{settingsLink.name}</span>
                   </Link>
                 </li>
               </ul>
