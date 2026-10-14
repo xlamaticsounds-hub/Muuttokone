@@ -3,7 +3,7 @@
 import Graphics from '@/features/contact/Graphics';
 import SectionTitle from '@/components/SectionTitle';
 import ContactInfoCard from '@/features/contact/ContactInfoCard';
-import ContactFormBox from '@/features/contact/ContactFormBox';
+import BusinessQuoteForm from '@/features/business/BusinessQuoteForm';
 import { useT } from '@/i18n/useT';
 import { contactDictionary } from '@/i18n/homeDictionary';
 
@@ -25,7 +25,7 @@ const Contact = () => {
         <div className="relative z-10 mx-auto mt-12.5 max-w-1390 px-4 md:px-8 lg:mt-20 xl:px-21">
           <div className="flex flex-col-reverse flex-wrap gap-7.5 md:flex-row md:flex-nowrap md:justify-between xl:gap-10">
             <ContactInfoCard />
-            <ContactFormBox />
+            <BusinessQuoteForm variant="contact" className="w-full md:w-[58%] lg:w-[64%]" />
           </div>
         </div>
       </section>

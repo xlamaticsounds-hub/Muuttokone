@@ -256,19 +256,6 @@ export const contactDictionary: Record<string, string> = {
   'Aukioloajat': 'Opening hours',
   'Yhteystiedot': 'Contact details',
   'Sosiaalinen media': 'Social media',
-  'Nimi': 'Name',
-  'Nimesi': 'Your name',
-  'sahkoposti@esimerkki.fi': 'email@example.fi',
-  '+358 40 123 4567': '+358 40 123 4567',
-  'Viesti': 'Message',
-  'Kerro meille kuinka voimme auttaa...': 'Tell us how we can help...',
-  'Lähetetään...': 'Sending...',
-  'Lähetä viesti': 'Send message',
-  'Nimi ja viesti ovat pakollisia': 'Name and message are required',
-  'Hyväksy tietojen käsittely jatkaaksesi': 'Please accept the data processing terms to continue',
-  'Viesti lähetetty onnistuneesti!': 'Message sent successfully!',
-  'Lähetys epäonnistui': 'Sending failed',
-  'Viestin lähetys epäonnistui. Yritä uudelleen.': 'Sending the message failed. Please try again.',
 };
 
 export const serviceAreaDictionary: Record<string, string> = {
