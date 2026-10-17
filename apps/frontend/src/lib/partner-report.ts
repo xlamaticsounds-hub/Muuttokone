@@ -1,4 +1,5 @@
 import { computeCommission } from '@/features/calculator/discount';
+import { isCompletedStatus } from '@/lib/lead-status';
 import { helsinkiMonthRange, toHelsinkiDateInput } from '@/lib/helsinki-time';
 
 // Kumppanin kuukausiraportti (välityspalkkio). Puhdas laskenta ilman tietokantaa: palvelin
@@ -113,7 +114,7 @@ export function buildPartnerReport(params: {
   const rows: PartnerReportRow[] = leads
     .filter(
       (lead) =>
-        lead.status === 'COMPLETED' &&
+        isCompletedStatus(lead.status) &&
         Boolean(lead.discountCode) &&
         partnerInfoOf(lead)?.partner === partner &&
         lead.completedAt instanceof Date &&

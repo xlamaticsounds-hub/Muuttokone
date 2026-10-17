@@ -1,4 +1,5 @@
 import type { PartnerReport } from '@prisma/client';
+import { COMPLETED_STATUSES } from '@/lib/lead-status';
 import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
 import { isSmtpConfigured, sendMail, SMTP_NOT_CONFIGURED_MESSAGE } from '@/server/mailer';
@@ -118,7 +119,7 @@ export async function generatePartnerReport(params: {
 
   const leads = await prisma.lead.findMany({
     where: {
-      status: 'COMPLETED',
+      status: { in: COMPLETED_STATUSES },
       discountCode: { not: null },
       completedAt: { gte: start, lt: end },
       // Varaushetken kumppani; vanhoilla liideillä (ilman sitä) koodin nykyinen kumppani

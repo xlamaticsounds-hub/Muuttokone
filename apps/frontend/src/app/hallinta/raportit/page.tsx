@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { isCompletedStatus } from '@/lib/lead-status';
 import { prisma } from '@/server/db';
 import { listPartners, reportData } from '@/server/partner-reports';
 import { previousHelsinkiMonth, toHelsinkiDateInput } from '@/lib/helsinki-time';
@@ -71,7 +72,7 @@ async function loadDiscountCodeRows(): Promise<DiscountCodeRow[]> {
   ]);
   return codes.map((code) => {
     const used = usage.filter((lead) => lead.discountCodeId === code.id);
-    const completed = used.filter((lead) => lead.status === 'COMPLETED');
+    const completed = used.filter((lead) => isCompletedStatus(lead.status));
     return {
       id: code.id,
       code: code.code,

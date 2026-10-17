@@ -6,7 +6,7 @@ Muuttokone.fi on nykyaikainen muuttopalvelualusta, joka yhdistää helpon tarjou
 
 ## 🚀 Ominaisuudet
 - **Muuttolaskuri**: Älykäs laskuri hinta-arvion saamiseksi.
-- **Hallintapaneeli**: Täysi hallinta liideille, diileille ja blogisisällölle.
+- **Hallintapaneeli**: Täysi hallinta liideille, pipelinelle ja blogisisällölle.
 - **AI-Avustaja**: GPT-pohjainen asiakaspalvelubotti.
 - **Bloggen**: Automaattinen sisällöntuotanto hakukoneoptimointia varten.
 

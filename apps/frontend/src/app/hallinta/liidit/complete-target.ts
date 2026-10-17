@@ -1,5 +1,6 @@
 import type { Contact, Lead } from '@prisma/client';
 import { defaultFinalPrice } from '@/server/lead-format';
+import { isCompletedStatus } from '@/lib/lead-status';
 
 // "Merkitse toteutuneeksi" -ikkunan tiedot liidistä. Tavallinen moduuli (ei 'use client'),
 // jotta sekä palvelinkomponentti (liidin sivu) että selainkomponentti (liidilista) voivat kutsua.
@@ -20,7 +21,7 @@ export function completeTargetFor(lead: LeadForCompletion): CompleteLeadTarget {
     leadId: lead.id,
     customerName: [lead.contact.firstName, lead.contact.lastName].filter(Boolean).join(' ') || 'Asiakas',
     defaultPrice: defaultFinalPrice(lead),
-    isEdit: lead.status === 'COMPLETED',
+    isEdit: isCompletedStatus(lead.status),
     partnerName: lead.discountCode ? lead.discountPartner ?? lead.discount?.partner ?? 'Kumppani' : null,
     commissionPercent: lead.discountCode ? lead.commissionPercent ?? null : null,
   };

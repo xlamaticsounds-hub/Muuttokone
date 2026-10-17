@@ -1,7 +1,7 @@
 import type { LeadStatus } from '@prisma/client';
 import { computeCommission } from '@/features/calculator/discount';
 import { toHelsinkiDateInput } from '@/lib/helsinki-time';
-import { LEAD_STATUS_LABELS } from '@/lib/lead-status';
+import { LEAD_STATUS_LABELS, isCompletedStatus } from '@/lib/lead-status';
 import { customerInitials } from '@/lib/partner-report';
 import { formatDateInputFi } from '@/lib/partner-report-render';
 
@@ -61,13 +61,13 @@ export function buildCodeActivity(params: {
     .filter((lead) => lead.discountCodeId === params.codeId)
     .map((lead): CodeActivityRow => {
       const commissionPercent = lead.commissionPercent ?? params.defaultCommissionPercent;
-      const completed = lead.status === 'COMPLETED' && typeof lead.finalPrice === 'number' && lead.finalPrice > 0;
+      const completed = isCompletedStatus(lead.status) && typeof lead.finalPrice === 'number' && lead.finalPrice > 0;
       const commission = completed ? computeCommission(lead.finalPrice!, commissionPercent) : null;
       return {
         leadId: lead.id,
         createdDate: toHelsinkiDateInput(lead.createdAt),
         moveDate: lead.requestedDate ? toHelsinkiDateInput(lead.requestedDate) : null,
-        completedDate: lead.status === 'COMPLETED' && lead.completedAt ? toHelsinkiDateInput(lead.completedAt) : null,
+        completedDate: isCompletedStatus(lead.status) && lead.completedAt ? toHelsinkiDateInput(lead.completedAt) : null,
         status: lead.status,
         statusLabel: LEAD_STATUS_LABELS[lead.status] ?? lead.status,
         customerName: [lead.contact.firstName, lead.contact.lastName].filter(Boolean).join(' ') || '–',
@@ -88,7 +88,7 @@ export function buildCodeActivity(params: {
       total: rows.length,
       open: rows.filter((r) => OPEN.includes(r.status)).length,
       confirmed: rows.filter((r) => r.status === 'WON').length,
-      completed: rows.filter((r) => r.status === 'COMPLETED').length,
+      completed: rows.filter((r) => isCompletedStatus(r.status)).length,
       cancelledOrLost: rows.filter((r) => ENDED.includes(r.status)).length,
       salesGross: roundCents(completedRows.reduce((s, r) => s + (r.finalPriceGross ?? 0), 0)),
       salesNet: roundCents(completedRows.reduce((s, r) => s + (r.finalPriceNet ?? 0), 0)),

@@ -22,6 +22,8 @@ function lead(overrides: Partial<PartnerReportLeadInput> & { id: string }): Part
 // Testidata: vain "toteutunut" saa näkyä raportissa.
 const leads: PartnerReportLeadInput[] = [
   lead({ id: 'toteutunut' }),
+  lead({ id: 'laskutettu', status: 'INVOICED' }),
+  lead({ id: 'maksettu', status: 'PAID' }),
   lead({ id: 'peruttu', status: 'CANCELLED' }),
   lead({ id: 'vahvistamaton', status: 'WON', completedAt: null, finalPrice: null }),
   lead({ id: 'uusi-varaus', status: 'SCHEDULED', completedAt: null, finalPrice: null }),
@@ -38,7 +40,7 @@ describe('buildPartnerReport', () => {
   const ids = report.groups.flatMap((g) => g.rows.map((r) => r.leadId));
 
   it('ottaa mukaan vain toteutuneet koodilla tehdyt muutot kuukauden ajalta (Suomen aikaa)', () => {
-    expect(ids.sort()).toEqual(['kuun-alku', 'kuun-loppu', 'toteutunut']);
+    expect(ids.sort()).toEqual(['kuun-alku', 'kuun-loppu', 'laskutettu', 'maksettu', 'toteutunut']);
   });
 
   it('peruttu ja vahvistamaton eivät näy', () => {
@@ -50,13 +52,13 @@ describe('buildPartnerReport', () => {
   it('laskee palkkion lopullisesta hinnasta alv 0 % ja summat', () => {
     const row = report.groups[0].rows.find((r) => r.leadId === 'toteutunut')!;
     expect(row).toMatchObject({ finalPriceGross: 1000, finalPriceNet: 796.81, commissionPercent: 5, commissionAmount: 39.84, initials: 'M. M.' });
-    expect(report.totals).toEqual({ count: 3, salesGross: 2809, salesNet: 2238.24, commission: 111.91 });
-    // 1000 -> 796,81 / 39,84 ; 1000 -> 796,81 / 39,84 ; 809 -> 644,62 / 32,23
+    expect(report.totals).toEqual({ count: 5, salesGross: 4809, salesNet: 3831.86, commission: 191.59 });
+    // 4 x 1000 (tehty, laskutettu, maksettu, kuun-alku) + 809 (kuun-loppu)
   });
 
   it('järjestää muuttopäivän mukaan ja käyttää Suomen päivämääriä', () => {
     const rows = report.groups[0].rows;
-    expect(rows.map((r) => r.moveDate)).toEqual(['2026-10-14', '2026-10-14', '2026-10-31']);
+    expect(rows.map((r) => r.moveDate)).toEqual(['2026-10-14', '2026-10-14', '2026-10-14', '2026-10-14', '2026-10-31']);
     expect(rows.find((r) => r.leadId === 'kuun-alku')!.completedDate).toBe('2026-10-01');
   });
 

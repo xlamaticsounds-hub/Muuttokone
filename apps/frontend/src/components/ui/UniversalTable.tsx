@@ -31,6 +31,12 @@ interface UniversalTableProps<T> {
   isLoading?: boolean;
   pagination?: TablePagination;
   emptyMessage?: string;
+  /**
+   * Oma tiivis kortti puhelinnäkymään. Ilman tätä jokainen sarake piirretään pinottuna otsikon kanssa,
+   * mikä tekee rivistä pitkän (ks. LeadsTable). Rivin klikkaus ja tarkistus "interaktiivinen elementti"
+   * toimivat samoin kuin oletusnäkymässä.
+   */
+  renderMobileCard?: (item: T) => React.ReactNode;
 }
 
 // A cell can contain its own interactive control (a status <select>, a delete
@@ -54,6 +60,7 @@ export function UniversalTable<T extends { id: string | number }>({
   isLoading,
   pagination,
   emptyMessage = "Ei tietoja saatavilla.",
+  renderMobileCard,
 }: UniversalTableProps<T>) {
   if (isLoading) {
     return (
@@ -83,11 +90,13 @@ export function UniversalTable<T extends { id: string | number }>({
                 if (isInteractiveTarget(e.target)) return;
                 onRowClick?.(row);
               }}
-              className={`space-y-2 px-4 py-3 ${
+              className={`${renderMobileCard ? "" : "space-y-2"} px-4 py-3 ${
                 onRowClick ? "cursor-pointer active:bg-gray-50 dark:active:bg-gray-800/60" : ""
               }`}
             >
-              {mobileColumns.map((col, idx) => (
+              {renderMobileCard
+                ? renderMobileCard(row)
+                : mobileColumns.map((col, idx) => (
                 <div key={idx}>
                   <div className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
                     {col.header}

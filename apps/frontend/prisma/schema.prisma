@@ -15,7 +15,7 @@ generator client {
 enum LeadStatus {
   NEW
   QUALIFIED
-  CONTACTED
+  CONTACTED // Poistunut käytöstä: yhdistetty tilaan PROPOSAL_SENT (migraatio siirtää rivit)
   SCHEDULED
   PROPOSAL_SENT
   WON // = vahvistettu (Discordin ✅ vahvistaa myös kalenterimerkinnän)
@@ -23,6 +23,8 @@ enum LeadStatus {
   ARCHIVED
   COMPLETED // Toteutunut — muutto tehty; completedAt + finalPrice asetetaan samalla
   CANCELLED // Peruttu vahvistuksen jälkeen (LOST = ei koskaan vahvistunut)
+  INVOICED // Laskutettu — toteutunut muutto, lasku lähetetty (completedAt + finalPrice säilyvät)
+  PAID // Maksettu — lasku maksettu (completedAt + finalPrice säilyvät)
 }
 
 enum LeadSource {
@@ -345,4 +347,63 @@ model Image {
   updatedAt DateTime @updatedAt
 
   @@index([url])
+}
+/**
+ * ===== AI-sähköpostiluku =====
+ */
+
+enum AiTodoStatus {
+  OPEN
+  DONE
+  DISMISSED
+}
+
+// Jokainen AI:n läpikäymä sähköposti kirjataan tähän kerran (mailbox + Message-ID), ettei samaa
+// viestiä käsitellä uudelleen.
+model MailEvent {
+  id          String   @id @default(cuid())
+  mailbox     String // "tarjous" | "info"
+  folder      String // "inbox" | "sent"
+  messageId   String
+  fromAddress String?
+  toAddress   String?
+  subject     String?
+  receivedAt  DateTime
+  kind        String // "ukko_payment" | "customer_inbound" | "customer_outbound" | "other"
+  leadId      String?
+  analysis    Json?
+  outcome     String // "applied" | "suggested" | "none" | "unmatched"
+  createdAt   DateTime @default(now())
+
+  @@unique([mailbox, messageId])
+  @@index([leadId])
+  @@index([receivedAt])
+}
+
+// AI:n ehdotukset ja huomiot hallintapaneelin etusivulle. dedupeKey estää saman asian
+// nousemisen listalle uudelleen (esim. sama viesti + sama ehdotus).
+model AiTodo {
+  id              String       @id @default(cuid())
+  leadId          String?
+  type            String // "status_suggestion" | "payment_unmatched" | "needs_reply" | ...
+  priority        Int          @default(2) // 1 = kiireellinen, 2 = normaali, 3 = matala
+  title           String
+  reason          String
+  suggestedStatus LeadStatus?
+  sourceMessageId String?
+  dedupeKey       String       @unique
+  status          AiTodoStatus @default(OPEN)
+  createdAt       DateTime     @default(now())
+  resolvedAt      DateTime?
+
+  @@index([status, priority])
+  @@index([leadId])
+}
+
+// Pieni avain–arvo-taulu ajastettujen töiden tilalle (esim. milloin posti luettiin viimeksi,
+// milloin aamuyhteenveto lähti), jotta niitä ei tarvitse tallentaa lokiin joka ajolla.
+model AppState {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
 }

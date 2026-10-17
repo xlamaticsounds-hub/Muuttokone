@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateLeadStatus } from '@/server/actions';
 import { LeadStatus } from '@prisma/client';
-import { LEAD_STATUS_LABELS, LEAD_STATUS_PILL_CLASSES, statusOptionsFor } from '@/lib/lead-status';
+import { LEAD_STATUS_LABELS, LEAD_STATUS_PILL_CLASSES, statusOptionsFor, isCompletedStatus } from '@/lib/lead-status';
 import CompleteLeadDialog from '../CompleteLeadDialog';
 import type { CompleteLeadTarget } from '../complete-target';
 
@@ -27,7 +27,7 @@ export default function StatusSelector({
 
   const handleStatusChange = async (newStatus: LeadStatus) => {
     // Toteutuneeksi vain lopullisen hinnan kanssa (kumppaniraportti ja palkkio)
-    if (newStatus === 'COMPLETED') {
+    if (newStatus === 'COMPLETED' && !isCompletedStatus(status)) {
       setCompleting(true);
       return;
     }
