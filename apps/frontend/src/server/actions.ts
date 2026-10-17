@@ -9,6 +9,7 @@ import { createLog } from './repo/logs';
 import { LeadSource, LeadStatus } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/server/auth';
+import { isCompletedStatus } from '@/lib/lead-status';
 import { rateLimit } from '@/server/rate-limit';
 
 import type { NextRequest } from 'next/server';
@@ -169,6 +170,11 @@ export async function updateLeadStatus(leadId: string, status: LeadStatus) {
 
   const { prisma } = await import('@/server/db');
   const previous = await prisma.lead.findUnique({ where: { id: leadId }, select: { status: true } });
+  // Laskutettu/Maksettu seuraavat toteutunutta: ilman completedAt + finalPrice -arvoja liidi
+  // putoaisi kumppaniraportilta, joten ne sallitaan vain jo toteutuneelle muutolle.
+  if ((status === 'INVOICED' || status === 'PAID') && !(previous && isCompletedStatus(previous.status))) {
+    throw new Error('Merkitse muutto ensin toteutuneeksi (Tehty), vasta sitten Laskutettu tai Maksettu.');
+  }
   // Pois toteutuneesta (esim. vahingossa merkitty): completedAt/finalPrice säilyvät historiana,
   // mutta kuukausiraportti ja hallinta käyttävät niitä vain tilassa COMPLETED. Säilynyt
   // completedAt estää tuplapalkkion jos liidi merkitään uudelleen toteutuneeksi (ks.

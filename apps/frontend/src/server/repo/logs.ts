@@ -2,7 +2,7 @@
 import { prisma } from '@/server/db';
 
 export async function createLog(params: {
-  entityType: 'Lead' | 'Contact' | 'Customer' | 'Project' | 'Task' | 'Invoice' | 'DiscountCode' | 'PartnerReport';
+  entityType: 'Lead' | 'Contact' | 'Customer' | 'Project' | 'Task' | 'Invoice' | 'DiscountCode' | 'PartnerReport' | 'System';
   entityId: string;
   action: string;
   message?: string;

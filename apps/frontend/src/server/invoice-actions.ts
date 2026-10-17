@@ -1,6 +1,7 @@
 'use server';
 
 import { getServerSession } from 'next-auth';
+import { isCompletedStatus } from '@/lib/lead-status';
 import { authOptions } from '@/server/auth';
 import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
@@ -124,7 +125,7 @@ export async function createInvoiceFromLead(leadId: string): Promise<{ id: strin
   // Toteutuneen muuton lopullinen hinta (Merkitse toteutuneeksi) on ensisijainen — vain tilassa
   // COMPLETED, ettei kumotun toteutumisen vanha hinta ohita myöhemmin vahvistettua.
   const amount =
-    lead.status === 'COMPLETED' && lead.finalPrice != null && lead.finalPrice > 0
+    isCompletedStatus(lead.status) && lead.finalPrice != null && lead.finalPrice > 0
       ? lead.finalPrice
       : Number.isFinite(confirmedNumber) && confirmedNumber > 0
         ? confirmedNumber

@@ -25,7 +25,7 @@ export default function LeadDetailActions({
   const [invoiceError, setInvoiceError] = useState<string | null>(null);
   const [confirmationFeedback, setConfirmationFeedback] = useState<{ ok: boolean; message: string } | null>(null);
 
-  const alreadySent = lead.status === 'PROPOSAL_SENT' || lead.status === 'WON';
+  const alreadySent = lead.status === 'PROPOSAL_SENT' || lead.status === 'CONTACTED' || lead.status === 'WON';
   const pfd = parseLeadFormData(lead.formData);
   const { confirmed: confirmedPrice, low: estimateLow, high: estimateHigh } = getStoredPrice(pfd);
 

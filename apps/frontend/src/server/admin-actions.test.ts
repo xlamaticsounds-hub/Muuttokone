@@ -125,6 +125,27 @@ describe('updateLeadStatus', () => {
     expect(mocks.state.leads.get('lead_1')!.status).toBe('WON');
   });
 
+  it('Laskutettu ja Maksettu vaativat ensin toteutuneen muuton', async () => {
+    await expect(updateLeadStatus('lead_1', 'INVOICED')).rejects.toThrow('toteutuneeksi');
+    await expect(updateLeadStatus('lead_1', 'PAID')).rejects.toThrow('toteutuneeksi');
+    expect(mocks.state.leads.get('lead_1')!.status).toBe('WON');
+  });
+
+  it('toteutunut muutto voidaan merkitä laskutetuksi ja maksetuksi', async () => {
+    mocks.state.leads.set('lead_1', { id: 'lead_1', status: 'COMPLETED', completedAt: new Date(), finalPrice: 600, calendarEventId: null });
+    await updateLeadStatus('lead_1', 'INVOICED');
+    expect(mocks.state.leads.get('lead_1')!.status).toBe('INVOICED');
+    await updateLeadStatus('lead_1', 'PAID');
+    expect(mocks.state.leads.get('lead_1')!.status).toBe('PAID');
+  });
+
+  it('hinnan korjaus ei palauta laskutettua liidiä tilaan Tehty', async () => {
+    mocks.state.leads.set('lead_1', { id: 'lead_1', status: 'INVOICED', completedAt: new Date(), finalPrice: 600, calendarEventId: null });
+    expect(await markLeadCompleted('lead_1', 650)).toEqual({ success: true });
+    expect(mocks.state.leads.get('lead_1')!.status).toBe('INVOICED');
+    expect(mocks.state.leads.get('lead_1')!.finalPrice).toBe(650);
+  });
+
   it('peruttu: tila vaihtuu, kalenteri synkronoidaan ja muutos kirjataan', async () => {
     await updateLeadStatus('lead_1', 'CANCELLED');
     expect(mocks.state.leads.get('lead_1')!.status).toBe('CANCELLED');

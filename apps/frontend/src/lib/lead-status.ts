@@ -1,37 +1,51 @@
 import type { LeadStatus } from '@prisma/client';
 
-// Liidin tilojen nimet ja värit yhdessä paikassa (liidilista, liidin sivu, diilit). Ennen tätä
+// Liidin tilojen nimet ja värit yhdessä paikassa (liidilista, liidin sivu, pipeline). Ennen tätä
 // jokainen valikko listasi tilat itse, ja laskurin varausten tila SCHEDULED puuttui niistä —
 // selain näytti silloin valikon ensimmäisen vaihtoehdon ("Uusi").
 //
-// Kumppaniraportin kannalta: WON = vahvistettu, COMPLETED = toteutunut (palkkio maksetaan vain
+// Kumppaniraportin kannalta: WON = voitettu/vahvistettu, COMPLETED/INVOICED/PAID = toteutunut (palkkio maksetaan vain
 // näistä), CANCELLED = peruttu vahvistuksen jälkeen, LOST = ei koskaan vahvistunut.
 
 export const LEAD_STATUS_LABELS: Record<LeadStatus, string> = {
   NEW: 'Uusi',
   SCHEDULED: 'Uusi varaus',
   QUALIFIED: 'Kelpuutettu',
-  CONTACTED: 'Oltu yhteydessä',
+  CONTACTED: 'Tarjous lähetetty', // vanha tila, yhdistetty PROPOSAL_SENT:iin (migraatio siirtää rivit)
   PROPOSAL_SENT: 'Tarjous lähetetty',
-  WON: 'Vahvistettu',
-  COMPLETED: 'Toteutunut',
+  WON: 'Voitettu',
+  COMPLETED: 'Tehty',
+  INVOICED: 'Laskutettu',
+  PAID: 'Maksettu',
   CANCELLED: 'Peruttu',
   LOST: 'Hävitty',
   ARCHIVED: 'Arkistoitu',
 };
 
-/** Valikoissa näytettävät tilat tässä järjestyksessä (QUALIFIED ei ole käytössä). */
+/** Valikoissa näytettävät tilat putken järjestyksessä (QUALIFIED ja CONTACTED eivät ole käytössä). */
 export const SELECTABLE_LEAD_STATUSES: LeadStatus[] = [
   'NEW',
   'SCHEDULED',
-  'CONTACTED',
   'PROPOSAL_SENT',
   'WON',
+  'LOST',
   'COMPLETED',
   'CANCELLED',
-  'LOST',
+  'INVOICED',
+  'PAID',
   'ARCHIVED',
 ];
+
+/**
+ * Toteutuneet muutot: tehty, laskutettu ja maksettu. Kaikissa näissä completedAt + finalPrice
+ * ovat voimassa, joten kumppaniraportti, palkkio ja lopullinen hinta toimivat samoin kuin
+ * tilassa COMPLETED. Käytä tätä ÄLÄKÄ vertaa suoraan COMPLETED:iin.
+ */
+export const COMPLETED_STATUSES: LeadStatus[] = ['COMPLETED', 'INVOICED', 'PAID'];
+
+export function isCompletedStatus(status: string): boolean {
+  return (COMPLETED_STATUSES as string[]).includes(status);
+}
 
 export function statusOptionsFor(current: LeadStatus): LeadStatus[] {
   return SELECTABLE_LEAD_STATUSES.includes(current) ? SELECTABLE_LEAD_STATUSES : [current, ...SELECTABLE_LEAD_STATUSES];
@@ -46,10 +60,12 @@ export const LEAD_STATUS_PILL_CLASSES: Record<LeadStatus, string> = {
   PROPOSAL_SENT: 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-900/20 dark:text-amber-400 dark:ring-amber-500/30',
   WON: 'bg-purple-50 text-purple-700 ring-purple-600/20 dark:bg-purple-900/20 dark:text-purple-400 dark:ring-purple-500/30',
   COMPLETED: 'bg-emerald-100 text-emerald-800 ring-emerald-600/30 dark:bg-emerald-900/30 dark:text-emerald-300 dark:ring-emerald-500/30',
+  INVOICED: 'bg-sky-50 text-sky-700 ring-sky-600/20 dark:bg-sky-900/20 dark:text-sky-400 dark:ring-sky-500/30',
+  PAID: 'bg-lime-100 text-lime-800 ring-lime-600/30 dark:bg-lime-900/30 dark:text-lime-300 dark:ring-lime-500/30',
   CANCELLED: 'bg-orange-50 text-orange-700 ring-orange-600/20 dark:bg-orange-900/20 dark:text-orange-400 dark:ring-orange-500/30',
   LOST: 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-900/20 dark:text-red-400 dark:ring-red-500/30',
   ARCHIVED: 'bg-gray-50 text-gray-600 ring-gray-500/10 dark:bg-gray-800 dark:text-gray-400 dark:ring-gray-700',
 };
 
 /** Tilat joissa keikka ei ole enää tulossa (keikat-lista, dashboardin tulevat keikat). */
-export const INACTIVE_JOB_STATUSES: LeadStatus[] = ['LOST', 'ARCHIVED', 'CANCELLED', 'COMPLETED'];
+export const INACTIVE_JOB_STATUSES: LeadStatus[] = ['LOST', 'ARCHIVED', 'CANCELLED', 'COMPLETED', 'INVOICED', 'PAID'];

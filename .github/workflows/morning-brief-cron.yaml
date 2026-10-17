@@ -1,0 +1,25 @@
+name: Morning Brief Cron
+
+# Aamuyhteenveto Discordiin: päivän keikat, huomenna tulevat ja avoimet AI-huomiot.
+# Vaatii GitHubin repo-secretit APP_URL ja CRON_SECRET (kuten muut cron-työt) sekä palvelimella
+# DISCORD_WEBHOOK_URL. Palvelin lähettää viestin vain kerran päivässä, joten uudelleenajo on turvallinen.
+on:
+  schedule:
+    - cron: '0 5 * * *' # 05 UTC = klo 07 talviaikaan / 08 kesäaikaan Suomessa
+  workflow_dispatch: {}
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call /api/cron/morning-brief
+        run: |
+          status=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -X POST "${{ secrets.APP_URL }}/api/cron/morning-brief" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          echo "HTTP status: $status"
+          cat /tmp/response.json
+          if [ "$status" -ge 300 ]; then
+            echo "Cron call failed with status $status"
+            exit 1
+          fi

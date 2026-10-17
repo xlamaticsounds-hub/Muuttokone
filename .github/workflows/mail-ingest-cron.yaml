@@ -1,0 +1,24 @@
+name: Mail Ingest Cron
+
+# AI lukee tarjous@- ja info@-postilaatikot ja päivittää liidien tilat / luo ehdotukset etusivulle.
+# Vaatii GitHubin repo-secretit APP_URL ja CRON_SECRET (kuten muut cron-työt).
+on:
+  schedule:
+    - cron: '*/15 * * * *' # 15 min välein (GitHub voi viivästyttää ajoja)
+  workflow_dispatch: {}
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call /api/cron/mail-ingest
+        run: |
+          status=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -X POST "${{ secrets.APP_URL }}/api/cron/mail-ingest" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          echo "HTTP status: $status"
+          cat /tmp/response.json
+          if [ "$status" -ge 300 ]; then
+            echo "Cron call failed with status $status"
+            exit 1
+          fi

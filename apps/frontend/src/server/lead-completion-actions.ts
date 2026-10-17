@@ -1,6 +1,7 @@
 'use server';
 
 import { getServerSession } from 'next-auth';
+import { isCompletedStatus } from '@/lib/lead-status';
 import { authOptions } from '@/server/auth';
 import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
@@ -36,7 +37,7 @@ export async function markLeadCompleted(leadId: string, finalPriceInput: string 
     });
     if (!lead) return { success: false, message: 'Liidiä ei löytynyt.' };
 
-    const alreadyCompleted = lead.status === 'COMPLETED' && lead.completedAt != null;
+    const alreadyCompleted = isCompletedStatus(lead.status) && lead.completedAt != null;
     // Kumottu ja uudelleen toteutuneeksi merkitty: jos muutto on jo lähetetyssä raportissa
     // (palkkio laskutettu), se pysyy siinä kuussa — muuten se päätyisi myös myöhemmän kuun
     // raporttiin ja palkkio maksettaisiin kahdesti.
@@ -49,7 +50,8 @@ export async function markLeadCompleted(leadId: string, finalPriceInput: string 
 
     await prisma.lead.update({
       where: { id: leadId },
-      data: { status: 'COMPLETED', completedAt, finalPrice },
+      // Jo laskutettu/maksettu liidi säilyttää tilansa hintaa korjattaessa
+      data: { status: alreadyCompleted ? lead.status : 'COMPLETED', completedAt, finalPrice },
     });
 
     await createLog({

@@ -18,6 +18,7 @@
 // single Google API and was enough to make `tsc` run out of heap memory on
 // this project. The scoped package is the same client, Calendar v3 only.
 import { calendar, calendar_v3 } from '@googleapis/calendar';
+import { isCompletedStatus } from '@/lib/lead-status';
 import { GoogleAuth } from 'google-auth-library';
 import { createLog } from '@/server/repo/logs';
 import { setLeadCalendarEventId } from '@/server/repo/leads';
@@ -332,7 +333,7 @@ export async function syncCalendarWithLeadStatus(
   status: LeadStatus,
 ): Promise<void> {
   if (!lead.calendarEventId) return;
-  if (status === 'WON' || status === 'COMPLETED') {
+  if (status === 'WON' || isCompletedStatus(status)) {
     await confirmCalendarEvent(lead.id, lead.calendarEventId);
   } else if (status === 'LOST' || status === 'CANCELLED') {
     await cancelCalendarEvent(lead.id, lead.calendarEventId);

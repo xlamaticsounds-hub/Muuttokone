@@ -3,7 +3,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookUser, ChartLine, DollarSign, Gauge, Mail, Settings, Zap, User, Search, LogOut, Send, FileText, ImageIcon, Truck, Users, Receipt, History, FileSpreadsheet } from 'lucide-react';
+import GlobalSearch from "./GlobalSearch";
+import { BookUser, ChartLine, DollarSign, Gauge, Mail, Settings, Zap, User, LogOut, Search, X, Send, FileText, ImageIcon, Truck, Users, Receipt, History, FileSpreadsheet } from 'lucide-react';
 
 interface AdminLayoutShellProps {
   children: React.ReactNode;
@@ -13,6 +14,7 @@ interface AdminLayoutShellProps {
 export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
@@ -21,7 +23,7 @@ export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShe
     { name: "Liidit", href: "/hallinta/liidit" },
     { name: "Keikat", href: "/hallinta/keikat" },
     { name: "Asiakkaat", href: "/hallinta/asiakkaat" },
-    { name: "Diilit", href: "/hallinta/diilit" },
+    { name: "Pipeline", href: "/hallinta/diilit" },
     { name: "Laskutus", href: "/hallinta/laskutus" },
     { name: "Raportit", href: "/hallinta/raportit" },
     { name: "Postilaatikko", href: "/hallinta/postilaatikko" },
@@ -56,6 +58,11 @@ export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShe
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Sivua vaihdettaessa puhelimen hakurivi sulkeutuu
+  useEffect(() => {
+    setMobileSearchOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     document.body.style.overflow = sidebarOpen ? "hidden" : "";
@@ -139,7 +146,7 @@ export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShe
                     {link.name === "Liidit" && <BookUser color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Keikat" && <Truck color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Asiakkaat" && <Users color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
-                    {link.name === "Diilit" && <DollarSign color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
+                    {link.name === "Pipeline" && <DollarSign color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Laskutus" && <Receipt color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Raportit" && <FileSpreadsheet color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Postilaatikko" && <Send color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
@@ -177,8 +184,8 @@ export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShe
       {/* Content Area */}
       <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
         {/* Header */}
-        <header className="sticky top-0 z-40 flex w-full bg-white shadow dark:bg-slate-800 drop-shadow-1 dark:drop-shadow-none">
-          <div className="flex flex-grow items-center justify-between px-4 py-4 shadow-2 md:px-6 2xl:px-11">
+        <header className="sticky top-0 z-40 flex w-full flex-col bg-white shadow dark:bg-slate-800 drop-shadow-1 dark:drop-shadow-none">
+          <div className="flex flex-grow items-center justify-between px-4 py-3 shadow-2 sm:py-4 md:px-6 2xl:px-11">
             <div className="flex items-center gap-2 sm:gap-4 lg:hidden">
               {/* Hamburger Toggle BTN */}
               <button
@@ -187,7 +194,7 @@ export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShe
                   e.stopPropagation();
                   setSidebarOpen(!sidebarOpen);
                 }}
-                className="z-99999 block rounded-sm border border-stroke bg-white p-1.5 shadow-sm dark:border-strokedark dark:bg-boxdark lg:hidden"
+                className="z-99999 block rounded-md border border-stroke bg-white p-2.5 shadow-sm dark:border-strokedark dark:bg-boxdark lg:hidden"
               >
                 <span className="relative block h-5.5 w-5.5 cursor-pointer">
                   <span className="du-block absolute right-0 h-full w-full">
@@ -212,34 +219,32 @@ export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShe
             </div>
 
             {/* Left: Page Title */}
-            <div className="min-w-0 flex-1 sm:flex-none">
-              <h1 className="truncate text-base font-semibold text-gray-800 dark:text-white sm:text-xl">
+            <div className="ml-3 min-w-0 flex-1 sm:ml-0 sm:flex-none">
+              <h1 className="truncate text-lg font-semibold text-gray-800 dark:text-white sm:text-xl">
                 {getPageTitle(pathname)}
               </h1>
             </div>
 
             {/* Middle: Search Bar */}
-            <div className="hidden sm:block w-full max-w-md mx-4">
-              <div className="relative">
-                <button className="absolute left-0 top-1/2 -translate-y-1/2 pl-3">
-                  <Search className="h-5 w-5 text-gray-400" />
-                </button>
-                <input
-                  type="text"
-                  placeholder="Hae..."
-                  className="w-full rounded-full border border-gray-300 bg-transparent py-2.5 pl-10 pr-4 text-sm text-gray-600 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-600 dark:text-gray-300"
-                />
-              </div>
-            </div>
+            <GlobalSearch className="mx-4 hidden w-full max-w-md sm:block" />
 
             {/* Right: User Menu */}
-            <div className="flex items-center gap-3 2xsm:gap-7" ref={userMenuRef}>
-              <div className="relative">
+            <div className="flex items-center gap-2 sm:gap-3 2xsm:gap-7">
+              <button
+                type="button"
+                onClick={() => setMobileSearchOpen((open) => !open)}
+                aria-label={mobileSearchOpen ? "Sulje haku" : "Avaa haku"}
+                aria-expanded={mobileSearchOpen}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-gray-100 text-gray-600 active:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 sm:hidden"
+              >
+                {mobileSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
+              </button>
+              <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="flex items-center gap-4"
                 >
-                  <span className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                  <span className="h-11 w-11 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 dark:bg-gray-700 dark:text-gray-300 sm:h-10 sm:w-10">
                      <User className="h-6 w-6" />
                   </span>
                 </button>
@@ -277,6 +282,11 @@ export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShe
               </div>
             </div>
           </div>
+          {mobileSearchOpen && (
+            <div className="px-4 pb-3 sm:hidden">
+              <GlobalSearch autoFocus onNavigate={() => setMobileSearchOpen(false)} />
+            </div>
+          )}
         </header>
 
         {/* Main Content */}

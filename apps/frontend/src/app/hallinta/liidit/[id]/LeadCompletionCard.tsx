@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { isCompletedStatus } from '@/lib/lead-status';
 import { useRouter } from 'next/navigation';
 import type { LeadStatus } from '@prisma/client';
 import { updateLeadStatus } from '@/server/actions';
@@ -62,7 +63,7 @@ export default function LeadCompletionCard({
   };
 
   const commission =
-    status === 'COMPLETED' && finalPrice != null && partner?.commissionPercent != null
+    isCompletedStatus(status) && finalPrice != null && partner?.commissionPercent != null
       ? computeCommission(finalPrice, partner.commissionPercent)
       : null;
 
@@ -89,7 +90,7 @@ export default function LeadCompletionCard({
         </div>
       )}
 
-      {status === 'COMPLETED' ? (
+      {isCompletedStatus(status) ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="font-bold text-emerald-700 dark:text-emerald-300">

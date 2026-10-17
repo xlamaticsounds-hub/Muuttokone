@@ -1,30 +1,37 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { Lead, Contact } from '@prisma/client';
 import { UniversalTable, Column, TablePagination } from '@/components/ui/UniversalTable';
+import { LEAD_STATUS_LABELS, LEAD_STATUS_PILL_CLASSES } from '@/lib/lead-status';
 
 type JobWithContact = Lead & { contact: Contact };
 
 export default function KeikatTable({
   jobs,
   pagination,
+  emptyMessage = 'Ei aktiivisia keikkoja.',
 }: {
   jobs: JobWithContact[];
   pagination?: TablePagination;
+  emptyMessage?: string;
 }) {
+  const router = useRouter();
+
   const columns: Column<JobWithContact>[] = [
     {
       header: 'Asiakas',
       cell: (job) => (
         <span className="font-medium text-gray-900 dark:text-white">
-          {job.contact.firstName || '-'} {job.contact.lastName || ''}
+          {[job.contact.firstName, job.contact.lastName].filter(Boolean).join(' ') || job.contact.companyName || '-'}
         </span>
       ),
     },
     {
       header: 'Muuttopäivä',
       cell: (job) => (
-        <span>{job.requestedDate ? new Date(job.requestedDate).toLocaleDateString('fi-FI') : '-'}</span>
+        // requestedDate on tallennettu UTC-keskiyönä, joten päivä luetaan UTC:nä (muuten ilta-aikavyöhyke voisi siirtää sen)
+        <span>{job.requestedDate ? new Date(job.requestedDate).toLocaleDateString('fi-FI', { timeZone: 'UTC' }) : '-'}</span>
       ),
     },
     {
@@ -38,8 +45,8 @@ export default function KeikatTable({
     {
       header: 'Tila',
       cell: (job) => (
-        <span className="rounded-full bg-gray-100 px-2.5 py-1 text-xs font-semibold text-gray-700 dark:bg-gray-700 dark:text-gray-200">
-          {job.status}
+        <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ${LEAD_STATUS_PILL_CLASSES[job.status]}`}>
+          {LEAD_STATUS_LABELS[job.status]}
         </span>
       ),
     },
@@ -54,7 +61,8 @@ export default function KeikatTable({
       data={jobs}
       columns={columns}
       pagination={pagination}
-      emptyMessage="Ei aktiivisia keikkoja."
+      emptyMessage={emptyMessage}
+      onRowClick={(job) => router.push(`/hallinta/liidit/${job.id}`)}
     />
   );
 }

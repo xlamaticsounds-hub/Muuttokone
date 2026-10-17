@@ -15,20 +15,21 @@
 // server's whole lifetime is a natural fit, not a workaround.
 
 import { Client, GatewayIntentBits, Partials, EmbedBuilder, Events, ChannelType } from 'discord.js';
+import { isCompletedStatus } from '@/lib/lead-status';
 import type { LeadStatus } from '@prisma/client';
 import { setLeadStatus, findLeadByDiscordMessageId } from '@/server/repo/leads';
 import { createLog } from '@/server/repo/logs';
 import { recreateConfirmedLeadEvent, syncCalendarWithLeadStatus } from '@/server/google-calendar';
 
 const REACTION_STATUS_MAP: Record<string, LeadStatus> = {
-  '🔵': 'CONTACTED',
+  '🔵': 'PROPOSAL_SENT',
   '✅': 'WON',
   '❌': 'LOST',
 };
 
 const STATUS_COLOR: Record<string, number> = {
   NEW: 0x22c55e,
-  CONTACTED: 0x3b82f6,
+  PROPOSAL_SENT: 0x3b82f6,
   WON: 0x8b5cf6,
   LOST: 0xef4444,
 };
@@ -127,7 +128,7 @@ async function handleReactionAdd(reaction: any, user: any) {
 
     // Toteutunut muutto on kumppaniraportin ja palkkion peruste — vanhaan viestiin lisätty
     // reaktio ei saa palauttaa sitä takaisin vahvistetuksi. Muutos tehdään hallinnasta.
-    if (lead.status === 'COMPLETED') {
+    if (isCompletedStatus(lead.status)) {
       await createLog({
         entityType: 'Lead',
         entityId: lead.id,

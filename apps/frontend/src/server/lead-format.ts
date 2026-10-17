@@ -1,4 +1,5 @@
 import { FURNITURE_CATALOG, RECYCLING_WASTE_TYPES, CalculatorSchema, calculateMovingPrice } from '@/features/calculator/pricing';
+import { isCompletedStatus } from '@/lib/lead-status';
 import { BOX_RENTAL, calculateBoxRental, describeBoxRental } from '@/features/calculator/boxRental';
 import { computePartnerDiscount, discountLabel, type PartnerDiscount } from '@/features/calculator/discount';
 
@@ -205,7 +206,7 @@ export function defaultFinalPrice(lead: {
   formData: unknown;
 }): number | null {
   // Kumotun toteutumisen vanha hinta ei ohita myöhemmin vahvistettua hintaa.
-  if (lead.status === 'COMPLETED' && lead.finalPrice != null) return lead.finalPrice;
+  if (isCompletedStatus(lead.status) && lead.finalPrice != null) return lead.finalPrice;
   const { confirmed, exact } = getStoredPrice(parseLeadFormData(lead.formData));
   const confirmedAmount = confirmed !== null ? parseEuroAmount(confirmed) : null;
   if (confirmedAmount !== null && confirmedAmount > 0) return confirmedAmount;

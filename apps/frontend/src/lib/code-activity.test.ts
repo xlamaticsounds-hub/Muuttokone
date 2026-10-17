@@ -41,7 +41,7 @@ describe('buildCodeActivity', () => {
 
   it('palkkio vain toteutuneista; liidin oma prosentti, muuten koodin', () => {
     const done = rows.find((r) => r.leadId === 'toteutunut')!;
-    expect(done).toMatchObject({ finalPriceGross: 1000, finalPriceNet: 796.81, commissionPercent: 5, commissionAmount: 39.84, statusLabel: 'Toteutunut' });
+    expect(done).toMatchObject({ finalPriceGross: 1000, finalPriceNet: 796.81, commissionPercent: 5, commissionAmount: 39.84, statusLabel: 'Tehty' });
     const fallback = rows.find((r) => r.leadId === 'toteutunut-2')!;
     expect(fallback).toMatchObject({ commissionPercent: 6, finalPriceNet: 223.11, commissionAmount: 13.39 });
     expect(rows.find((r) => r.leadId === 'vahvistettu')!.commissionAmount).toBeNull();
@@ -54,7 +54,7 @@ describe('buildCodeActivity', () => {
     expect(lines[0]).toMatch(/^Varaus tehty;Muuttopäivä;Tila;/);
     expect(csv).not.toContain('Kaisa');
     expect(csv).not.toContain('Koodilla');
-    expect(csv).toContain(';Toteutunut;15.10.2026;K. K.;275,00;796,81;1000,00;5;39,84');
+    expect(csv).toContain(';Tehty;15.10.2026;K. K.;275,00;796,81;1000,00;5;39,84');
     expect(lines.at(-2)).toBe('Yhteensä KIINTEISTOMAAILMA;;6 varausta, 2 toteutunut;;;;1019,92;1280,00;;53,23');
     expect(codeActivityCsvFilename('KM-MANKKAA', new Date('2026-10-09T10:00:00Z'))).toBe('muuttokone-koodi-km-mankkaa-2026-10-09.csv');
   });

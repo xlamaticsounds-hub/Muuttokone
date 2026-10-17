@@ -32,3 +32,34 @@ export async function sendDiscordNotification(title: string, fields: DiscordFiel
     console.error('Failed to send Discord notification:', error);
   }
 }
+
+/**
+ * Pidempi tekstiviesti (embed-kuvaus) webhook-kanavalle: aamuyhteenveto ja kiireelliset huomiot.
+ * Palauttaa true vain kun Discord hyväksyi viestin; ei koskaan heitä (kuten sendDiscordNotification).
+ */
+export async function sendDiscordEmbed(params: { title: string; description: string; color?: number; url?: string }): Promise<boolean> {
+  const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+  if (!webhookUrl) return false;
+  try {
+    const res = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        embeds: [
+          {
+            title: params.title.slice(0, 256),
+            description: params.description.slice(0, 4000),
+            color: params.color ?? 5814783,
+            ...(params.url && { url: params.url }),
+            timestamp: new Date().toISOString(),
+            footer: { text: 'Muuttokone Lead System' },
+          },
+        ],
+      }),
+    });
+    return res.ok;
+  } catch (error) {
+    console.error('Failed to send Discord embed:', error);
+    return false;
+  }
+}

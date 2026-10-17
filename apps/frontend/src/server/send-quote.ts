@@ -1,6 +1,7 @@
 'use server';
 
 import { getServerSession } from 'next-auth';
+import { isCompletedStatus } from '@/lib/lead-status';
 import { LeadStatus } from '@prisma/client';
 import { authOptions } from '@/server/auth';
 import { prisma } from '@/server/db';
@@ -156,7 +157,7 @@ async function sendQuoteEmailInner(leadId: string, customMessage: string | null)
 
   // Toteutunut muutto ei palaa tarjousvaiheeseen, vaikka tarjous lähetettäisiin uudelleen
   // (muuten se putoaisi kumppaniraportilta).
-  if (lead.status !== LeadStatus.COMPLETED) {
+  if (!isCompletedStatus(lead.status)) {
     await prisma.lead.update({ where: { id: leadId }, data: { status: LeadStatus.PROPOSAL_SENT } });
   }
 

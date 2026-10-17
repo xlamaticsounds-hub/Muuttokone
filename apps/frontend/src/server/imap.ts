@@ -7,10 +7,25 @@ import type { ImapFlow } from 'imapflow';
  * send-quote.ts on tätä kirjoitettaessa vielä keskeneräinen, committaamaton ominaisuus eikä
  * sitä haluta tässä yhteydessä koskea. Kun se joskus valmistuu, nämä kaksi voi yhdistää.
  */
-export async function connectImap(): Promise<ImapFlow> {
-  const host = process.env.IMAP_HOST || process.env.SMTP_HOST;
-  const user = process.env.IMAP_USER || process.env.SMTP_USER;
-  const pass = process.env.IMAP_PASSWORD || process.env.SMTP_PASSWORD;
+export type MailAccount = 'tarjous' | 'info';
+
+/**
+ * Tili valitaan nimellä: 'tarjous' = oletustili (IMAP_USER/SMTP_USER, kuten ennenkin), 'info' =
+ * info@muuttokone.fi. Info-tili käyttää samaa palvelinta ja salasanaa ellei INFO_IMAP_HOST /
+ * INFO_IMAP_PASSWORD toisin määrää.
+ */
+export function imapAccountConfig(account: MailAccount) {
+  const host = (account === 'info' && process.env.INFO_IMAP_HOST) || process.env.IMAP_HOST || process.env.SMTP_HOST;
+  const user =
+    account === 'info'
+      ? process.env.INFO_IMAP_USER || 'info@muuttokone.fi'
+      : process.env.IMAP_USER || process.env.SMTP_USER;
+  const pass = (account === 'info' && process.env.INFO_IMAP_PASSWORD) || process.env.IMAP_PASSWORD || process.env.SMTP_PASSWORD;
+  return { host, user, pass };
+}
+
+export async function connectImap(account: MailAccount = 'tarjous'): Promise<ImapFlow> {
+  const { host, user, pass } = imapAccountConfig(account);
   if (!host || !user || !pass) {
     throw new Error('IMAP-asetuksia (IMAP_HOST/IMAP_USER/IMAP_PASSWORD tai SMTP_*) ei ole määritetty palvelimelle.');
   }
