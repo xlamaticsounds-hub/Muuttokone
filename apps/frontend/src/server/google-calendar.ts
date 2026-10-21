@@ -148,6 +148,8 @@ export type LeadEventDetails = {
   // 'vuokraus' = Muuttolaatikot-sivun tilaus: tapahtuma on laatikoiden/tuotteiden toimitus, ei muutto
   serviceKind?: 'muutto' | 'vuokraus';
   notes: string | null;
+  // Kaukana tukikohdasta: laskurin hinta ei kata tyhjää ajoa (ks. lib/base-trip.ts) — näkyy kalenterissa
+  baseTripNote?: string | null;
   hallintaUrl: string;
 };
 
@@ -225,6 +227,7 @@ export async function createTentativeLeadEvent(
       ? `Toivottu kellonaika: ${details.preferredTime}`
       : `Kellonaika: ei ilmoitettu (merkitty klo ${DEFAULT_START_TIME})`,
     details.notes ? `Lisätiedot: ${details.notes}` : null,
+    details.baseTripNote ? `⚠️ Kaukana tukikohdasta: ${details.baseTripNote}` : null,
     '',
     `Liidi hallintapaneelissa: ${details.hallintaUrl}`,
     '',

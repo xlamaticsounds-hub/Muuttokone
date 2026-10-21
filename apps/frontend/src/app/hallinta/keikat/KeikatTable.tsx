@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Lead, Contact } from '@prisma/client';
 import { UniversalTable, Column, TablePagination } from '@/components/ui/UniversalTable';
 import { LEAD_STATUS_LABELS, LEAD_STATUS_PILL_CLASSES } from '@/lib/lead-status';
+import BaseTripBadge from '../BaseTripBadge';
 
 type JobWithContact = Lead & { contact: Contact };
 
@@ -37,8 +38,11 @@ export default function KeikatTable({
     {
       header: 'Reitti',
       cell: (job) => (
-        <div className="max-w-md truncate">
-          {job.fromAddress || '-'} {'->'} {job.toAddress || '-'}
+        <div className="max-w-md">
+          <div className="truncate">
+            {job.fromAddress || '-'} {'->'} {job.toAddress || '-'}
+          </div>
+          <BaseTripBadge lead={job} />
         </div>
       ),
     },

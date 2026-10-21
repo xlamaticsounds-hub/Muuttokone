@@ -13,6 +13,7 @@ import { MAX_EXTRA_DESTINATIONS } from '@/features/calculator/pricing';
 import { discountLabel } from '@/features/calculator/discount';
 import { lookupDiscountCode } from '@/server/discount-codes';
 import { recomputeLeadPrice } from '@/server/lead-format';
+import { baseTripSummary, leadBaseTripAdvice } from '@/lib/base-trip';
 
 // Force Node.js runtime (multipart + File)
 export const runtime = 'nodejs';
@@ -372,10 +373,16 @@ async function notifyNewLead(
     fromAddress: string | null;
     toAddress: string | null;
     notes: string | null;
+    formData?: unknown;
   },
   details: NotifyLeadDetails,
 ) {
   const hallintaUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.muuttokone.fi'}/hallinta/liidit/${lead.id}`;
+
+  // Kaukana tukikohdasta: laskurin hinta ei kata tyhjää ajoa. Vain muistutus Discordiin ja kalenteriin —
+  // hintaa ei muuteta (ks. lib/base-trip.ts).
+  const baseTrip = details.serviceKind === 'vuokraus' ? null : leadBaseTripAdvice(lead);
+  const baseTripNote = baseTrip ? baseTripSummary(baseTrip) : null;
 
   let overlapWarnings: string[] = [];
   let calendarEvent: { eventId: string; htmlLink: string | null } | null = null;
@@ -392,6 +399,7 @@ async function notifyNewLead(
       preferredTime: details.preferredTime ?? null,
       serviceKind: details.serviceKind,
       notes: lead.notes,
+      baseTripNote,
       hallintaUrl,
     });
   } else {
@@ -427,6 +435,7 @@ async function notifyNewLead(
     hallintaUrl,
     overlapWarnings,
     calendarLink: calendarEvent?.htmlLink ?? null,
+    baseTripNote,
   });
 
   // Best-effort: save whatever actually succeeded, so a later Discord

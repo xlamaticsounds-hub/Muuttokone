@@ -208,6 +208,8 @@ export type LeadMessageDetails = {
   hallintaUrl: string;
   overlapWarnings: string[];
   calendarLink: string | null;
+  // Keikka on kaukana tukikohdasta: laskurin hinta ei kata tyhjää ajoa (ks. lib/base-trip.ts)
+  baseTripNote?: string | null;
 };
 
 /**
@@ -263,6 +265,10 @@ export async function postLeadToDiscord(
         value: details.overlapWarnings.join(', '),
         inline: false,
       });
+    }
+
+    if (details.baseTripNote) {
+      embed.addFields({ name: '⚠️ Kaukana tukikohdasta', value: details.baseTripNote.slice(0, 1000), inline: false });
     }
 
     const linkLines = [`[Avaa hallintapaneelissa](${details.hallintaUrl})`];
