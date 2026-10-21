@@ -8,11 +8,12 @@ import type { EmailSummaryData } from '@/server/email-summary';
 
 export default function EmailSummarySection({
   leadId,
-  customerEmail,
+  canSearch,
   initialSummary,
 }: {
   leadId: string;
-  customerEmail: string | null;
+  /** Liidillä on sähköpostiosoite tai katuosoite, jolla viestit voi hakea */
+  canSearch: boolean;
   initialSummary: EmailSummaryData | null;
 }) {
   const router = useRouter();
@@ -50,8 +51,8 @@ export default function EmailSummarySection({
         </h2>
         <button
           onClick={handleGenerate}
-          disabled={loading || !customerEmail}
-          title={!customerEmail ? 'Liidillä ei ole sähköpostiosoitetta' : undefined}
+          disabled={loading || !canSearch}
+          title={!canSearch ? 'Liidillä ei ole sähköposti- eikä katuosoitetta' : undefined}
           className="flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
@@ -60,8 +61,8 @@ export default function EmailSummarySection({
       </div>
 
       <p className="mb-4 text-xs text-gray-500 dark:text-gray-400">
-        AI käy läpi tarjous@muuttokone.fi-postilaatikon ja asiakkaan väliset sähköpostit tämän liidin osalta
-        ja poimii niistä sovitut ajat. Päivittyy myös automaattisesti kuuden tunnin välein.
+        AI käy läpi tarjous@- ja info@muuttokone.fi-postilaatikoiden sähköpostit tämän liidin osalta (myös Muuttomaailma-tarjousten
+        yhteenvedot) ja poimii niistä sovitut ajat. Päivitä yhteenveto napista, kun sähköposteja on tullut lisää.
       </p>
 
       {error && (
@@ -110,7 +111,8 @@ export default function EmailSummarySection({
           )}
 
           <p className="text-xs text-gray-400 dark:text-gray-500">
-            Päivitetty {formatGeneratedAt(summary.generatedAt)} — {summary.messageCount} viestiä läpikäyty.
+            Päivitetty {formatGeneratedAt(summary.generatedAt)} — {summary.messageCount} viestiä läpikäyty
+            {summary.mailboxes && summary.mailboxes.length > 0 ? ` (${summary.mailboxes.join(' + ')})` : ''}.
           </p>
         </div>
       )}

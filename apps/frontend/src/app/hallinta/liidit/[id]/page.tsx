@@ -13,6 +13,7 @@ import {
   parseLeadFormData,
 } from '@/server/lead-format';
 import { baseTripSummary, leadBaseTripAdvice } from '@/lib/base-trip';
+import { leadMailSearchKeys } from '@/lib/mail-search';
 import { parseEmailSummary } from '@/server/email-summary';
 import StatusSelector from './StatusSelector';
 import LeadDetailActions from './LeadDetailActions';
@@ -60,6 +61,7 @@ export default async function LeadDetailPage({
   // Kaukana tukikohdasta: laskurin hinta ei kata tyhjää ajoa (vain varoitus, hintaa ei muuteta)
   const baseTrip = leadBaseTripAdvice(lead);
   const calculatorPrice = getStoredPrice(pfd).exact;
+  const searchKeys = leadMailSearchKeys(lead);
 
   // Kohteen kerros/hissi ja asunnon kokoluokka elävät vain formData-JSONissa (muuttolaskurin
   // syöttämät kentät), ei omina Lead-sarakkeinaan — Lead.floor/hasElevator kuvaavat vain
@@ -417,7 +419,8 @@ export default async function LeadDetailPage({
 
       <EmailSummarySection
         leadId={lead.id}
-        customerEmail={lead.contact.email}
+        // Haku onnistuu asiakkaan sähköpostilla tai (Muuttomaailma-liidit) pyynnön katuosoitteella
+        canSearch={Boolean(searchKeys.email || searchKeys.streets.length > 0)}
         initialSummary={parseEmailSummary(lead.emailSummary)}
       />
     </div>
