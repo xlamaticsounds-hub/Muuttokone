@@ -94,6 +94,8 @@ export const calculatorDictionary: Record<string, string> = {
   'Muista huomioida välipysähdysten lisäämä matka alla olevassa etäisyysarviossa.':
     'Remember to account for the extra distance from stops in the estimate below.',
   'Arvioitu etäisyys (km)': 'Estimated distance (km)',
+  'Etäisyyttä ei saatu laskettua automaattisesti. Tarkista arvio liukusäätimellä – hinta riippuu siitä.':
+    'The distance could not be calculated automatically. Please check the estimate with the slider – the price depends on it.',
 
   // Step 3: apartment / driver details
   'Kuljettajat ja kohteet': 'Drivers and destinations',

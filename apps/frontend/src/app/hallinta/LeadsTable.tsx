@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { UniversalTable, Column, TablePagination } from '@/components/ui/UniversalTable';
 import { LEAD_STATUS_LABELS, LEAD_STATUS_PILL_CLASSES, statusOptionsFor, isCompletedStatus } from '@/lib/lead-status';
 import { formatEuro } from '@/lib/format';
+import BaseTripBadge from './BaseTripBadge';
 import CompleteLeadDialog from './liidit/CompleteLeadDialog';
 import { completeTargetFor, type CompleteLeadTarget, type LeadForCompletion } from './liidit/complete-target';
 
@@ -94,6 +95,7 @@ export default function LeadsTable({
             {route && <span className="line-clamp-2">{route}</span>}
           </p>
         )}
+        <BaseTripBadge lead={lead} />
 
         <div className="flex flex-wrap items-center gap-2">
           {phone && (
@@ -174,6 +176,7 @@ export default function LeadsTable({
               📅 {new Date(lead.requestedDate).toLocaleDateString('fi-FI')}
             </div>
           )}
+          <BaseTripBadge lead={lead} />
         </div>
       ),
     },

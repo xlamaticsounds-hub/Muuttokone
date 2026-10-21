@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
     "test": "vitest run",
-    "format": "prettier --write \"**/*.{js,ts,tsx,json,css,md}\""
+    "format": "prettier --write \"**/*.{js,ts,tsx,json,css,md}\"",
+    "profit-report": "PROFIT_REPORT=1 vitest run src/features/calculator/profitabilityReport.test.ts"
   },
   "prisma": {
     "seed": "node --experimental-strip-types prisma/seed.ts"

@@ -4,7 +4,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 import { motion, AnimatePresence } from 'framer-motion';
-import { calculateMovingPrice, CalculatorData, PriceBreakdown, FURNITURE_CATALOG, INCLUDED_DISTANCE_KM, RECYCLING_WASTE_TYPES, MAX_EXTRA_DESTINATIONS, EXTRA_DESTINATION_MINUTES } from './pricing';
+import { calculateMovingPrice, CalculatorData, PriceBreakdown, FURNITURE_CATALOG, INCLUDED_DISTANCE_KM, RECYCLING_WASTE_TYPES, MAX_EXTRA_DESTINATIONS, EXTRA_DESTINATION_MINUTES, MAX_DISTANCE_KM } from './pricing';
 import { BOX_RENTAL, BOX_RENTAL_SUGGESTED_COUNT, calculateBoxRental, formatEuro, suggestBoxCount } from './boxRental';
 import BoxRentalOfferModal from './BoxRentalOfferModal';
 import RentalDaysSlider from '@/features/vuokraus/RentalDaysSlider';
@@ -96,6 +96,9 @@ export default function Calculator() {
   const partnerCode = usePartnerDiscountCode(searchParams.get('koodi'));
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Google ei antanut käyttökelpoista ajomatkaa: hinta perustuu silloin oletus-/edelliseen arvioon (esim. 5 km),
+  // joten asiakkaalle kerrotaan että arvio pitää tarkistaa liukusäätimellä.
+  const [distanceLookupFailed, setDistanceLookupFailed] = useState(false);
   const [isBooked, setIsBooked] = useState(false);
   const [gdprConsent, setGdprConsent] = useState(false);
   const [honeypot, setHoneypot] = useState('');
@@ -250,7 +253,10 @@ export default function Calculator() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const google = (window as any).google;
-    if (!google || !google.maps || !formData.addressFrom || !formData.addressTo) return;
+    if (!google || !google.maps || !formData.addressFrom || !formData.addressTo) {
+      setDistanceLookupFailed(false);
+      return;
+    }
 
     // Pieni viive: ei kutsuta Googlea jokaisesta näppäinpainalluksesta (varsinkin useampi osoite kerrallaan).
     const timer = setTimeout(() => {
@@ -266,19 +272,29 @@ export default function Calculator() {
       }, (response: any, status: any) => {
         if (status !== google.maps.DistanceMatrixStatus.OK) {
           console.warn('Distance Matrix API error:', status);
+          setDistanceLookupFailed(true);
           return;
         }
         // Osuus i: osoite i -> osoite i+1 on matriisin lävistäjällä
         let meters = 0;
         for (let i = 0; i < chain.length - 1; i++) {
           const element = response.rows[i]?.elements[i];
-          if (!element || element.status !== google.maps.DistanceMatrixElementStatus.OK) return;
+          if (!element || element.status !== google.maps.DistanceMatrixElementStatus.OK) {
+            setDistanceLookupFailed(true);
+            return;
+          }
           meters += element.distance.value;
         }
         const distanceInKm = Math.round(meters / 1000);
-        // Only update if distance is reasonable (between 1km and 500km)
-        if (distanceInKm >= 1 && distanceInKm <= 500) {
-          updateField('distanceKm', distanceInKm);
+        // Päivitetään vain järkevä etäisyys. Yläraja oli aiemmin 500 km, jolloin sitä pidemmät muutot
+        // (esim. Helsinki–Oulu) jäivät oletusmatkalle 5 km ja hinta-arvio oli täysin liian halpa.
+        // Alle 1 km muutto (esim. sama talo) on onnistunut haku, ei virhe: etäisyyttä ei päivitetä (kuten ennenkin),
+        // mutta asiakkaalle ei näytetä varoitusta.
+        if (distanceInKm > MAX_DISTANCE_KM) {
+          setDistanceLookupFailed(true);
+        } else {
+          if (distanceInKm >= 1) updateField('distanceKm', distanceInKm);
+          setDistanceLookupFailed(false);
         }
       });
     }, 600);
@@ -970,13 +986,18 @@ export default function Calculator() {
                       <input
                         type="range"
                         min="1"
-                        max="500"
+                        max={Math.max(500, formData.distanceKm)}
                         className="flex-1 accent-primary"
                         value={formData.distanceKm}
                         onChange={(e) => updateField('distanceKm', parseInt(e.target.value))}
                       />
                       <span className="font-bold text-lg min-w-[60px]">{formData.distanceKm} km</span>
                     </div>
+                    {distanceLookupFailed && (
+                      <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                        {t('Etäisyyttä ei saatu laskettua automaattisesti. Tarkista arvio liukusäätimellä – hinta riippuu siitä.')}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

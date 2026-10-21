@@ -324,6 +324,34 @@ export interface PriceBreakdown {
 export const INCLUDED_DISTANCE_KM = 5;
 export const VAT_RATE = 0.255; // 25.5% VAT
 
+// Pisin laskuri hyväksyy automaattisesti laskettuna ajomatkana (Helsinki–Utsjoki on noin 1 200 km).
+// Aiemmin raja oli 500 km, ja sitä pidemmät muutot (esim. Helsinki–Oulu) jäivät huomaamatta
+// oletusmatkalle 5 km, jolloin hinta-arvio oli täysin liian halpa.
+export const MAX_DISTANCE_KM = 1500;
+
+/**
+ * Ajoaika (h) yhteen suuntaan. Ensimmäiset 40 km ajetaan taajamassa/kaupunkiliikenteessä keskimäärin
+ * 40 km/h (sama kalibroitu arvo jota lyhyet muutot ovat aina käyttäneet, joten alle 40 km muuttojen
+ * hinnat eivät muutu), sen yli menevä osuus moottori-/valtatiellä 80 km/h.
+ *
+ * Aiemmin KAIKKI kilometrit laskettiin 40 km/h nopeudella: Tampere–Helsinki (180 km) laskutettiin
+ * 4,75 tunnin ajona, vaikka todellinen ajoaika on noin 2–2,5 h, ja yksiön hinnasta noin 80 %
+ * oli pelkkää ajoaikaa. Kiinteä 0,25 h varaus kattaa lähdön ja auton paikoituksen.
+ */
+export const URBAN_DRIVE_KM = 40;
+export const URBAN_SPEED_KMH = 40;
+export const HIGHWAY_SPEED_KMH = 80;
+const DRIVE_BUFFER_HOURS = 0.25;
+
+export function estimateDriveHours(distanceKm: number): number {
+  const km = Math.max(0, distanceKm);
+  return (
+    Math.min(km, URBAN_DRIVE_KM) / URBAN_SPEED_KMH +
+    Math.max(0, km - URBAN_DRIVE_KM) / HIGHWAY_SPEED_KMH +
+    DRIVE_BUFFER_HOURS
+  );
+}
+
 const PRICING_CONSTANTS = {
   ratePerKm: 0.79,
   includedDistanceKm: INCLUDED_DISTANCE_KM,
@@ -583,7 +611,7 @@ function calculatePriceWithoutBoxRental(data: CalculatorData): PriceBreakdown {
   // The first 5 km are included in the move price.
   const billableDistanceKm = Math.max(0, distanceKm - PRICING_CONSTANTS.includedDistanceKm);
   const distanceCost = billableDistanceKm * PRICING_CONSTANTS.ratePerKm;
-  const driveTime = (distanceKm / 40) + 0.25;
+  const driveTime = estimateDriveHours(distanceKm);
 
   // Muuttopäivän alennus (ei koskaan korotus) — sovelletaan kaikkiin palvelutyyppeihin/paketteihin.
   const dateDiscount = getDateDiscount(date);

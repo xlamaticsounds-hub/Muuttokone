@@ -9,8 +9,11 @@ import {
   getServiceLabel,
   getPackageLabel,
   getPhotoUrls,
+  getStoredPrice,
   parseLeadFormData,
 } from '@/server/lead-format';
+import { baseTripSummary, leadBaseTripAdvice } from '@/lib/base-trip';
+import { leadMailSearchKeys } from '@/lib/mail-search';
 import { parseEmailSummary } from '@/server/email-summary';
 import StatusSelector from './StatusSelector';
 import LeadDetailActions from './LeadDetailActions';
@@ -55,6 +58,10 @@ export default async function LeadDetailPage({
   const packageLabel = getPackageLabel(pfd);
   const totalItemCount = inventoryEntries.reduce((sum, e) => sum + e.qty, 0);
   const photoUrls = getPhotoUrls(pfd);
+  // Kaukana tukikohdasta: laskurin hinta ei kata tyhjää ajoa (vain varoitus, hintaa ei muuteta)
+  const baseTrip = leadBaseTripAdvice(lead);
+  const calculatorPrice = getStoredPrice(pfd).exact;
+  const searchKeys = leadMailSearchKeys(lead);
 
   // Kohteen kerros/hissi ja asunnon kokoluokka elävät vain formData-JSONissa (muuttolaskurin
   // syöttämät kentät), ei omina Lead-sarakkeinaan — Lead.floor/hasElevator kuvaavat vain
@@ -206,6 +213,24 @@ export default async function LeadDetailPage({
                   <p className="mt-1 text-lg font-medium text-gray-900 dark:text-white">{lead.toAddress || '-'}</p>
                 </div>
               </div>
+
+              {baseTrip && (
+                <div
+                  role="note"
+                  className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200"
+                >
+                  <p className="font-semibold">⚠️ Kaukana tukikohdasta</p>
+                  <p className="mt-1">
+                    Laskurin hinta kattaa vain muuton oman matkan. Tässä keikassa on {baseTripSummary(baseTrip)}
+                  </p>
+                  {calculatorPrice != null && (
+                    <p className="mt-1">
+                      Laskurin arvio {Math.round(calculatorPrice)} € + lisä noin {baseTrip.surcharge} € ≈{' '}
+                      <strong>{Math.round(calculatorPrice) + baseTrip.surcharge} €</strong>. Hintaa ei ole muutettu: tarkista ja vahvista hinta käsin.
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div className="grid gap-4 sm:grid-cols-2">
                  <div>
@@ -394,7 +419,8 @@ export default async function LeadDetailPage({
 
       <EmailSummarySection
         leadId={lead.id}
-        customerEmail={lead.contact.email}
+        // Haku onnistuu asiakkaan sähköpostilla tai (Muuttomaailma-liidit) pyynnön katuosoitteella
+        canSearch={Boolean(searchKeys.email || searchKeys.streets.length > 0)}
         initialSummary={parseEmailSummary(lead.emailSummary)}
       />
     </div>
