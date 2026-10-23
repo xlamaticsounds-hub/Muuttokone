@@ -4,14 +4,16 @@ import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import GlobalSearch from "./GlobalSearch";
-import { BookUser, ChartLine, DollarSign, Gauge, Mail, Settings, Zap, User, LogOut, Search, X, Send, FileText, ImageIcon, Truck, Users, Receipt, History, FileSpreadsheet } from 'lucide-react';
+import { BookUser, ChartLine, DollarSign, Gauge, Mail, Settings, Zap, User, LogOut, Search, X, Send, FileText, ImageIcon, Truck, Users, Receipt, History, FileSpreadsheet, Timer, StickyNote } from 'lucide-react';
 
 interface AdminLayoutShellProps {
   children: React.ReactNode;
   userEmail?: string | null;
+  /** Käynnissä olevien työaikaleimojen määrä (näytetään valikossa ja otsikkorivillä) */
+  runningTimers?: number;
 }
 
-export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShellProps) {
+export default function AdminLayoutShell({ children, userEmail, runningTimers = 0 }: AdminLayoutShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -22,11 +24,13 @@ export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShe
     { name: "Hallintapaneeli", href: "/hallinta/dashboard" },
     { name: "Liidit", href: "/hallinta/liidit" },
     { name: "Keikat", href: "/hallinta/keikat" },
+    { name: "Työajat", href: "/hallinta/tyoajat" },
     { name: "Asiakkaat", href: "/hallinta/asiakkaat" },
     { name: "Pipeline", href: "/hallinta/diilit" },
     { name: "Laskutus", href: "/hallinta/laskutus" },
     { name: "Raportit", href: "/hallinta/raportit" },
     { name: "Postilaatikko", href: "/hallinta/postilaatikko" },
+    { name: "Muistiinpanot", href: "/hallinta/muistiinpanot" },
     { name: "Blogi", href: "/hallinta/blogi" },
     { name: "Galleria", href: "/hallinta/galleria" },
     { name: "Analytiikka", href: "/hallinta/analytiikka" },
@@ -145,6 +149,18 @@ export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShe
                     {link.name === "Hallintapaneeli" && <Gauge color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Liidit" && <BookUser color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Keikat" && <Truck color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
+                    {link.name === "Työajat" && (
+                      <span className="relative">
+                        <Timer color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />
+                        {runningTimers > 0 && (
+                          <span className="absolute -right-1 -top-1 flex h-3 w-3" title="Työ käynnissä">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-75" />
+                            <span className="relative inline-flex h-3 w-3 rounded-full border border-white bg-emerald-400" />
+                          </span>
+                        )}
+                      </span>
+                    )}
+                    {link.name === "Muistiinpanot" && <StickyNote color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Asiakkaat" && <Users color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Pipeline" && <DollarSign color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Laskutus" && <Receipt color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
@@ -224,6 +240,20 @@ export default function AdminLayoutShell({ children, userEmail }: AdminLayoutShe
                 {getPageTitle(pathname)}
               </h1>
             </div>
+
+            {runningTimers > 0 && pathname !== "/hallinta/tyoajat" && (
+              <Link
+                href="/hallinta/tyoajat"
+                className="ml-2 flex shrink-0 items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200"
+              >
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
+                  <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                </span>
+                <span className="hidden min-[400px]:inline">Työ käynnissä</span>
+                <span className="min-[400px]:hidden">Työ</span>
+              </Link>
+            )}
 
             {/* Middle: Search Bar */}
             <GlobalSearch className="mx-4 hidden w-full max-w-md sm:block" />

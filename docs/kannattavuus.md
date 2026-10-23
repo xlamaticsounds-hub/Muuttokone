@@ -113,4 +113,5 @@ _Ei-työkustannukset (auto, admin, markkinointi) konservatiivisella mallilla, el
 
 - Päiväalennus (-15 %) ei muuta kustannuksia, joten se syö katteen suoraan; pitkillä matkoilla alennuspäivä on ohuin tilanne.
 - Pitkillä matkoilla tyhjä paluumatka on kustannus, jota hinta ei erikseen kata. Kantoavussa (2 henkilöä, ei autoa) sama paluuaika kasvattaa kustannusta ilman auton kuluja.
+- Mallin työaika-arviota voi verrata toteutuneeseen: hallinnan **Työajat**-osio tallentaa leimatut työajat ja henkilötunnit, ja liidin sivu näyttää keikan hinnan jaettuna henkilötunneilla (€ / henkilötunti, ennen kuluja). Jos toteutunut työaika poikkeaa mallin arviosta jatkuvasti, säädä `pricing.ts`:n työaika-arvioita.
 - Vanhat laskelmat (`pricing_optimization.py`, `business_analytics.py`, `FINANCIAL_DATA.csv`) perustuvat vanhaan hinnoitteluun (120/140 €/h, 0,59 €/km) eivätkä enää vastaa laskuria.

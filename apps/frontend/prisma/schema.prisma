@@ -407,3 +407,43 @@ model AppState {
   value     Json
   updatedAt DateTime @updatedAt
 }
+
+// Työaika: yksi leimattu työjakso (keikka tai muu työ). Leimataan alkavaksi ja päättyväksi
+// hallintapaneelissa (puhelimella). endedAt = null tarkoittaa että työ on käynnissä.
+// Ei Prisma-relaatiota Leadiin (kuten AiTodo ja MailEvent): leadId on pelkkä viite, jotta liidin
+// poisto tai arkistointi ei riko työaikahistoriaa.
+model TimeEntry {
+  id           String    @id @default(cuid())
+  leadId       String?
+  title        String? // vapaa kuvaus kun työ ei liity liidiin (esim. "Purkukeikka", "Auton huolto")
+  startedAt    DateTime
+  endedAt      DateTime?
+  crewSize     Int       @default(3) // henkilöä työssä
+  breakMinutes Int       @default(0) // tauot, joita ei lasketa työajaksi
+  notes        String?
+  createdBy    String? // kirjautuneen ylläpitäjän sähköposti
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([startedAt])
+  @@index([leadId])
+}
+
+// Muistiinpanot: paikka kirjata asioita ylös (huomioita, ideoita, asiakastietoja, tehtäviä).
+// Voi liittää liidiin (leadId), kiinnittää listan alkuun (pinned) ja arkistoida näkyvistä.
+model Note {
+  id        String   @id @default(cuid())
+  title     String?
+  body      String
+  category  String   @default("yleinen") // yleinen | tehtava | asiakas | kalusto | talous | idea
+  pinned    Boolean  @default(false)
+  archived  Boolean  @default(false)
+  leadId    String?
+  createdBy String? // kirjautuneen ylläpitäjän sähköposti
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([pinned, archived])
+  @@index([leadId])
+  @@index([createdAt])
+}

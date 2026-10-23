@@ -1,7 +1,7 @@
 import { prisma } from '@/server/db';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Calendar, MapPin, User, Phone, Mail, FileText, Globe, Package, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, User, Phone, Mail, FileText, Globe, Package, Image as ImageIcon, Timer, StickyNote } from 'lucide-react';
 import {
   getInventoryEntries,
   getWasteTypeLabels,
@@ -19,9 +19,14 @@ import StatusSelector from './StatusSelector';
 import LeadDetailActions from './LeadDetailActions';
 import EmailSummarySection from './EmailSummarySection';
 import LeadCompletionCard from './LeadCompletionCard';
+import LeadWorkTimeCard from './LeadWorkTimeCard';
+import NotesBoard from '../../muistiinpanot/NotesBoard';
+import { toNoteDto, type NoteDto } from '../../muistiinpanot/dto';
+import { leadJobLabel, toTimeEntryDto, type TimeEntryDto } from '../../tyoajat/dto';
 import { completeTargetFor } from '../complete-target';
 import { sentReportsContainingLead } from '@/server/partner-reports';
 import { formatHelsinkiDate } from '@/lib/helsinki-time';
+import { defaultFinalPrice } from '@/server/lead-format';
 
 export const dynamic = 'force-dynamic';
 
@@ -87,6 +92,22 @@ export default async function LeadDetailPage({
       year: 'numeric',
     });
   };
+
+  // Työajat ja muistiinpanot: jos taulut eivät ole käytettävissä, kortit jätetään pois eikä sivu kaadu
+  let workTime: { running: TimeEntryDto[]; finished: TimeEntryDto[] } | null = null;
+  let leadNotes: NoteDto[] | null = null;
+  try {
+    const [timeRows, noteRows] = await Promise.all([
+      prisma.timeEntry.findMany({ where: { leadId: lead.id }, orderBy: { startedAt: 'desc' } }),
+      prisma.note.findMany({ where: { leadId: lead.id }, orderBy: { updatedAt: 'desc' } }),
+    ]);
+    const timeDtos = timeRows.map((e) => toTimeEntryDto(e, lead));
+    workTime = { running: timeDtos.filter((e) => !e.endedAt), finished: timeDtos.filter((e) => e.endedAt) };
+    leadNotes = noteRows.map((n) => toNoteDto(n, lead));
+  } catch (error) {
+    console.warn('[hallinta/liidit/[id]] Työaika- ja muistiinpanotietoja ei voitu hakea', error);
+  }
+  const serverNow = new Date().toISOString();
 
   const completeTarget = completeTargetFor(lead);
   // Lähetetyt kumppaniraportit joissa tämä muutto on (palkkio jo laskutettu)
@@ -416,6 +437,31 @@ export default async function LeadDetailPage({
            <LeadDetailActions lead={lead} />
         </div>
       </div>
+
+      {workTime && leadNotes && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <section id="tyoaika" className="scroll-mt-24 rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
+              <Timer className="h-5 w-5 text-gray-400" />
+              Työaika
+            </h2>
+            <LeadWorkTimeCard
+              lead={{ id: lead.id, label: leadJobLabel(lead) }}
+              running={workTime.running}
+              entries={workTime.finished}
+              price={defaultFinalPrice(lead)}
+              serverNow={serverNow}
+            />
+          </section>
+          <section id="muistiinpanot" className="scroll-mt-24 rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+            <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
+              <StickyNote className="h-5 w-5 text-gray-400" />
+              Muistiinpanot
+            </h2>
+            <NotesBoard notes={leadNotes} leadId={lead.id} compact />
+          </section>
+        </div>
+      )}
 
       <EmailSummarySection
         leadId={lead.id}
