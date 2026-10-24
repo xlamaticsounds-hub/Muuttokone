@@ -79,6 +79,8 @@ export default function AdminLayoutShell({ children, userEmail, runningTimers = 
     const allLinks = [...links, settingsLink];
     const link = allLinks.find(l => l.href === path);
     if (link) return link.name;
+    if (path === "/hallinta/liidit/uusi") return "Keikka muualta";
+    if (/^\/hallinta\/liidit\/[^/]+\/tarjous$/.test(path)) return "Tarjous / vahvistus";
     if (path.startsWith("/hallinta/")) {
       // Fallback for subpages or unlisted routes, capitalize first letter
       const part = path.split("/").pop();

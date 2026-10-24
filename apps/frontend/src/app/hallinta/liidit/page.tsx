@@ -1,3 +1,5 @@
+import Link from 'next/link';
+import { Plus } from 'lucide-react';
 import type { LeadStatus, Prisma } from '@prisma/client';
 import { prisma } from '@/server/db';
 import { SELECTABLE_LEAD_STATUSES } from '@/lib/lead-status';
@@ -54,9 +56,18 @@ export default async function LiiditPage({
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Liidit</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Hallinnoi saapuneita tarjouspyyntöjä.</p>
         </div>
-        <span className="shrink-0 bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium border border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/30">
-          {total} {status || onlyDiscount ? 'osumaa' : 'yhteensä'}
-        </span>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="hidden bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium border border-blue-100 sm:inline dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-900/30">
+            {total} {status || onlyDiscount ? 'osumaa' : 'yhteensä'}
+          </span>
+          <Link
+            href="/hallinta/liidit/uusi"
+            className="flex h-10 items-center gap-1.5 rounded-xl bg-blue-600 px-3 text-sm font-bold text-white shadow-sm hover:bg-blue-700"
+          >
+            <Plus className="h-4 w-4" />
+            Keikka muualta
+          </Link>
+        </div>
       </div>
 
       <LeadFilters status={status} onlyDiscount={onlyDiscount} />
