@@ -141,6 +141,13 @@ export default function LeadDetailActions({
           >
             Esikatsele varausvahvistus
           </button>
+          <Link
+            href={`/hallinta/liidit/${lead.id}/tarjous`}
+            title="Yleinen tarjous tai tilausvahvistus PDF:nä ilman tavaraluetteloa (myös muualta tulleille keikoille)"
+            className="col-span-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-center text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+          >
+            Tarjous / tilausvahvistus (PDF)
+          </Link>
         </div>
         {invoiceError && <p className="text-sm text-red-600 dark:text-red-400">{invoiceError}</p>}
         {confirmationFeedback && (

@@ -1,7 +1,7 @@
 import { prisma } from '@/server/db';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Calendar, MapPin, User, Phone, Mail, FileText, Globe, Package, Image as ImageIcon, Timer, StickyNote } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, User, Phone, Mail, FileText, Globe, Package, Image as ImageIcon, Timer, StickyNote, MessageSquareText } from 'lucide-react';
 import {
   getInventoryEntries,
   getWasteTypeLabels,
@@ -20,6 +20,8 @@ import LeadDetailActions from './LeadDetailActions';
 import EmailSummarySection from './EmailSummarySection';
 import LeadCompletionCard from './LeadCompletionCard';
 import LeadWorkTimeCard from './LeadWorkTimeCard';
+import LeadAttachmentsCard, { type AttachmentDto } from './LeadAttachmentsCard';
+import { externalSourceLabel } from '@/lib/external-lead';
 import NotesBoard from '../../muistiinpanot/NotesBoard';
 import { toNoteDto, type NoteDto } from '../../muistiinpanot/dto';
 import { leadJobLabel, toTimeEntryDto, type TimeEntryDto } from '../../tyoajat/dto';
@@ -108,6 +110,20 @@ export default async function LeadDetailPage({
     console.warn('[hallinta/liidit/[id]] Työaika- ja muistiinpanotietoja ei voitu hakea', error);
   }
   const serverNow = new Date().toISOString();
+  // Keskustelun kuvat: oma haku, ettei puuttuva taulu piilota työaikoja ja muistiinpanoja
+  let attachments: AttachmentDto[] | null = null;
+  try {
+    const rows = await prisma.leadAttachment.findMany({
+      where: { leadId: lead.id },
+      select: { id: true, name: true, size: true, createdAt: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    attachments = rows.map((a) => ({ id: a.id, name: a.name, size: a.size, createdAt: a.createdAt.toISOString() }));
+  } catch (error) {
+    console.warn('[hallinta/liidit/[id]] Kuvaliitteitä ei voitu hakea', error);
+  }
+  const external = pfd.external && typeof pfd.external === 'object' ? (pfd.external as Record<string, unknown>) : null;
+  const externalLabel = external ? [externalSourceLabel(external.source) ?? 'Muu', typeof external.detail === 'string' ? external.detail : null].filter(Boolean).join(', ') : null;
 
   const completeTarget = completeTargetFor(lead);
   // Lähetetyt kumppaniraportit joissa tämä muutto on (palkkio jo laskutettu)
@@ -129,6 +145,11 @@ export default async function LeadDetailPage({
               {lead.contact.firstName} {lead.contact.lastName}
             </h1>
             <div className="flex flex-wrap items-center gap-x-2 text-sm text-gray-500">
+              {externalLabel && (
+                <span className="rounded-full bg-violet-50 px-2 py-0.5 text-xs font-bold text-violet-800 dark:bg-violet-900/20 dark:text-violet-300">
+                  📥 Muualta: {externalLabel}
+                </span>
+              )}
               {lead.discountCode && (
                 <span className="rounded-full bg-green-50 px-2 py-0.5 text-xs font-bold text-green-800 dark:bg-green-900/20 dark:text-green-300">
                   🏠 {lead.discountPartner ?? lead.discount?.partner ?? 'Kumppani'}-koodi
@@ -461,6 +482,16 @@ export default async function LeadDetailPage({
             <NotesBoard notes={leadNotes} leadId={lead.id} compact />
           </section>
         </div>
+      )}
+
+      {attachments && (
+        <section id="keskustelu" className="scroll-mt-24 rounded-lg border border-gray-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-800">
+          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900 dark:text-white">
+            <MessageSquareText className="h-5 w-5 text-gray-400" />
+            Keskustelun kuvat
+          </h2>
+          <LeadAttachmentsCard leadId={lead.id} attachments={attachments} />
+        </section>
       )}
 
       <EmailSummarySection

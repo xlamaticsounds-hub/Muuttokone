@@ -1,3 +1,5 @@
+import Link from 'next/link';
+import { Plus } from 'lucide-react';
 import { prisma } from '@/server/db';
 import { Lead, Contact, LeadStatus } from '@prisma/client';
 import KeikatTable from './KeikatTable';
@@ -80,7 +82,14 @@ export default async function KeikatPage({
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Keikat</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Tulevat muutot lähimmästä päivästä alkaen.</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/hallinta/liidit/uusi"
+            className="flex h-9 items-center gap-1.5 rounded-xl bg-blue-600 px-3 text-sm font-bold text-white shadow-sm hover:bg-blue-700"
+          >
+            <Plus className="h-4 w-4" />
+            Keikka muualta
+          </Link>
           <span className={`${chip} border-blue-100 bg-blue-50 text-blue-700 dark:border-blue-900/30 dark:bg-blue-900/20 dark:text-blue-400`}>
             {upcomingTotal} tulevaa
           </span>

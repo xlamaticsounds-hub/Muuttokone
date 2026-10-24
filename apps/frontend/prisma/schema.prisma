@@ -447,3 +447,19 @@ model Note {
   @@index([leadId])
   @@index([createdAt])
 }
+
+// Keikan kuvaliitteet, esim. kuvakaappaukset asiakkaan kanssa käydystä keskustelusta (WhatsApp,
+// Messenger, Muuttomaailma). Tallennetaan kantaan eikä julkiseen tallennustilaan, koska kuvissa on
+// asiakkaan henkilötietoja: niitä näytetään vain kirjautuneille (/api/hallinta/liitteet/[id]).
+model LeadAttachment {
+  id        String   @id @default(cuid())
+  leadId    String
+  name      String
+  mimeType  String // image/jpeg | image/png | image/webp (tunnistettu tiedoston sisällöstä)
+  size      Int
+  data      Bytes
+  createdBy String? // kirjautuneen ylläpitäjän sähköposti
+  createdAt DateTime @default(now())
+
+  @@index([leadId])
+}
