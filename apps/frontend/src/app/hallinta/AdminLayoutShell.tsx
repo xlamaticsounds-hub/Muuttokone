@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import GlobalSearch from "./GlobalSearch";
-import { BookUser, ChartLine, DollarSign, Gauge, Mail, Settings, Zap, User, LogOut, Search, X, Send, FileText, ImageIcon, Truck, Users, Receipt, History, FileSpreadsheet, Timer, StickyNote } from 'lucide-react';
+import { BookUser, ChartLine, DollarSign, Gauge, Mail, Settings, Zap, User, LogOut, Search, X, Send, FileText, ImageIcon, Truck, Users, Receipt, History, FileSpreadsheet, Timer, StickyNote, TrendingUp } from 'lucide-react';
 
 interface AdminLayoutShellProps {
   children: React.ReactNode;
@@ -24,6 +24,7 @@ export default function AdminLayoutShell({ children, userEmail, runningTimers = 
     { name: "Hallintapaneeli", href: "/hallinta/dashboard" },
     { name: "Liidit", href: "/hallinta/liidit" },
     { name: "Keikat", href: "/hallinta/keikat" },
+    { name: "Ennuste", href: "/hallinta/ennuste" },
     { name: "Työajat", href: "/hallinta/tyoajat" },
     { name: "Asiakkaat", href: "/hallinta/asiakkaat" },
     { name: "Pipeline", href: "/hallinta/diilit" },
@@ -151,6 +152,7 @@ export default function AdminLayoutShell({ children, userEmail, runningTimers = 
                     {link.name === "Hallintapaneeli" && <Gauge color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Liidit" && <BookUser color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Keikat" && <Truck color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
+                    {link.name === "Ennuste" && <TrendingUp color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Työajat" && (
                       <span className="relative">
                         <Timer color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />
