@@ -5,7 +5,9 @@ import { loadBookedJobs } from '@/server/forecast-data';
 import { toHelsinkiDateInput } from '@/lib/helsinki-time';
 import {
   FORECAST_SORTS,
+  NEXT_DAYS,
   formatJobDay,
+  formatShortDate,
   isForecastSort,
   sortUpcoming,
   summarizeBookedJobs,
@@ -29,6 +31,7 @@ export const dynamic = 'force-dynamic';
 
 const card = 'rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800';
 const pill = 'inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset';
+const highlight = 'border-blue-200 bg-blue-50 dark:border-blue-900/40 dark:bg-blue-900/20';
 
 const jobCount = (n: number) => `${n} ${n === 1 ? 'keikka' : 'keikkaa'}`;
 const missingNote = (missing: number) => `${missing} keikalta puuttuu hinta, summa on vähintään tämä`;
@@ -109,14 +112,24 @@ export default async function EnnustePage({ searchParams }: { searchParams: Prom
       {!dbUnavailable && (
         <>
           <div className="space-y-2">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-              <div className={`${card} col-span-2 border-blue-200 bg-blue-50 sm:col-span-1 dark:border-blue-900/40 dark:bg-blue-900/20`}>
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <div className={`${card} ${highlight}`}>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
                   Vahvistetut keikat{origin && <span className="font-semibold"> · {LEAD_ORIGIN_LABELS[origin]}</span>}
                 </p>
-                <p className="text-3xl font-bold leading-tight text-gray-900 dark:text-white">{formatEuros(view.total.sum)}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-300">{jobCount(view.total.count)}</p>
+                <p className="text-2xl font-bold leading-tight text-gray-900 sm:text-3xl dark:text-white">{formatEuros(view.total.sum)}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{jobCount(view.total.count)} · kaikki tulevat</p>
                 {view.total.missing > 0 && <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">{missingNote(view.total.missing)}</p>}
+              </div>
+              <div className={`${card} ${highlight}`}>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  Seuraavat {NEXT_DAYS} päivää{origin && <span className="font-semibold"> · {LEAD_ORIGIN_LABELS[origin]}</span>}
+                </p>
+                <p className="text-2xl font-bold leading-tight text-gray-900 sm:text-3xl dark:text-white">{formatEuros(view.nextDays.sum)}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  {jobCount(view.nextDays.count)} · {formatShortDate(new Date(`${todayKey}T00:00:00Z`))}–{formatShortDate(new Date(`${view.nextDays.endKey}T00:00:00Z`))}
+                </p>
+                {view.nextDays.missing > 0 && <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">{missingNote(view.nextDays.missing)}</p>}
               </div>
               {LEAD_ORIGINS.map((o) => {
                 const total = all.byOrigin[o];

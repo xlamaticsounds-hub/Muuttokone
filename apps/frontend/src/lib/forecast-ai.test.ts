@@ -24,6 +24,7 @@ describe('buildForecastAiPrompt', () => {
   it('sisältää summat, lähteet, viikot ja sääntöjen havainnot', () => {
     expect(prompt).toContain('Tulevat vahvistetut keikat: 3 kpl');
     expect(prompt).toContain('(1 keikalta puuttuu hinta)');
+    expect(prompt).toContain('Seuraavat 30 päivää (2026-10-28–2026-11-26): 2 kpl');
     expect(prompt).toContain('Muuttomaailma 1 kpl');
     expect(prompt).toContain('vk 45 (alkaa 2026-11-02): 1 kpl');
     expect(prompt).toContain('- 2026-11-12 to, Oma sivu, hinta puuttuu');

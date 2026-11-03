@@ -33,10 +33,15 @@ export type ForecastTotal = { count: number; sum: number; missing: number };
 export type ForecastOriginTotal = ForecastTotal & { share: number };
 export type ForecastMonth = ForecastTotal & { key: string; label: string; byOrigin: Record<LeadOrigin, number> };
 
+/** "Seuraavat 30 päivää": tämä päivä ja 29 seuraavaa. */
+export const NEXT_DAYS = 30;
+
 export type Forecast = {
   /** Tulevat keikat lähimmästä päivästä alkaen. */
   upcoming: DatedJob[];
   total: ForecastTotal;
+  /** Keikat tänään–`endKey` (NEXT_DAYS päivää, molemmat päivät mukaan lukien). */
+  nextDays: ForecastTotal & { endKey: string };
   byOrigin: Record<LeadOrigin, ForecastOriginTotal>;
   months: ForecastMonth[];
   /** Muuttopäivä on mennyt, mutta keikkaa ei ole merkitty tehdyksi — ei mukana summassa. */
@@ -46,6 +51,11 @@ export type Forecast = {
 };
 
 export const dayKey = (date: Date) => date.toISOString().slice(0, 10);
+
+const addDays = (key: string, days: number) => dayKey(new Date(Date.parse(`${key}T00:00:00Z`) + days * 86_400_000));
+
+/** "26.11." (UTC-päivä) */
+export const formatShortDate = (date: Date) => `${date.getUTCDate()}.${date.getUTCMonth() + 1}.`;
 
 /** "ti 3.11." (requestedDate on UTC-keskiyö, joten päivä luetaan UTC:nä) */
 export function formatJobDay(date: Date): string {
@@ -78,6 +88,8 @@ export function summarizeBookedJobs(jobs: BookedJob[], todayKey: string): Foreca
   const dated = booked.filter((job): job is DatedJob => job.requestedDate !== null);
   const upcoming = dated.filter((job) => dayKey(job.requestedDate) >= todayKey).sort(byDate);
   const total = totalOf(upcoming);
+  const endKey = addDays(todayKey, NEXT_DAYS - 1);
+  const nextDays = { ...totalOf(upcoming.filter((job) => dayKey(job.requestedDate) <= endKey)), endKey };
 
   const byOrigin = Object.fromEntries(
     LEAD_ORIGINS.map((origin) => {
@@ -95,6 +107,7 @@ export function summarizeBookedJobs(jobs: BookedJob[], todayKey: string): Foreca
   return {
     upcoming,
     total,
+    nextDays,
     byOrigin,
     months,
     pastCount: dated.length - upcoming.length,
