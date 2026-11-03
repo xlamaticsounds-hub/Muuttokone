@@ -1,5 +1,5 @@
 import { MAX_JOBS_PER_DAY, overloadedDays } from '@/lib/calendar-load';
-import { dayKey, formatJobDay, type DatedJob, type Forecast } from '@/lib/forecast';
+import { dayKey, formatJobDay, formatShortDate, type DatedJob, type Forecast } from '@/lib/forecast';
 
 // Ennuste-sivun vinkit: säännöt nostavat esiin asiat, jotka kannattaa hoitaa (alustavat kalenterimerkinnät,
 // puuttuvat hinnat, ruuhkapäivät, tyhjät viikot, kanavien tasapaino, käsittelemättömät keikat). Puhtaita
@@ -16,7 +16,6 @@ const MIN_JOBS_FOR_SHARE = 3;
 const DAY_MS = 86_400_000;
 
 const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
-const shortDate = (date: Date) => `${date.getUTCDate()}.${date.getUTCMonth() + 1}.`;
 const listFi = (items: string[]) => (items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} ja ${items[items.length - 1]}`);
 
 const jobLinks = (jobs: DatedJob[]): TipLink[] =>
@@ -100,7 +99,7 @@ export function forecastTips(forecast: Forecast, todayKey: string): ForecastTip[
       key: 'empty-weeks',
       tone: 'info',
       title: emptyWeeks.length === 1 ? `Viikolla ${numbers[0]} ei ole vielä keikkoja` : `Viikoilla ${listFi(numbers)} ei ole vielä keikkoja`,
-      detail: `${emptyWeeks.map((week) => `vk ${week.week} (${shortDate(week.start)}–${shortDate(week.end)})`).join(', ')}. Näille viikoille mahtuu vielä töitä — vastaa Muuttomaailman pyyntöihin näille päiville.`,
+      detail: `${emptyWeeks.map((week) => `vk ${week.week} (${formatShortDate(week.start)}–${formatShortDate(week.end)})`).join(', ')}. Näille viikoille mahtuu vielä töitä — vastaa Muuttomaailman pyyntöihin näille päiville.`,
       links: [],
     });
   }

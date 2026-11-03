@@ -40,6 +40,25 @@ describe('summarizeBookedJobs', () => {
     expect(forecast.byOrigin.oma).toEqual({ count: 1, sum: 200, missing: 0, share: 0.2 });
   });
 
+  it('seuraavat 30 päivää: tänään mukaan lukien, 30. päivä viimeinen', () => {
+    const forecast = summarizeBookedJobs(
+      [
+        job('today', 'WON', TODAY, 100),
+        job('last', 'SCHEDULED', '2026-11-26', 200), // 28.10. + 29 pv
+        job('after', 'WON', '2026-11-27', 400),
+        job('noprice', 'WON', '2026-11-01', null),
+        job('past', 'WON', '2026-10-27', 800),
+      ],
+      TODAY,
+    );
+    expect(forecast.nextDays).toEqual({ count: 3, sum: 300, missing: 1, endKey: '2026-11-26' });
+    expect(forecast.total.sum).toBe(700);
+  });
+
+  it('30 päivän ikkuna ylittää vuodenvaihteen', () => {
+    expect(summarizeBookedJobs([], '2026-12-20').nextDays.endKey).toBe('2027-01-18');
+  });
+
   it('osuus on nolla, kun summaa ei ole', () => {
     const forecast = summarizeBookedJobs([job('a', 'WON', '2026-11-03', null, 'muuttomaailma')], TODAY);
     expect(forecast.byOrigin.muuttomaailma.share).toBe(0);

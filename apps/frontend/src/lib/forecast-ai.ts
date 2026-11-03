@@ -1,5 +1,5 @@
 import { MAX_JOBS_PER_DAY } from '@/lib/calendar-load';
-import { dayKey, formatJobDay, type Forecast } from '@/lib/forecast';
+import { NEXT_DAYS, dayKey, formatJobDay, type Forecast } from '@/lib/forecast';
 import type { ForecastTip } from '@/lib/forecast-tips';
 import { upcomingWeeks } from '@/lib/forecast-tips';
 import { LEAD_ORIGINS, LEAD_ORIGIN_LABELS } from '@/lib/lead-origin';
@@ -29,13 +29,14 @@ export type ForecastAiTip = { title: string; detail: string };
 export type ForecastAiResult = { generatedAt: string; fingerprint: string; summary: string; tips: ForecastAiTip[] };
 
 export function buildForecastAiPrompt(forecast: Forecast, tips: ForecastTip[], todayKey: string): string {
-  const { total, byOrigin, months, upcoming } = forecast;
+  const { total, nextDays, byOrigin, months, upcoming } = forecast;
   const lines: string[] = [];
 
   lines.push(`Tänään: ${formatJobDay(new Date(`${todayKey}T00:00:00Z`))} ${todayKey}`);
   lines.push(
     `Tulevat vahvistetut keikat: ${total.count} kpl, yhteensä ${formatEuros(total.sum)}${total.missing > 0 ? ` (${total.missing} keikalta puuttuu hinta)` : ''}`,
   );
+  lines.push(`Seuraavat ${NEXT_DAYS} päivää (${todayKey}–${nextDays.endKey}): ${nextDays.count} kpl, ${formatEuros(nextDays.sum)}`);
   lines.push(
     `Lähteittäin: ${LEAD_ORIGINS.map((origin) => `${LEAD_ORIGIN_LABELS[origin]} ${byOrigin[origin].count} kpl, ${formatEuros(byOrigin[origin].sum)} (${Math.round(byOrigin[origin].share * 100)} %)`).join('; ')}`,
   );
