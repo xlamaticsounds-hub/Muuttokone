@@ -22,6 +22,10 @@ import LeadCompletionCard from './LeadCompletionCard';
 import LeadWorkTimeCard from './LeadWorkTimeCard';
 import LeadAttachmentsCard, { type AttachmentDto } from './LeadAttachmentsCard';
 import CalendarStatus from './CalendarStatus';
+import PriceFloorCard from './PriceFloorCard';
+import { PRICE_FLOOR_COSTS_KEY, estimateFloorJob, parsePriceFloorCosts } from '@/lib/price-floor';
+import { getAppState } from '@/server/app-state';
+import { leadOrigin } from '@/lib/lead-origin';
 import { calendarEventStart, formatCalendarStart, leadPreferredTime, parsePreferredTime } from '@/lib/calendar-time';
 import { externalSourceLabel } from '@/lib/external-lead';
 import NotesBoard from '../../muistiinpanot/NotesBoard';
@@ -71,6 +75,16 @@ export default async function LeadDetailPage({
   const baseTrip = leadBaseTripAdvice(lead);
   const calculatorPrice = getStoredPrice(pfd).exact;
   const searchKeys = leadMailSearchKeys(lead);
+  // Hintalattia: ei vuokrauksille eikä työavulle (niillä on omat kiinteät hintansa)
+  const payloadServiceType =
+    pfd.payload && typeof pfd.payload === 'object' ? (pfd.payload as Record<string, unknown>).service_type : undefined;
+  const serviceKind = typeof pfd.serviceType === 'string' ? pfd.serviceType : payloadServiceType;
+  const showPriceFloor = serviceKind !== 'vuokraus' && serviceKind !== 'tyoapu';
+  const externalSource =
+    pfd.external && typeof pfd.external === 'object' ? (pfd.external as Record<string, unknown>).source : undefined;
+  const isMuuttomaailma = leadOrigin(lead) === 'muuttomaailma' && (externalSource === undefined || externalSource === 'muuttomaailma');
+  const priceFloorCosts = showPriceFloor ? parsePriceFloorCosts(await getAppState<unknown>(PRICE_FLOOR_COSTS_KEY)) : null;
+  const priceFloorJob = showPriceFloor ? estimateFloorJob(lead, isMuuttomaailma) : null;
   const preferredTime = leadPreferredTime(pfd);
 
   // Kohteen kerros/hissi ja asunnon kokoluokka elävät vain formData-JSONissa (muuttolaskurin
@@ -197,6 +211,10 @@ export default async function LeadDetailPage({
             : null
         }
       />
+
+      {priceFloorJob && (
+        <PriceFloorCard costs={priceFloorCosts} initialJob={priceFloorJob} price={defaultFinalPrice(lead)} />
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left Column: Contact & Move Info */}

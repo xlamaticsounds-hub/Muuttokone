@@ -12,6 +12,21 @@ export type LeadActionResult = { success: true } | { success: false; message: st
 
 const MAX_FINAL_PRICE = 100_000;
 
+const MISSING_TIME_ENTRY_MESSAGE =
+  'Kirjaa ensin keikan työaika (liidin Työaika-kortti tai Työajat-sivu). Keikan voi merkitä tehdyksi vasta, kun työaika on leimattu.';
+
+function isRentalLead(formData: unknown): boolean {
+  try {
+    const data = typeof formData === 'string' ? JSON.parse(formData) : formData;
+    if (!data || typeof data !== 'object') return false;
+    const record = data as Record<string, unknown>;
+    const payload = record.payload && typeof record.payload === 'object' ? (record.payload as Record<string, unknown>) : null;
+    return record.serviceType === 'vuokraus' || payload?.service_type === 'vuokraus';
+  } catch {
+    return false;
+  }
+}
+
 /**
  * "Merkitse toteutuneeksi": tila COMPLETED, toteutumishetki ja lopullinen laskutettu hinta
  * (€ sis. alv). Kumppanin välityspalkkio maksetaan vain näistä, ja kuukausiraportti valitsee
@@ -33,11 +48,17 @@ export async function markLeadCompleted(leadId: string, finalPriceInput: string 
   try {
     const lead = await prisma.lead.findUnique({
       where: { id: leadId },
-      select: { id: true, status: true, completedAt: true, finalPrice: true, calendarEventId: true, partnerReportedAt: true },
+      select: { id: true, status: true, completedAt: true, finalPrice: true, calendarEventId: true, partnerReportedAt: true, formData: true },
     });
     if (!lead) return { success: false, message: 'Liidiä ei löytynyt.' };
 
     const alreadyCompleted = isCompletedStatus(lead.status) && lead.completedAt != null;
+    // Työaikaleimat ovat pakollisia (tiimipalaverin päätös 4.11.2026): keikkaa ei merkitä tehdyksi
+    // ilman päättynyttä työaikakirjausta. Hinnan korjaus jo tehdylle keikalle ja vuokraukset sallitaan.
+    if (!alreadyCompleted && !isRentalLead(lead.formData)) {
+      const stamps = await prisma.timeEntry.count({ where: { leadId, endedAt: { not: null } } });
+      if (stamps === 0) return { success: false, message: MISSING_TIME_ENTRY_MESSAGE };
+    }
     // Kumottu ja uudelleen toteutuneeksi merkitty: jos muutto on jo lähetetyssä raportissa
     // (palkkio laskutettu), se pysyy siinä kuussa — muuten se päätyisi myös myöhemmän kuun
     // raporttiin ja palkkio maksettaisiin kahdesti.
