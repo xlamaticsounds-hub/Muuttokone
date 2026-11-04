@@ -152,15 +152,13 @@ describe('computePartnerDiscount — laskentasäännöt oikealla hinnoittelulla'
   });
 
   it('saa viedä 4h+ -muuton alle 899 € vähimmäishinnan', () => {
-    // Pieni 4h+ -muutto hiljaisena päivänä: päiväalennus painaisi alle 899 €, joten tiukka minimi laukeaa
+    // ALV-korotuksen jälkeen (tuntihinnat +25,5 %, vähimmäishinnat ennallaan) pieninkin 4h+ -muutto ylittää
+    // 899 € myös hiljaisena päivänä, joten kumppanialennus testataan suoraan vähimmäishinnasta.
     const price = calculateMovingPrice(
       move({ apartmentSize: '4h+', furnitureItems: { sofa_3: 1 }, distanceKm: 5, date: TUESDAY_MID_MONTH }),
     );
-    expect(price.normalPriceTotal * 0.85).toBeLessThan(899);
-    expect(price.total).toBe(899);
-
-    const discount = computePartnerDiscount(price, 10);
-    expect(discount.priceAfterDiscount).toBe(809);
+    expect(price.total).toBeGreaterThan(899);
+    expect(computePartnerDiscount({ total: 899, addOnsTotal: 0 }, 10).priceAfterDiscount).toBe(809);
   });
 
   it('ei koske muuttosiivousta eikä laatikkovuokraa', () => {
@@ -172,25 +170,29 @@ describe('computePartnerDiscount — laskentasäännöt oikealla hinnoittelulla'
         boxRentalDays: BOX_RENTAL.defaultDays,
       }),
     );
-    expect(price.addOnsTotal).toBeCloseTo(169, 6); // 2h-siivous, ei päiväalennusta
+    expect(price.addOnsTotal).toBeCloseTo(219, 6); // 2h-siivous, kiinteä hinta
     expect(price.boxRental?.total).toBeGreaterThan(0);
 
-    const moveOnly = price.total - 169 - price.boxRental!.total;
+    const moveOnly = price.total - 219 - price.boxRental!.total;
     const discount = computePartnerDiscount(price, 10);
     expect(discount.discountableAmount).toBeCloseTo(moveOnly, 6);
     expect(discount.discountAmount).toBe(Math.round(moveOnly * 0.1));
     expect(discount.priceBeforeDiscount).toBe(Math.round(price.total));
   });
 
-  it('siivouksen osuus seuraa päiväalennusta', () => {
+  it('siivous on kiinteähintainen: ei päiväalennusta', () => {
     const price = calculateMovingPrice(move({ needsCleaning: true, date: TUESDAY_MID_MONTH }));
-    expect(price.addOnsTotal).toBeCloseTo(169 * 0.85, 6);
+    const withoutCleaning = calculateMovingPrice(move({ date: TUESDAY_MID_MONTH }));
+    expect(price.addOnsTotal).toBeCloseTo(219, 6);
+    expect(price.cleaning).toBe(219);
+    expect(price.total).toBeCloseTo(withoutCleaning.total + 219, 1);
+    expect(price.dateDiscountAmount).toBeCloseTo(withoutCleaning.dateDiscountAmount, 6);
   });
 
   it('ei koske kierrätyksen jätemaksuja', () => {
     const price = calculateMovingPrice(move({ serviceType: 'recycling', selectedWasteTypes: ['sekajate'] }));
-    expect(price.addOnsTotal).toBeCloseTo(50, 6);
-    expect(computePartnerDiscount(price, 10).discountAmount).toBe(Math.round((price.total - 50) * 0.1));
+    expect(price.addOnsTotal).toBeCloseTo(63, 6); // sekajäte 50 € + ALV
+    expect(computePartnerDiscount(price, 10).discountAmount).toBe(Math.round((price.total - 63) * 0.1));
   });
 
   it('kuljetuksessa ei ole lisäpalveluita', () => {

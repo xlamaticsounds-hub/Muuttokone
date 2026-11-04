@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => {
     codes: new Map<string, Record<string, any>>(),
     logs: [] as Record<string, any>[],
     reports: [] as Record<string, any>[],
+    finishedTimeEntries: 1,
   };
   const prisma = {
     lead: {
@@ -33,6 +34,7 @@ const mocks = vi.hoisted(() => {
       }),
     },
     log: { create: vi.fn(async ({ data }: any) => (state.logs.push(data), data)) },
+    timeEntry: { count: vi.fn(async () => state.finishedTimeEntries) },
     partnerReport: {
       findMany: vi.fn(async ({ where }: any) => state.reports.filter((r) => !where?.status || r.status === where.status)),
     },
@@ -74,6 +76,7 @@ beforeEach(() => {
   mocks.state.codes.clear();
   mocks.state.logs = [];
   mocks.state.reports = [];
+  mocks.state.finishedTimeEntries = 1;
   mocks.syncCalendarWithLeadStatus.mockClear();
   mocks.recreateConfirmedLeadEvent.mockClear();
   mocks.updateCalendarEventTime.mockClear();
@@ -113,6 +116,23 @@ describe('markLeadCompleted', () => {
     const result = await markLeadCompleted('lead_1', input);
     expect(result.success).toBe(false);
     expect(mocks.state.leads.get('lead_1')!.status).toBe('WON');
+  });
+
+  it('vaatii leimatun työajan ennen kuin keikan voi merkitä tehdyksi', async () => {
+    mocks.state.finishedTimeEntries = 0;
+    const result = await markLeadCompleted('lead_1', '648');
+    expect(result.success).toBe(false);
+    expect(result.success === false && result.message).toMatch(/työaika/);
+    expect(mocks.state.leads.get('lead_1')!.status).toBe('WON');
+    expect(mocks.prisma.timeEntry.count).toHaveBeenCalledWith({ where: { leadId: 'lead_1', endedAt: { not: null } } });
+  });
+
+  it('hinnan korjaus tehdylle keikalle ja vuokraus eivät vaadi leimaa', async () => {
+    mocks.state.finishedTimeEntries = 0;
+    mocks.state.leads.set('lead_1', { id: 'lead_1', status: 'COMPLETED', completedAt: new Date('2026-10-05T10:00:00Z'), finalPrice: 600 });
+    expect(await markLeadCompleted('lead_1', 650)).toEqual({ success: true });
+    mocks.state.leads.set('lead_2', { id: 'lead_2', status: 'WON', completedAt: null, finalPrice: null, formData: { serviceType: 'vuokraus' } });
+    expect(await markLeadCompleted('lead_2', 120)).toEqual({ success: true });
   });
 
   it('vaatii kirjautumisen', async () => {

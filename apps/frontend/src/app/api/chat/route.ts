@@ -2,6 +2,7 @@ import { convertToModelMessages, streamText, UIMessage } from 'ai';
 import { openai } from '@ai-sdk/openai';
 import { rateLimit, logAction } from '@/server/rate-limit';
 import { headers } from 'next/headers';
+import { INCLUDED_DISTANCE_KM, PRICING_CONSTANTS } from '@/features/calculator/pricing';
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -30,7 +31,7 @@ export async function POST(req: Request) {
       - Pakkauspalvelu
       - Muuttosiivous
 
-      Hinnoittelumme perustuu asiakkaan ilmoittamaan tavaralistaan, ei pelkkään asunnon kokoon — kaksi samankokoista asuntoa voivat saada eri hinnan tavaramäärän, kerrosten, hissien ja kantomatkan mukaan. Ensimmäiset 5 km sisältyvät hintaan ja tämän jälkeen kilometrit veloitetaan 0,79 €/km.
+      Hinnoittelumme perustuu asiakkaan ilmoittamaan tavaralistaan, ei pelkkään asunnon kokoon — kaksi samankokoista asuntoa voivat saada eri hinnan tavaramäärän, kerrosten, hissien ja kantomatkan mukaan. Ensimmäiset ${INCLUDED_DISTANCE_KM} km sisältyvät hintaan ja tämän jälkeen kilometrit veloitetaan ${PRICING_CONSTANTS.ratePerKm.toFixed(2).replace('.', ',')} €/km. Hinnat sisältävät ALV:n 25,5 %.
       Muuttopäivä voi myös tuoda alennusta: hiljaisemmat päivät (esim. tiistai ja keskiviikko) ovat edullisempia kuin suositut päivät (perjantai-sunnuntai). Emme koskaan lisää viikonloppulisää tai korota hintaa päivän perusteella, vain alennamme hiljaisempina päivinä.
       Meillä on käytössä Suomen tarkin muuttolaskuri, jolla saa tarkan hinta-arvion lisäämällä muutettavat tavarat listaan.
 

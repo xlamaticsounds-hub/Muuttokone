@@ -9,7 +9,7 @@ import { postLeadToDiscord } from '@/server/discord-bot';
 import { sendDiscordNotification } from '@/server/discord-webhook';
 import { createTentativeLeadEvent, findOverlappingEvents } from '@/server/google-calendar';
 import { BOX_RENTAL, calculateBoxRental, describeBoxRental } from '@/features/calculator/boxRental';
-import { MAX_EXTRA_DESTINATIONS } from '@/features/calculator/pricing';
+import { MAX_EXTRA_DESTINATIONS, applianceLines, describeApplianceLine } from '@/features/calculator/pricing';
 import { discountLabel } from '@/features/calculator/discount';
 import { lookupDiscountCode } from '@/server/discount-codes';
 import { recomputeLeadPrice } from '@/server/lead-format';
@@ -586,7 +586,17 @@ async function submitBooking(data: any) {
     : discountLookup && !discountLookup.check.ok && discountLookup.code
       ? `⚠️ Alennuskoodi "${discountLookup.code.slice(0, 64)}" ei kelvannut: ${discountLookup.check.message}`
       : null;
-  const extraNotes = [discountLine, rejectedCodeLine, boxRentalLine, extraDestinationsLine]
+  // Laitepalvelut (pesukone, TV) muistiinpanoihin ja Discordiin, jotta työkalut osataan ottaa mukaan.
+  const appliances = data.serviceType === 'moving' ? applianceLines(data.applianceServices) : [];
+  const appliancesLine = appliances.length > 0 ? `🔧 Lisäpalvelut: ${appliances.map(describeApplianceLine).join('; ')}` : null;
+
+  // Tukikohtalisä on jo hinnassa; "hinta tarjouksella" -keikoissa asiakas ei nähnyt hintaa laskurissa.
+  const baseTripLine = priced?.baseTripSurcharge ? `🚚 Tukikohtalisä ${priced.baseTripSurcharge} € sisältyy hinta-arvioon` : null;
+  const quoteOnlyLine = priced?.quoteOnly
+    ? `⚠️ Hinta tarjouksella (${priced.quoteOnly === 'far_from_base' ? 'kaukana tukikohdasta' : 'pitkä muutto'}): asiakas ei nähnyt hintaa, laske ja lähetä tarjous`
+    : null;
+
+  const extraNotes = [quoteOnlyLine, discountLine, rejectedCodeLine, boxRentalLine, appliancesLine, baseTripLine, extraDestinationsLine]
     .filter((line): line is string => Boolean(line))
     .join('\n');
 
@@ -602,6 +612,9 @@ async function submitBooking(data: any) {
       formData: JSON.stringify({
         ...data,
         ...(priced && { price: priced.price, priceRangeLow: priced.priceRangeLow, priceRangeHigh: priced.priceRangeHigh }),
+        // Aina palvelimen laskemana (undefined pudottaa selaimen lähettämän arvon pois JSONista).
+        baseTripSurcharge: priced?.baseTripSurcharge ?? undefined,
+        quoteOnly: priced?.quoteOnly ?? undefined,
         discountCode: discountRecord?.code,
       }),
       requestedDate,

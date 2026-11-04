@@ -1,5 +1,21 @@
 import { z } from 'zod';
 import { BOX_RENTAL, calculateBoxRental, type BoxRentalBreakdown } from './boxRental';
+import { BASE_TRIP_QUOTE_THRESHOLD, baseTripCharge } from '@/lib/base-trip';
+
+export const VAT_RATE = 0.255; // 25.5% VAT
+
+/**
+ * ALV-velvollisuus alkoi 28.10.2026. Laskuri on aina näyttänyt hinnat "ALV sisältyy hintaan", mutta ALV oli
+ * siihen asti 0 %, joten koko hinta jäi yritykselle. Kaikki laskurin €-hinnat nostettiin siksi 25,5 %, jotta
+ * hinta ilman ALV:ia (yrityksen tuotto ja kate) pysyy ennallaan — paitsi vähimmäishinnat, jotka pidettiin ennallaan
+ * omistajan päätöksellä (ks. FULL_SERVICE_MIN_PRICE). Vakioissa näkyy vanha ALV 0 % -taso, ja tämä
+ * lisää siihen ALV:n: pyöristys kokonaisiin euroihin, km-hinta senttiin. Funktio (ei const), koska vakioita
+ * määritellään jo ennen tätä kohtaa tiedostossa.
+ */
+export function withVat(beforeVat: number, decimals = 0): number {
+  const factor = 10 ** decimals;
+  return Math.round(beforeVat * (1 + VAT_RATE) * factor) / factor;
+}
 
 // v2.1-kalibrointi: minuutit kuvaavat tavaran OSUUTTA koko muuton kestoon, ei sen
 // yksittäistä siirtoaikaa. Ammattimuuttaja kantaa useita tavaroita per kierros, käyttää
@@ -192,15 +208,47 @@ export type RecyclingWasteType = {
   disposalCostPerLoad: number; // € per erä. 0 = ilmainen kierrätys.
 };
 
-// Jätetyyppikohtaiset kierrätysmaksut (HSY/Ämmässuo 2024 kaupalliset hinnat, per pieni erä).
+// Jätetyyppikohtaiset kierrätysmaksut (HSY/Ämmässuo 2024 kaupalliset hinnat, per pieni erä), sis. ALV (ks. withVat).
 export const RECYCLING_WASTE_TYPES: RecyclingWasteType[] = [
-  { id: 'suurjate',      label: 'Suurjäte',          icon: '🛋️', description: 'Huonekalut, matot, patjat',              disposalCostPerLoad: 25 },
-  { id: 'puujate',       label: 'Puujäte',            icon: '🪵', description: 'Puu, laudat, puiset huonekalut',         disposalCostPerLoad: 20 },
-  { id: 'sekajate',      label: 'Sekajäte',           icon: '🗑️', description: 'Sekalainen jäte, ei lajiteltavissa',    disposalCostPerLoad: 50 },
+  { id: 'suurjate',      label: 'Suurjäte',          icon: '🛋️', description: 'Huonekalut, matot, patjat',              disposalCostPerLoad: withVat(25) },
+  { id: 'puujate',       label: 'Puujäte',            icon: '🪵', description: 'Puu, laudat, puiset huonekalut',         disposalCostPerLoad: withVat(20) },
+  { id: 'sekajate',      label: 'Sekajäte',           icon: '🗑️', description: 'Sekalainen jäte, ei lajiteltavissa',    disposalCostPerLoad: withVat(50) },
   { id: 'metallit',      label: 'Metallit',           icon: '🔧', description: 'Metalliromut, kodinkoneet (metalli)',    disposalCostPerLoad: 0  },
   { id: 'elektroniikka', label: 'Elektroniikka (SER)', icon: '📺', description: 'TV, kodinelektroniikka — WEEE-velvoite', disposalCostPerLoad: 0  },
-  { id: 'rakennusjate',  label: 'Rakennusjäte',       icon: '🧱', description: 'Remonttijäte, tiili, kipsilevy, betoni', disposalCostPerLoad: 60 },
+  { id: 'rakennusjate',  label: 'Rakennusjäte',       icon: '🧱', description: 'Remonttijäte, tiili, kipsilevy, betoni', disposalCostPerLoad: withVat(60) },
 ];
+
+// Laitteiden irrotus ja asennus muuton yhteydessä (vain Muutto). Kiinteä kappalehinta sis. ALV (omistajan
+// päätös 3.11.2026), kuten laatikkovuokra: ei päivä- eikä kumppanialennusta eikä vähimmäishintoja. Ilman
+// muuttoa tilattava työapu hinnoitellaan omilla hinnoillaan (features/tyoapu/tyoapuData.ts).
+export const APPLIANCE_SERVICES = [
+  {
+    id: 'washing_machine',
+    label: 'Pesukoneen irrotus ja asennus',
+    description: 'Irrotus vanhassa asunnossa ja kytkentä valmiisiin liitäntöihin uudessa',
+    price: 49,
+  },
+  { id: 'tv_small', label: 'TV:n seinäasennus, alle 55"', description: 'Seinätelineen kiinnitys ja television asennus', price: 59 },
+  { id: 'tv_large', label: 'TV:n seinäasennus, 55" tai isompi', description: 'Iso televisio, asennus kahdella asentajalla', price: 99 },
+] as const;
+export const MAX_APPLIANCES_PER_TYPE = 4;
+
+export type ApplianceServiceId = (typeof APPLIANCE_SERVICES)[number]['id'];
+export type ApplianceLine = { id: ApplianceServiceId; label: string; qty: number; unitPrice: number; total: number };
+
+/** Valitut laitepalvelut riveinä: tuntemattomat ja nollat pois, määrä 1–MAX_APPLIANCES_PER_TYPE. */
+export function applianceLines(selected: unknown): ApplianceLine[] {
+  if (!selected || typeof selected !== 'object') return [];
+  const counts = selected as Record<string, unknown>;
+  return APPLIANCE_SERVICES.flatMap((service) => {
+    const qty = Math.min(MAX_APPLIANCES_PER_TYPE, Math.max(0, Math.floor(Number(counts[service.id]) || 0)));
+    return qty > 0 ? [{ id: service.id, label: service.label, qty, unitPrice: service.price, total: qty * service.price }] : [];
+  });
+}
+
+/** "Pesukoneen irrotus ja asennus × 2 (98 €)" */
+export const describeApplianceLine = (line: ApplianceLine) =>
+  `${line.label}${line.qty > 1 ? ` × ${line.qty}` : ''} (${line.total} €)`;
 
 export const CalculatorSchema = z.object({
   // Service type
@@ -249,6 +297,9 @@ export const CalculatorSchema = z.object({
   boxRentalCount: z.number().default(0),
   boxRentalDays: z.number().default(BOX_RENTAL.defaultDays),
 
+  // Laitteiden irrotus/asennus (vain Muutto), esim. { washing_machine: 1, tv_large: 1 } — ks. APPLIANCE_SERVICES
+  applianceServices: z.record(z.string(), z.number()).default({}),
+
   // Timing
   date: z.date().optional(),
   preferredTime: z.string().optional(), // Toivottu kellonaika (esim. "09:00") — ei vaikuta hintaan, vain tiedoksi
@@ -278,9 +329,17 @@ export interface PriceBreakdown {
   priceRangeLow: number;
   priceRangeHigh: number;
   inventoryWarning?: string;
-  // Muuttosiivouksen ja kierrätyksen jätemaksujen osuus totalista päiväalennuksen jälkeen (€).
-  // Kumppanialennus (discount.ts) ei koske näitä eikä laatikkovuokraa, vain itse muuttoa.
+  // Muuttosiivouksen ja kierrätyksen jätemaksujen osuus totalista päiväalennuksen jälkeen (€) sekä
+  // laitepalvelut. Kumppanialennus (discount.ts) ei koske näitä eikä laatikkovuokraa, vain itse muuttoa.
   addOnsTotal: number;
+  // Vain kun laitepalveluita on valittu (Muutto): sisältyvät totaliin ja addOnsTotaliin.
+  appliances?: { lines: ApplianceLine[]; total: number };
+  // Muuttosiivouksen kiinteä hinta (€), kun siivous on valittu. Sisältyy totaliin, extrasCostiin ja addOnsTotaliin.
+  cleaning?: number;
+  // Tukikohtalisä, kun keikka on kaukana tukikohdasta. Sisältyy totaliin ja addOnsTotaliin.
+  baseTrip?: { place: string; emptyKm: number; surcharge: number };
+  // Laskuri ei näytä hintaa asiakkaalle, vaan keikka hinnoitellaan tarjouksella (total lasketaan silti).
+  quoteOnly?: 'far_from_base' | 'long_distance';
   // Vain kun laatikkovuokra on valittu (Muutto): total sisältää vuokran, moveTotal on muuton
   // hinta ilman sitä. Vuokraan ei sovelleta päiväalennusta eikä muuton vähimmäishintoja.
   boxRental?: BoxRentalBreakdown;
@@ -322,7 +381,6 @@ export interface PriceBreakdown {
 }
 
 export const INCLUDED_DISTANCE_KM = 5;
-export const VAT_RATE = 0.255; // 25.5% VAT
 
 // Pisin laskuri hyväksyy automaattisesti laskettuna ajomatkana (Helsinki–Utsjoki on noin 1 200 km).
 // Aiemmin raja oli 500 km, ja sitä pidemmät muutot (esim. Helsinki–Oulu) jäivät huomaamatta
@@ -352,13 +410,17 @@ export function estimateDriveHours(distanceKm: number): number {
   );
 }
 
-const PRICING_CONSTANTS = {
-  ratePerKm: 0.79,
+// €-hinnat sis. ALV: suluissa vanha ALV 0 % -taso (ks. withVat)
+export const PRICING_CONSTANTS = {
+  ratePerKm: withVat(0.79, 2), // €/km
   includedDistanceKm: INCLUDED_DISTANCE_KM,
-  hourlyRateDefault: 129, // €/h
-  hourlyRateComplex: 159, // €/h
-  driverWithVehicleRate: 89, // €/h
-  carryingHelpRate: 89.9, // €/h
+  hourlyRateDefault: withVat(129), // €/h
+  // Vaikea keikka (ei hissiä yli 2. kerroksesta tai 4h+): tiimipalaverin päätös 4.11.2026 180 €/h sis. ALV
+  // (ennen withVat(159) = 200 €/h, joka oli kilpailijoita kalliimpi).
+  hourlyRateComplex: 180, // €/h
+  driverWithVehicleRate: withVat(89), // €/h
+  carryingHelpRate: withVat(89.9), // €/h
+  // Vähimmäishinnat pysyvät ALV 0 % -aikaisina omistajan päätöksellä (ks. FULL_SERVICE_MIN_PRICE)
   driverWithVehicleMinimum: 184, // €
   carryingHelpMinimum: 180, // €
   vatRate: VAT_RATE,
@@ -395,7 +457,14 @@ const MID_MONTH_BONUS_DISCOUNT = 0.05;
 const MID_MONTH_RANGE: [number, number] = [8, 24];
 const DEFAULT_DATE_DISCOUNT: DateDiscountTier = { label: 'Suosittu päivä', emoji: '🔴', discount: 0 };
 
-function getDateDiscount(date: Date | undefined): DateDiscountTier {
+/** Yli tämän pituisille muutoille (km) ei anneta päiväalennusta (tiimipalaverin päätös 4.11.2026). */
+export const LONG_MOVE_NO_DISCOUNT_KM = 100;
+/** Yli tämän pituisille muutoille (km) laskuri ei näytä hintaa: hinta lasketaan tarjouksella. */
+export const LONG_MOVE_QUOTE_KM = 300;
+const LONG_MOVE_DATE_DISCOUNT: DateDiscountTier = { label: 'Pitkä muutto: sama hinta joka päivä', emoji: '🚚', discount: 0 };
+
+function getDateDiscount(date: Date | undefined, distanceKm = 0): DateDiscountTier {
+  if (distanceKm > LONG_MOVE_NO_DISCOUNT_KM) return LONG_MOVE_DATE_DISCOUNT;
   if (!date) return DEFAULT_DATE_DISCOUNT;
   const tier = WEEKDAY_DISCOUNTS[date.getDay()];
   const dayOfMonth = date.getDate();
@@ -483,10 +552,12 @@ const COORDINATION_TIME_HOURS = 0.25;
 // nämä asettuvat niiden alle tai samalle tasolle, ja on vahvistettu kannattavaksi tämän
 // yrityksen todellisella (kevyellä, ei-alv-velvollisella) kulurakenteella.
 // HUOM v2.7: 3h-minimi (599 €) on omistajan päätöksellä tämän kalibroinnin yläpuolella.
-const FULL_SERVICE_MIN_PRICE: Partial<Record<CalculatorData['apartmentSize'], number>> = {
+// Omistajan päätös 3.11.2026: vähimmäishinnat EIVÄT nousseet ALV:n mukana (muut hinnat nousivat, ks. withVat).
+// Hyvin pieni muutto saa yhä maksaa 189/299/599 €. Etusivun "alkaen"-hinnat (PricingPreview.tsx) luetaan tästä.
+export const FULL_SERVICE_MIN_PRICE: Partial<Record<CalculatorData['apartmentSize'], number>> = {
   '1h': 189,
   '2h': 299,
-  // v2.7: 3h-minimi nostettu 500 -> 599 € (etusivun Kolmio+-kortti "alkaen 599 €", ks. PricingPreview.tsx)
+  // v2.7: 3h-minimi nostettu 500 -> 599 € (etusivun Kolmio+-kortti "alkaen", ks. PricingPreview.tsx)
   '3h': 599,
   // v2.6: tavaralistapohjainen hinta jäi 4h+ muutoilla selvästi liian alas (esim. 117 tavaraa,
   // 77 laatikkoa, 5. krs hissillä, 19 km: laskettu 647 € vs. todellinen työ ~6-7 h = 1000-1200 €).
@@ -500,12 +571,14 @@ const FULL_SERVICE_MIN_PRICE: Partial<Record<CalculatorData['apartmentSize'], nu
 // kiinteänä lisänä (kuten FULL_SERVICE_MIN_PRICE) eikä käsittelyajan kautta.
 // HUOM: tätä kenttää ei ennen v2.5:tä luettu ollenkaan hinnoittelussa — asiakas saattoi
 // valita "Muuttosiivous"-lisäpalvelun ilmaiseksi. Office hinnoitellaan kuten 4h+.
-const CLEANING_PRICE: Record<CalculatorData['apartmentSize'], number> = {
-  '1h': 129,
-  '2h': 169,
-  '3h': 219,
-  '4h+': 289,
-  office: 289,
+// Tiimipalaverin päätös 4.11.2026: kiinteät hinnat sis. ALV, ei päivä- eikä kumppanialennusta
+// (lisätään valmiin hinnan päälle, ks. applyCleaning). Toimisto kuten 4h+.
+export const CLEANING_PRICE: Record<CalculatorData['apartmentSize'], number> = {
+  '1h': 159,
+  '2h': 219,
+  '3h': 274,
+  '4h+': 359,
+  office: 359,
 };
 
 // Mukautetun (katalogin ulkopuolisen) tavaran oletuskäsittelyaika — keskikokoisen
@@ -527,7 +600,7 @@ export const MAX_EXTRA_DESTINATIONS = 4;
 
 const EXTRA_STOP_MINUTES = 15; // ylimääräisen välipysähdyksen lastaus/purku-aika
 const DRIVER_COUNT_EFFICIENCY: Record<'1' | '2', number> = { '1': 1.0, '2': 0.65 };
-const SECOND_DRIVER_RATE_ADDON = 30; // €/h, 2. kuljettajan lisähinta (89 + 30 = 119 €/h, ks. yllä)
+const SECOND_DRIVER_RATE_ADDON = withVat(30); // €/h, 2. kuljettajan lisähinta (ALV 0 % -aikana 89 + 30 = 119 €/h, ks. yllä)
 
 function round5(value: number): number {
   return Math.round(value / 5) * 5;
@@ -614,7 +687,7 @@ function calculatePriceWithoutBoxRental(data: CalculatorData): PriceBreakdown {
   const driveTime = estimateDriveHours(distanceKm);
 
   // Muuttopäivän alennus (ei koskaan korotus) — sovelletaan kaikkiin palvelutyyppeihin/paketteihin.
-  const dateDiscount = getDateDiscount(date);
+  const dateDiscount = getDateDiscount(date, distanceKm);
   const applyDateDiscount = (normalPriceTotal: number) => {
     const dateDiscountAmount = normalPriceTotal * dateDiscount.discount;
     return { total: normalPriceTotal - dateDiscountAmount, dateDiscountAmount };
@@ -748,7 +821,7 @@ function calculatePriceWithoutBoxRental(data: CalculatorData): PriceBreakdown {
     let subtotal = distanceCost + laborCost;
 
     // Minimum Charge for transport, korkeampi 2 kuljettajalle
-    const transportMinimum = driverCount === '2' ? 169 : 99; // €
+    const transportMinimum = driverCount === '2' ? 169 : 99; // € (vähimmäishinnat eivät nousseet ALV:n mukana)
     if (subtotal < transportMinimum) {
       subtotal = transportMinimum;
     }
@@ -1167,7 +1240,7 @@ function applyExtraDestinations(base: PriceBreakdown, data: CalculatorData): Pri
 
   const hours = (count * EXTRA_DESTINATION_MINUTES) / 60;
   const normalExtra = Math.round(hours * base.details.laborRate * 100) / 100;
-  const discount = getDateDiscount(data.date).discount;
+  const discount = getDateDiscount(data.date, data.distanceKm).discount;
   const discountAmount = Math.round(normalExtra * discount * 100) / 100;
   const total = Math.round((base.total + normalExtra - discountAmount) * 100) / 100;
   const vat = total - total / (1 + PRICING_CONSTANTS.vatRate);
@@ -1194,7 +1267,8 @@ function applyExtraDestinations(base: PriceBreakdown, data: CalculatorData): Pri
 }
 
 /**
- * Calculates the price based on the provided data, including the optional box rental.
+ * Calculates the price based on the provided data, including the optional box rental and
+ * appliance services (applyAppliances).
  *
  * Laatikkovuokra (vain Muutto) lisätään valmiin muuttohinnan päälle erillisenä kiinteänä
  * tuotehintana: sille ei sovelleta muuttopäivän alennusta eikä muuton vähimmäishintoja, ja
@@ -1202,7 +1276,103 @@ function applyExtraDestinations(base: PriceBreakdown, data: CalculatorData): Pri
  * Kun vuokraa ei ole valittu, tulos on täsmälleen sama kuin calculatePriceWithoutBoxRental().
  */
 export function calculateMovingPrice(data: CalculatorData): PriceBreakdown {
-  const base = applyExtraDestinations(calculatePriceWithoutBoxRental(data), data);
+  // Siivous hinnoitellaan kiinteänä lisänä valmiin hinnan päälle (applyCleaning), ei muuton sisällä.
+  const move = calculatePriceWithoutBoxRental({ ...data, needsCleaning: false });
+  const withExtras = applyBaseTrip(applyCleaning(applyExtraDestinations(move, data), data), data);
+  return applyQuoteOnly(applyAppliances(applyBoxRental(withExtras, data), data), data);
+}
+
+const round2 = (value: number) => Math.round(value * 100) / 100;
+const ceil5 = (value: number) => Math.ceil(value / 5) * 5;
+
+/** Lisää kiinteän summan valmiin hinnan päälle: ei päiväalennusta, ei vähimmäishintoja, ei kumppanialennusta. */
+function addFixedAddOn(base: PriceBreakdown, amount: number): PriceBreakdown {
+  const total = round2(base.total + amount);
+  const vat = total - total / (1 + PRICING_CONSTANTS.vatRate);
+  return {
+    ...base,
+    total,
+    vat,
+    subtotal: total - vat,
+    normalPriceTotal: base.normalPriceTotal + amount,
+    priceRangeLow: ceil5(base.priceRangeLow + amount),
+    priceRangeHigh: ceil5(base.priceRangeHigh + amount),
+    addOnsTotal: base.addOnsTotal + amount,
+  };
+}
+
+/** Muuttosiivous (vain Muutto): kiinteä hinta asunnon koon mukaan (CLEANING_PRICE). */
+function applyCleaning(base: PriceBreakdown, data: CalculatorData): PriceBreakdown {
+  if (data.serviceType !== 'moving' || !data.needsCleaning) return base;
+  const cleaning = CLEANING_PRICE[data.apartmentSize];
+  const result = addFixedAddOn(base, cleaning);
+  return {
+    ...result,
+    extrasCost: base.extrasCost + cleaning,
+    cleaning,
+    details: {
+      ...result.details,
+      impactBreakdown: { ...result.details.impactBreakdown, extras: result.details.impactBreakdown.extras + cleaning },
+    },
+  };
+}
+
+/**
+ * Tukikohtalisä (Muutto ja Kuljetus): tyhjä ajo tukikohdasta keikalle ja takaisin, kun keikka on
+ * kaukana pääkaupunkiseudulta (lib/base-trip.ts). Täysi muuttopalvelu 3 hengen km-hinnalla, muut
+ * 1–2 hengen hinnalla.
+ */
+function applyBaseTrip(base: PriceBreakdown, data: CalculatorData): PriceBreakdown {
+  if (data.serviceType !== 'moving' && data.serviceType !== 'transport') return base;
+  const crew3 = data.serviceType === 'moving' && (data.movingPackage ?? 'full_service') === 'full_service';
+  const charge = baseTripCharge({ fromAddress: data.addressFrom, toAddress: data.addressTo, distanceKm: data.distanceKm, crew3 });
+  if (!charge) return base;
+  const place = charge.advice.fromCity === charge.advice.toCity ? charge.advice.fromCity : `${charge.advice.fromCity}–${charge.advice.toCity}`;
+  return {
+    ...addFixedAddOn(base, charge.surcharge),
+    baseTrip: { place, emptyKm: Math.round(charge.advice.extraEmptyKm), surcharge: charge.surcharge },
+  };
+}
+
+/** Kaukainen tai pitkä keikka: laskurin arvio on epävarma, joten hinta annetaan tarjouksella. */
+function applyQuoteOnly(base: PriceBreakdown, data: CalculatorData): PriceBreakdown {
+  if (data.serviceType === 'recycling') return base;
+  const quoteOnly =
+    (base.baseTrip?.surcharge ?? 0) > BASE_TRIP_QUOTE_THRESHOLD
+      ? 'far_from_base'
+      : data.distanceKm > LONG_MOVE_QUOTE_KM
+        ? 'long_distance'
+        : undefined;
+  return quoteOnly ? { ...base, quoteOnly } : base;
+}
+
+/**
+ * Laitepalvelut (vain Muutto) valmiin hinnan päälle kiinteinä kappalehintoina, kuten laatikkovuokra:
+ * ei päiväalennusta eikä vähimmäishintoja, ja addOnsTotalin kautta ei kumppanialennustakaan.
+ */
+function applyAppliances(base: PriceBreakdown, data: CalculatorData): PriceBreakdown {
+  if (data.serviceType !== 'moving') return base;
+  const lines = applianceLines(data.applianceServices);
+  if (lines.length === 0) return base;
+
+  const appliancesTotal = lines.reduce((sum, line) => sum + line.total, 0);
+  const total = Math.round((base.total + appliancesTotal) * 100) / 100;
+  const vat = total - total / (1 + PRICING_CONSTANTS.vatRate);
+  const ceil5 = (value: number) => Math.ceil(value / 5) * 5;
+
+  return {
+    ...base,
+    total,
+    vat,
+    subtotal: total - vat,
+    priceRangeLow: ceil5(base.priceRangeLow + appliancesTotal),
+    priceRangeHigh: ceil5(base.priceRangeHigh + appliancesTotal),
+    addOnsTotal: base.addOnsTotal + appliancesTotal,
+    appliances: { lines, total: appliancesTotal },
+  };
+}
+
+function applyBoxRental(base: PriceBreakdown, data: CalculatorData): PriceBreakdown {
   if (!data.needsBoxRental || data.serviceType !== 'moving') return base;
 
   const rental = calculateBoxRental({ count: data.boxRentalCount, days: data.boxRentalDays, withMove: true });
