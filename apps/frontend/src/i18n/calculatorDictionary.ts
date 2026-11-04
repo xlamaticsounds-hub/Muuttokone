@@ -77,7 +77,6 @@ export const calculatorDictionary: Record<string, string> = {
   'Pääsen itse auttamaan kantamisessa.': "I'll help with the carrying myself.",
   'Vain kantoapu': 'Carrying help only',
   'Tarvitsen vain kantajat.': 'I only need movers.',
-  '89,90 €/h, min. 180 €': '€89.90/h, min. €180',
 
   // Step 2: locations
   'Mistä ja mihin kuljetetaan?': 'Where are you transporting from and to?',
@@ -229,6 +228,29 @@ export const calculatorDictionary: Record<string, string> = {
   'Laatikkovuokra (ei alennusta)': 'Box rental (no discount)',
   'Laatikkovuokra': 'Box rental',
   'Laatikoiden toimitus ja nouto': 'Box delivery and pickup',
+
+  // Cleaning, base trip and quote-only (team decisions 4.11.2026)
+  'kiinteä hinta': 'fixed price',
+  'Muuttosiivous (kiinteä hinta)': 'Move-out cleaning (fixed price)',
+  'Ajo tukikohdasta': 'Drive from our base',
+  'Pitkä muutto: sama hinta joka päivä': 'Long-distance move: same price every day',
+  'Hinta tarjouksella': 'Price by quote',
+  'Keikka on kaukana tukikohdastamme, joten laskemme hinnan erikseen. Lähetä tarjouspyyntö, niin saat tarkan hinnan sähköpostiisi.':
+    'This job is far from our base, so we price it separately. Send a quote request and we will email you an exact price.',
+  'Pitkässä muutossa laskemme hinnan erikseen. Lähetä tarjouspyyntö, niin saat tarkan hinnan sähköpostiisi.':
+    'We price long-distance moves separately. Send a quote request and we will email you an exact price.',
+
+  // Appliance services (moving)
+  'Laitteiden irrotus ja asennus': 'Appliance disconnection and installation',
+  'Kiinteä hinta muuton yhteydessä': 'Fixed price with your move',
+  'Laitteiden asennus (ei alennusta)': 'Appliance installation (no discount)',
+  'Pesukoneen irrotus ja asennus': 'Washing machine disconnection and installation',
+  'Irrotus vanhassa asunnossa ja kytkentä valmiisiin liitäntöihin uudessa': 'Disconnected at the old home, connected to existing fittings at the new one',
+  'TV:n seinäasennus, alle 55"': 'TV wall mounting, under 55"',
+  'TV:n seinäasennus, 55" tai isompi': 'TV wall mounting, 55" or larger',
+  'Seinätelineen kiinnitys ja television asennus': 'Wall bracket fitting and TV mounting',
+  'Iso televisio, asennus kahdella asentajalla': 'Large TV, mounted by two installers',
+  'Vähennä': 'Decrease',
 
   // Multiple destinations (moving)
   'Lisäkohteet (valinnainen)': 'Additional destinations (optional)',

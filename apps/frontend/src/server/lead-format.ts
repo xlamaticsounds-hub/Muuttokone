@@ -1,4 +1,12 @@
-import { FURNITURE_CATALOG, RECYCLING_WASTE_TYPES, CalculatorSchema, calculateMovingPrice } from '@/features/calculator/pricing';
+import {
+  FURNITURE_CATALOG,
+  RECYCLING_WASTE_TYPES,
+  CalculatorSchema,
+  applianceLines,
+  calculateMovingPrice,
+  describeApplianceLine,
+  type PriceBreakdown,
+} from '@/features/calculator/pricing';
 import { isCompletedStatus } from '@/lib/lead-status';
 import { BOX_RENTAL, calculateBoxRental, describeBoxRental } from '@/features/calculator/boxRental';
 import { computePartnerDiscount, discountLabel, type PartnerDiscount } from '@/features/calculator/discount';
@@ -83,6 +91,9 @@ export function getExtraServices(data: unknown): string[] {
     );
     if (rental) extras.push(rental);
   }
+  if (record.serviceType === undefined || record.serviceType === 'moving') {
+    for (const line of applianceLines(record.applianceServices)) extras.push(describeApplianceLine(line));
+  }
   if (Array.isArray(record.additionalStops) && record.additionalStops.length > 0) {
     if (record.serviceType === 'moving') {
       // Muutossa lisäosoitteet ovat lisäkohteita (useampi kohdeosoite) — näytetään osoitteet myös
@@ -123,6 +134,9 @@ export type RecomputedLeadPrice = {
   priceRangeHigh: number;
   // Vain kun liidillä on voimassa ollut kumppanikoodi: price ja haarukka ovat jo alennettuja.
   discount: PartnerDiscount | null;
+  // Hintaan sisältyvä tukikohtalisä (€) ja tieto, ettei asiakas nähnyt hintaa (hinta tarjouksella).
+  baseTripSurcharge: number | null;
+  quoteOnly: PriceBreakdown['quoteOnly'] | null;
 };
 
 // Laskee liidin hinta-arvion uudelleen formData:n pohjalta — käytetään sekä laskurin varausta
@@ -147,11 +161,13 @@ export function recomputeLeadPrice(
     input.date = date && !Number.isNaN(date.getTime()) ? date : undefined;
 
     const result = calculateMovingPrice(CalculatorSchema.parse(input));
+    const extras = { baseTripSurcharge: result.baseTrip?.surcharge ?? null, quoteOnly: result.quoteOnly ?? null };
     if (!discountPercent || discountPercent <= 0) {
-      return { price: result.total, priceRangeLow: result.priceRangeLow, priceRangeHigh: result.priceRangeHigh, discount: null };
+      return { price: result.total, priceRangeLow: result.priceRangeLow, priceRangeHigh: result.priceRangeHigh, discount: null, ...extras };
     }
     const discount = computePartnerDiscount(result, discountPercent);
     return {
+      ...extras,
       price: discount.priceAfterDiscount,
       priceRangeLow: result.priceRangeLow - discount.discountAmount,
       priceRangeHigh: result.priceRangeHigh - discount.discountAmount,

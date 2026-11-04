@@ -52,7 +52,18 @@ export default function TermsOfService() {
               <li>Ilmoittaa arvokkaista tai erityistä varovaisuutta vaativista esineistä etukäteen.</li>
             </ul>
 
-            <h2 className="text-xl font-semibold text-black dark:text-white mt-6 mb-4">5. Peruutusehdot</h2>
+            <h2 className="text-xl font-semibold text-black dark:text-white mt-6 mb-4">5. Tavaroiden suojaaminen</h2>
+            <p>Suojaamme muuton aikana muuttohuovilla ja kelmulla:</p>
+            <ul className="list-disc pl-5 mb-4 space-y-2">
+              <li>elektroniikan, kuten televisiot, näytöt ja tietokoneet</li>
+              <li>lasipinnat, kuten lasiovet, peilit, lasiset taulut ja lasitasot</li>
+              <li>esineet, joiden merkittävästä arvosta asiakas on ilmoittanut meille etukäteen.</li>
+            </ul>
+            <p>
+              Muiden tavaroiden pakkaaminen ja suojaaminen on asiakkaan vastuulla, ellei pakkauspalvelua ole tilattu. Lattioiden, ovenkarmien ja porraskäytävien suojaus ei sisälly hintaan, ellei siitä ole erikseen sovittu.
+            </p>
+
+            <h2 className="text-xl font-semibold text-black dark:text-white mt-6 mb-4">6. Peruutusehdot</h2>
             <p>
               Tilauksen peruutus on tehtävä kirjallisesti tai puhelimitse viimeistään 48 tuntia ennen sovittua muuttoajankohtaa.
             </p>
@@ -61,20 +72,20 @@ export default function TermsOfService() {
               <li>Peruuttamattomista tilauksista ("no-show") veloitamme täyden hinnan.</li>
             </ul>
 
-            <h2 className="text-xl font-semibold text-black dark:text-white mt-6 mb-4">6. Vakuutukset ja vastuu</h2>
+            <h2 className="text-xl font-semibold text-black dark:text-white mt-6 mb-4">7. Vakuutukset ja vastuu</h2>
             <p>
               Palveluntarjoajalla on lakisääteinen tiekuljetusvakuutus ja toiminnan vastuuvakuutus. Vakuutus korvaa Palveluntarjoajan huolimattomuudesta aiheutuneet vahingot vakuutusehtojen mukaisesti.
             </p>
             <p>
-              Palveluntarjoaja ei vastaa vahingoista, jotka johtuvat asiakkaan puutteellisesta pakkauksesta tai ylivoimaisesta esteestä (force majeure).
+              Palveluntarjoaja ei vastaa vahingoista, jotka johtuvat asiakkaan puutteellisesta pakkauksesta tai suojauksesta (ks. kohta 5) tai ylivoimaisesta esteestä (force majeure).
             </p>
 
-            <h2 className="text-xl font-semibold text-black dark:text-white mt-6 mb-4">7. Reklamaatiot</h2>
+            <h2 className="text-xl font-semibold text-black dark:text-white mt-6 mb-4">8. Reklamaatiot</h2>
             <p>
               Mahdolliset huomautukset palvelusta tai havaituista vahingoista on tehtävä kirjallisesti 7 vuorokauden kuluessa palvelun suorittamisesta.
             </p>
 
-            <h2 className="text-xl font-semibold text-black dark:text-white mt-6 mb-4">8. Vuokraus</h2>
+            <h2 className="text-xl font-semibold text-black dark:text-white mt-6 mb-4">9. Vuokraus</h2>
             <p>Vuokrattaviin tuotteisiin (muun muassa muuttolaatikot, ks. Muuttolaatikot-sivu) sovelletaan lisäksi seuraavia ehtoja:</p>
             <ul className="list-disc pl-5 mb-4 space-y-2">
               <li>Hinnat sisältävät arvonlisäveron. Vuokra lasketaan toimituspäivästä noutopäivään.</li>
@@ -93,7 +104,7 @@ export default function TermsOfService() {
               <li>Tuotteet palautetaan tyhjinä sovittuna noutopäivänä. Vuokra jatkuu, kunnes tuotteet on noudettu.</li>
             </ul>
 
-            <h2 className="text-xl font-semibold text-black dark:text-white mt-6 mb-4">9. Sovellettava laki</h2>
+            <h2 className="text-xl font-semibold text-black dark:text-white mt-6 mb-4">10. Sovellettava laki</h2>
             <p>
               Sopimukseen sovelletaan Suomen lakia. Mahdolliset erimielisyydet pyritään ratkaisemaan ensisijaisesti neuvottelemalla.
             </p>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CalculatorSchema, calculateMovingPrice } from '@/features/calculator/pricing';
-import { defaultFinalPrice, parseEuroAmount, partnerDiscountNote, recomputeLeadPrice } from './lead-format';
+import { defaultFinalPrice, getExtraServices, parseEuroAmount, partnerDiscountNote, recomputeLeadPrice } from './lead-format';
 
 // Laskurin varauksen formData sellaisena kuin se saapuu /api/submit-reitille (JSON):
 // päivämäärä merkkijonona, yhteystiedot mukana, selaimen oma hinta-arvio mukana.
@@ -54,7 +54,15 @@ describe('recomputeLeadPrice', () => {
       priceRangeLow: expected.priceRangeLow,
       priceRangeHigh: expected.priceRangeHigh,
       discount: null,
+      baseTripSurcharge: null,
+      quoteOnly: null,
     });
+  });
+
+  it('kaukainen paikallinen muutto: tukikohtalisä ja tarjoustila palautetaan', () => {
+    const result = recomputeLeadPrice({ ...bookingPayload, addressFrom: 'Katu 1, Hamina', addressTo: 'Tie 2, Hamina', distanceKm: 5 });
+    expect(result?.baseTripSurcharge).toBe(500);
+    expect(result?.quoteOnly).toBe('far_from_base');
   });
 
   it('ei luota selaimen lähettämään hintaan', () => {
@@ -179,5 +187,21 @@ describe('defaultFinalPrice — puuttuvat kentät', () => {
   it('kestää undefined-kentät (paikallinen mock-tietokanta ei aseta null-arvoja)', () => {
     const lead = { formData: JSON.stringify({ price: 719.6 }) } as unknown as Parameters<typeof defaultFinalPrice>[0];
     expect(defaultFinalPrice(lead)).toBe(720);
+  });
+});
+
+describe('getExtraServices: laitepalvelut', () => {
+  it('näyttää pesukoneen ja TV:n hintoineen liidillä ja sähköposteissa', () => {
+    expect(getExtraServices({ serviceType: 'moving', applianceServices: { washing_machine: 1, tv_large: 2 } })).toEqual([
+      'Pesukoneen irrotus ja asennus (49 €)',
+      'TV:n seinäasennus, 55" tai isompi × 2 (198 €)',
+    ]);
+  });
+
+  it('laskee ne mukaan liidin hinnan uudelleenlaskennassa', () => {
+    const data = { addressFrom: 'A', addressTo: 'B', serviceType: 'moving', apartmentSize: '1h', furnitureItems: { sofa_2: 1 }, distanceKm: 5 };
+    const without = recomputeLeadPrice(data, null)!;
+    const withWasher = recomputeLeadPrice({ ...data, applianceServices: { washing_machine: 1 } }, null)!;
+    expect(withWasher.price - without.price).toBeCloseTo(49, 6);
   });
 });

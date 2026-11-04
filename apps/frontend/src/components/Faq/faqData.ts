@@ -1,3 +1,5 @@
+import { CLEANING_PRICE } from '@/features/calculator/pricing';
+
 export type FaqItem = { q: string; a: string };
 
 // Yleiset muuttokysymykset (Faq-komponentin oletuslista). Omassa moduulissaan ilman 'use client'
@@ -30,6 +32,14 @@ export const generalFaqData: FaqItem[] = [
   {
     q: 'Voinko vuokrata muuttolaatikot teiltä?',
     a: 'Kyllä. Vuokraamme kestäviä, pinottavia muuttolaatikoita 0,19 €/laatikko/vuorokausi (sis. ALV). Toimitus kotiovelle ja nouto ovat ilmaiset, kun vuokraat laatikot muuton yhteydessä. Ilman muuttoa ne ovat ilmaiset, kun vuokran arvo on vähintään 100 € (esim. 38 laatikkoa 14 vuorokaudeksi), muuten toimitus ja nouto maksavat yhteensä 39 € pääkaupunkiseudulla. Lisää laatikot muuttolaskurin lisäpalveluista tai vuokraa pelkät laatikot Muuttolaatikot-sivulta.',
+  },
+  {
+    q: 'Teettekö muuttosiivouksen?',
+    a: `Kyllä. Muuttosiivous on kiinteähintainen lisäpalvelu muuton yhteydessä: yksiö ${CLEANING_PRICE['1h']} €, kaksio ${CLEANING_PRICE['2h']} €, kolmio ${CLEANING_PRICE['3h']} € ja neliö tai suurempi ${CLEANING_PRICE['4h+']} € (sis. ALV). Lisää siivous muuttolaskurin lisäpalveluista.`,
+  },
+  {
+    q: 'Suojaatteko tavarat muuton aikana?',
+    a: 'Suojaamme elektroniikan (esim. televisiot ja tietokoneet), lasipinnat (esim. lasiovet, peilit ja lasitasot) sekä esineet, joiden merkittävästä arvosta olet ilmoittanut meille etukäteen. Muiden tavaroiden pakkaaminen ja suojaaminen on asiakkaan vastuulla, ellei pakkauspalvelua ole tilattu. Lisätiedot löytyvät käyttöehdoista.',
   },
   {
     q: 'Kuinka monta muuttolaatikkoa tarvitsen?',

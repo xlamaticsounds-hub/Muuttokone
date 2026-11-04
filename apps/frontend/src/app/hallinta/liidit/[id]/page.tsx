@@ -264,15 +264,21 @@ export default async function LeadDetailPage({
                   role="note"
                   className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200"
                 >
-                  <p className="font-semibold">⚠️ Kaukana tukikohdasta</p>
-                  <p className="mt-1">
-                    Laskurin hinta kattaa vain muuton oman matkan. Tässä keikassa on {baseTripSummary(baseTrip)}
-                  </p>
-                  {calculatorPrice != null && (
-                    <p className="mt-1">
-                      Laskurin arvio {Math.round(calculatorPrice)} € + lisä noin {baseTrip.surcharge} € ≈{' '}
-                      <strong>{Math.round(calculatorPrice) + baseTrip.surcharge} €</strong>. Hintaa ei ole muutettu: tarkista ja vahvista hinta käsin.
-                    </p>
+                  <p className="font-semibold">{baseTrip.includedInPrice != null ? '🚚' : '⚠️'} Kaukana tukikohdasta</p>
+                  {baseTrip.includedInPrice != null ? (
+                    <p className="mt-1">Tässä keikassa on {baseTripSummary(baseTrip)}</p>
+                  ) : (
+                    <>
+                      <p className="mt-1">
+                        Liidi on tehty ennen kuin laskuri alkoi lisätä tukikohtalisän, joten hinta kattaa vain muuton oman matkan. Tässä keikassa on {baseTripSummary(baseTrip)}
+                      </p>
+                      {calculatorPrice != null && (
+                        <p className="mt-1">
+                          Laskurin arvio {Math.round(calculatorPrice)} € + lisä noin {baseTrip.surchargeCrew3} € (3 hengellä) ≈{' '}
+                          <strong>{Math.round(calculatorPrice) + baseTrip.surchargeCrew3} €</strong>. Hintaa ei ole muutettu: tarkista ja vahvista hinta käsin.
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
               )}

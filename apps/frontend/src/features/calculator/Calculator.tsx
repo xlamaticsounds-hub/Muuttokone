@@ -4,7 +4,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Script from 'next/script';
 import { motion, AnimatePresence } from 'framer-motion';
-import { calculateMovingPrice, CalculatorData, PriceBreakdown, FURNITURE_CATALOG, INCLUDED_DISTANCE_KM, RECYCLING_WASTE_TYPES, MAX_EXTRA_DESTINATIONS, EXTRA_DESTINATION_MINUTES, MAX_DISTANCE_KM } from './pricing';
+import { calculateMovingPrice, CalculatorData, PriceBreakdown, FURNITURE_CATALOG, INCLUDED_DISTANCE_KM, RECYCLING_WASTE_TYPES, MAX_EXTRA_DESTINATIONS, EXTRA_DESTINATION_MINUTES, MAX_DISTANCE_KM, PRICING_CONSTANTS, APPLIANCE_SERVICES, MAX_APPLIANCES_PER_TYPE, CLEANING_PRICE } from './pricing';
 import { BOX_RENTAL, BOX_RENTAL_SUGGESTED_COUNT, calculateBoxRental, formatEuro, suggestBoxCount } from './boxRental';
 import BoxRentalOfferModal from './BoxRentalOfferModal';
 import RentalDaysSlider from '@/features/vuokraus/RentalDaysSlider';
@@ -85,6 +85,7 @@ export default function Calculator() {
     needsBoxRental: false,
     boxRentalCount: 0,
     boxRentalDays: BOX_RENTAL.defaultDays,
+    applianceServices: {},
     contactName: '',
     contactEmail: '',
     contactPhone: '',
@@ -353,6 +354,15 @@ export default function Calculator() {
 
   const updateField = (field: keyof CalculatorData, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const stepAppliance = (id: string, delta: number) => {
+    setFormData((prev) => {
+      const qty = Math.min(MAX_APPLIANCES_PER_TYPE, Math.max(0, (prev.applianceServices[id] ?? 0) + delta));
+      const next = { ...prev.applianceServices, [id]: qty };
+      if (qty === 0) delete next[id];
+      return { ...prev, applianceServices: next };
+    });
   };
 
   const toggleService = (service: string) => {
@@ -843,7 +853,11 @@ export default function Calculator() {
                         <p className="text-sm text-gray-600 dark:text-gray-400">
                           {t('Tarvitsen vain kantajat.')}
                         </p>
-                        <p className="text-xs text-gray-500 mt-2">{t('89,90 €/h, min. 180 €')}</p>
+                        <p className="text-xs text-gray-500 mt-2">
+                          {locale === 'en'
+                            ? `€${PRICING_CONSTANTS.carryingHelpRate}/h, min. €${PRICING_CONSTANTS.carryingHelpMinimum}`
+                            : `${PRICING_CONSTANTS.carryingHelpRate} €/h, min. ${PRICING_CONSTANTS.carryingHelpMinimum} €`}
+                        </p>
                       </div>
                       <div
                         className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ml-4 flex-shrink-0 ${
@@ -1486,8 +1500,59 @@ export default function Calculator() {
                     <div>
                       <h4 className="font-bold">{t('Muuttosiivous')}</h4>
                       <p className="text-xs text-gray-500">{t('Vanhan asunnon loppusiivous')}</p>
+                      <p className="text-xs font-semibold text-primary mt-0.5">
+                        {formatEuro(CLEANING_PRICE[formData.apartmentSize])} · {t('kiinteä hinta')}
+                      </p>
                     </div>
                   </div>
+
+                  {/* Laitteiden irrotus ja asennus — vain Muutto, kiinteät kappalehinnat (pricing.ts: APPLIANCE_SERVICES) */}
+                  {formData.serviceType === 'moving' && (
+                    <div
+                      className={`md:col-span-2 rounded-2xl border-2 p-6 transition-all ${
+                        Object.keys(formData.applianceServices).length > 0 ? 'border-primary bg-primary/5' : 'border-gray-100 dark:border-gray-800'
+                      }`}
+                    >
+                      <h4 className="font-bold">🔧 {t('Laitteiden irrotus ja asennus')}</h4>
+                      <p className="text-xs text-gray-500">{t('Kiinteä hinta muuton yhteydessä')}</p>
+                      <div className="mt-4 divide-y divide-gray-100 dark:divide-gray-800">
+                        {APPLIANCE_SERVICES.map((service) => {
+                          const qty = formData.applianceServices[service.id] ?? 0;
+                          return (
+                            <div key={service.id} className="flex items-center justify-between gap-3 py-3">
+                              <div className="min-w-0">
+                                <p className="text-sm font-semibold">{t(service.label)}</p>
+                                <p className="text-xs text-gray-500">
+                                  {t(service.description)} · {locale === 'en' ? `€${service.price}` : `${service.price} €`}
+                                </p>
+                              </div>
+                              <div className="flex flex-shrink-0 items-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => stepAppliance(service.id, -1)}
+                                  disabled={qty === 0}
+                                  aria-label={`${t('Vähennä')}: ${t(service.label)}`}
+                                  className="w-9 h-9 rounded-full border-2 border-gray-200 dark:border-gray-700 flex items-center justify-center text-lg font-bold disabled:opacity-30 hover:border-primary hover:text-primary transition-all"
+                                >
+                                  -
+                                </button>
+                                <span className="w-6 text-center font-bold" aria-live="polite">{qty}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => stepAppliance(service.id, 1)}
+                                  disabled={qty >= MAX_APPLIANCES_PER_TYPE}
+                                  aria-label={`${t('Lisää')}: ${t(service.label)}`}
+                                  className="w-9 h-9 rounded-full border-2 border-gray-200 dark:border-gray-700 flex items-center justify-center text-lg font-bold disabled:opacity-30 hover:border-primary hover:text-primary transition-all"
+                                >
+                                  +
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Muuttolaatikoiden vuokra — vain Muutto (hinnoittelu: boxRental.ts) */}
                   {formData.serviceType === 'moving' && (
@@ -1702,17 +1767,28 @@ export default function Calculator() {
                 <div className="bg-primary text-white p-6 sm:p-8 rounded-3xl shadow-xl shadow-primary/20 relative overflow-hidden">
                    <div className="relative z-10">
                       <p className="text-primary-foreground/80 font-medium mb-1">{t('Arvioitu muuttosi')}</p>
-                      {partnerDiscount && (
+                      {partnerDiscount && !priceResult.quoteOnly && (
                         <p className="text-lg font-bold text-white/60 line-through" aria-label={t('Hinta ilman etua')}>
                           {priceResult.priceRangeLow}–{priceResult.priceRangeHigh}€
                         </p>
                       )}
-                      <div className="flex flex-wrap items-end gap-x-2">
-                        <span className="text-4xl sm:text-5xl font-black">
-                          {displayRangeLow}–{displayRangeHigh}€
-                        </span>
-                        <span className="text-xl font-bold mb-2">{t('sis. ALV')}</span>
-                      </div>
+                      {priceResult.quoteOnly ? (
+                        <div>
+                          <span className="text-3xl sm:text-4xl font-black">{t('Hinta tarjouksella')}</span>
+                          <p className="mt-2 text-sm text-white/80">
+                            {priceResult.quoteOnly === 'far_from_base'
+                              ? t('Keikka on kaukana tukikohdastamme, joten laskemme hinnan erikseen. Lähetä tarjouspyyntö, niin saat tarkan hinnan sähköpostiisi.')
+                              : t('Pitkässä muutossa laskemme hinnan erikseen. Lähetä tarjouspyyntö, niin saat tarkan hinnan sähköpostiisi.')}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap items-end gap-x-2">
+                          <span className="text-4xl sm:text-5xl font-black">
+                            {displayRangeLow}–{displayRangeHigh}€
+                          </span>
+                          <span className="text-xl font-bold mb-2">{t('sis. ALV')}</span>
+                        </div>
+                      )}
                       {partnerDiscount && partnerCode.applied && (
                         <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-sm font-bold">
                           🏠 {partnerLabel(partnerCode.applied, locale)}
@@ -1780,6 +1856,12 @@ export default function Calculator() {
                         <span className="font-bold">+{formatEuro(priceResult.boxRental.total)}</span>
                       </div>
                     )}
+                    {priceResult.appliances && (
+                      <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                        <span className="text-gray-500">{t('Laitteiden asennus (ei alennusta)')}</span>
+                        <span className="font-bold">+{formatEuro(priceResult.appliances.total)}</span>
+                      </div>
+                    )}
                     {partnerDiscount && partnerCode.applied && (
                       <div className="flex justify-between p-3 rounded-xl bg-green-50 dark:bg-green-900/20">
                         <span className="text-green-700 dark:text-green-300">🏠 {partnerLabel(partnerCode.applied, locale)}</span>
@@ -1820,6 +1902,40 @@ export default function Calculator() {
                         {priceResult.boxRental.deliveryFree ? t('Ilmainen') : formatEuro(priceResult.boxRental.deliveryCost)}
                       </span>
                     </div>
+                  </div>
+                )}
+
+                {priceResult.appliances && (
+                  <div className="grid gap-3">
+                    <h3 className="font-bold text-sm uppercase tracking-wide text-gray-400">{t('Laitteiden irrotus ja asennus')}</h3>
+                    {priceResult.appliances.lines.map((line) => (
+                      <div key={line.id} className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                        <span className="text-gray-500">
+                          {t(line.label)}
+                          {line.qty > 1 ? ` × ${line.qty}` : ''}
+                        </span>
+                        <span className="font-bold">{formatEuro(line.total)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {(priceResult.cleaning != null || priceResult.baseTrip) && (
+                  <div className="grid gap-3">
+                    {priceResult.cleaning != null && (
+                      <div className="flex justify-between p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                        <span className="text-gray-500">{t('Muuttosiivous (kiinteä hinta)')}</span>
+                        <span className="font-bold">{formatEuro(priceResult.cleaning)}</span>
+                      </div>
+                    )}
+                    {priceResult.baseTrip && (
+                      <div className="flex justify-between gap-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                        <span className="text-gray-500">
+                          {t('Ajo tukikohdasta')} ({priceResult.baseTrip.place}, {priceResult.baseTrip.emptyKm} km)
+                        </span>
+                        <span className="font-bold">{formatEuro(priceResult.baseTrip.surcharge)}</span>
+                      </div>
+                    )}
                   </div>
                 )}
 

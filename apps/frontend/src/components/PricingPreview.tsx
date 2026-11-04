@@ -7,25 +7,27 @@ import { useT } from '@/i18n/useT';
 import { useLocale } from '@/i18n/LocaleContext';
 import { pricingPreviewDictionary } from '@/i18n/homeDictionary';
 import { BOX_RENTAL } from '@/features/calculator/boxRental';
+import { FULL_SERVICE_MIN_PRICE } from '@/features/calculator/pricing';
 
+// "Alkaen"-hinnat ovat laskurin täyden palvelun vähimmäishinnat, jotta etusivu ja laskuri näyttävät aina saman hinnan.
 const PLANS = [
   {
     title: 'Yksiö (25-35m²)',
     badge: 'Suosittu',
     text: 'Sopii opiskelijoille ja sinkuille. Nopea ja ketterä muutto.',
-    price: '189€',
+    price: FULL_SERVICE_MIN_PRICE['1h'],
     features: ['2 muuttomiestä', 'Kuorma-auto (20m³)', 'Noin 2-3 tuntia'],
   },
   {
     title: 'Kaksio (40-60m²)',
     text: 'Pariskunnille ja pienille perheille. Tehokas palvelu.',
-    price: '299€',
+    price: FULL_SERVICE_MIN_PRICE['2h'],
     features: ['2-3 muuttomiestä', 'Iso kuorma-auto', 'Noin 3-5 tuntia'],
   },
   {
     title: 'Kolmio+ (70m²+)',
     text: 'Perheasunnot ja omakotitalot. Täyden palvelun muutto.',
-    price: '599€',
+    price: FULL_SERVICE_MIN_PRICE['3h'],
     features: ['3-4 muuttomiestä', 'Iso kuorma-auto', 'Koko päivä'],
   },
 ];
@@ -48,6 +50,7 @@ export default function PricingPreview() {
     locale === 'en'
       ? `€${BOX_RENTAL.ratePerBoxPerDay.toFixed(2)}`
       : `${BOX_RENTAL.ratePerBoxPerDay.toFixed(2).replace('.', ',')} €`;
+  const euros = (amount: number | undefined) => (locale === 'en' ? `€${amount}` : `${amount}€`);
 
   return (
     <section className="relative z-20 py-14 lg:py-20">
@@ -55,7 +58,9 @@ export default function PricingPreview() {
         {/* Pricing Badge */}
         <div className="animate_top mx-auto mb-8 max-w-fit rounded-full bg-white px-6 py-2 text-center shadow-lg ring-1 ring-black/5 md:mb-10 md:px-8 md:py-3 dark:bg-black dark:ring-white/10">
           <p className="flex flex-wrap items-center justify-center gap-2 text-sm font-semibold text-black md:text-base dark:text-white">
-            <span className="text-primary">{t('🔥 Muutot alk. 189€')}</span>
+            <span className="text-primary">
+              {locale === 'en' ? `🔥 Moves from ${euros(PLANS[0].price)}` : `🔥 Muutot alk. ${euros(PLANS[0].price)}`}
+            </span>
             <span className="hidden h-1 w-1 rounded-full bg-gray-300 sm:block"></span>
             <span>{t('5 km sisältyy hintaan')}</span>
           </p>
@@ -79,13 +84,13 @@ export default function PricingPreview() {
                 </div>
                 <p className="shrink-0 text-right sm:hidden">
                   <span className="block text-xs font-medium text-black/60 dark:text-white/60">{t('Alkaen')}</span>
-                  <span className="text-2xl font-bold text-primary">{plan.price}</span>
+                  <span className="text-2xl font-bold text-primary">{euros(plan.price)}</span>
                 </p>
               </div>
               <p className="mb-4 hidden text-sm text-black/60 sm:block sm:min-h-10 dark:text-white/60">{t(plan.text)}</p>
               <div className="mb-6 hidden items-baseline gap-1 sm:flex">
                 <span className="text-sm font-medium text-black/60 dark:text-white/60">{t('Alkaen')}</span>
-                <span className="text-3xl font-bold text-primary">{plan.price}</span>
+                <span className="text-3xl font-bold text-primary">{euros(plan.price)}</span>
               </div>
               <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs font-medium text-black/70 sm:mt-0 sm:mb-8 sm:block sm:space-y-3 sm:text-sm sm:text-black dark:text-white/70 sm:dark:text-white">
                 {plan.features.map((feature) => (
