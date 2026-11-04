@@ -39,7 +39,8 @@ const mocks = vi.hoisted(() => {
   };
   const syncCalendarWithLeadStatus = vi.fn(async () => {});
   const recreateConfirmedLeadEvent = vi.fn(async () => {});
-  return { state, prisma, syncCalendarWithLeadStatus, recreateConfirmedLeadEvent };
+  const updateCalendarEventTime = vi.fn(async () => {});
+  return { state, prisma, syncCalendarWithLeadStatus, recreateConfirmedLeadEvent, updateCalendarEventTime };
 });
 
 vi.mock('next-auth', () => ({ getServerSession: vi.fn(async () => mocks.state.session) }));
@@ -48,10 +49,11 @@ vi.mock('@/server/db', () => ({ prisma: mocks.prisma }));
 vi.mock('@/server/google-calendar', () => ({
   syncCalendarWithLeadStatus: mocks.syncCalendarWithLeadStatus,
   recreateConfirmedLeadEvent: mocks.recreateConfirmedLeadEvent,
+  updateCalendarEventTime: mocks.updateCalendarEventTime,
 }));
 
 const { markLeadCompleted } = await import('./lead-completion-actions');
-const { updateLeadStatus } = await import('./actions');
+const { updateLeadStatus, updateLeadDetails } = await import('./actions');
 const { saveDiscountCode, setDiscountCodeActive } = await import('./discount-code-actions');
 
 const codeForm = {
@@ -74,6 +76,7 @@ beforeEach(() => {
   mocks.state.reports = [];
   mocks.syncCalendarWithLeadStatus.mockClear();
   mocks.recreateConfirmedLeadEvent.mockClear();
+  mocks.updateCalendarEventTime.mockClear();
   mocks.state.leads.set('lead_1', {
     id: 'lead_1',
     status: 'WON',
@@ -273,5 +276,36 @@ describe('saveDiscountCode / setDiscountCodeActive', () => {
     mocks.state.session = null;
     expect(await saveDiscountCode(null, codeForm)).toEqual({ success: false, message: 'Kirjaudu sisään.' });
     expect(mocks.state.codes.size).toBe(0);
+  });
+});
+
+describe('updateLeadDetails: kalenteri', () => {
+  const day = new Date('2026-11-04T00:00:00Z');
+  const form = (overrides: Record<string, string> = {}) => ({ fromAddress: 'A', toAddress: 'B', requestedDate: '2026-11-04', preferredTime: 'klo 10', ...overrides });
+
+  it('pelkkä kellonajan muutos siirtää kalenterimerkinnän', async () => {
+    mocks.state.leads.set('lead_1', { id: 'lead_1', status: 'WON', requestedDate: day, calendarEventId: 'evt_1', formData: { preferredTime: '09:00' } });
+    await updateLeadDetails('lead_1', form());
+    expect(mocks.updateCalendarEventTime).toHaveBeenCalledWith('lead_1', 'evt_1', day, 'klo 10');
+    expect(JSON.parse(mocks.state.leads.get('lead_1')!.formData).preferredTime).toBe('klo 10');
+  });
+
+  it('ei koske kalenteriin, kun päivä ja aika pysyvät samoina', async () => {
+    mocks.state.leads.set('lead_1', { id: 'lead_1', status: 'WON', requestedDate: day, calendarEventId: 'evt_1', formData: { preferredTime: 'klo 10' } });
+    await updateLeadDetails('lead_1', form());
+    expect(mocks.updateCalendarEventTime).not.toHaveBeenCalled();
+    expect(mocks.recreateConfirmedLeadEvent).not.toHaveBeenCalled();
+  });
+
+  it('vahvistettu keikka ilman merkintää menee kalenteriin, kun sille annetaan päivä', async () => {
+    mocks.state.leads.set('lead_1', { id: 'lead_1', status: 'WON', requestedDate: null, calendarEventId: null, formData: {} });
+    await updateLeadDetails('lead_1', form());
+    expect(mocks.recreateConfirmedLeadEvent).toHaveBeenCalledWith('lead_1');
+  });
+
+  it('vahvistamaton keikka ei mene kalenteriin päivän lisäämisestä', async () => {
+    mocks.state.leads.set('lead_1', { id: 'lead_1', status: 'PROPOSAL_SENT', requestedDate: null, calendarEventId: null, formData: {} });
+    await updateLeadDetails('lead_1', form());
+    expect(mocks.recreateConfirmedLeadEvent).not.toHaveBeenCalled();
   });
 });

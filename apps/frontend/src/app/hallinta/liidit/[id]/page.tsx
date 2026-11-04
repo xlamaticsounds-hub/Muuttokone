@@ -21,6 +21,8 @@ import EmailSummarySection from './EmailSummarySection';
 import LeadCompletionCard from './LeadCompletionCard';
 import LeadWorkTimeCard from './LeadWorkTimeCard';
 import LeadAttachmentsCard, { type AttachmentDto } from './LeadAttachmentsCard';
+import CalendarStatus from './CalendarStatus';
+import { calendarEventStart, formatCalendarStart, leadPreferredTime, parsePreferredTime } from '@/lib/calendar-time';
 import { externalSourceLabel } from '@/lib/external-lead';
 import NotesBoard from '../../muistiinpanot/NotesBoard';
 import { toNoteDto, type NoteDto } from '../../muistiinpanot/dto';
@@ -69,6 +71,7 @@ export default async function LeadDetailPage({
   const baseTrip = leadBaseTripAdvice(lead);
   const calculatorPrice = getStoredPrice(pfd).exact;
   const searchKeys = leadMailSearchKeys(lead);
+  const preferredTime = leadPreferredTime(pfd);
 
   // Kohteen kerros/hissi ja asunnon kokoluokka elävät vain formData-JSONissa (muuttolaskurin
   // syöttämät kentät), ei omina Lead-sarakkeinaan — Lead.floor/hasElevator kuvaavat vain
@@ -284,9 +287,15 @@ export default async function LeadDetailPage({
                 </div>
                 <div>
                   <label className="text-xs font-medium text-gray-500 uppercase">Toivottu kellonaika</label>
-                  <p className="mt-1 text-gray-900 dark:text-white">
-                    {typeof pfd.preferredTime === 'string' && pfd.preferredTime ? pfd.preferredTime : '-'}
-                  </p>
+                  <p className="mt-1 text-gray-900 dark:text-white">{preferredTime ?? '-'}</p>
+                </div>
+                <div className="sm:col-span-2">
+                  <CalendarStatus
+                    leadId={lead.id}
+                    inCalendar={Boolean(lead.calendarEventId)}
+                    startLabel={lead.requestedDate ? formatCalendarStart(calendarEventStart(lead.requestedDate, preferredTime)) : null}
+                    timeRecognized={!preferredTime || parsePreferredTime(preferredTime) !== null}
+                  />
                 </div>
                 <div>
                   <label className="text-xs font-medium text-gray-500 uppercase">Tilavuus / Koko</label>

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { updateLeadDetails } from '@/server/actions';
 import { createInvoiceFromLead } from '@/server/invoice-actions';
 import { parseLeadFormData, getStoredPrice } from '@/server/lead-format';
+import { leadPreferredTime } from '@/lib/calendar-time';
 import { Lead, Contact } from '@prisma/client';
 import QuoteEmailPreviewModal from './QuoteEmailPreviewModal';
 import BookingConfirmationPreviewModal from './BookingConfirmationPreviewModal';
@@ -218,6 +219,16 @@ export default function LeadDetailActions({
                     type="date"
                     name="requestedDate"
                     defaultValue={lead.requestedDate ? new Date(lead.requestedDate).toISOString().split('T')[0] : ''}
+                    className="mt-1 w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 uppercase">Kellonaika</label>
+                  <input
+                    name="preferredTime"
+                    defaultValue={leadPreferredTime(pfd) ?? ''}
+                    placeholder="esim. 9.00, klo 10 tai aamupäivä"
+                    maxLength={80}
                     className="mt-1 w-full rounded-md border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-600 dark:text-white"
                   />
                 </div>

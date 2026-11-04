@@ -19,6 +19,15 @@
 // this project. The scoped package is the same client, Calendar v3 only.
 import { calendar, calendar_v3 } from '@googleapis/calendar';
 import { isCompletedStatus } from '@/lib/lead-status';
+import {
+  DEFAULT_START,
+  calendarEventStart,
+  formatCalendarStart,
+  formatClockTime,
+  leadPreferredTime,
+  parsePreferredTime,
+} from '@/lib/calendar-time';
+import { helsinkiLocalToUtc } from '@/lib/helsinki-time';
 import { GoogleAuth } from 'google-auth-library';
 import { createLog } from '@/server/repo/logs';
 import { setLeadCalendarEventId } from '@/server/repo/leads';
@@ -27,66 +36,16 @@ import type { LeadStatus } from '@prisma/client';
 const CALENDAR_SCOPES = ['https://www.googleapis.com/auth/calendar.events'];
 const DEFAULT_JOB_DURATION_HOURS = 4;
 const TIME_ZONE = 'Europe/Helsinki';
-// Aloitusaika kun asiakas ei ole ilmoittanut toivottua kellonaikaa.
-const DEFAULT_START_TIME = '09:00';
-
 // Tapahtuman kuvauksen viimeinen rivi — vaihdetaan vahvistusriviin kun liidi voitetaan.
 const PENDING_NOTE =
   '(Alustava merkintä — vahvistuu kun liidi merkitään voitetuksi Discordissa. Kesto on oletusarvoinen arvio.)';
 const PENDING_NOTE_RE = /^\(Alustava merkintä.*$/m;
 const CONFIRMED_NOTE = '✅ Vahvistettu — liidi merkitty voitetuksi.';
 
-// Europe/Helsinki-aikavyöhykkeen ero UTC:hen (ms) annettuna hetkenä — huomioi kesäajan.
-function helsinkiOffsetMs(timestamp: number): number {
-  const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: TIME_ZONE,
-    hourCycle: 'h23',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  }).formatToParts(new Date(timestamp));
-  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
-  const asUtc = Date.UTC(get('year'), get('month') - 1, get('day'), get('hour'), get('minute'), get('second'));
-  return asUtc - timestamp;
-}
-
-// Suomen seinäkelloaika (esim. 5.10.2026 klo 12:00) → oikea hetki (Date).
-function helsinkiWallTime(year: number, month: number, day: number, hour: number, minute: number): Date {
-  const guess = Date.UTC(year, month - 1, day, hour, minute);
-  return new Date(guess - helsinkiOffsetMs(guess));
-}
-
-/**
- * Kalenteritapahtuman alkuhetki. Lomakkeet ja hallinnan muokkaus tallentavat muuttopäivän
- * pelkkänä päivänä (<input type="date"> → UTC-keskiyö), jolloin sellaisenaan käytettynä
- * tapahtuma alkoi Suomessa klo 2–3 yöllä. Päivämäärä yhdistetään siksi asiakkaan toivomaan
- * kellonaikaan (laskurin "Toivottu kellonaika") tai oletukseen klo 9.00 Suomen aikaa.
- */
-export function calendarEventStart(requestedDate: Date, preferredTime?: string | null): Date {
-  const isDateOnly =
-    requestedDate.getUTCHours() === 0 && requestedDate.getUTCMinutes() === 0 && requestedDate.getUTCSeconds() === 0;
-  if (!isDateOnly) return requestedDate;
-
-  const timeRe = /^(\d{1,2}):(\d{2})/;
-  const match = timeRe.exec(preferredTime ?? '') ?? timeRe.exec(DEFAULT_START_TIME)!;
-  const hour = Math.min(23, Number(match[1]));
-  const minute = Math.min(59, Number(match[2]));
-  return helsinkiWallTime(
-    requestedDate.getUTCFullYear(),
-    requestedDate.getUTCMonth() + 1,
-    requestedDate.getUTCDate(),
-    hour,
-    minute,
-  );
-}
-
 // Suomen vuorokauden alku sille päivälle, jolle tapahtuma osuu.
 function helsinkiDayStart(date: Date): Date {
   const [y, m, d] = new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE }).format(date).split('-').map(Number);
-  return helsinkiWallTime(y, m, d, 0, 0);
+  return helsinkiLocalToUtc(y, m, d);
 }
 
 // Google Calendar's built-in numbered event colors (stable across all
@@ -144,7 +103,7 @@ export type LeadEventDetails = {
   fromAddress: string | null;
   toAddress: string | null;
   requestedDate: Date;
-  preferredTime?: string | null; // "HH:MM" — laskurin toivottu kellonaika
+  preferredTime?: string | null; // laskurin "HH:MM" tai muualta kirjatun keikan vapaa teksti (lib/calendar-time.ts)
   // 'vuokraus' = Muuttolaatikot-sivun tilaus: tapahtuma on laatikoiden/tuotteiden toimitus, ei muutto
   serviceKind?: 'muutto' | 'vuokraus';
   notes: string | null;
@@ -224,8 +183,8 @@ export async function createTentativeLeadEvent(
     details.fromAddress ? `${isRental ? 'Toimitusosoite' : 'Mistä'}: ${details.fromAddress}` : null,
     !isRental && details.toAddress ? `Minne: ${details.toAddress}` : null,
     details.preferredTime
-      ? `Toivottu kellonaika: ${details.preferredTime}`
-      : `Kellonaika: ei ilmoitettu (merkitty klo ${DEFAULT_START_TIME})`,
+      ? `Toivottu kellonaika: ${details.preferredTime}${parsePreferredTime(details.preferredTime) ? '' : ` (ei tunnistettu, merkitty klo ${formatClockTime(DEFAULT_START)})`}`
+      : `Kellonaika: ei ilmoitettu (merkitty klo ${formatClockTime(DEFAULT_START)})`,
     details.notes ? `Lisätiedot: ${details.notes}` : null,
     details.baseTripNote ? `⚠️ Kaukana tukikohdasta: ${details.baseTripNote}` : null,
     '',
@@ -355,27 +314,101 @@ export async function recreateConfirmedLeadEvent(leadId: string): Promise<void> 
     const lead = await prisma.lead.findUnique({ where: { id: leadId }, include: { contact: true } });
     if (!lead || !lead.requestedDate || lead.calendarEventId) return;
 
-    const { parseLeadFormData } = await import('@/server/lead-format');
-    const pfd = parseLeadFormData(lead.formData);
-    const payload = pfd.payload && typeof pfd.payload === 'object' ? (pfd.payload as Record<string, unknown>) : {};
-    const preferredTime =
-      typeof pfd.preferredTime === 'string' ? pfd.preferredTime : typeof payload.preferred_time === 'string' ? payload.preferred_time : null;
-
-    const created = await createTentativeLeadEvent({
-      leadId: lead.id,
-      customerName: [lead.contact.firstName, lead.contact.lastName].filter(Boolean).join(' ') || 'Ei nimeä',
-      fromAddress: lead.fromAddress,
-      toAddress: lead.toAddress,
-      requestedDate: lead.requestedDate,
-      preferredTime,
-      serviceKind: payload.service_type === 'vuokraus' ? 'vuokraus' : 'muutto',
-      notes: lead.notes,
-      hallintaUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.muuttokone.fi'}/hallinta/liidit/${lead.id}`,
-    });
+    const created = await createTentativeLeadEvent(await leadEventDetails(lead, lead.requestedDate));
     if (!created) return;
     await setLeadCalendarEventId(lead.id, created.eventId);
     await confirmCalendarEvent(lead.id, created.eventId);
   } catch (error) {
     await logCalendarFailure('recreateConfirmedLeadEvent', leadId, error);
+  }
+}
+
+type LeadWithContact = {
+  id: string;
+  formData: unknown;
+  fromAddress: string | null;
+  toAddress: string | null;
+  notes: string | null;
+  contact: { firstName: string | null; lastName: string | null };
+};
+
+async function leadEventDetails(lead: LeadWithContact, requestedDate: Date): Promise<LeadEventDetails> {
+  const { parseLeadFormData } = await import('@/server/lead-format');
+  const pfd = parseLeadFormData(lead.formData);
+  const payload = pfd.payload && typeof pfd.payload === 'object' ? (pfd.payload as Record<string, unknown>) : {};
+  return {
+    leadId: lead.id,
+    customerName: [lead.contact.firstName, lead.contact.lastName].filter(Boolean).join(' ') || 'Ei nimeä',
+    fromAddress: lead.fromAddress,
+    toAddress: lead.toAddress,
+    requestedDate,
+    preferredTime: leadPreferredTime(pfd),
+    serviceKind: payload.service_type === 'vuokraus' ? 'vuokraus' : 'muutto',
+    notes: lead.notes,
+    hallintaUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.muuttokone.fi'}/hallinta/liidit/${lead.id}`,
+  };
+}
+
+export type CalendarSyncResult = { ok: boolean; message: string };
+
+/** Tiloja, joille puuttuva kalenterimerkintä luodaan: laskurivaraus (alustava) ja vahvistettu keikka. */
+const CALENDAR_STATUSES: LeadStatus[] = ['SCHEDULED', 'WON'];
+
+/**
+ * Liidin sivun "Päivitä kalenteriin" -nappi: siirtää olemassa olevan merkinnän liidin päivälle ja
+ * kellonajalle (korjaa myös vanhat, väärään aikaan menneet merkinnät) tai luo puuttuvan merkinnän
+ * vahvistetulle keikalle. Jos merkintä on poistettu kalenterista käsin, luodaan uusi. Ei heitä.
+ */
+export async function resyncLeadCalendarEvent(leadId: string): Promise<CalendarSyncResult> {
+  const calendarId = getCalendarId();
+  const client = getCalendarClient();
+  if (!calendarId || !client) return { ok: false, message: 'Google-kalenteria ei ole määritetty palvelimelle.' };
+
+  try {
+    const { prisma } = await import('@/server/db');
+    const lead = await prisma.lead.findUnique({ where: { id: leadId }, include: { contact: true } });
+    if (!lead) return { ok: false, message: 'Liidiä ei löytynyt.' };
+    if (!lead.requestedDate) return { ok: false, message: 'Keikalla ei ole päivää. Lisää päivä ensin.' };
+
+    const details = await leadEventDetails(lead, lead.requestedDate);
+    const start = calendarEventStart(lead.requestedDate, details.preferredTime);
+    const end = new Date(start.getTime() + DEFAULT_JOB_DURATION_HOURS * 60 * 60 * 1000);
+    const confirmed = lead.status === 'WON' || isCompletedStatus(lead.status);
+
+    if (lead.calendarEventId) {
+      let gone = false;
+      try {
+        const res = await client.events.patch({
+          calendarId,
+          eventId: lead.calendarEventId,
+          requestBody: {
+            start: { dateTime: start.toISOString(), timeZone: TIME_ZONE },
+            end: { dateTime: end.toISOString(), timeZone: TIME_ZONE },
+          },
+        });
+        gone = res.data.status === 'cancelled'; // poistettu tapahtuma voi yhä vastata, mutta ei näy kalenterissa
+      } catch (error) {
+        const code = (error as { code?: number })?.code;
+        if (code !== 404 && code !== 410) throw error;
+        gone = true;
+      }
+      if (!gone) {
+        if (confirmed) await confirmCalendarEvent(lead.id, lead.calendarEventId);
+        return { ok: true, message: `Kalenteri päivitetty: ${formatCalendarStart(start)}.` };
+      }
+      await setLeadCalendarEventId(lead.id, null);
+    }
+
+    if (!CALENDAR_STATUSES.includes(lead.status)) {
+      return { ok: false, message: 'Kalenteriin viedään vahvistetut keikat. Merkitse keikka ensin voitetuksi.' };
+    }
+    const created = await createTentativeLeadEvent(details);
+    if (!created) return { ok: false, message: 'Kalenterimerkinnän luonti epäonnistui. Yritä hetken päästä uudelleen.' };
+    await setLeadCalendarEventId(lead.id, created.eventId);
+    if (confirmed) await confirmCalendarEvent(lead.id, created.eventId);
+    return { ok: true, message: `Lisätty kalenteriin: ${formatCalendarStart(start)}.` };
+  } catch (error) {
+    await logCalendarFailure('resyncLeadCalendarEvent', leadId, error);
+    return { ok: false, message: 'Kalenterin päivitys epäonnistui. Yritä hetken päästä uudelleen.' };
   }
 }

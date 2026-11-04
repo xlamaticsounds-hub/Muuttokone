@@ -10,6 +10,7 @@ import { LeadSource, LeadStatus } from '@prisma/client';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/server/auth';
 import { isCompletedStatus } from '@/lib/lead-status';
+import { leadPreferredTime } from '@/lib/calendar-time';
 import { rateLimit } from '@/server/rate-limit';
 
 import type { NextRequest } from 'next/server';
@@ -220,7 +221,7 @@ export async function updateLeadDetails(leadId: string, data: any) {
   // lähetetty lopullinen TARJOUS voivat olla eri asioita.
   const existingLead = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: { formData: true, calendarEventId: true, requestedDate: true, contactId: true, discountPercent: true },
+    select: { formData: true, calendarEventId: true, requestedDate: true, contactId: true, discountPercent: true, status: true },
   });
   const existingFormData = parseLeadFormData(existingLead?.formData ?? null);
   const confirmedPriceRaw = typeof data.confirmedPrice === 'string' ? data.confirmedPrice.trim() : data.confirmedPrice;
@@ -232,6 +233,14 @@ export async function updateLeadDetails(leadId: string, data: any) {
     // merkkijonona sellaisenaan, väliviiva normalisoituna ajatusviivaksi ("–") jotta
     // se näyttää samalta kuin laskurin oman arvion haarukka sähköpostissa.
     updatedFormData.confirmedPrice = String(confirmedPriceRaw).replace(/\s*-\s*/g, '–');
+  }
+
+  // Toivottu kellonaika vapaana tekstinä ("klo 10", "9.30", "aamupäivä") — kalenteri tulkitsee sen
+  // (lib/calendar-time.ts). Kenttä puuttuu vanhoista lomakkeista: silloin aikaan ei kosketa.
+  if (typeof data.preferredTime === 'string') {
+    const preferredTime = data.preferredTime.trim().slice(0, 80);
+    if (preferredTime) updatedFormData.preferredTime = preferredTime;
+    else delete updatedFormData.preferredTime;
   }
 
   // Asunnon kokoluokka ja kohteen kerros/hissi eivät ole omia Prisma-sarakkeita (vain
@@ -307,17 +316,22 @@ export async function updateLeadDetails(leadId: string, data: any) {
     });
   }
 
-  // Keep an already-created calendar event in sync if the moving date changed
+  // Keep an already-created calendar event in sync if the moving date or time changed
   // here — best-effort, same "never throw" rule as the rest of the Discord
   // bot / Calendar integration (see google-calendar.ts).
+  const previousTime = leadPreferredTime(existingFormData);
+  const preferredTime = leadPreferredTime(updatedFormData);
   if (
     existingLead?.calendarEventId &&
     newRequestedDate &&
-    newRequestedDate.getTime() !== existingLead.requestedDate?.getTime()
+    (newRequestedDate.getTime() !== existingLead.requestedDate?.getTime() || preferredTime !== previousTime)
   ) {
     const { updateCalendarEventTime } = await import('@/server/google-calendar');
-    const preferredTime = typeof existingFormData.preferredTime === 'string' ? existingFormData.preferredTime : null;
     await updateCalendarEventTime(leadId, existingLead.calendarEventId, newRequestedDate, preferredTime);
+  } else if (existingLead && !existingLead.calendarEventId && newRequestedDate && existingLead.status === 'WON') {
+    // Vahvistettu keikka sai päivän vasta nyt (esim. muualta kirjattu ilman päivää) → kalenteriin
+    const { recreateConfirmedLeadEvent } = await import('@/server/google-calendar');
+    await recreateConfirmedLeadEvent(leadId);
   }
 
   return { success: true };
