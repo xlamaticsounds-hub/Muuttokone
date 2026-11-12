@@ -9,6 +9,8 @@ import AiTodoList, { type AiTodoItem, type MailStatus } from './AiTodoList';
 import { getLastMailCycle } from '@/server/mail-cycle';
 import { getIngestMode } from '@/server/mail-ingest';
 import { describeLastRun } from '@/lib/mail-status';
+import { summarizeInventory } from '@/lib/box-inventory';
+import { loadInventoryRentals } from '@/server/box-rentals';
 
 export const dynamic = 'force-dynamic'; // Ensure we always get fresh data
 
@@ -38,6 +40,8 @@ export default async function DashboardPage() {
   let mailStatus: MailStatus = { label: 'ei vielä luettu', stale: true, mode: getIngestMode(), summary: null, error: null, neverRun: true };
   let totalLeads = 0;
   let notices: CalendarNotices = { undated: 0, overdue: 0 };
+  // Laatikkovuokrat: myöhässä olevat noudot ja tämän päivän toimitukset/noudot (ks. /hallinta/inventaario)
+  let boxNotices: string[] = [];
 
   const todayKey = toHelsinkiDateInput(new Date());
   // Kalenteriin: edellisestä kuusta vuoden päähän. Hävityt, perutut ja arkistoidut jäävät pois.
@@ -73,6 +77,20 @@ export default async function DashboardPage() {
       prisma.lead.count({ where: { ...activeWhere, requestedDate: { lt: todayUtc } } }),
     ]);
     notices = { undated, overdue };
+    try {
+      const inventory = summarizeInventory(0, await loadInventoryRentals(), todayKey);
+      const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+      const deliveriesToday = inventory.upcoming.filter((r) => r.deliveryKey === todayKey).length;
+      const pickupsToday = inventory.current.filter((r) => r.pickupKey === todayKey).length;
+      boxNotices = [
+        inventory.overduePickups.length ? count(inventory.overduePickups.length, 'nouto myöhässä', 'noutoa myöhässä') : null,
+        inventory.unmarkedDeliveries.length ? count(inventory.unmarkedDeliveries.length, 'toimitus merkitsemättä', 'toimitusta merkitsemättä') : null,
+        deliveriesToday ? `toimituksia tänään ${deliveriesToday}` : null,
+        pickupsToday ? `noutoja tänään ${pickupsToday}` : null,
+      ].filter((line): line is string => line !== null);
+    } catch (error) {
+      console.warn('[hallinta/dashboard] laatikkovuokria ei voitu hakea', error);
+    }
     // Huomiolista on lisäosa: jos sen haku epäonnistuu (esim. migraatiota ei ole ajettu), etusivu toimii silti
     try {
       const [todos, total] = await Promise.all([
@@ -115,6 +133,15 @@ export default async function DashboardPage() {
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200">
           Tietokantaan ei juuri nyt saada yhteyttä. Hallintapaneeli on silti käytettävissä, mutta data ei päivity.
         </div>
+      )}
+
+      {boxNotices.length > 0 && (
+        <Link
+          href="/hallinta/inventaario"
+          className="flex min-h-11 flex-wrap items-center gap-x-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-900 hover:bg-amber-100 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200 dark:hover:bg-amber-900/30"
+        >
+          <span className="font-semibold">📦 Laatikot:</span> {boxNotices.join(' · ')} <span className="ml-auto font-semibold">Inventaario →</span>
+        </Link>
       )}
 
       {/* Työpöydällä Huomio ja Keikat vierekkäin, puhelimella päällekkäin (Huomio ensin) */}

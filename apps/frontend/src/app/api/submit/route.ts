@@ -414,6 +414,10 @@ async function notifyNewLead(
     }).catch(() => {});
   }
 
+  // Laatikkovuokra inventaarioon (luo vuokrausrivin) ja varoitus, jos laatikot eivät riitä vuokra-ajalla
+  const { boxRentalWarningForNewLead } = await import('@/server/box-rentals');
+  const boxWarning = await boxRentalWarningForNewLead(lead.id);
+
   const posted = await postLeadToDiscord({
     leadId: lead.id,
     customerName: details.customerName,
@@ -436,6 +440,7 @@ async function notifyNewLead(
     overlapWarnings,
     calendarLink: calendarEvent?.htmlLink ?? null,
     baseTripNote,
+    boxWarning,
   });
 
   // Best-effort: save whatever actually succeeded, so a later Discord

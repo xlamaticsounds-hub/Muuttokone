@@ -176,6 +176,12 @@ const createPrismaMock = (): PrismaClient => {
       return expanded;
     }
 
+    if (model === 'boxRental' && include.lead) {
+      const lead = getRows('lead').find((l) => l.id === row.leadId) ?? null;
+      const nested = typeof include.lead === 'object' ? include.lead.include : undefined;
+      return { ...row, lead: lead && nested ? expandInclude('lead', lead, nested) : lead };
+    }
+
     if (model === 'contact' && (include._count || include.leads)) {
       const contactLeads = getRows('lead').filter((lead) => lead.contactId === row.id);
       const enriched: MockRecord = { ...row };

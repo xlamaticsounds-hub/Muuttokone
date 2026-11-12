@@ -294,6 +294,14 @@ export async function syncCalendarWithLeadStatus(
   lead: { id: string; calendarEventId: string | null },
   status: LeadStatus,
 ): Promise<void> {
+  // Laatikkovuokran toimitus- ja noutomerkinnät seuraavat samaa tilaa (ks. server/box-rentals.ts).
+  // Dynaaminen import: box-rentals käyttää tämän tiedoston funktioita.
+  try {
+    const { syncBoxRentalCalendarForLead } = await import('@/server/box-rentals');
+    await syncBoxRentalCalendarForLead(lead.id, status);
+  } catch (error) {
+    console.warn('[google-calendar] laatikkovuokran kalenterisynkronointi epäonnistui', error);
+  }
   if (!lead.calendarEventId) return;
   if (status === 'WON' || isCompletedStatus(status)) {
     await confirmCalendarEvent(lead.id, lead.calendarEventId);
@@ -410,5 +418,49 @@ export async function resyncLeadCalendarEvent(leadId: string): Promise<CalendarS
   } catch (error) {
     await logCalendarFailure('resyncLeadCalendarEvent', leadId, error);
     return { ok: false, message: 'Kalenterin päivitys epäonnistui. Yritä hetken päästä uudelleen.' };
+  }
+}
+
+/**
+ * Koko päivän merkintä (laatikkovuokran toimitus tai nouto). Päivittää olemassa olevan tai luo uuden,
+ * jos merkintää ei ole tai se on poistettu kalenterista käsin. Palauttaa tapahtuman tunnisteen, tai
+ * null jos kalenteria ei ole määritetty tai luonti epäonnistui. Ei heitä.
+ */
+export async function upsertAllDayEvent(
+  leadId: string,
+  eventId: string | null,
+  event: { summary: string; description: string; dateKey: string; confirmed: boolean },
+): Promise<string | null> {
+  const calendarId = getCalendarId();
+  const client = getCalendarClient();
+  if (!calendarId || !client) return null;
+
+  const next = new Date(`${event.dateKey}T00:00:00Z`);
+  next.setUTCDate(next.getUTCDate() + 1);
+  const requestBody: calendar_v3.Schema$Event = {
+    summary: event.summary,
+    description: event.description,
+    start: { date: event.dateKey },
+    end: { date: next.toISOString().slice(0, 10) },
+    status: event.confirmed ? 'confirmed' : 'tentative',
+    colorId: event.confirmed ? COLOR_ID_CONFIRMED : COLOR_ID_PENDING,
+    transparency: 'transparent', // ei varaa koko päivää kalenterissa
+  };
+
+  try {
+    if (eventId) {
+      try {
+        const res = await client.events.patch({ calendarId, eventId, requestBody });
+        if (res.data.status !== 'cancelled') return eventId;
+      } catch (error) {
+        const code = (error as { code?: number })?.code;
+        if (code !== 404 && code !== 410) throw error;
+      }
+    }
+    const res = await client.events.insert({ calendarId, requestBody });
+    return res.data.id ?? null;
+  } catch (error) {
+    await logCalendarFailure('upsertAllDayEvent', leadId, error);
+    return eventId;
   }
 }

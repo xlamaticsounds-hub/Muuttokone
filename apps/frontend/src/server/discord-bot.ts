@@ -210,6 +210,8 @@ export type LeadMessageDetails = {
   calendarLink: string | null;
   // Keikka on kaukana tukikohdasta: laskurin hinta ei kata tyhjää ajoa (ks. lib/base-trip.ts)
   baseTripNote?: string | null;
+  // Laatikkovuokra ei mahdu varastoon vuokra-ajalla (ks. server/box-rentals.ts)
+  boxWarning?: string | null;
 };
 
 /**
@@ -269,6 +271,10 @@ export async function postLeadToDiscord(
 
     if (details.baseTripNote) {
       embed.addFields({ name: '⚠️ Kaukana tukikohdasta', value: details.baseTripNote.slice(0, 1000), inline: false });
+    }
+
+    if (details.boxWarning) {
+      embed.addFields({ name: '📦 Laatikot eivät riitä', value: details.boxWarning.slice(0, 1000), inline: false });
     }
 
     const linkLines = [`[Avaa hallintapaneelissa](${details.hallintaUrl})`];
