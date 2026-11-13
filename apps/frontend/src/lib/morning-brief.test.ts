@@ -40,4 +40,17 @@ describe('buildMorningBrief', () => {
     expect(msg.description).toContain('2 menneen päivän keikkaa');
     expect(msg.description).toContain('https://x.test');
   });
+  it('laatikot: päivän toimitukset ja noudot sekä kuittaamattomat', () => {
+    const boxes = { deliveries: [{ customer: 'Virtanen', quantity: 50 }], pickups: [{ customer: 'Korhonen', quantity: 40 }], overduePickups: 2, unmarkedDeliveries: 1 };
+    const msg = buildMorningBrief({ ...base, boxes })!;
+    expect(msg.description).toContain('**📦 Laatikot**');
+    expect(msg.description).toContain('• Toimitus: Virtanen 50 kpl');
+    expect(msg.description).toContain('• Nouto: Korhonen 40 kpl');
+    expect(msg.description).toContain('2 noutoa myöhässä · 1 toimitus merkitsemättä');
+  });
+  it('pelkät laatikot riittävät viestiin, tyhjät laatikot eivät', () => {
+    const none = { deliveries: [], pickups: [], overduePickups: 0, unmarkedDeliveries: 0 };
+    expect(buildMorningBrief({ ...base, boxes: none })).toBeNull();
+    expect(buildMorningBrief({ ...base, boxes: { ...none, overduePickups: 1 } })!.description).toContain('1 nouto myöhässä');
+  });
 });

@@ -334,5 +334,11 @@ export async function updateLeadDetails(leadId: string, data: any) {
     await recreateConfirmedLeadEvent(leadId);
   }
 
+  // Laatikkovuokran arvioidut päivät seuraavat muuttopäivää (ja kalenterin toimitus/nouto siirtyy)
+  if (newRequestedDate?.getTime() !== existingLead?.requestedDate?.getTime()) {
+    const { refreshBoxRentalFromLead } = await import('@/server/box-rentals');
+    await refreshBoxRentalFromLead(leadId);
+  }
+
   return { success: true };
 }

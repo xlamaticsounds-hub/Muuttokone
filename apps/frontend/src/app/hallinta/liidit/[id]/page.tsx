@@ -23,6 +23,10 @@ import LeadWorkTimeCard from './LeadWorkTimeCard';
 import LeadAttachmentsCard, { type AttachmentDto } from './LeadAttachmentsCard';
 import CalendarStatus from './CalendarStatus';
 import PriceFloorCard from './PriceFloorCard';
+import BoxRentalCard, { type BoxRentalDto } from './BoxRentalCard';
+import { addDaysToKey, dateToKey } from '@/lib/box-inventory';
+import { boxRentalWarning, ensureBoxRentalForLead } from '@/server/box-rentals';
+import { BOX_ITEM_ID, getRentalItem } from '@/features/vuokraus/rental';
 import { PRICE_FLOOR_COSTS_KEY, estimateFloorJob, parsePriceFloorCosts } from '@/lib/price-floor';
 import { getAppState } from '@/server/app-state';
 import { leadOrigin } from '@/lib/lead-origin';
@@ -33,7 +37,7 @@ import { toNoteDto, type NoteDto } from '../../muistiinpanot/dto';
 import { leadJobLabel, toTimeEntryDto, type TimeEntryDto } from '../../tyoajat/dto';
 import { completeTargetFor } from '../complete-target';
 import { sentReportsContainingLead } from '@/server/partner-reports';
-import { formatHelsinkiDate } from '@/lib/helsinki-time';
+import { formatHelsinkiDate, toHelsinkiDateInput } from '@/lib/helsinki-time';
 import { defaultFinalPrice } from '@/server/lead-format';
 
 export const dynamic = 'force-dynamic';
@@ -142,6 +146,37 @@ export default async function LeadDetailPage({
   const external = pfd.external && typeof pfd.external === 'object' ? (pfd.external as Record<string, unknown>) : null;
   const externalLabel = external ? [externalSourceLabel(external.source) ?? 'Muu', typeof external.detail === 'string' ? external.detail : null].filter(Boolean).join(', ') : null;
 
+  // Laatikkovuokra (inventaario): rivi luodaan lomaketiedoista, jos sitä ei vielä ole
+  let boxRental: BoxRentalDto | null = null;
+  let boxWarning: string | null = null;
+  try {
+    const row = await ensureBoxRentalForLead(lead.id);
+    if (row) {
+      boxRental = {
+        id: row.id,
+        quantity: row.quantity,
+        deliveryKey: dateToKey(row.deliveryDate),
+        pickupKey: dateToKey(row.pickupDate),
+        datesEstimated: row.datesEstimated,
+        status: row.status,
+        returnedQty: row.returnedQty,
+        lostQty: row.lostQty,
+        notes: row.notes,
+        manualCalendar: Boolean(row.manualCalendar),
+      };
+      boxWarning = await boxRentalWarning(row);
+    }
+  } catch (error) {
+    console.warn('[hallinta/liidit/[id]] Laatikkovuokraa ei voitu hakea', error);
+  }
+  const boxItem = getRentalItem(BOX_ITEM_ID);
+  const boxDeliveryDefault = lead.requestedDate ? addDaysToKey(dateToKey(lead.requestedDate), -7) : toHelsinkiDateInput(new Date());
+  const boxDefaults = {
+    quantity: boxItem?.qty.default ?? 50,
+    deliveryKey: boxDeliveryDefault,
+    pickupKey: addDaysToKey(boxDeliveryDefault, boxItem?.days.default ?? 14),
+  };
+
   const completeTarget = completeTargetFor(lead);
   // Lähetetyt kumppaniraportit joissa tämä muutto on (palkkio jo laskutettu)
   const reportedIn = lead.discountCode ? await sentReportsContainingLead(lead.id).catch(() => []) : [];
@@ -215,6 +250,8 @@ export default async function LeadDetailPage({
       {priceFloorJob && (
         <PriceFloorCard costs={priceFloorCosts} initialJob={priceFloorJob} price={defaultFinalPrice(lead)} />
       )}
+
+      <BoxRentalCard leadId={lead.id} rental={boxRental} defaults={boxDefaults} warning={boxWarning} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left Column: Contact & Move Info */}

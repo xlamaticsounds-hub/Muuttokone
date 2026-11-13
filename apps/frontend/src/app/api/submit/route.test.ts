@@ -48,6 +48,7 @@ vi.mock('@/server/google-calendar', () => ({
   findOverlappingEvents: vi.fn(async () => []),
   createTentativeLeadEvent: vi.fn(async () => null),
 }));
+vi.mock('@/server/box-rentals', () => ({ boxRentalWarningForNewLead: vi.fn(async () => null) }));
 
 const { POST: submit } = await import('./route');
 const { POST: checkCode } = await import('../discount-code/route');

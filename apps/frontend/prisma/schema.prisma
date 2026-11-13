@@ -152,6 +152,9 @@ model Lead {
   partnerReportedAt DateTime?
   partnerReportId   String?
 
+  // Muuttolaatikoiden vuokraus (inventaario), luodaan liidin tiedoista ks. src/server/box-rentals.ts
+  boxRental BoxRental?
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
@@ -462,4 +465,44 @@ model LeadAttachment {
   createdAt DateTime @default(now())
 
   @@index([leadId])
+}
+
+// Muuttolaatikoiden vuokraus: yksi per liidi. Luodaan automaattisesti liidin lomaketiedoista
+// (Muuttolaatikot-sivun tilaus tai laskurin laatikkovuokra) ja päivät korjataan hallinnassa
+// toteutuneiksi. Varattu/vahvistettu tulee liidin tilasta, fyysinen tila tästä (ks. lib/box-inventory.ts).
+enum BoxRentalStatus {
+  RESERVED // Varattu, ei vielä toimitettu
+  DELIVERED // Toimitettu asiakkaalle
+  RETURNED // Noudettu takaisin varastoon
+  CANCELLED // Vuokraus peruttu (liidi voi silti toteutua ilman laatikoita)
+}
+
+model BoxRental {
+  id     String @id @default(cuid())
+  lead   Lead   @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  leadId String @unique
+
+  quantity       Int
+  // Suomen päivä UTC-keskiyönä (kuten Lead.requestedDate)
+  deliveryDate   DateTime
+  pickupDate     DateTime
+  datesEstimated Boolean  @default(true) // true = päivät arvioitu lomakkeesta, ei vielä vahvistettu
+
+  status      BoxRentalStatus @default(RESERVED)
+  returnedQty Int?
+  lostQty     Int             @default(0)
+  notes       String?
+
+  // Google-kalenterin toimitus- ja noutomerkinnät (koko päivän tapahtumat)
+  deliveryEventId String?
+  pickupEventId   String?
+  // Toimitus ja nouto on merkitty kalenteriin käsin (esim. ennen inventaariota): ei luoda päällekkäisiä merkintöjä
+  manualCalendar  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([deliveryDate])
+  @@index([pickupDate])
 }
