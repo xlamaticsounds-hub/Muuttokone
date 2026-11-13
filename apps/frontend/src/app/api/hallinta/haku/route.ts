@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/server/auth';
 import { prisma } from '@/server/db';
 import { LEAD_STATUS_LABELS } from '@/lib/lead-status';
+import { INVOICING_ENABLED, isAdminSectionHidden } from '@/lib/features';
 
 const LIMIT = 6;
 
@@ -50,18 +51,23 @@ export async function GET(req: NextRequest) {
         orderBy: { createdAt: 'desc' },
         take: LIMIT,
       }),
-      prisma.contact.findMany({ where: contactWhere, orderBy: { updatedAt: 'desc' }, take: LIMIT }),
-      prisma.invoice.findMany({
-        where: {
-          OR: [
-            { customerName: text },
-            { customerEmail: text },
-            ...(invoiceNumber !== null ? [{ invoiceNumber }] : []),
-          ],
-        },
-        orderBy: { createdAt: 'desc' },
-        take: LIMIT,
-      }),
+      // Piilotettujen osioiden (lib/features.ts) tuloksia ei haeta: asiakkaat löytyvät liideistä
+      isAdminSectionHidden('/hallinta/asiakkaat')
+        ? Promise.resolve([])
+        : prisma.contact.findMany({ where: contactWhere, orderBy: { updatedAt: 'desc' }, take: LIMIT }),
+      INVOICING_ENABLED
+        ? prisma.invoice.findMany({
+            where: {
+              OR: [
+                { customerName: text },
+                { customerEmail: text },
+                ...(invoiceNumber !== null ? [{ invoiceNumber }] : []),
+              ],
+            },
+            orderBy: { createdAt: 'desc' },
+            take: LIMIT,
+          })
+        : Promise.resolve([]),
     ]);
 
     const result: SearchResults = {
