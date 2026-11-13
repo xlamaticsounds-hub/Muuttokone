@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Search } from 'lucide-react';
 import type { SearchResults } from '@/app/api/hallinta/haku/route';
+import { INVOICING_ENABLED } from '@/lib/features';
 
 const EMPTY: SearchResults = { leads: [], contacts: [], invoices: [] };
 
@@ -86,7 +87,7 @@ export default function GlobalSearch({ className = '', autoFocus = false, onNavi
         }}
         onFocus={() => setOpen(true)}
         onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
-        placeholder="Hae liidejä, asiakkaita, laskuja..."
+        placeholder={INVOICING_ENABLED ? 'Hae liidejä, asiakkaita, laskuja...' : 'Hae liidejä, asiakkaita, osoitteita...'}
         aria-label="Hae"
         autoFocus={autoFocus}
         className="w-full rounded-full border border-gray-300 bg-transparent py-2.5 pl-10 pr-4 text-base text-gray-600 sm:text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary dark:border-gray-600 dark:text-gray-300"

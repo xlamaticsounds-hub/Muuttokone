@@ -4,6 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import GlobalSearch from "./GlobalSearch";
+import { isAdminSectionHidden } from "@/lib/features";
 import { BookUser, ChartLine, DollarSign, Gauge, Mail, Settings, Zap, User, LogOut, Search, X, Send, FileText, ImageIcon, Truck, Users, Receipt, History, FileSpreadsheet, Timer, StickyNote, TrendingUp, Package } from 'lucide-react';
 
 interface AdminLayoutShellProps {
@@ -20,7 +21,7 @@ export default function AdminLayoutShell({ children, userEmail, runningTimers = 
   const userMenuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
-  const links = [
+  const sections = [
     { name: "Hallintapaneeli", href: "/hallinta/dashboard" },
     { name: "Liidit", href: "/hallinta/liidit" },
     { name: "Keikat", href: "/hallinta/keikat" },
@@ -38,6 +39,8 @@ export default function AdminLayoutShell({ children, userEmail, runningTimers = 
     { name: "Analytiikka", href: "/hallinta/analytiikka" },
     { name: "Lokit", href: "/hallinta/lokit" },
   ];
+  // Piilotetut osiot (lib/features.ts) eivät näy valikossa, mutta niiden sivuilla otsikko löytyy silti
+  const links = sections.filter((link) => !isAdminSectionHidden(link.href));
 
   const settingsLink = { name: "Asetukset", href: "/hallinta/asetukset" };
 
@@ -78,7 +81,7 @@ export default function AdminLayoutShell({ children, userEmail, runningTimers = 
   }, [sidebarOpen]);
 
   const getPageTitle = (path: string) => {
-    const allLinks = [...links, settingsLink];
+    const allLinks = [...sections, settingsLink];
     const link = allLinks.find(l => l.href === path);
     if (link) return link.name;
     if (path === "/hallinta/liidit/uusi") return "Keikka muualta";

@@ -7,6 +7,7 @@ import { updateLeadDetails } from '@/server/actions';
 import { createInvoiceFromLead } from '@/server/invoice-actions';
 import { parseLeadFormData, getStoredPrice } from '@/server/lead-format';
 import { leadPreferredTime } from '@/lib/calendar-time';
+import { INVOICING_ENABLED } from '@/lib/features';
 import { Lead, Contact } from '@prisma/client';
 import QuoteEmailPreviewModal from './QuoteEmailPreviewModal';
 import BookingConfirmationPreviewModal from './BookingConfirmationPreviewModal';
@@ -119,18 +120,20 @@ export default function LeadDetailActions({
         <div className="grid grid-cols-2 gap-2">
           <Link
             href={`/hallinta/liidit/${lead.id}/kuitti`}
-            className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-center text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+            className={`${INVOICING_ENABLED ? '' : 'col-span-2 '}flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-center text-sm font-medium text-gray-700 hover:bg-gray-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700`}
           >
             Tee kuitti
           </Link>
-          <button
-            onClick={handleCreateInvoice}
-            disabled={creatingInvoice}
-            title="Luo laskuluonnos liidin asiakastiedoista, palvelusta ja hinnasta"
-            className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-center text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
-          >
-            {creatingInvoice ? 'Luodaan...' : 'Tee lasku'}
-          </button>
+          {INVOICING_ENABLED && (
+            <button
+              onClick={handleCreateInvoice}
+              disabled={creatingInvoice}
+              title="Luo laskuluonnos liidin asiakastiedoista, palvelusta ja hinnasta"
+              className="flex-1 rounded-md border border-gray-300 bg-white px-4 py-2 text-center text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700"
+            >
+              {creatingInvoice ? 'Luodaan...' : 'Tee lasku'}
+            </button>
+          )}
           <button
             onClick={() => {
               setConfirmationFeedback(null);
