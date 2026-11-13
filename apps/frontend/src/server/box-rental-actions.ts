@@ -6,8 +6,10 @@ import { authOptions } from '@/server/auth';
 import { prisma } from '@/server/db';
 import { setAppState } from '@/server/app-state';
 import { createLog } from '@/server/repo/logs';
-import { BOX_STOCK_KEY, MAX_RENTAL_QTY, isDateKey, keyToDate, lostOnReturn } from '@/lib/box-inventory';
-import { boxRentalWarning, getBoxStockTotal, syncBoxRentalCalendar } from '@/server/box-rentals';
+import { BOX_STOCK_KEY, MAX_RENTAL_QTY, dateToKey, isDateKey, keyToDate, lostOnReturn, type BoxRentalStatusKey } from '@/lib/box-inventory';
+import { leadPreferredTime } from '@/lib/calendar-time';
+import { parseLeadFormData } from '@/server/lead-format';
+import { boxRentalWarning, getBoxStockTotal, isRentalOrderLead, loadInventoryRentals, syncBoxRentalCalendar } from '@/server/box-rentals';
 
 // Laatikkovuokrausten muokkaus hallinnassa (liidin kortti ja Inventaario-sivu). Palauttaa aina tuloksen
 // eikä heitä, koska Next.js piilottaa server actionin virheviestit tuotannossa.
@@ -15,6 +17,12 @@ import { boxRentalWarning, getBoxStockTotal, syncBoxRentalCalendar } from '@/ser
 export type BoxRentalActionResult = { success: true; warning?: string | null } | { success: false; message: string };
 
 const noSession: BoxRentalActionResult = { success: false, message: 'Kirjaudu sisään.' };
+const ALLOWED_TRANSITIONS: Record<BoxRentalStatusKey, BoxRentalStatusKey[]> = {
+  RESERVED: ['DELIVERED', 'CANCELLED'],
+  DELIVERED: ['RETURNED', 'RESERVED'],
+  RETURNED: ['DELIVERED'],
+  CANCELLED: ['RESERVED'],
+};
 const MAX_STOCK = 100_000;
 const MAX_NOTES = 1000;
 
@@ -46,7 +54,10 @@ export async function saveBoxRental(input: {
   const notes = typeof input.notes === 'string' && input.notes.trim() ? input.notes.trim().slice(0, MAX_NOTES) : null;
 
   try {
-    const lead = await prisma.lead.findUnique({ where: { id: input.leadId }, select: { id: true } });
+    const lead = await prisma.lead.findUnique({
+      where: { id: input.leadId },
+      select: { id: true, formData: true, requestedDate: true, calendarEventId: true },
+    });
     if (!lead) return { success: false, message: 'Liidiä ei löytynyt.' };
     const data = {
       quantity,
@@ -67,6 +78,15 @@ export async function saveBoxRental(input: {
       message: `Laatikkovuokra: ${quantity} kpl, ${input.deliveryKey} – ${input.pickupKey}`,
       actorId: session.user?.email ?? null,
     });
+    // Muuttolaatikot-tilauksessa liidin oma päivä ja kalenterimerkintä ovat toimitus: siirretään mukana
+    if (isRentalOrderLead(lead.formData) && (!lead.requestedDate || dateToKey(lead.requestedDate) !== input.deliveryKey)) {
+      const deliveryDate = keyToDate(input.deliveryKey);
+      await prisma.lead.update({ where: { id: lead.id }, data: { requestedDate: deliveryDate } });
+      if (lead.calendarEventId) {
+        const { updateCalendarEventTime } = await import('@/server/google-calendar');
+        await updateCalendarEventTime(lead.id, lead.calendarEventId, deliveryDate, leadPreferredTime(parseLeadFormData(lead.formData)));
+      }
+    }
     await syncBoxRentalCalendar(rental.id);
     refresh(input.leadId);
     return { success: true, warning: await boxRentalWarning(rental) };
@@ -92,6 +112,10 @@ export async function setBoxRentalStatus(input: {
   try {
     const rental = await prisma.boxRental.findUnique({ where: { id: input.id } });
     if (!rental) return { success: false, message: 'Vuokrausta ei löytynyt.' };
+    // Samat siirtymät kuin napeissa (InventoryActions): esim. noudetun peruminen palauttaisi hävikin varastoon
+    if (!ALLOWED_TRANSITIONS[rental.status].includes(input.status)) {
+      return { success: false, message: 'Tila on jo muuttunut. Päivitä sivu.' };
+    }
 
     let returnedQty: number | null = null;
     let lostQty = 0;
@@ -130,26 +154,45 @@ export async function setBoxRentalStatus(input: {
   }
 }
 
-/** Varaston koko (laatikoita yhteensä, myös vuokralla olevat). */
-export async function saveBoxStock(total: number): Promise<BoxRentalActionResult> {
+async function writeBoxStock(total: number, message: string, actorId: string | null): Promise<BoxRentalActionResult> {
+  await setAppState(BOX_STOCK_KEY, { total });
+  await createLog({ entityType: 'System', entityId: BOX_STOCK_KEY, action: 'box_stock.saved', message, actorId });
+  revalidatePath('/hallinta/inventaario');
+  return { success: true };
+}
+
+/**
+ * Hyllyssä nyt olevat laatikot (laskettu varastossa). Varaston koko = hyllyssä + asiakkailla olevat,
+ * joten asiakkailla olevia ei tarvitse laskea käsin.
+ */
+export async function saveBoxShelfCount(shelf: number): Promise<BoxRentalActionResult> {
   const session = await getServerSession(authOptions);
   if (!session) return noSession;
-  const n = Number(total);
-  if (!Number.isInteger(n) || n < 0 || n > MAX_STOCK) return { success: false, message: 'Anna laatikoiden määrä kokonaislukuna.' };
+  const n = Number(shelf);
+  if (!Number.isInteger(n) || n < 0 || n > MAX_STOCK) return { success: false, message: 'Anna hyllyssä olevien laatikoiden määrä kokonaislukuna.' };
   try {
-    const previous = await getBoxStockTotal();
-    await setAppState(BOX_STOCK_KEY, { total: n });
-    await createLog({
-      entityType: 'System',
-      entityId: BOX_STOCK_KEY,
-      action: 'box_stock.saved',
-      message: `Laatikkovarasto: ${previous ?? '–'} -> ${n}`,
-      actorId: session.user?.email ?? null,
-    });
-    revalidatePath('/hallinta/inventaario');
-    return { success: true };
+    const [previous, rentals] = await Promise.all([getBoxStockTotal(), loadInventoryRentals()]);
+    const out = rentals.filter((r) => r.status === 'DELIVERED').reduce((sum, r) => sum + r.quantity, 0);
+    const total = n + out;
+    return await writeBoxStock(total, `Laatikkovarasto: ${previous ?? '–'} -> ${total} (hyllyssä ${n} + asiakkailla ${out})`, session.user?.email ?? null);
   } catch (error) {
-    console.error('[box-rental-actions] saveBoxStock', error);
+    console.error('[box-rental-actions] saveBoxShelfCount', error);
+    return { success: false, message: 'Tallennus epäonnistui.' };
+  }
+}
+
+/** Uudet laatikot varastoon (+) tai rikkinäiset pois (−). */
+export async function adjustBoxStock(delta: number): Promise<BoxRentalActionResult> {
+  const session = await getServerSession(authOptions);
+  if (!session) return noSession;
+  const n = Number(delta);
+  if (!Number.isInteger(n) || n === 0 || Math.abs(n) > MAX_STOCK) return { success: false, message: 'Anna lisättävä (+) tai poistettava (−) määrä.' };
+  try {
+    const previous = (await getBoxStockTotal()) ?? 0;
+    const total = Math.max(0, Math.min(MAX_STOCK, previous + n));
+    return await writeBoxStock(total, `Laatikkovarasto: ${previous} -> ${total} (${n > 0 ? `lisätty ${n}` : `poistettu ${-n}`})`, session.user?.email ?? null);
+  } catch (error) {
+    console.error('[box-rental-actions] adjustBoxStock', error);
     return { success: false, message: 'Tallennus epäonnistui.' };
   }
 }

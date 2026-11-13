@@ -4,13 +4,17 @@ import { getAppState } from '@/server/app-state';
 import { parseLeadFormData } from '@/server/lead-format';
 import { createLog } from '@/server/repo/logs';
 import {
+  BACKFILL_LOOKBACK_DAYS,
   BOX_STOCK_KEY,
+  addDaysToKey,
   checkOverbooking,
   dateToKey,
   extractBoxRentalRequest,
+  isPastRental,
   keyToDate,
   overbookingMessage,
   rentalCommitment,
+  type BoxRentalRequest,
   type InventoryRental,
 } from '@/lib/box-inventory';
 import { toHelsinkiDateInput } from '@/lib/helsinki-time';
@@ -60,25 +64,43 @@ function isUniqueViolation(error: unknown): boolean {
   return (error as { code?: string })?.code === 'P2002';
 }
 
-/** Luo liidille vuokrausrivin lomaketiedoista, jos sitä ei vielä ole. Palauttaa rivin tai null. */
+const todayKey = () => toHelsinkiDateInput(new Date());
+
+/** Lomakkeen laatikkovuokra, jos se on vielä ajankohtainen (nouto tänään tai myöhemmin). */
+function currentRequestOf(lead: { formData: unknown; requestedDate: Date | null }): BoxRentalRequest | null {
+  const request = extractBoxRentalRequest(parseLeadFormData(lead.formData), lead.requestedDate);
+  return request && !isPastRental(request, todayKey()) ? request : null;
+}
+
+async function createRentalFromRequest(leadId: string, request: BoxRentalRequest): Promise<BoxRental> {
+  const row = await prisma.boxRental.create({
+    data: {
+      leadId,
+      quantity: request.quantity,
+      deliveryDate: keyToDate(request.deliveryKey),
+      pickupDate: keyToDate(request.pickupKey),
+      datesEstimated: true,
+      status: 'RESERVED',
+    },
+  });
+  // Jo vahvistettu keikka (esim. ennen inventaariota tullut) saa toimitus- ja noutomerkinnät heti
+  await syncBoxRentalCalendar(row.id);
+  return row;
+}
+
+/**
+ * Luo liidille vuokrausrivin lomaketiedoista, jos sitä ei vielä ole. Palauttaa rivin tai null.
+ * Vanhoille liideille (nouto mennyt) riviä ei luoda, ks. isPastRental.
+ */
 export async function ensureBoxRentalForLead(leadId: string): Promise<BoxRental | null> {
   try {
     const existing = await prisma.boxRental.findUnique({ where: { leadId } });
     if (existing) return existing;
     const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { formData: true, requestedDate: true } });
     if (!lead) return null;
-    const request = extractBoxRentalRequest(parseLeadFormData(lead.formData), lead.requestedDate);
+    const request = currentRequestOf(lead);
     if (!request) return null;
-    return await prisma.boxRental.create({
-      data: {
-        leadId,
-        quantity: request.quantity,
-        deliveryDate: keyToDate(request.deliveryKey),
-        pickupDate: keyToDate(request.pickupKey),
-        datesEstimated: true,
-        status: 'RESERVED',
-      },
-    });
+    return await createRentalFromRequest(leadId, request);
   } catch (error) {
     if (isUniqueViolation(error)) return prisma.boxRental.findUnique({ where: { leadId } }).catch(() => null);
     console.warn('[box-rentals] vuokrausrivin luonti epäonnistui', leadId, error);
@@ -89,11 +111,17 @@ export async function ensureBoxRentalForLead(leadId: string): Promise<BoxRental 
 /**
  * Luo puuttuvat vuokrausrivit liideille, joilla on laatikkovuokra lomaketiedoissa (myös ennen
  * inventaarion käyttöönottoa tulleet). Idempotentti: liidi, jolla on jo rivi (myös peruttu), ohitetaan.
+ * Luetaan vain liidit, joista voi vielä tulla ajankohtainen vuokraus (BACKFILL_LOOKBACK_DAYS).
  */
 export async function syncMissingBoxRentals(): Promise<number> {
+  const cutoff = keyToDate(addDaysToKey(todayKey(), -BACKFILL_LOOKBACK_DAYS));
   const [leads, existing] = await Promise.all([
     prisma.lead.findMany({
-      where: { deletedAt: null, boxRental: { is: null } },
+      where: {
+        deletedAt: null,
+        boxRental: { is: null },
+        OR: [{ requestedDate: { gte: cutoff } }, { requestedDate: null, createdAt: { gte: cutoff } }],
+      },
       select: { id: true, formData: true, requestedDate: true },
     }),
     prisma.boxRental.findMany({ select: { leadId: true } }),
@@ -102,25 +130,52 @@ export async function syncMissingBoxRentals(): Promise<number> {
   let created = 0;
   for (const lead of leads) {
     if (hasRental.has(lead.id)) continue;
-    const request = extractBoxRentalRequest(parseLeadFormData(lead.formData), lead.requestedDate);
+    const request = currentRequestOf(lead);
     if (!request) continue;
     try {
-      await prisma.boxRental.create({
-        data: {
-          leadId: lead.id,
-          quantity: request.quantity,
-          deliveryDate: keyToDate(request.deliveryKey),
-          pickupDate: keyToDate(request.pickupKey),
-          datesEstimated: true,
-          status: 'RESERVED',
-        },
-      });
+      await createRentalFromRequest(lead.id, request);
       created += 1;
     } catch (error) {
       if (!isUniqueViolation(error)) console.warn('[box-rentals] synkronointi ohitti liidin', lead.id, error);
     }
   }
   return created;
+}
+
+/**
+ * Liidin päivä tai lomaketiedot muuttuivat hallinnassa: arvioidut vuokrauspäivät (ja määrä) seuraavat
+ * uutta muuttopäivää, ja kalenterimerkinnät siirtyvät. Käsin vahvistettuihin päiviin ei kosketa.
+ */
+export async function refreshBoxRentalFromLead(leadId: string): Promise<void> {
+  try {
+    const rental = await prisma.boxRental.findUnique({ where: { leadId } });
+    if (!rental) {
+      await ensureBoxRentalForLead(leadId);
+      return;
+    }
+    if (rental.status !== 'RESERVED' || !rental.datesEstimated) return;
+    const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { formData: true, requestedDate: true } });
+    const request = lead ? extractBoxRentalRequest(parseLeadFormData(lead.formData), lead.requestedDate) : null;
+    if (!request) return;
+    const unchanged =
+      request.quantity === rental.quantity &&
+      request.deliveryKey === dateToKey(rental.deliveryDate) &&
+      request.pickupKey === dateToKey(rental.pickupDate);
+    if (unchanged) return;
+    await prisma.boxRental.update({
+      where: { id: rental.id },
+      data: { quantity: request.quantity, deliveryDate: keyToDate(request.deliveryKey), pickupDate: keyToDate(request.pickupKey) },
+    });
+    await createLog({
+      entityType: 'Lead',
+      entityId: leadId,
+      action: 'box_rental.dates_followed_lead',
+      message: `Laatikkovuokra siirtyi liidin mukana: ${request.quantity} kpl, ${request.deliveryKey} – ${request.pickupKey}`,
+    }).catch(() => {});
+    await syncBoxRentalCalendar(rental.id);
+  } catch (error) {
+    console.warn('[box-rentals] vuokrauksen päivitys liidistä epäonnistui', leadId, error);
+  }
 }
 
 /** Ylivarausvaroitus liidin vuokraukselle, tai null jos laatikot riittävät (tai varastoa ei ole asetettu). */
@@ -134,7 +189,7 @@ export async function boxRentalWarning(rental: Pick<BoxRental, 'id' | 'quantity'
     deliveryKey: dateToKey(rental.deliveryDate),
     pickupKey: dateToKey(rental.pickupDate),
   };
-  return overbookingMessage(checkOverbooking(total, rentals, candidate, toHelsinkiDateInput(new Date())), rental.quantity);
+  return overbookingMessage(checkOverbooking(total, rentals, candidate, todayKey()), rental.quantity);
 }
 
 /** Uuden liidin yhteydessä: luo vuokrausrivin ja palauttaa varoituksen Discordiin, jos laatikot eivät riitä. */
@@ -142,7 +197,6 @@ export async function boxRentalWarningForNewLead(leadId: string): Promise<string
   try {
     const rental = await ensureBoxRentalForLead(leadId);
     if (!rental) return null;
-    await syncBoxRentalCalendar(rental.id);
     return await boxRentalWarning(rental);
   } catch (error) {
     console.warn('[box-rentals] ylivarauksen tarkistus epäonnistui', leadId, error);
@@ -152,7 +206,8 @@ export async function boxRentalWarningForNewLead(leadId: string): Promise<string
 
 // --- Google-kalenteri ---------------------------------------------------------------------------
 
-function isRentalOrderLead(formData: unknown): boolean {
+/** Muuttolaatikot-sivun tilaus: liidin päivä on laatikoiden toimituspäivä (ei muuttopäivä). */
+export function isRentalOrderLead(formData: unknown): boolean {
   const pfd = parseLeadFormData(formData);
   const payload = pfd.kind === 'api-lead' && pfd.payload && typeof pfd.payload === 'object' ? (pfd.payload as Record<string, unknown>) : null;
   return payload?.service_type === 'vuokraus';
@@ -170,10 +225,17 @@ export async function syncBoxRentalCalendar(rentalId: string, leadStatus?: LeadS
     const { upsertAllDayEvent, cancelCalendarEvent, isCalendarConfigured } = await import('@/server/google-calendar');
     if (!isCalendarConfigured()) return;
 
+    // Noudettu vuokraus on valmis: sen merkinnät jäävät kalenteriin historiaksi. Käsin kalenteriin
+    // merkityille (esim. inventaarion lähtötilanne kalenterista) ei luoda päällekkäisiä merkintöjä.
+    if (rental.status === 'RETURNED' || rental.manualCalendar) return;
+
     const { lead } = rental;
     const commitment = rentalCommitment(leadStatus ?? lead.status);
-    const keep = rental.status !== 'CANCELLED' && commitment !== 'inactive';
-    const create = keep && commitment === 'confirmed';
+    // Toimitetut laatikot ovat asiakkaalla, vaikka muutto peruttaisiin: nouto pysyy kalenterissa
+    const physicallyOut = rental.status === 'DELIVERED';
+    const keep = physicallyOut || (rental.status !== 'CANCELLED' && commitment !== 'inactive');
+    const confirmed = physicallyOut || commitment === 'confirmed';
+    const create = keep && confirmed;
     const rentalOrder = isRentalOrderLead(lead.formData);
     const updates: { deliveryEventId?: string | null; pickupEventId?: string | null } = {};
 
@@ -190,7 +252,6 @@ export async function syncBoxRentalCalendar(rentalId: string, leadStatus?: LeadS
         [`Asiakas: ${name}`, `Laatikoita: ${rental.quantity} kpl`, address ? `${label}: ${address}` : null, rental.notes ? `Lisätiedot: ${rental.notes}` : null, estimated, '', `Liidi: ${hallintaUrl}`]
           .filter((line): line is string => line !== null)
           .join('\n');
-      const confirmed = commitment === 'confirmed';
 
       if (!rentalOrder && rental.status === 'RESERVED') {
         const id = await upsertAllDayEvent(lead.id, rental.deliveryEventId, {
@@ -229,7 +290,29 @@ export async function syncBoxRentalCalendar(rentalId: string, leadStatus?: LeadS
   }
 }
 
+// Tilat, joissa keikka vahvistetaan: alustava varaus muuttuu oikeaksi, joten laatikoiden riittävyys
+// tarkistetaan uudelleen (uuden liidin varoitus ei huomaa kahta alustavaa, jotka vahvistuvat päällekkäin).
+const CONFIRMING_STATUSES: LeadStatus[] = ['SCHEDULED', 'WON'];
+
+/** Liidin tila vaihtui: kalenterimerkinnät seuraavat tilaa, ja vahvistettaessa varoitetaan Discordissa, jos laatikot eivät riitä. */
 export async function syncBoxRentalCalendarForLead(leadId: string, leadStatus?: LeadStatus): Promise<void> {
-  const rental = await prisma.boxRental.findUnique({ where: { leadId }, select: { id: true } }).catch(() => null);
-  if (rental) await syncBoxRentalCalendar(rental.id, leadStatus);
+  const rental = await prisma.boxRental.findUnique({ where: { leadId } }).catch(() => null);
+  if (!rental) return;
+  await syncBoxRentalCalendar(rental.id, leadStatus);
+  if (!leadStatus || !CONFIRMING_STATUSES.includes(leadStatus)) return;
+  try {
+    const warning = await boxRentalWarning(rental);
+    if (!warning) return;
+    const lead = await prisma.lead.findUnique({ where: { id: leadId }, include: { contact: true } });
+    const base = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.muuttokone.fi';
+    const { sendDiscordEmbed } = await import('@/server/discord-webhook');
+    await sendDiscordEmbed({
+      title: `📦 Laatikot eivät riitä – ${lead ? customerNameOf(lead.contact) : 'vahvistettu keikka'}`,
+      description: `${warning}\nToimitus ${dateToKey(rental.deliveryDate)}, nouto ${dateToKey(rental.pickupDate)}.`,
+      color: 0xdc2626,
+      url: `${base}/hallinta/liidit/${leadId}`,
+    });
+  } catch (error) {
+    console.warn('[box-rentals] vahvistuksen laatikkotarkistus epäonnistui', leadId, error);
+  }
 }

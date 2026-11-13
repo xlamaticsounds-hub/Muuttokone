@@ -6,6 +6,7 @@ import {
   availabilityByDay,
   daysBetweenKeys,
   formatDateKey,
+  possibleDuplicates,
   summarizeInventory,
   type InventoryRental,
 } from '@/lib/box-inventory';
@@ -37,7 +38,7 @@ function Badge({ children, tone }: { children: React.ReactNode; tone: 'red' | 'a
   return <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${tones[tone]}`}>{children}</span>;
 }
 
-function RentalRow({ rental, todayKey }: { rental: InventoryRental; todayKey: string }) {
+function RentalRow({ rental, todayKey, duplicate }: { rental: InventoryRental; todayKey: string; duplicate: boolean }) {
   const toPickup = daysBetweenKeys(todayKey, rental.pickupKey);
   const toDelivery = daysBetweenKeys(todayKey, rental.deliveryKey);
   return (
@@ -57,6 +58,7 @@ function RentalRow({ rental, todayKey }: { rental: InventoryRental; todayKey: st
           {rental.status === 'RESERVED' && rental.commitment === 'confirmed' && toDelivery < 0 && <Badge tone="amber">Toimitus merkitsemättä</Badge>}
           {rental.status === 'RESERVED' && toDelivery >= 0 && toDelivery <= 2 && <Badge tone="blue">{toDelivery === 0 ? 'Toimitus tänään' : `Toimitus ${toDelivery} pv päästä`}</Badge>}
           {rental.datesEstimated && rental.status === 'RESERVED' && <Badge tone="gray">päivät arvioita</Badge>}
+          {duplicate && <Badge tone="red">mahdollinen kaksoisliidi</Badge>}
           {rental.status === 'RETURNED' && rental.lostQty > 0 && <Badge tone="red">puuttui {rental.lostQty}</Badge>}
           {rental.status === 'RETURNED' && rental.lostQty === 0 && <Badge tone="gray">kaikki palautui</Badge>}
         </div>
@@ -74,10 +76,12 @@ function Section({
   open,
   empty,
   hint,
+  duplicates,
 }: {
   title: string;
   rentals: InventoryRental[];
   todayKey: string;
+  duplicates: Set<string>;
   open: boolean;
   empty: string;
   hint?: string;
@@ -100,7 +104,7 @@ function Section({
       ) : (
         <ul className="divide-y divide-gray-100 border-t border-gray-100 dark:divide-gray-700 dark:border-gray-700">
           {rentals.map((r) => (
-            <RentalRow key={r.id} rental={r} todayKey={todayKey} />
+            <RentalRow key={r.id} rental={r} todayKey={todayKey} duplicate={duplicates.has(r.id)} />
           ))}
         </ul>
       )}
@@ -127,6 +131,8 @@ export default async function InventaarioPage() {
   const s = summarizeInventory(stock, rentals, todayKey);
   const days = availabilityByDay(stock, rentals, todayKey, AVAILABILITY_DAYS, todayKey);
   const lowLimit = Math.max(1, Math.round(stock * 0.15));
+  const duplicates = possibleDuplicates(rentals);
+  const duplicateNames = [...new Set(rentals.filter((r) => duplicates.has(r.id)).map((r) => r.customer))];
 
   return (
     <div className="space-y-5">
@@ -135,7 +141,7 @@ export default async function InventaarioPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Inventaario</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Muuttolaatikot: varasto, vuokraukset ja palautukset.</p>
         </div>
-        <BoxStockEditor total={total} />
+        <BoxStockEditor total={total} out={s.out} />
       </div>
 
       {dbUnavailable && (
@@ -166,7 +172,7 @@ export default async function InventaarioPage() {
         <Tile label="Varattu tuleviin" value={`${s.reserved}`} sub={s.tentative ? `+ ${s.tentative} alustavaa` : 'ei alustavia'} />
       </div>
 
-      {(s.overduePickups.length > 0 || s.unmarkedDeliveries.length > 0) && (
+      {(s.overduePickups.length > 0 || s.unmarkedDeliveries.length > 0 || duplicateNames.length > 0) && (
         <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-900/20 dark:text-red-200">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div className="space-y-1">
@@ -178,6 +184,12 @@ export default async function InventaarioPage() {
             {s.unmarkedDeliveries.length > 0 && (
               <p>
                 <b>Toimitus merkitsemättä:</b> {s.unmarkedDeliveries.map((r) => `${r.customer} (${formatDateKey(r.deliveryKey, false)})`).join(', ')}
+              </p>
+            )}
+            {duplicateNames.length > 0 && (
+              <p>
+                <b>Mahdollinen kaksoisliidi:</b> {duplicateNames.join(', ')}. Samalla asiakkaalla on kaksi päällekkäistä vuokrausta, jotka
+                lasketaan kahteen kertaan. Peru ylimääräinen vuokraus liidin sivulla.
               </p>
             )}
           </div>
@@ -220,8 +232,9 @@ export default async function InventaarioPage() {
       )}
 
       <div className="space-y-3">
-        <Section title="Nykyiset vuokraukset" rentals={s.current} todayKey={todayKey} open empty="Ei laatikoita asiakkailla." />
+        <Section duplicates={duplicates} title="Nykyiset vuokraukset" rentals={s.current} todayKey={todayKey} open empty="Ei laatikoita asiakkailla." />
         <Section
+          duplicates={duplicates}
           title="Tulevat vuokraukset"
           rentals={s.upcoming}
           todayKey={todayKey}
@@ -230,6 +243,7 @@ export default async function InventaarioPage() {
           hint="Vahvistetut liidit (kalenterissa). Päivät tulevat lomakkeelta arviona: korjaa ne liidin sivulla, kun toimitus on sovittu."
         />
         <Section
+          duplicates={duplicates}
           title="Alustavat"
           rentals={s.tentativeList}
           todayKey={todayKey}
@@ -237,7 +251,7 @@ export default async function InventaarioPage() {
           empty="Ei alustavia vuokrauksia."
           hint="Uudet ja tarjotut liidit. Eivät varaa laatikoita ennen kuin liidi vahvistetaan."
         />
-        <Section title="Palautetut" rentals={s.returned} todayKey={todayKey} open={false} empty="Ei vielä palautettuja." hint="20 viimeisintä." />
+        <Section duplicates={duplicates} title="Palautetut" rentals={s.returned} todayKey={todayKey} open={false} empty="Ei vielä palautettuja." hint="20 viimeisintä." />
       </div>
     </div>
   );

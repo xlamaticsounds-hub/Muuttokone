@@ -6,6 +6,9 @@ import { MAX_JOBS_PER_DAY } from '@/lib/calendar-load';
 
 export type BriefJob = { time: string | null; customer: string; route: string; status: LeadStatus };
 export type BriefTodo = { priority: number; title: string };
+export type BriefBoxRun = { customer: string; quantity: number };
+// Laatikkovuokrat (ks. lib/box-inventory.ts): päivän toimitukset ja noudot sekä kuittaamattomat
+export type BriefBoxes = { deliveries: BriefBoxRun[]; pickups: BriefBoxRun[]; overduePickups: number; unmarkedDeliveries: number };
 
 export type BriefInput = {
   todayKey: string; // YYYY-MM-DD (Suomen päivä)
@@ -14,8 +17,24 @@ export type BriefInput = {
   todos: BriefTodo[]; // avoimet huomiot tärkeysjärjestyksessä
   todosTotal: number;
   overdue: number; // menneen päivän keikkoja käsittelemättä
+  boxes?: BriefBoxes;
   dashboardUrl?: string;
 };
+
+const hasBoxNews = (b?: BriefBoxes) => Boolean(b && (b.deliveries.length || b.pickups.length || b.overduePickups || b.unmarkedDeliveries));
+
+function boxLines(b: BriefBoxes): string[] {
+  const run = (label: string, r: BriefBoxRun) => `• ${label}: ${trim(r.customer, 40)} ${r.quantity} kpl`;
+  const lines = ['', '**📦 Laatikot**'];
+  for (const r of b.deliveries.slice(0, MAX_JOB_LINES)) lines.push(run('Toimitus', r));
+  for (const r of b.pickups.slice(0, MAX_JOB_LINES)) lines.push(run('Nouto', r));
+  const late = [
+    b.overduePickups ? `${b.overduePickups} ${b.overduePickups === 1 ? 'nouto' : 'noutoa'} myöhässä` : null,
+    b.unmarkedDeliveries ? `${b.unmarkedDeliveries} ${b.unmarkedDeliveries === 1 ? 'toimitus' : 'toimitusta'} merkitsemättä` : null,
+  ].filter(Boolean);
+  if (late.length) lines.push(`⚠ ${late.join(' · ')} (kuittaa Inventaario-sivulla)`);
+  return lines;
+}
 
 const WEEKDAYS = ['sunnuntai', 'maanantai', 'tiistai', 'keskiviikko', 'torstai', 'perjantai', 'lauantai'];
 const MAX_JOB_LINES = 10;
@@ -23,7 +42,8 @@ const MAX_TODO_LINES = 5;
 const trim = (text: string, max: number) => (text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text);
 
 export function buildMorningBrief(input: BriefInput): { title: string; description: string } | null {
-  const hasContent = input.jobsToday.length > 0 || input.jobsTomorrow > 0 || input.todosTotal > 0 || input.overdue > 0;
+  const hasContent =
+    input.jobsToday.length > 0 || input.jobsTomorrow > 0 || input.todosTotal > 0 || input.overdue > 0 || hasBoxNews(input.boxes);
   if (!hasContent) return null;
 
   const date = new Date(`${input.todayKey}T00:00:00Z`);
@@ -43,6 +63,7 @@ export function buildMorningBrief(input: BriefInput): { title: string; descripti
     if (input.jobsToday.length > MAX_JOBS_PER_DAY) lines.push(`⚠ Päivälle on ${input.jobsToday.length} keikkaa — tarkista kuormitus.`);
   }
   if (input.jobsTomorrow > 0) lines.push(`Huomenna: ${input.jobsTomorrow} ${input.jobsTomorrow === 1 ? 'keikka' : 'keikkaa'}.`);
+  if (input.boxes && hasBoxNews(input.boxes)) lines.push(...boxLines(input.boxes));
 
   if (input.todosTotal > 0) {
     lines.push('', `**Huomio (${input.todosTotal} avointa)**`);

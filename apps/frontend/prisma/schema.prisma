@@ -496,6 +496,8 @@ model BoxRental {
   // Google-kalenterin toimitus- ja noutomerkinnät (koko päivän tapahtumat)
   deliveryEventId String?
   pickupEventId   String?
+  // Toimitus ja nouto on merkitty kalenteriin käsin (esim. ennen inventaariota): ei luoda päällekkäisiä merkintöjä
+  manualCalendar  Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

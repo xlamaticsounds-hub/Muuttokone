@@ -95,11 +95,14 @@ export function extractBoxRentalRequest(formData: Record<string, unknown>, reque
     if (!quantity) return null;
     const days = positiveInt(boxLine?.days) ?? DEFAULT_DAYS;
     const movingDate = typeof payload.moving_date === 'string' ? payload.moving_date.slice(0, 10) : null;
-    const deliveryKey = isDateKey(movingDate) ? movingDate : requestedDate ? dateToKey(requestedDate) : null;
+    const formKey = isDateKey(movingDate) ? movingDate : null;
+    // Liidin päivä on toimituspäivä: lomakkeella sama kuin moving_date, mutta hallinnassa siirrettävissä
+    const deliveryKey = requestedDate ? dateToKey(requestedDate) : formKey;
     if (!deliveryKey) return null;
+    // Vuokra-aika lomakkeelta (arvioitu nouto – toimitus), joten nouto siirtyy toimituksen mukana
     const estimate = typeof rental?.pickupEstimate === 'string' ? rental.pickupEstimate.slice(0, 10) : null;
-    const pickupKey = isDateKey(estimate) && estimate > deliveryKey ? estimate : addDaysToKey(deliveryKey, days);
-    return { quantity, deliveryKey, pickupKey, source: 'vuokraus' };
+    const length = formKey && isDateKey(estimate) && estimate > formKey ? daysBetweenKeys(formKey, estimate) : days;
+    return { quantity, deliveryKey, pickupKey: addDaysToKey(deliveryKey, length), source: 'vuokraus' };
   }
 
   const serviceType = formData.serviceType;
@@ -114,6 +117,18 @@ export function extractBoxRentalRequest(formData: Record<string, unknown>, reque
 
   return null;
 }
+
+/**
+ * Liidit, joiden laatikoiden nouto on jo mennyt, jätetään inventaarion ulkopuolelle: muuten jokainen
+ * vanha tehty muutto näkyisi "tulevana" ja "toimitus merkitsemättä" ennen kuin ne kuitataan käsin.
+ */
+export function isPastRental(request: Pick<BoxRentalRequest, 'pickupKey'>, todayKey: string): boolean {
+  return request.pickupKey < todayKey;
+}
+
+// Pisin aika liidin päivästä laatikoiden noutoon (vuokra enintään 60 pv + puskuri). Tätä vanhemmista
+// liideistä ei voi enää tulla tulevaa vuokrausta, joten niiden lomaketietoja ei tarvitse lukea.
+export const BACKFILL_LOOKBACK_DAYS = Math.max(120, (BOX_ITEM?.days.max ?? 60) * 2);
 
 // --- Saatavuus -----------------------------------------------------------------------------
 
@@ -135,6 +150,15 @@ export type InventoryRental = {
 type OccupancyRental = Pick<InventoryRental, 'id' | 'quantity' | 'deliveryKey' | 'pickupKey' | 'status' | 'commitment'>;
 
 /**
+ * Varaako vuokraus laatikot päivälle: toimituspäivästä noutopäivän edelliseen päivään. Noutopäivänä
+ * aamulla haetut laatikot voi viedä samana päivänä seuraavalle asiakkaalle, joten noutopäivä on vapaa
+ * (paitsi jos toimitus ja nouto ovat samana päivänä, jolloin se päivä varataan).
+ */
+function withinRentalDays(dayKey: string, deliveryKey: string, pickupKey: string): boolean {
+  return dayKey >= deliveryKey && (dayKey < pickupKey || dayKey === deliveryKey);
+}
+
+/**
  * Onko vuokraus pois varastosta annettuna päivänä. Toimitetut ovat poissa kunnes ne merkitään
  * noudetuiksi (myöhässä oleva nouto varaa laatikot tähän päivään asti), varatut toimitus–noutovälin.
  * Toimitettu lasketaan aina (laatikot ovat fyysisesti asiakkaalla), varattu vain jos liidi on vahvistettu
@@ -142,12 +166,13 @@ type OccupancyRental = Pick<InventoryRental, 'id' | 'quantity' | 'deliveryKey' |
  */
 export function occupiesDay(r: OccupancyRental, dayKey: string, todayKey: string, includeTentative = false): boolean {
   if (r.status === 'DELIVERED') {
-    const end = r.pickupKey < todayKey ? todayKey : r.pickupKey;
-    return dayKey <= end && (dayKey >= r.deliveryKey || dayKey >= todayKey);
+    // Myöhässä oleva nouto: laatikot ovat yhä asiakkaalla, joten niihin ei voi luottaa tänään
+    if (r.pickupKey < todayKey) return dayKey <= todayKey && (dayKey >= r.deliveryKey || dayKey === todayKey);
+    return withinRentalDays(dayKey, r.deliveryKey < todayKey ? r.deliveryKey : todayKey, r.pickupKey);
   }
   if (r.status !== 'RESERVED') return false;
   if (r.commitment === 'inactive' || (r.commitment === 'tentative' && !includeTentative)) return false;
-  return dayKey >= r.deliveryKey && dayKey <= r.pickupKey;
+  return withinRentalDays(dayKey, r.deliveryKey, r.pickupKey);
 }
 
 export function occupancyOn(rentals: OccupancyRental[], dayKey: string, todayKey: string, includeTentative = false): number {
@@ -166,12 +191,12 @@ export function availabilityByDay(total: number, rentals: OccupancyRental[], fro
   });
 }
 
-/** Suurin vahvistettu käyttöaste välillä (alkaen aikaisintaan tänään). */
+/** Suurin vahvistettu käyttöaste vuokrauksen päivinä (toimitus – noutoa edeltävä päivä, aikaisintaan tänään). */
 export function peakOccupancy(rentals: OccupancyRental[], fromKey: string, toKey: string, todayKey: string, excludeId?: string): number {
   const others = excludeId ? rentals.filter((r) => r.id !== excludeId) : rentals;
   let peak = 0;
-  const start = fromKey < todayKey ? todayKey : fromKey;
-  for (let key = start; key <= toKey; key = addDaysToKey(key, 1)) {
+  for (let key = fromKey; withinRentalDays(key, fromKey, toKey); key = addDaysToKey(key, 1)) {
+    if (key < todayKey) continue;
     peak = Math.max(peak, occupancyOn(others, key, todayKey));
   }
   return peak;
@@ -244,6 +269,30 @@ export function summarizeInventory(total: number, rentals: InventoryRental[], to
     overduePickups: current.filter((r) => r.pickupKey < todayKey),
     unmarkedDeliveries: upcoming.filter((r) => r.deliveryKey < todayKey),
   };
+}
+
+const normalizeName = (name: string) => name.toLocaleLowerCase('fi-FI').replace(/\s+/g, ' ').trim();
+const isActive = (r: InventoryRental) => (r.status === 'DELIVERED' || r.status === 'RESERVED') && r.commitment !== 'inactive';
+
+/**
+ * Mahdolliset kaksoisliidit: samalla asiakkaalla kaksi voimassa olevaa vuokrausta päällekkäisillä päivillä
+ * (esim. uusi tarjous samaan muuttoon). Ne laskettaisiin varastosta kahteen kertaan. Palauttaa rivien id:t.
+ */
+export function possibleDuplicates(rentals: InventoryRental[]): Set<string> {
+  const ids = new Set<string>();
+  const active = rentals.filter(isActive);
+  for (let i = 0; i < active.length; i++) {
+    for (let j = i + 1; j < active.length; j++) {
+      const a = active[i];
+      const b = active[j];
+      if (a.leadId === b.leadId || normalizeName(a.customer) !== normalizeName(b.customer)) continue;
+      if (a.deliveryKey <= b.pickupKey && b.deliveryKey <= a.pickupKey) {
+        ids.add(a.id);
+        ids.add(b.id);
+      }
+    }
+  }
+  return ids;
 }
 
 /** Puuttuvat laatikot noudettaessa (palautettu < vuokrattu). */

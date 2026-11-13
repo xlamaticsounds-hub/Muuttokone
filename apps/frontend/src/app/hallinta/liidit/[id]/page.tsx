@@ -162,6 +162,7 @@ export default async function LeadDetailPage({
         returnedQty: row.returnedQty,
         lostQty: row.lostQty,
         notes: row.notes,
+        manualCalendar: Boolean(row.manualCalendar),
       };
       boxWarning = await boxRentalWarning(row);
     }

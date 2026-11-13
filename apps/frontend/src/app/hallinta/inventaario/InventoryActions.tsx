@@ -3,8 +3,8 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { Check, Pencil, Truck, Undo2, X, PackageCheck } from 'lucide-react';
-import { saveBoxStock, setBoxRentalStatus } from '@/server/box-rental-actions';
+import { Check, Minus, Pencil, Plus, Truck, Undo2, X, PackageCheck } from 'lucide-react';
+import { adjustBoxStock, saveBoxShelfCount, setBoxRentalStatus } from '@/server/box-rental-actions';
 import type { BoxRentalStatusKey } from '@/lib/box-inventory';
 
 const buttonClass =
@@ -14,53 +14,81 @@ const primary = `${buttonClass} border-blue-600 bg-blue-600 text-white hover:bg-
 const inputClass =
   'w-20 rounded-md border border-gray-300 bg-white px-2 py-1 text-sm dark:border-gray-600 dark:bg-gray-900 dark:text-white';
 
-/** Varaston koko (kaikki laatikot, myös vuokralla olevat). */
-export function BoxStockEditor({ total }: { total: number | null }) {
+/**
+ * Varasto: hyllyssä olevien määrä (varaston koko = hyllyssä + asiakkailla) sekä uusien laatikoiden
+ * lisäys ja rikkinäisten poisto. Asiakkailla olevat lasketaan toimitetuista vuokrauksista.
+ */
+export function BoxStockEditor({ total, out }: { total: number | null; out: number }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [editing, setEditing] = useState(total === null);
-  const [value, setValue] = useState(total === null ? '' : String(total));
+  const shelfNow = total === null ? null : total - out;
+  const [shelf, setShelf] = useState(shelfNow === null ? '' : String(Math.max(0, shelfNow)));
+  const [delta, setDelta] = useState('');
 
-  const save = () =>
+  const run = (action: () => Promise<{ success: boolean; message?: string }>, done: string) =>
     startTransition(async () => {
-      const result = await saveBoxStock(Number(value));
+      const result = await action();
       if (!result.success) {
-        toast.error(result.message);
+        toast.error(result.message ?? 'Tallennus epäonnistui.');
         return;
       }
-      toast.success('Varaston koko tallennettu');
+      toast.success(done);
+      setDelta('');
       setEditing(false);
       router.refresh();
     });
 
+  const deltaN = Number(delta);
+  const deltaValid = delta !== '' && Number.isInteger(deltaN) && deltaN > 0;
+
   if (!editing) {
     return (
-      <button type="button" onClick={() => setEditing(true)} className={neutral} title="Muuta varaston kokoa (esim. lisäostot)">
+      <button type="button" onClick={() => setEditing(true)} className={neutral} title="Hyllyssä olevat, uudet ja rikkinäiset laatikot">
         <Pencil className="h-3.5 w-3.5" /> Varasto {total} kpl
       </button>
     );
   }
   return (
-    <form
-      className="flex items-center gap-2"
-      onSubmit={(e) => {
-        e.preventDefault();
-        save();
-      }}
-    >
-      <label className="text-sm text-gray-600 dark:text-gray-300" htmlFor="box-stock">
-        Laatikoita yhteensä
-      </label>
-      <input id="box-stock" type="number" min={0} inputMode="numeric" className={inputClass} value={value} onChange={(e) => setValue(e.target.value)} autoFocus />
-      <button type="submit" className={primary} disabled={pending || value === ''}>
-        <Check className="h-3.5 w-3.5" /> Tallenna
-      </button>
-      {total !== null && (
-        <button type="button" className={neutral} onClick={() => setEditing(false)} disabled={pending}>
-          Peru
+    <div className="w-full space-y-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm sm:w-auto dark:border-gray-700 dark:bg-gray-800">
+      <form
+        className="flex flex-wrap items-center gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          run(() => saveBoxShelfCount(Number(shelf)), 'Varasto päivitetty');
+        }}
+      >
+        <label className="text-sm text-gray-600 dark:text-gray-300" htmlFor="box-shelf">
+          Hyllyssä nyt
+        </label>
+        <input id="box-shelf" type="number" min={0} inputMode="numeric" className={inputClass} value={shelf} onChange={(e) => setShelf(e.target.value)} autoFocus />
+        <span className="text-xs text-gray-500 dark:text-gray-400">+ asiakkailla {out} kpl</span>
+        <button type="submit" className={primary} disabled={pending || shelf === ''}>
+          <Check className="h-3.5 w-3.5" /> Tallenna
         </button>
+      </form>
+      {total !== null && (
+        <div className="flex flex-wrap items-center gap-2 border-t border-gray-100 pt-3 dark:border-gray-700">
+          <label className="text-sm text-gray-600 dark:text-gray-300" htmlFor="box-delta">
+            Uusia tai rikkinäisiä
+          </label>
+          <input id="box-delta" type="number" min={1} inputMode="numeric" placeholder="kpl" className={inputClass} value={delta} onChange={(e) => setDelta(e.target.value)} />
+          <button type="button" className={neutral} disabled={pending || !deltaValid} onClick={() => run(() => adjustBoxStock(deltaN), `Lisätty ${deltaN} laatikkoa`)}>
+            <Plus className="h-3.5 w-3.5" /> Lisää
+          </button>
+          <button type="button" className={neutral} disabled={pending || !deltaValid} onClick={() => run(() => adjustBoxStock(-deltaN), `Poistettu ${deltaN} laatikkoa`)}>
+            <Minus className="h-3.5 w-3.5" /> Poista
+          </button>
+        </div>
       )}
-    </form>
+      {total !== null && (
+        <div className="flex justify-end">
+          <button type="button" className={neutral} onClick={() => setEditing(false)} disabled={pending}>
+            Sulje
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 

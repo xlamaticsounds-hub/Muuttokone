@@ -3,7 +3,9 @@ import {
   availabilityByDay,
   checkOverbooking,
   extractBoxRentalRequest,
+  isPastRental,
   lostOnReturn,
+  possibleDuplicates,
   overbookingMessage,
   rentalCommitment,
   summarizeInventory,
@@ -45,6 +47,19 @@ describe('extractBoxRentalRequest', () => {
       pickupKey: '2026-11-28',
       source: 'vuokraus',
     });
+  });
+
+  it('vuokraustilaus: hallinnassa siirretty liidin päivä siirtää toimituksen ja noudon (vuokra-aika säilyy)', () => {
+    const formData = {
+      kind: 'api-lead',
+      payload: {
+        service_type: 'vuokraus',
+        moving_date: '2026-11-14',
+        rental: { items: [{ id: 'muuttolaatikot', qty: 50, days: 14 }], pickupEstimate: '2026-11-28' },
+      },
+    };
+    expect(extractBoxRentalRequest(formData, new Date('2026-11-14T00:00:00Z'))).toMatchObject({ deliveryKey: '2026-11-14', pickupKey: '2026-11-28' });
+    expect(extractBoxRentalRequest(formData, new Date('2026-11-18T00:00:00Z'))).toMatchObject({ deliveryKey: '2026-11-18', pickupKey: '2026-12-02' });
   });
 
   it('vuokraustilaus ilman laatikoita ei ole laatikkovuokraus', () => {
@@ -144,6 +159,47 @@ describe('checkOverbooking', () => {
   it('oma rivi ei kilpaile itsensä kanssa', () => {
     const check = checkOverbooking(88, others, { id: 'a', quantity: 60, deliveryKey: '2026-11-12', pickupKey: '2026-11-20' }, TODAY);
     expect(check.shortBy).toBe(0);
+  });
+  it('noutopäivänä palaavat laatikot voi toimittaa samana päivänä seuraavalle', () => {
+    const check = checkOverbooking(88, others, { quantity: 40, deliveryKey: '2026-11-20', pickupKey: '2026-11-30' }, TODAY);
+    expect(check.shortBy).toBe(0);
+    // ...mutta päivää aiemmin ne ovat vielä edellisellä asiakkaalla
+    expect(checkOverbooking(88, others, { quantity: 40, deliveryKey: '2026-11-19', pickupKey: '2026-11-30' }, TODAY).shortBy).toBe(12);
+  });
+  it('samana päivänä toimitettava ja noudettava varaa sen päivän', () => {
+    const sameDay = [rental({ id: 's', quantity: 60, deliveryKey: '2026-11-12', pickupKey: '2026-11-12' })];
+    expect(checkOverbooking(88, sameDay, { quantity: 40, deliveryKey: '2026-11-12', pickupKey: '2026-11-12' }, TODAY).shortBy).toBe(12);
+  });
+});
+
+describe('same-day pickup in availability', () => {
+  it('toimitettu vuokraus vapautuu noutopäivänä, myöhässä oleva vasta kun se kuitataan', () => {
+    const out = rental({ status: 'DELIVERED', quantity: 30, deliveryKey: '2026-11-01', pickupKey: '2026-11-11' });
+    expect(availabilityByDay(88, [out], TODAY, 2, TODAY).map((d) => d.free)).toEqual([58, 88]);
+    const late = rental({ status: 'DELIVERED', quantity: 30, deliveryKey: '2026-11-01', pickupKey: '2026-11-09' });
+    expect(availabilityByDay(88, [late], TODAY, 2, TODAY).map((d) => d.free)).toEqual([58, 88]);
+  });
+});
+
+describe('possibleDuplicates', () => {
+  it('sama asiakas, päällekkäiset päivät, eri liidit → kaksoisliidi', () => {
+    const a = rental({ id: 'a', leadId: 'l1', customer: 'Oona Sipinen' });
+    const b = rental({ id: 'b', leadId: 'l2', customer: 'oona  sipinen', commitment: 'tentative' });
+    expect([...possibleDuplicates([a, b])].sort()).toEqual(['a', 'b']);
+  });
+  it('eri asiakkaat, eri ajat tai peruttu eivät ole kaksoisliidejä', () => {
+    const a = rental({ id: 'a', leadId: 'l1', customer: 'Matti' });
+    expect(possibleDuplicates([a, rental({ id: 'b', leadId: 'l2', customer: 'Maija' })]).size).toBe(0);
+    expect(possibleDuplicates([a, rental({ id: 'c', leadId: 'l3', customer: 'Matti', deliveryKey: '2026-12-01', pickupKey: '2026-12-10' })]).size).toBe(0);
+    expect(possibleDuplicates([a, rental({ id: 'd', leadId: 'l4', customer: 'Matti', status: 'CANCELLED' })]).size).toBe(0);
+  });
+});
+
+describe('isPastRental', () => {
+  it('vanhat liidit (nouto mennyt) jätetään inventaarion ulkopuolelle', () => {
+    expect(isPastRental({ pickupKey: '2026-11-09' }, TODAY)).toBe(true);
+    expect(isPastRental({ pickupKey: '2026-11-10' }, TODAY)).toBe(false);
+    expect(isPastRental({ pickupKey: '2026-12-01' }, TODAY)).toBe(false);
   });
 });
 

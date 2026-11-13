@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/server/db';
 import { getAppState, setAppState } from '@/server/app-state';
 import { sendDiscordEmbed } from '@/server/discord-webhook';
-import { buildMorningBrief, type BriefJob } from '@/lib/morning-brief';
+import { buildMorningBrief, type BriefBoxes, type BriefJob } from '@/lib/morning-brief';
+import { summarizeInventory, type InventoryRental } from '@/lib/box-inventory';
+import { loadInventoryRentals } from '@/server/box-rentals';
 import { toHelsinkiDateInput } from '@/lib/helsinki-time';
 import { INACTIVE_JOB_STATUSES } from '@/lib/lead-status';
 
@@ -64,6 +66,21 @@ export async function POST(req: NextRequest) {
       status: lead.status,
     }));
 
+    // Laatikkovuokrat ovat lisäosa: jos haku epäonnistuu (esim. migraatio puuttuu), katsaus lähtee silti
+    let boxes: BriefBoxes | undefined;
+    try {
+      const inventory = summarizeInventory(0, await loadInventoryRentals(), todayKey);
+      const run = (r: InventoryRental) => ({ customer: r.customer, quantity: r.quantity });
+      boxes = {
+        deliveries: inventory.upcoming.filter((r) => r.deliveryKey === todayKey).map(run),
+        pickups: inventory.current.filter((r) => r.pickupKey === todayKey).map(run),
+        overduePickups: inventory.overduePickups.length,
+        unmarkedDeliveries: inventory.unmarkedDeliveries.length,
+      };
+    } catch (error) {
+      console.warn('[cron/morning-brief] laatikkovuokria ei voitu hakea', error);
+    }
+
     const base = process.env.NEXTAUTH_URL?.replace(/\/$/, '');
     const message = buildMorningBrief({
       todayKey,
@@ -72,6 +89,7 @@ export async function POST(req: NextRequest) {
       todos: todos.map((t) => ({ priority: t.priority, title: t.title })),
       todosTotal,
       overdue,
+      boxes,
       dashboardUrl: base ? `${base}/hallinta/dashboard` : undefined,
     });
 

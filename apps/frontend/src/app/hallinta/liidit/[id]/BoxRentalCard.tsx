@@ -20,6 +20,7 @@ export type BoxRentalDto = {
   returnedQty: number | null;
   lostQty: number;
   notes: string | null;
+  manualCalendar: boolean;
 };
 
 const STATUS_LABELS: Record<BoxRentalStatusKey, string> = {
@@ -111,6 +112,11 @@ export default function BoxRentalCard({
       {rental?.datesEstimated && rental.status === 'RESERVED' && (
         <p className="mb-3 text-xs text-amber-700 dark:text-amber-300">
           Päivät on arvioitu lomakkeelta. Sovi toimitus asiakkaan kanssa ja tallenna oikeat päivät.
+        </p>
+      )}
+      {rental?.manualCalendar && (rental.status === 'RESERVED' || rental.status === 'DELIVERED') && (
+        <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+          Toimitus ja nouto on merkitty kalenteriin käsin, joten järjestelmä ei lisää niitä. Jos päivät muuttuvat, siirrä myös kalenterimerkinnät.
         </p>
       )}
       {rental?.status === 'RETURNED' && (
