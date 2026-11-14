@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { Calculator, CalendarCheck, Truck, PartyPopper, ClipboardList, CalendarRange, CheckCircle2, type LucideIcon } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { processStepsDictionary } from '@/i18n/homeDictionary';
@@ -22,6 +23,8 @@ export type ProcessStep = {
   title: string;
   desc: string;
   icon: keyof typeof iconMap;
+  /** Kuvitus (esim. /icons/tyoapu/*.png) ikonin tilalle; ilman tätä näytetään icon. */
+  image?: string;
   highlight?: boolean;
   href?: string;
 };
@@ -91,8 +94,14 @@ export default function ProcessSteps({
               >
                 <div className="absolute right-[-40px] top-[-40px] h-32 w-32 rounded-full bg-primary/5 blur-3xl group-hover:bg-primary/10" />
                 <div className="relative flex items-start gap-4">
-                  <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <Icon className="h-6 w-6" />
+                  <div
+                    className={`relative flex shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary ${step.image ? 'h-16 w-16' : 'h-12 w-12'}`}
+                  >
+                    {step.image ? (
+                      <Image src={step.image} alt="" width={96} height={96} className="h-12 w-12 object-contain" />
+                    ) : (
+                      <Icon className="h-6 w-6" />
+                    )}
                     <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white ring-2 ring-white dark:ring-slate-900">
                       {idx + 1}
                     </span>

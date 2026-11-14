@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Home, Laptop, Shovel, PackageOpen, Building2, BadgeEuro, Receipt, Wrench, type LucideIcon } from 'lucide-react';
+import Image from 'next/image';
 import { generateSEOMetadata, SEOConfigs } from '@/components/SEO/SEOHelpers';
 import ProcessSteps from '@/components/ProcessSteps';
 import Faq from '@/components/Faq';
@@ -18,27 +18,25 @@ export const metadata: Metadata = generateSEOMetadata({
   },
 });
 
-const categoryIcons: Record<string, LucideIcon> = {
-  'kodin-asennukset': Home,
-  'it-apu': Laptop,
-  'piha-ja-ulkotyot': Shovel,
-  kantoapu: PackageOpen,
-  yrityksille: Building2,
-};
+// Kuvitukset: public/icons/tyoapu/ (512×512 PNG). Kategorian kuva = sen id, muuten työkalupakki.
+const categoryIcon = (id: string) =>
+  ['kodin-asennukset', 'it-apu', 'piha-ja-ulkotyot', 'kantoapu', 'yrityksille'].includes(id)
+    ? `/icons/tyoapu/${id}.png`
+    : '/icons/palvelut/tyoapu.png';
 
 const trustPoints = [
   {
-    icon: BadgeEuro,
+    icon: '/icons/tyoapu/hinta.png',
     title: 'Kiinteä hinta tai tuntiveloitus',
     desc: 'Sovitaan etukäteen kumpi sopii työhön — ei yllätyksiä laskussa.',
   },
   {
-    icon: Receipt,
+    icon: '/icons/tyoapu/kotitalousvahennys.png',
     title: 'Kotitalousvähennys',
     desc: 'Kotona tehdystä työstä voit yleensä saada kotitalousvähennyksen. Erittelemme työn osuuden laskulle.',
   },
   {
-    icon: Wrench,
+    icon: '/icons/tyoapu/tyokalut.png',
     title: 'Omat työkalut mukana',
     desc: 'Tulemme valmiina töihin, ja viemme pakkaukset ja jätteet mennessämme.',
   },
@@ -84,20 +82,17 @@ export default function TyoapuPage() {
         <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
           <div className="relative rounded-2xl border border-black/5 bg-white/80 p-6 shadow-sm ring-1 ring-black/5 backdrop-blur md:p-8 dark:border-white/10 dark:bg-white/5 dark:ring-white/5">
             <div className="grid gap-7.5 sm:grid-cols-3">
-              {trustPoints.map((point) => {
-                const Icon = point.icon;
-                return (
-                  <div key={point.title} className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h3 className="mb-1 font-semibold text-black/90 dark:text-white">{point.title}</h3>
-                      <p className="text-sm text-black/70 dark:text-white/70">{point.desc}</p>
-                    </div>
+              {trustPoints.map((point) => (
+                <div key={point.title} className="flex items-start gap-4">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                    <Image src={point.icon} alt="" width={96} height={96} className="h-12 w-12 object-contain" />
                   </div>
-                );
-              })}
+                  <div>
+                    <h3 className="mb-1 font-semibold text-black/90 dark:text-white">{point.title}</h3>
+                    <p className="text-sm text-black/70 dark:text-white/70">{point.desc}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -111,19 +106,16 @@ export default function TyoapuPage() {
             <h2 className="text-3xl font-bold text-black/90 dark:text-white sm:text-4xl">Mihin tarvitset apua?</h2>
           </div>
           <div className="flex flex-wrap justify-center gap-3">
-            {tyoapuCategories.map((category) => {
-              const Icon = categoryIcons[category.id] ?? Wrench;
-              return (
-                <Link
-                  key={category.id}
-                  href={`#${category.id}`}
-                  className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-5 py-2.5 text-sm font-medium text-black/80 transition-colors hover:border-primary hover:text-primary dark:border-white/10 dark:bg-slate-900 dark:text-white/80"
-                >
-                  <Icon className="h-4 w-4" />
-                  {category.title}
-                </Link>
-              );
-            })}
+            {tyoapuCategories.map((category) => (
+              <Link
+                key={category.id}
+                href={`#${category.id}`}
+                className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-5 py-2 text-sm font-medium text-black/80 transition-colors hover:border-primary hover:text-primary dark:border-white/10 dark:bg-slate-900 dark:text-white/80"
+              >
+                <Image src={categoryIcon(category.id)} alt="" width={56} height={56} className="h-7 w-7 object-contain" />
+                {category.title}
+              </Link>
+            ))}
           </div>
         </div>
       </section>
@@ -134,8 +126,8 @@ export default function TyoapuPage() {
           <div className="rounded-2xl border-2 border-primary/30 bg-gradient-to-r from-primary/10 via-white to-white p-6 shadow-md sm:p-8 dark:from-primary/20 dark:via-slate-900 dark:to-slate-900">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center">
               <div className="flex items-start gap-4 lg:max-w-md">
-                <div className="bg-primary flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white">
-                  <BadgeEuro className="h-7 w-7" />
+                <div className="ring-primary/10 flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white shadow-md ring-1 dark:bg-slate-800">
+                  <Image src="/icons/tyoapu/suosituimmat.png" alt="" width={112} height={112} className="h-14 w-14 object-contain" />
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-black/90 dark:text-white">Suosituimmat asennukset</h2>
@@ -159,7 +151,6 @@ export default function TyoapuPage() {
 
       {/* Categories */}
       {tyoapuCategories.map((category, index) => {
-        const Icon = categoryIcons[category.id] ?? Wrench;
         return (
           <section
             key={category.id}
@@ -168,8 +159,8 @@ export default function TyoapuPage() {
           >
             <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
               <div className="mb-8 flex items-start gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <Icon className="h-6 w-6" />
+                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                  <Image src={categoryIcon(category.id)} alt="" width={112} height={112} className="h-14 w-14 object-contain" />
                 </div>
                 <div>
                   <h2 className="text-2xl font-bold text-black/90 dark:text-white sm:text-3xl">{category.title}</h2>

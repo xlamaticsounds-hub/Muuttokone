@@ -140,9 +140,10 @@ const Header = () => {
               <div className="hidden items-center sm:flex">
                 <a
                   href={`tel:${siteConfig.contact.phone.tel}`}
-                  className="hover:text-primary mr-4 font-semibold text-black/80 dark:text-white whitespace-nowrap"
+                  className="hover:text-primary mr-4 inline-flex items-center gap-2 font-semibold text-black/80 dark:text-white whitespace-nowrap"
                 >
-                  📞 {siteConfig.contact.phone.display}
+                  <Image src="/icons/yhteystiedot/puhelin.png" alt="" width={48} height={48} className="h-6 w-6 object-contain" />
+                  {siteConfig.contact.phone.display}
                 </a>
 
                 <Link

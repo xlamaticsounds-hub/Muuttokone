@@ -45,24 +45,25 @@ export default function Footer() {
               <div className="animate_top lg:pl-8">
                 <h4 className="mb-6 text-xl font-bold text-black dark:text-white">{t('Yhteystiedot')}</h4>
                 <ul className="space-y-4 text-sm font-medium text-black/70 dark:text-white/70">
+                  {/* Kuvitukset: public/icons/yhteystiedot/ */}
                   <li className="flex items-center gap-3">
-                    <span className="text-lg">📞</span>
+                    <Image src="/icons/yhteystiedot/puhelin.png" alt="" width={56} height={56} className="h-7 w-7 shrink-0 object-contain" />
                     <a href={`tel:${siteConfig.contact.phone.tel}`} className="hover:text-primary transition-colors">
                       {siteConfig.contact.phone.display}
                     </a>
                   </li>
                   <li className="flex items-center gap-3">
-                    <span className="text-lg">✉️</span>
+                    <Image src="/icons/yhteystiedot/sahkoposti.png" alt="" width={56} height={56} className="h-7 w-7 shrink-0 object-contain" />
                     <a href={`mailto:${siteConfig.contact.email}`} className="hover:text-primary transition-colors">
                       {siteConfig.contact.email}
                     </a>
                   </li>
-                  <li className="flex items-start gap-3">
-                    <span className="text-lg">🕒</span>
+                  <li className="flex items-center gap-3">
+                    <Image src="/icons/yhteystiedot/aukiolo.png" alt="" width={56} height={56} className="h-7 w-7 shrink-0 object-contain" />
                     <span className="leading-relaxed">{siteConfig.contact.openingHours}</span>
                   </li>
                   <li className="flex items-center gap-3">
-                    <span className="text-lg">🏢</span>
+                    <Image src="/icons/yhteystiedot/y-tunnus.png" alt="" width={56} height={56} className="h-7 w-7 shrink-0 object-contain" />
                     <span>Y-tunnus: {siteConfig.businessId}</span>
                   </li>
                 </ul>

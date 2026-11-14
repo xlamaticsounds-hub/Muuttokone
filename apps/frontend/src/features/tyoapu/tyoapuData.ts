@@ -80,6 +80,7 @@ export const tyoapuProcessSteps: ProcessStep[] = [
     title: 'Kerro tarpeesi',
     desc: 'Täytä lomake tai soita. Kuvat ja mitat nopeuttavat tarjousta.',
     icon: 'ClipboardList',
+    image: '/icons/tyoapu/kerro-tarpeesi.png',
     highlight: true,
     href: '#tarjous',
   },
@@ -87,16 +88,19 @@ export const tyoapuProcessSteps: ProcessStep[] = [
     title: 'Saat tarjouksen',
     desc: 'Sovimme kiinteästä hinnasta tai tuntiveloituksesta — kumpi sopii työhön paremmin.',
     icon: 'Calculator',
+    image: '/icons/tyoapu/tarjous.png',
   },
   {
     title: 'Sovitaan ajankohta',
     desc: 'Tulemme sovittuna päivänä, tarvittaessa myös iltaisin ja viikonloppuisin.',
     icon: 'CalendarCheck',
+    image: '/icons/tyoapu/ajankohta.png',
   },
   {
     title: 'Työ valmiiksi',
     desc: 'Teemme työn alusta loppuun ja viemme ylimääräiset pakkaukset mennessämme.',
     icon: 'CheckCircle2',
+    image: '/icons/tyoapu/valmis.png',
   },
 ];
 
