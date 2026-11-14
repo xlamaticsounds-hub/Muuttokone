@@ -34,6 +34,8 @@ const nextConfig = {
   },
   images: {
     remotePatterns: [],
+    // 75 = oletus, 90 = tiimikuvat (yhteystiedot), joissa pakkaus näkyy kasvoissa
+    qualities: [75, 90],
   },
   typescript: {
     ignoreBuildErrors: true,

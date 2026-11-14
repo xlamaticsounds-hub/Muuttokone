@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import SectionTitle from '@/components/SectionTitle';
 import ServiceItem from '@/features/services/ServiceItem';
 import FeaturedServiceCard from '@/features/services/FeaturedServiceCard';
@@ -14,9 +15,11 @@ interface ServicesProps {
   items?: Service[];
   /** Palvelut-sivulla otsikko on sivun pääotsikko (h1), muualla h2. */
   headingLevel?: 'h1' | 'h2';
+  /** Kuva otsikon alle ennen palveluita (16:9, esim. tiimikuva Palvelut-sivulla). */
+  image?: { src: string; alt: string };
 }
 
-export default function Services({ title, subtitle, items = [], headingLevel = 'h2' }: ServicesProps) {
+export default function Services({ title, subtitle, items = [], headingLevel = 'h2', image }: ServicesProps) {
   const Heading = headingLevel;
   const t = useT(servicesDictionary);
   const tData = useT(servicesDataDictionary);
@@ -40,6 +43,21 @@ export default function Services({ title, subtitle, items = [], headingLevel = '
             <Heading className="text-3xl font-bold text-black/90 dark:text-white sm:text-4xl">{title || t('Muuttopalvelut')}</Heading>
             <p className="mt-2 text-black/70 dark:text-white/70">{subtitle || t('Tarjoamme kattavat muuttopalvelut kotitalouksille ja yrityksille Helsingissä ja Uudellamaalla.')}</p>
           </div>
+
+          {image && (
+            <div className="shadow-solid-8 mx-auto mb-12 max-w-5xl overflow-hidden rounded-2xl">
+              <Image
+                src={image.src}
+                alt={image.alt}
+                width={1920}
+                height={1080}
+                priority
+                quality={90}
+                sizes="(min-width: 1100px) 1024px, 100vw"
+                className="h-auto w-full"
+              />
+            </div>
+          )}
 
           {featuredItems.map((service) => (
             <FeaturedServiceCard

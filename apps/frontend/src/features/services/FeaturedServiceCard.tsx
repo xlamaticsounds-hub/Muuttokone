@@ -1,5 +1,6 @@
+import Image from 'next/image';
 import Link from 'next/link';
-import { Wrench, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import type { Service } from '@/types/service';
 
 // Leveä korostuskortti palvelulistan yläpuolelle (Service.featured) — nostaa uuden tai
@@ -15,8 +16,8 @@ export default function FeaturedServiceCard({
 }) {
   const content = (
     <div className="relative z-10 flex flex-col gap-6 sm:flex-row sm:items-center">
-      <div className="bg-primary flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl text-white shadow-lg sm:h-24 sm:w-24">
-        <Wrench className="h-10 w-10 sm:h-12 sm:w-12" />
+      <div className="ring-primary/20 flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-1 sm:h-24 sm:w-24 dark:bg-slate-800">
+        <Image src={service.icon} alt="" width={160} height={160} className="h-16 w-16 object-contain sm:h-20 sm:w-20" />
       </div>
 
       <div className="flex-1">

@@ -5,13 +5,17 @@ import type { TeamMember } from './teamData';
 export default function TeamCard({ member }: { member: TeamMember }) {
   return (
     <div className="animate_top rounded-2xl bg-white p-7.5 text-center shadow-solid-8 xl:p-10 dark:border dark:border-strokedark dark:bg-blacksection">
-      <div className="bg-primary/10 mx-auto mb-5 flex h-28 w-28 items-center justify-center overflow-hidden rounded-full">
+      {/* Kuvat ovat pystyssä 9:16 (public/images/tiimi/). Uusi kuva uudella tiedostonimellä, koska
+          next/image pitää optimoidut kuvat välimuistissa osoitteen perusteella. */}
+      <div className="bg-primary/10 mx-auto mb-5 flex aspect-[9/16] w-full max-w-56 items-center justify-center overflow-hidden rounded-xl">
         {member.photo ? (
           <Image
             src={member.photo}
-            alt={member.name}
-            width={112}
-            height={112}
+            alt={member.fullName ?? member.name}
+            width={1080}
+            height={1920}
+            sizes="224px"
+            quality={90}
             className="h-full w-full object-cover"
           />
         ) : (

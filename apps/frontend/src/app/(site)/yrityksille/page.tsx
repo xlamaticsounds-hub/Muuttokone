@@ -145,21 +145,20 @@ export default function YrityksillePage() {
       <section className="bg-primary relative overflow-hidden py-20 lg:py-28">
         <div className="relative z-10 mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
           <div className="flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
-            {/* Logo: puhelimella tekstin yläpuolella, isoilla näytöillä oikealla. logo-transparent.png,
-                koska muissa logotiedostoissa on kermanvärinen tausta joka näkyisi sinisellä. */}
-            <div className="relative w-fit lg:order-last lg:shrink-0">
-              <div className="pointer-events-none absolute inset-0 m-auto h-3/4 w-3/4 rounded-full bg-white/20 blur-3xl" />
+            {/* Tiimikuva: puhelimella tekstin yläpuolella, isoilla näytöillä oikealla */}
+            <div className="w-full lg:order-last lg:w-[46%] lg:shrink-0">
               <Image
-                src="/images/logo/logo-transparent.png"
-                alt="Muuttokone.fi"
-                width={649}
-                height={485}
+                src="/images/tiimi/tiimi-ryhma.jpg"
+                alt="Muuttokoneen tiimi: Domenic, Paavo ja Hugo"
+                width={1800}
+                height={1200}
                 priority
-                sizes="(min-width: 1280px) 384px, (min-width: 1024px) 320px, 224px"
-                className="relative w-48 sm:w-56 lg:w-80 xl:w-96"
+                quality={90}
+                sizes="(min-width: 1390px) 600px, (min-width: 1024px) 46vw, 100vw"
+                className="h-auto w-full rounded-2xl shadow-2xl ring-1 ring-white/20"
               />
             </div>
-            <div className="max-w-2xl">
+            <div className="max-w-2xl lg:flex-1">
               <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/80">Yrityksille</p>
               <h1 className="mb-5 text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
                 Yritysmuutto, joka ei keskeytä työtänne

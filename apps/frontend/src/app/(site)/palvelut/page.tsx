@@ -34,6 +34,7 @@ export default async function Page() {
         title="Muuttopalvelut"
         headingLevel="h1"
         subtitle="Luotettavat ja monipuoliset muuttopalvelut koteihin ja yrityksille Helsingissä ja Uudellamaalla."
+        image={{ src: '/images/tiimi/tiimi-muuttopalvelut.jpg', alt: 'Muuttokoneen tiimi: Domenic, Paavo ja Hugo' }}
         items={items}
       />
       <section className="bg-gray-50 dark:bg-black/20 py-16 lg:py-24">

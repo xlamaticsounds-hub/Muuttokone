@@ -25,13 +25,14 @@ export default function ServiceItem({ service, index = 0 }: ServiceItemProps) {
   const content = (
     <>
       <div className="relative z-10">
-        <div className="mb-5 flex h-14 w-14 items-center justify-center overflow-hidden rounded-xl bg-primary/10">
+        <div className="mb-5 flex h-16 w-16 items-center justify-center overflow-hidden rounded-xl bg-primary/10">
+          {/* Kuvitukset public/icons/palvelut/ (512×512 PNG); alt tyhjä, koska otsikko kertoo saman */}
           <Image
             src={iconSrc}
-            alt={service.title}
-            width={48}
-            height={48}
-            className="h-11 w-11 object-contain"
+            alt=""
+            width={112}
+            height={112}
+            className="h-14 w-14 object-contain"
           />
         </div>
 
