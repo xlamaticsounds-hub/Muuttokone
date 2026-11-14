@@ -108,6 +108,8 @@ const createPrismaMock = (): PrismaClient => {
     return rows.filter((row) => {
       return Object.entries(where).every(([key, value]) => {
         const current = row[key];
+        // { teamId: null } osuu myös riveihin, joilta kenttä puuttuu kokonaan (luotu ennen kentän lisäystä)
+        if (value === null) return current == null;
         if (value instanceof Date) return sameValue(current, value);
         if (value && typeof value === 'object') {
           return Array.isArray(value) ? true : matchesOperators(current, value);
@@ -235,7 +237,8 @@ const createPrismaMock = (): PrismaClient => {
               if (model === 'lead') {
                 const contactId = data.contact?.connect?.id ?? data.contactId ?? null;
                 const discountCodeId = data.discount?.connect?.id ?? data.discountCodeId ?? null;
-                const record = { ...base, ...data, contactId, discountCodeId, contact: undefined, discount: undefined } as MockRecord;
+                const teamId = data.team?.connect?.id ?? data.teamId ?? null;
+                const record = { ...base, ...data, contactId, discountCodeId, teamId, contact: undefined, discount: undefined, team: undefined } as MockRecord;
                 rows.unshift(record);
                 saveStoreToDisk();
                 return record;

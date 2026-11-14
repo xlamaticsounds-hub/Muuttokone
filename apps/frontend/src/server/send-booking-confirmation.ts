@@ -1,7 +1,6 @@
 'use server';
 
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/server/auth';
+import { getLeadSession } from '@/server/access';
 import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
 import { isSmtpConfigured, sendMail, SMTP_NOT_CONFIGURED_MESSAGE } from '@/server/mailer';
@@ -45,7 +44,7 @@ async function sendBookingConfirmationEmailInner(
   leadId: string,
   customMessage: string | null,
 ): Promise<SendBookingConfirmationResult> {
-  const session = await getServerSession(authOptions);
+  const session = await getLeadSession(leadId);
   if (!session) {
     return { success: false, message: 'Kirjaudu sisään lähettääksesi varausvahvistuksen.' };
   }

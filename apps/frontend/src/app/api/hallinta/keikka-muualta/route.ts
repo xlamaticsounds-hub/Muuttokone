@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/server/auth';
+import { getAdminSession } from '@/server/access';
+import { scopeTeamId } from '@/lib/access';
 import { createExternalLead, readImagesFromForm } from '@/server/external-lead';
 import { normalizeExternalLeadInput } from '@/lib/external-lead';
 import { toHelsinkiDateInput } from '@/lib/helsinki-time';
@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 
 /** Luo muualta tulleen keikan (multipart: payload = JSON, images = kuvat). */
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
   if (!session) return NextResponse.json({ success: false, message: 'Kirjaudu sisään.' }, { status: 401 });
 
   let form: FormData;
@@ -27,7 +27,12 @@ export async function POST(req: NextRequest) {
   if (!images.ok) return NextResponse.json({ success: false, message: images.message }, { status: 400 });
 
   try {
-    const { leadId, attachmentError } = await createExternalLead(input.value, images.images, session.user?.email ?? null);
+    const { leadId, attachmentError } = await createExternalLead(
+      input.value,
+      images.images,
+      session.user.email,
+      scopeTeamId(session.actor),
+    );
     return NextResponse.json({ success: true, leadId, warning: attachmentError });
   } catch (error) {
     console.error('[keikka-muualta] keikan luonti epäonnistui', error);

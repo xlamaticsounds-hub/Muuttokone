@@ -14,6 +14,8 @@ import { discountLabel } from '@/features/calculator/discount';
 import { lookupDiscountCode } from '@/server/discount-codes';
 import { recomputeLeadPrice } from '@/server/lead-format';
 import { baseTripSummary, leadBaseTripAdvice } from '@/lib/base-trip';
+import { suggestTeamId } from '@/lib/teams';
+import { teamRelation } from '@/server/repo/leads';
 
 // Force Node.js runtime (multipart + File)
 export const runtime = 'nodejs';
@@ -258,6 +260,7 @@ async function submitLead(data: z.infer<typeof LeadSchema>) {
       data: {
         ...leadData,
         source: leadSource,
+        ...teamRelation(suggestTeamId({ fromAddress, toAddress })),
       },
     });
     action = 'lead.create';
@@ -625,6 +628,7 @@ async function submitBooking(data: any) {
       requestedDate,
       fromAddress: data.addressFrom,
       toAddress: data.addressTo,
+      ...teamRelation(suggestTeamId({ fromAddress: data.addressFrom, toAddress: data.addressTo })),
       notes: `${priceNote}${extraNotes ? `\n${extraNotes}` : ''}`,
       floor: data.floorFrom,
       hasElevator: data.elevatorFrom,

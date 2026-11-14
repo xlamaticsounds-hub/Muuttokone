@@ -1,8 +1,7 @@
 'use server';
 
-import { getServerSession } from 'next-auth';
 import { revalidatePath } from 'next/cache';
-import { authOptions } from '@/server/auth';
+import { canSeeLead, getAdminSession, type AccessSession } from '@/server/access';
 import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
 import { normalizeNoteInput } from '@/lib/notes';
@@ -13,6 +12,13 @@ export type NoteActionResult = { success: true } | { success: false; message: st
 
 const noSession: NoteActionResult = { success: false, message: 'Kirjaudu sisään.' };
 
+// Aluevastaava näkee ja muokkaa omia muistiinpanojaan sekä oman tiimin liideihin liitettyjä.
+async function canTouchNote(session: AccessSession, note: { createdBy: string | null; leadId: string | null }): Promise<boolean> {
+  if (session.actor.role === 'OWNER') return true;
+  if (note.createdBy && note.createdBy === session.actor.email) return true;
+  return note.leadId ? canSeeLead(session.actor, note.leadId) : false;
+}
+
 function refresh(leadId?: string | null) {
   revalidatePath('/hallinta/muistiinpanot');
   if (leadId) revalidatePath(`/hallinta/liidit/${leadId}`);
@@ -22,7 +28,7 @@ export type SaveNoteInput = { id?: string; title?: string | null; body: string; 
 
 /** Luo uuden muistiinpanon tai muokkaa olemassa olevaa (liidi-liitos säilyy muokatessa ellei sitä anneta). */
 export async function saveNote(input: SaveNoteInput): Promise<NoteActionResult> {
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
   if (!session) return noSession;
 
   const parsed = normalizeNoteInput(input);
@@ -32,12 +38,12 @@ export async function saveNote(input: SaveNoteInput): Promise<NoteActionResult> 
   try {
     if (leadId) {
       const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true } });
-      if (!lead) return { success: false, message: 'Liidiä ei löytynyt.' };
+      if (!lead || !(await canSeeLead(session.actor, leadId))) return { success: false, message: 'Liidiä ei löytynyt.' };
     }
 
     if (input.id) {
       const existing = await prisma.note.findUnique({ where: { id: input.id } });
-      if (!existing) return { success: false, message: 'Muistiinpanoa ei löytynyt.' };
+      if (!existing || !(await canTouchNote(session, existing))) return { success: false, message: 'Muistiinpanoa ei löytynyt.' };
       await prisma.note.update({
         where: { id: input.id },
         data: { title, body, category, ...(input.leadId !== undefined ? { leadId } : {}) },
@@ -60,11 +66,11 @@ export async function saveNote(input: SaveNoteInput): Promise<NoteActionResult> 
 }
 
 async function updateFlag(id: string, data: { pinned: boolean } | { archived: boolean }): Promise<NoteActionResult> {
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
   if (!session) return noSession;
   try {
     const existing = await prisma.note.findUnique({ where: { id } });
-    if (!existing) return { success: false, message: 'Muistiinpanoa ei löytynyt.' };
+    if (!existing || !(await canTouchNote(session, existing))) return { success: false, message: 'Muistiinpanoa ei löytynyt.' };
     await prisma.note.update({ where: { id }, data });
     refresh(existing.leadId);
     return { success: true };
@@ -83,11 +89,12 @@ export async function setNoteArchived(id: string, archived: boolean): Promise<No
 }
 
 export async function deleteNote(id: string): Promise<NoteActionResult> {
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
   if (!session) return noSession;
   try {
     const existing = await prisma.note.findUnique({ where: { id } });
     if (!existing) return { success: true }; // jo poistettu
+    if (!(await canTouchNote(session, existing))) return { success: false, message: 'Muistiinpanoa ei löytynyt.' };
     await prisma.note.delete({ where: { id } });
     await createLog({ entityType: 'Note', entityId: id, action: 'note.delete', message: 'Muistiinpano poistettu', data: { leadId: existing.leadId } }).catch(() => {});
     refresh(existing.leadId);

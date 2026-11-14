@@ -1319,7 +1319,7 @@ function applyCleaning(base: PriceBreakdown, data: CalculatorData): PriceBreakdo
 
 /**
  * Tukikohtalisä (Muutto ja Kuljetus): tyhjä ajo tukikohdasta keikalle ja takaisin, kun keikka on
- * kaukana pääkaupunkiseudulta (lib/base-trip.ts). Täysi muuttopalvelu 3 hengen km-hinnalla, muut
+ * kaukana lähimmästä tukikohdasta (Helsinki tai Tampere, lib/base-trip.ts). Täysi muuttopalvelu 3 hengen km-hinnalla, muut
  * 1–2 hengen hinnalla.
  */
 function applyBaseTrip(base: PriceBreakdown, data: CalculatorData): PriceBreakdown {

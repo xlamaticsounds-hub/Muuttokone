@@ -1,8 +1,7 @@
 'use server';
 
-import { getServerSession } from 'next-auth';
 import { isCompletedStatus } from '@/lib/lead-status';
-import { authOptions } from '@/server/auth';
+import { getLeadSession } from '@/server/access';
 import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
 import { parseEuroAmount } from '@/server/lead-format';
@@ -37,7 +36,7 @@ function isRentalLead(formData: unknown): boolean {
  * Palauttaa aina tuloksen (ei heitä) — Next.js piilottaa server actionin virheviestit tuotannossa.
  */
 export async function markLeadCompleted(leadId: string, finalPriceInput: string | number): Promise<LeadActionResult> {
-  const session = await getServerSession(authOptions);
+  const session = await getLeadSession(leadId);
   if (!session) return { success: false, message: 'Kirjaudu sisään.' };
 
   const finalPrice = parseEuroAmount(finalPriceInput);

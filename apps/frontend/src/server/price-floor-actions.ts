@@ -1,7 +1,6 @@
 'use server';
 
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/server/auth';
+import { getAdminSession, getOwnerSession } from '@/server/access';
 import { getAppState, setAppState } from '@/server/app-state';
 import { createLog } from '@/server/repo/logs';
 import { PRICE_FLOOR_COSTS_KEY, parsePriceFloorCosts, type PriceFloorCosts } from '@/lib/price-floor';
@@ -9,14 +8,15 @@ import { PRICE_FLOOR_COSTS_KEY, parsePriceFloorCosts, type PriceFloorCosts } fro
 export type PriceFloorSaveResult = { ok: true } | { ok: false; message: string };
 
 /** Hintalattian kululuvut tietokannasta (ei koodista). null, jos niitä ei ole vielä tallennettu. */
+// Kululuvut näkyvät myös aluevastaavalle (hintalattiavaroitus liidin sivulla), muuttaa voi vain omistaja.
 export async function getPriceFloorCosts(): Promise<PriceFloorCosts | null> {
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
   if (!session) return null;
   return parsePriceFloorCosts(await getAppState<unknown>(PRICE_FLOOR_COSTS_KEY));
 }
 
 export async function savePriceFloorCosts(input: Record<string, unknown>): Promise<PriceFloorSaveResult> {
-  const session = await getServerSession(authOptions);
+  const session = await getOwnerSession();
   if (!session) return { ok: false, message: 'Kirjaudu sisään.' };
   const costs = parsePriceFloorCosts(input);
   if (!costs) return { ok: false, message: 'Tarkista luvut: kaikki kentät ovat pakollisia ja vähintään 0.' };

@@ -1,7 +1,6 @@
 'use server';
 
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/server/auth';
+import { getOwnerSession } from '@/server/access';
 import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
 import { isSmtpConfigured, sendMail, SMTP_NOT_CONFIGURED_MESSAGE } from '@/server/mailer';
@@ -51,7 +50,7 @@ async function sendInvoiceEmailInner(
   email: string,
   options: SendInvoiceOptions,
 ): Promise<SendInvoiceResult> {
-  const session = await getServerSession(authOptions);
+  const session = await getOwnerSession();
   if (!session) {
     return { success: false, message: 'Kirjaudu sisään lähettääksesi laskun.' };
   }

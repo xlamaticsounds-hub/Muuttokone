@@ -1,8 +1,8 @@
 'use server';
 
-import { getServerSession } from 'next-auth';
 import { revalidatePath } from 'next/cache';
-import { authOptions } from '@/server/auth';
+import { getLeadSession, getOwnerSession } from '@/server/access';
+import { CREW_HOME } from '@/lib/access';
 import { prisma } from '@/server/db';
 import { setAppState } from '@/server/app-state';
 import { createLog } from '@/server/repo/logs';
@@ -28,6 +28,7 @@ const MAX_NOTES = 1000;
 
 function refresh(leadId: string) {
   revalidatePath('/hallinta/inventaario');
+  revalidatePath(CREW_HOME);
   revalidatePath(`/hallinta/liidit/${leadId}`);
 }
 
@@ -44,7 +45,7 @@ export async function saveBoxRental(input: {
   pickupKey: string;
   notes?: string | null;
 }): Promise<BoxRentalActionResult> {
-  const session = await getServerSession(authOptions);
+  const session = await getLeadSession(input.leadId);
   if (!session) return noSession;
 
   const quantity = quantityOf(input.quantity);
@@ -105,13 +106,17 @@ export async function setBoxRentalStatus(input: {
   status: 'RESERVED' | 'DELIVERED' | 'RETURNED' | 'CANCELLED';
   returnedQty?: number;
 }): Promise<BoxRentalActionResult> {
-  const session = await getServerSession(authOptions);
-  if (!session) return noSession;
   if (!['RESERVED', 'DELIVERED', 'RETURNED', 'CANCELLED'].includes(input.status)) return { success: false, message: 'Tuntematon tila.' };
 
   try {
     const rental = await prisma.boxRental.findUnique({ where: { id: input.id } });
     if (!rental) return { success: false, message: 'Vuokrausta ei löytynyt.' };
+    // Partionjohtaja kuittaa oman tiiminsä toimitukset ja noudot (partiosivu), muttei peru vuokrauksia
+    const session = await getLeadSession(rental.leadId, { allowCrew: true });
+    if (!session) return noSession;
+    if (session.actor.role === 'CREW_LEAD' && (input.status === 'CANCELLED' || rental.status === 'CANCELLED')) {
+      return { success: false, message: 'Vuokrauksen perumisen tekee toimisto.' };
+    }
     // Samat siirtymät kuin napeissa (InventoryActions): esim. noudetun peruminen palauttaisi hävikin varastoon
     if (!ALLOWED_TRANSITIONS[rental.status].includes(input.status)) {
       return { success: false, message: 'Tila on jo muuttunut. Päivitä sivu.' };
@@ -166,7 +171,8 @@ async function writeBoxStock(total: number, message: string, actorId: string | n
  * joten asiakkailla olevia ei tarvitse laskea käsin.
  */
 export async function saveBoxShelfCount(shelf: number): Promise<BoxRentalActionResult> {
-  const session = await getServerSession(authOptions);
+  // Varasto on yhteinen: vain omistajat muuttavat sen kokoa
+  const session = await getOwnerSession();
   if (!session) return noSession;
   const n = Number(shelf);
   if (!Number.isInteger(n) || n < 0 || n > MAX_STOCK) return { success: false, message: 'Anna hyllyssä olevien laatikoiden määrä kokonaislukuna.' };
@@ -183,7 +189,8 @@ export async function saveBoxShelfCount(shelf: number): Promise<BoxRentalActionR
 
 /** Uudet laatikot varastoon (+) tai rikkinäiset pois (−). */
 export async function adjustBoxStock(delta: number): Promise<BoxRentalActionResult> {
-  const session = await getServerSession(authOptions);
+  // Varasto on yhteinen: vain omistajat muuttavat sen kokoa
+  const session = await getOwnerSession();
   if (!session) return noSession;
   const n = Number(delta);
   if (!Number.isInteger(n) || n === 0 || Math.abs(n) > MAX_STOCK) return { success: false, message: 'Anna lisättävä (+) tai poistettava (−) määrä.' };

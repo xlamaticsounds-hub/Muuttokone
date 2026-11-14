@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/server/auth';
+import { getAdminSession } from '@/server/access';
 import { extractLeadFromConversation, isAiConfigured, readImagesFromForm } from '@/server/external-lead';
 
 export const runtime = 'nodejs';
@@ -10,7 +9,7 @@ const MAX_TEXT = 20_000;
 
 /** Tekoäly lukee keskustelun kuvat ja muistiinpanot ja palauttaa lomakkeen esitäytön. Mitään ei tallenneta. */
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
   if (!session) return NextResponse.json({ success: false, message: 'Kirjaudu sisään.' }, { status: 401 });
   if (!isAiConfigured()) {
     return NextResponse.json({ success: false, message: 'Tekoäly ei ole käytössä palvelimella. Täytä tiedot käsin.' }, { status: 503 });

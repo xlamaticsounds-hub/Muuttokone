@@ -12,6 +12,8 @@ import {
 } from '@/lib/box-inventory';
 import { getBoxStockTotal, loadInventoryRentals, syncMissingBoxRentals } from '@/server/box-rentals';
 import { BoxStockEditor, RentalActions } from './InventoryActions';
+import { requirePageAccess } from '@/server/access';
+import { scopeTeamId } from '@/lib/access';
 
 export const dynamic = 'force-dynamic';
 
@@ -113,6 +115,10 @@ function Section({
 }
 
 export default async function InventaarioPage() {
+  const actor = await requirePageAccess('/hallinta/inventaario');
+  // Varasto on yhteinen (omistajat): aluevastaava näkee vain oman tiiminsä vuokraukset ilman varastolukuja,
+  // koska koko yrityksen varasto miinus yhden tiimin vuokraukset antaisi väärän kuvan saatavuudesta.
+  const showStock = actor.role === 'OWNER';
   const todayKey = toHelsinkiDateInput(new Date());
   let dbUnavailable = false;
   let total: number | null = null;
@@ -121,7 +127,7 @@ export default async function InventaarioPage() {
   try {
     // Liidit, joilla on laatikkovuokra mutta ei vielä vuokrausriviä (esim. ennen inventaariota tulleet)
     await syncMissingBoxRentals();
-    [total, rentals] = await Promise.all([getBoxStockTotal(), loadInventoryRentals()]);
+    [total, rentals] = await Promise.all([getBoxStockTotal(), loadInventoryRentals(scopeTeamId(actor))]);
   } catch (error) {
     dbUnavailable = true;
     console.warn('[hallinta/inventaario] tietokanta ei vastaa', error);
@@ -141,7 +147,7 @@ export default async function InventaarioPage() {
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Inventaario</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Muuttolaatikot: varasto, vuokraukset ja palautukset.</p>
         </div>
-        <BoxStockEditor total={total} out={s.out} />
+        {showStock && <BoxStockEditor total={total} out={s.out} />}
       </div>
 
       {dbUnavailable && (
@@ -149,19 +155,19 @@ export default async function InventaarioPage() {
           Tietokantaan ei juuri nyt saada yhteyttä.
         </div>
       )}
-      {!dbUnavailable && total === null && (
+      {!dbUnavailable && showStock && total === null && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-900/40 dark:bg-blue-900/20 dark:text-blue-200">
           Aseta ensin varaston koko (kaikki laatikot, myös vuokralla olevat). Sen jälkeen saatavuus ja ylivarausvaroitukset toimivat.
         </div>
       )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Tile
+        {showStock && <Tile
           label="Varastossa nyt"
           value={total !== null ? `${s.inStock}` : '–'}
           sub={total !== null ? `/ ${total} laatikkoa` : 'varaston koko puuttuu'}
           tone={total !== null && s.inStock < 0 ? 'warn' : 'default'}
-        />
+        />}
         <Tile label="Vuokralla" value={`${s.out}`} sub={`${s.current.length} asiakkaalla`} />
         <Tile
           label={`Palaamassa ${RETURNING_SOON_DAYS} pv`}
@@ -196,7 +202,7 @@ export default async function InventaarioPage() {
         </div>
       )}
 
-      {total !== null && (
+      {showStock && total !== null && (
         <section className={`${card} p-4`}>
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
             <h2 className="font-semibold text-gray-900 dark:text-white">Vapaana seuraavat {AVAILABILITY_DAYS} päivää</h2>

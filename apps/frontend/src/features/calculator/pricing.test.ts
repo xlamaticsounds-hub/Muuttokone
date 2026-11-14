@@ -203,18 +203,26 @@ describe('tiimipalaverin hintapäätökset 4.11.2026', () => {
 
   it('tukikohtalisä lisätään kaukaiseen paikalliseen muuttoon ilman alennuksia', () => {
     const helsinki = local('Helsinki', { date: TUESDAY_MID_MONTH });
-    const hml = local('Hämeenlinna', { date: TUESDAY_MID_MONTH });
-    // 100 + 100 − 5 − 30 = 165 km × 1,88 €/km ≈ 310 €
+    const hml = local('Lahti', { date: TUESDAY_MID_MONTH });
+    // 105 + 105 − 5 − 30 = 175 km × 1,88 €/km ≈ 330 €
     expect(helsinki.baseTrip).toBeUndefined();
-    expect(hml.baseTrip).toEqual({ place: 'Hämeenlinna', emptyKm: 165, surcharge: 310 });
-    expect(hml.total).toBeCloseTo(helsinki.total + 310, 6);
-    expect(hml.addOnsTotal).toBeCloseTo(helsinki.addOnsTotal + 310, 6);
+    expect(hml.baseTrip).toEqual({ place: 'Lahti', emptyKm: 175, surcharge: 330 });
+    expect(hml.total).toBeCloseTo(helsinki.total + 330, 6);
+    expect(hml.addOnsTotal).toBeCloseTo(helsinki.addOnsTotal + 330, 6);
     expect(computePartnerDiscount(hml, 10).discountAmount).toBe(computePartnerDiscount(helsinki, 10).discountAmount);
     expect(hml.quoteOnly).toBeUndefined();
   });
 
   it('kantoavussa tukikohtalisä 1–2 hengen hinnalla', () => {
-    expect(local('Hämeenlinna', { movingPackage: 'carrying_help' }).baseTrip?.surcharge).toBe(230);
+    expect(local('Lahti', { movingPackage: 'carrying_help' }).baseTrip?.surcharge).toBe(240);
+  });
+
+  it('lähempänä Tamperetta lisä lasketaan Tampereen tukikohdasta', () => {
+    expect(local('Tampere').baseTrip).toBeUndefined();
+    expect(local('Nokia').baseTrip).toBeUndefined();
+    // Pori: 120 + 120 − 5 − 30 = 205 km × 1,88 €/km ≈ 385 € (Helsingistä yli tarjousrajan)
+    expect(local('Pori').baseTrip).toEqual({ place: 'Pori', emptyKm: 205, surcharge: 385 });
+    expect(local('Pori').quoteOnly).toBeUndefined();
   });
 
   it('hyvin kaukaiset ja yli 300 km keikat hinnoitellaan tarjouksella', () => {

@@ -145,6 +145,32 @@ export function summarizePeriod(
   };
 }
 
+export type WorkerHoursRow = { workerId: string; minutes: number; entries: number };
+
+/**
+ * Työntekijäkohtaiset tunnit jaksolla (palkanmaksu): jokainen leimalle valittu työntekijä saa leiman koko
+ * työajan (alku → loppu − tauot). Leimat, joille ei ole valittu työntekijöitä, eivät näy tässä
+ * (ne näkyvät yhä henkilötunneissa crewSize-luvun perusteella). Eniten tunteja ensin.
+ */
+export function workerHours(
+  entries: (Pick<TimeEntryLike, 'startedAt' | 'endedAt' | 'breakMinutes'> & { workerIds?: string[] | null })[],
+  period: Period,
+  now: Date = new Date(),
+): WorkerHoursRow[] {
+  const byWorker = new Map<string, WorkerHoursRow>();
+  for (const entry of entries) {
+    if (entry.startedAt < period.start || entry.startedAt >= period.end) continue;
+    const minutes = workedMinutes(entry, now);
+    for (const workerId of new Set(entry.workerIds ?? [])) {
+      const row = byWorker.get(workerId) ?? { workerId, minutes: 0, entries: 0 };
+      row.minutes += minutes;
+      row.entries += 1;
+      byWorker.set(workerId, row);
+    }
+  }
+  return [...byWorker.values()].sort((a, b) => b.minutes - a.minutes);
+}
+
 /** Hinta ÷ henkilötunnit (€/henkilötunti, ennen kuluja). null jos hintaa tai tunteja ei ole. */
 export function revenuePerPersonHour(price: number | null | undefined, hours: number): number | null {
   if (price == null || !(price > 0) || !(hours > 0)) return null;

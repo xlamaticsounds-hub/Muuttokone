@@ -1,7 +1,6 @@
 'use server';
 
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/server/auth';
+import { getOwnerSession } from '@/server/access';
 import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
 import { parseDiscountCodeInput, type DiscountCodeFormValues } from '@/lib/discount-code-input';
@@ -15,7 +14,7 @@ export type DiscountCodeActionResult = { success: true; id: string } | { success
  * muuta jo tehtyjä kauppoja.
  */
 export async function saveDiscountCode(id: string | null, values: DiscountCodeFormValues): Promise<DiscountCodeActionResult> {
-  const session = await getServerSession(authOptions);
+  const session = await getOwnerSession();
   if (!session) return { success: false, message: 'Kirjaudu sisään.' };
 
   const parsed = parseDiscountCodeInput(values);
@@ -50,7 +49,7 @@ export async function saveDiscountCode(id: string | null, values: DiscountCodeFo
 
 /** Ota käyttöön / poista käytöstä. Koodeja ei poisteta, jotta vanhat liidit säilyttävät viitteensä. */
 export async function setDiscountCodeActive(id: string, active: boolean): Promise<DiscountCodeActionResult> {
-  const session = await getServerSession(authOptions);
+  const session = await getOwnerSession();
   if (!session) return { success: false, message: 'Kirjaudu sisään.' };
 
   try {

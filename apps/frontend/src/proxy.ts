@@ -1,36 +1,26 @@
 import { NextRequest, NextFetchEvent, NextResponse } from "next/server";
 import { withAuth } from "next-auth/middleware";
 import type { NextRequestWithAuth } from "next-auth/middleware";
+import { LOGIN_PATH } from "@/lib/access";
 
 const authProxy = withAuth({
+  pages: {
+    signIn: LOGIN_PATH,
+  },
   cookies: {
     sessionToken: {
       name: "next-auth.session-token",
     },
   },
   callbacks: {
-    authorized: ({ token, req }) => {
-      // Only allowed emails can access admin or AI generation tools
-      const allowedEmails = (process.env.ALLOWED_EMAILS || "")
-        .split(",")
-        .map((e) => e.trim().toLowerCase());
-
-      const userEmail = token?.email?.toLowerCase();
-
-      if (!userEmail) return false;
-
-      // Check if user is in the allowlist
-      const isAllowed =
-        userEmail === 'xlamaticsounds@gmail.com' ||
-        userEmail === 'domenic.eklund@gmail.com' ||
-        allowedEmails.includes(userEmail);
-
-      return isAllowed;
-    },
+    // Vain kirjautuminen tarkistetaan tässä. Token myönnetään vain sallituille (server/auth.ts: signIn), ja
+    // roolit/tiimit tarkistetaan kannasta joka sivulla, server actionissa ja API-reitissä (server/access.ts),
+    // jotta käytöstä poisto ja roolin muutos tehoavat heti eikä vasta tokenin vanhetessa.
+    authorized: ({ token }) => Boolean(token?.email),
   },
 });
 
-// hallinta/api-ai: täsmälleen sama auth-tarkistus kuin ennenkin, koskematta.
+// hallinta/api-ai: vaatii kirjautumisen (yllä).
 // Kaikki muut reitit: merkitään kieli x-locale-headeriin URL:n perusteella (/en tai
 // /en/... -> 'en', muuten 'fi') — (site)/layout.tsx lukee tämän, jotta Header/Footer/koko
 // sivu renderöityy oikealla kielellä jo ensimmäisellä, evästeettömällä käynnillä (esim.

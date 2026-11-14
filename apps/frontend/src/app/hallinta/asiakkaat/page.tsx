@@ -1,5 +1,7 @@
 import { prisma } from '@/server/db';
 import AsiakkaatTable, { CustomerWithLeads } from './AsiakkaatTable';
+import { requirePageAccess } from '@/server/access';
+import { teamWhere } from '@/lib/access';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +12,11 @@ export default async function AsiakkaatPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
+  const actor = await requirePageAccess('/hallinta/asiakkaat');
+  // Aluevastaava: vain asiakkaat, joilla on keikka hänen tiimissään (ja vain niiden keikat)
+  const leadScope = teamWhere(actor);
+  const isOwner = actor.role === 'OWNER';
+  const contactWhere = isOwner ? {} : { leads: { some: leadScope } };
   const { page: pageParam } = await searchParams;
   const page = Math.max(1, parseInt(pageParam ?? '1', 10) || 1);
 
@@ -20,9 +27,11 @@ export default async function AsiakkaatPage({
   try {
     [customers, total] = await Promise.all([
       prisma.contact.findMany({
+        where: contactWhere,
         include: {
-          _count: { select: { leads: true } },
+          _count: { select: { leads: isOwner ? true : { where: leadScope } } },
           leads: {
+            where: leadScope,
             take: 1,
             orderBy: { createdAt: 'desc' },
             select: { status: true, requestedDate: true, createdAt: true },
@@ -32,7 +41,7 @@ export default async function AsiakkaatPage({
         take: PAGE_SIZE,
         skip: (page - 1) * PAGE_SIZE,
       }),
-      prisma.contact.count(),
+      prisma.contact.count({ where: contactWhere }),
     ]);
   } catch (error) {
     dbUnavailable = true;

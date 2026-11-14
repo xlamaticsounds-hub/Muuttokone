@@ -1,10 +1,13 @@
 import { google } from '@ai-sdk/google';
 import { generateObject } from 'ai';
 import { z } from 'zod';
+import { getOwnerSession } from '@/server/access';
 
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
+  // Blogin AI-työkalut: vain omistajat (proxy tarkistaa vain kirjautumisen)
+  if (!(await getOwnerSession())) return Response.json({ error: 'Ei oikeuksia.' }, { status: 403 });
   if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
     return Response.json(
       { error: 'AI-palvelu ei ole määritetty (GOOGLE_GENERATIVE_AI_API_KEY puuttuu).' },

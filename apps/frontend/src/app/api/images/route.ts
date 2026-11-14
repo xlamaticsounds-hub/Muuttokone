@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/server/auth';
+import { getOwnerSession } from '@/server/access';
 import { uploadImage } from '@/server/storage';
 import { prisma } from '@/server/db';
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getOwnerSession();
   
   // Security: Only authorized admins can upload
   if (!session) {
@@ -31,7 +30,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  const session = await getOwnerSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const images = await prisma.image.findMany({

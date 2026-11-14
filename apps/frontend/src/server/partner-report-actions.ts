@@ -1,7 +1,6 @@
 'use server';
 
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/server/auth';
+import { getOwnerSession } from '@/server/access';
 import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
 import { generatePartnerReport, sendPartnerReport } from '@/server/partner-reports';
@@ -27,7 +26,7 @@ export async function savePartnerSettings(
   partner: string,
   values: { reportEmail: string; reportCcEmail: string },
 ): Promise<ReportActionResult> {
-  const session = await getServerSession(authOptions);
+  const session = await getOwnerSession();
   if (!session) return { success: false, message: 'Kirjaudu sisään.' };
 
   const reportEmail = parseEmailList(values.reportEmail);
@@ -63,7 +62,7 @@ export async function createPartnerReport(
   monthInput: string,
   sendPreviewEmail: boolean,
 ): Promise<ReportActionResult> {
-  const session = await getServerSession(authOptions);
+  const session = await getOwnerSession();
   if (!session) return { success: false, message: 'Kirjaudu sisään.' };
 
   const m = /^(\d{4})-(\d{2})$/.exec(monthInput);
@@ -93,7 +92,7 @@ export async function createPartnerReport(
 }
 
 export async function approveAndSendPartnerReport(reportId: string, resend = false): Promise<ReportActionResult> {
-  const session = await getServerSession(authOptions);
+  const session = await getOwnerSession();
   if (!session) return { success: false, message: 'Kirjaudu sisään.' };
 
   try {

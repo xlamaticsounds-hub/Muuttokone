@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/server/auth';
+import { getOwnerSession } from '@/server/access';
 import { getPageContent, updatePageContent } from '@/server/repo/pages';
 
 export async function GET(
@@ -16,7 +15,7 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  const session = await getServerSession(authOptions);
+  const session = await getOwnerSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { slug } = await params;

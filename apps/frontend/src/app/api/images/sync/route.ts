@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/server/auth';
+import { getOwnerSession } from '@/server/access';
 import { prisma } from '@/server/db';
 import { Storage } from '@google-cloud/storage';
 
@@ -23,7 +22,7 @@ const bucketName = 'muuttokone.fi';
 const bucket = storage.bucket(bucketName);
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getOwnerSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {

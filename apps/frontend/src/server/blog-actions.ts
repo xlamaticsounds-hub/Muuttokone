@@ -4,6 +4,13 @@ import { prisma } from '@/server/db';
 import { Prisma } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { getOwnerSession } from '@/server/access';
+
+// Blogi on koko yrityksen nettisivun sisältöä: vain omistajat. (Aiemmin näissä ei ollut
+// kirjautumistarkistusta lainkaan, joten kuka tahansa olisi voinut kutsua niitä suoraan.)
+async function requireOwner() {
+  if (!(await getOwnerSession())) throw new Error('Unauthorized');
+}
 
 // Prisma throws on save failures (e.g. duplicate slug) — without this, that exception
 // propagates out of the Server Action and Next.js renders its generic
@@ -19,6 +26,7 @@ function saveErrorMessage(error: unknown): string {
 }
 
 export async function createPost(formData: FormData) {
+  await requireOwner();
   const title = formData.get('title') as string;
   const slug = formData.get('slug') as string;
   const content = formData.get('content') as string;
@@ -52,6 +60,7 @@ export async function createPost(formData: FormData) {
 }
 
 export async function updatePost(id: string, formData: FormData) {
+  await requireOwner();
   const title = formData.get('title') as string;
   const slug = formData.get('slug') as string;
   const content = formData.get('content') as string;
@@ -87,6 +96,7 @@ export async function updatePost(id: string, formData: FormData) {
 }
 
 export async function deletePost(id: string) {
+  await requireOwner();
   await prisma.post.delete({
     where: { id },
   });
@@ -103,6 +113,7 @@ export async function saveAiPost(data: {
   metaTitle: string;
   metaDescription: string;
 }) {
+  await requireOwner();
   const { title, slug, content, excerpt, metaTitle, metaDescription } = data;
 
   let post;

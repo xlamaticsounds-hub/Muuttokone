@@ -1,8 +1,7 @@
 'use server';
 
-import { getServerSession } from 'next-auth';
 import { isCompletedStatus } from '@/lib/lead-status';
-import { authOptions } from '@/server/auth';
+import { getOwnerSession } from '@/server/access';
 import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
 import { buildLateFeeItem, buildReminderFeeItem, parseInvoiceItems, type InvoiceLineItem } from '@/lib/invoice';
@@ -22,7 +21,7 @@ export type CreateInvoiceInput = {
 };
 
 export async function createInvoice(input: CreateInvoiceInput): Promise<{ id: string }> {
-  const session = await getServerSession(authOptions);
+  const session = await getOwnerSession();
   if (!session) {
     throw new Error('Unauthorized');
   }
@@ -60,7 +59,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<{ id: st
 export type UpdateInvoiceInput = CreateInvoiceInput;
 
 export async function updateInvoice(invoiceId: string, input: UpdateInvoiceInput): Promise<{ id: string }> {
-  const session = await getServerSession(authOptions);
+  const session = await getOwnerSession();
   if (!session) {
     throw new Error('Unauthorized');
   }
@@ -109,7 +108,7 @@ export async function updateInvoice(invoiceId: string, input: UpdateInvoiceInput
 // Summa otetaan vahvistetusta hinnasta tai laskurin tarkasta hinnasta — jos hinta on vain
 // haarukka (esim. "99–129"), summa jätetään nollaksi ja täytetään muokkaussivulla.
 export async function createInvoiceFromLead(leadId: string): Promise<{ id: string }> {
-  const session = await getServerSession(authOptions);
+  const session = await getOwnerSession();
   if (!session) {
     throw new Error('Unauthorized');
   }
@@ -173,7 +172,7 @@ export async function createInvoiceFromLead(leadId: string): Promise<{ id: strin
 // usein pohjaksi seuraavalle laskulle ilman että kukaan kirjoittaa koko laskua
 // uusiksi — kopiossa ei näy mitään "kopio"-merkintää, se on ihan tavallinen uusi lasku.
 export async function duplicateInvoice(invoiceId: string): Promise<{ id: string }> {
-  const session = await getServerSession(authOptions);
+  const session = await getOwnerSession();
   if (!session) {
     throw new Error('Unauthorized');
   }
@@ -216,7 +215,7 @@ export async function createLateFeeInvoice(
   dueDate: string | null = null, // ISO-päivämäärä uudelle laskulle
   reminderFee: number | null = null, // kiinteä muistutusmaksu euroina, esim. 5
 ): Promise<{ id: string; amount: number; days: number }> {
-  const session = await getServerSession(authOptions);
+  const session = await getOwnerSession();
   if (!session) {
     throw new Error('Unauthorized');
   }
@@ -289,7 +288,7 @@ const STATUS_LABELS_FI: Record<InvoiceStatus, string> = {
 };
 
 export async function updateInvoiceStatus(invoiceId: string, status: InvoiceStatus) {
-  const session = await getServerSession(authOptions);
+  const session = await getOwnerSession();
   if (!session) {
     throw new Error('Unauthorized');
   }
@@ -315,7 +314,7 @@ export async function updateInvoiceStatus(invoiceId: string, status: InvoiceStat
 // toisin kuin Leadillä). Lokimerkintä jää talteen erikseen ennen poistoa, koska Log-rivi
 // viittaa entityId:hen joka ei enää löydy Invoice-taulusta poiston jälkeen.
 export async function deleteInvoice(invoiceId: string) {
-  const session = await getServerSession(authOptions);
+  const session = await getOwnerSession();
   if (!session) {
     throw new Error('Unauthorized');
   }

@@ -1,23 +1,32 @@
 'use server';
 
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/server/auth';
 import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
 import { updateLeadStatus } from '@/server/actions';
+import { canSeeLead, getAdminSession } from '@/server/access';
 
 export type AiTodoResult = { success: true } | { success: false; message: string };
 
 async function requireSession() {
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
   if (!session) throw new Error('Unauthorized');
   return session;
+}
+
+const notFound = { success: false as const, message: 'Huomiota ei löytynyt.' };
+
+/** Aluevastaava käsittelee vain oman tiimin liideihin liittyviä huomioita; liidittömät (esim. maksut) ovat omistajien. */
+async function canHandleTodo(todo: { leadId: string | null }): Promise<boolean> {
+  const session = await requireSession();
+  if (session.actor.role === 'OWNER') return true;
+  return todo.leadId ? canSeeLead(session.actor, todo.leadId) : false;
 }
 
 /** "Tee ehdotettu": vaihtaa liidin tilan samalla tavalla kuin käsin (kalenteri, lokit, säännöt) ja sulkee huomion. */
 export async function applyAiTodo(id: string): Promise<AiTodoResult> {
   const session = await requireSession();
   const todo = await prisma.aiTodo.findUnique({ where: { id } });
+  if (todo && !(await canHandleTodo(todo))) return notFound;
   if (!todo || todo.status !== 'OPEN') return { success: false, message: 'Huomiota ei löytynyt tai se on jo käsitelty.' };
   if (!todo.leadId || !todo.suggestedStatus) return { success: false, message: 'Tällä huomiolla ei ole tehtävää toimenpidettä.' };
 
@@ -42,7 +51,7 @@ export async function applyAiTodo(id: string): Promise<AiTodoResult> {
 export async function resolveAiTodo(id: string, outcome: 'DONE' | 'DISMISSED'): Promise<AiTodoResult> {
   await requireSession();
   const todo = await prisma.aiTodo.findUnique({ where: { id } });
-  if (!todo) return { success: false, message: 'Huomiota ei löytynyt.' };
+  if (!todo || !(await canHandleTodo(todo))) return notFound;
   await prisma.aiTodo.update({ where: { id }, data: { status: outcome, resolvedAt: new Date() } });
   return { success: true };
 }
@@ -81,7 +90,7 @@ export async function draftReplyForTodo(id: string): Promise<ReplyDraftResult> {
   }
 
   const todo = await prisma.aiTodo.findUnique({ where: { id } });
-  if (!todo || !todo.leadId) return { success: false, message: 'Huomiota tai liidiä ei löytynyt.' };
+  if (!todo || !todo.leadId || !(await canHandleTodo(todo))) return { success: false, message: 'Huomiota tai liidiä ei löytynyt.' };
   if (todo.type !== 'needs_reply' && todo.type !== 'follow_up') {
     return { success: false, message: 'Tälle huomiolle ei voi tehdä vastausluonnosta.' };
   }

@@ -3,18 +3,28 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import GlobalSearch from "./GlobalSearch";
 import { isAdminSectionHidden } from "@/lib/features";
-import { BookUser, ChartLine, DollarSign, Gauge, Mail, Settings, Zap, User, LogOut, Search, X, Send, FileText, ImageIcon, Truck, Users, Receipt, History, FileSpreadsheet, Timer, StickyNote, TrendingUp, Package } from 'lucide-react';
+import { CREW_HOME, LOGIN_PATH, PASSWORD_PATH, ROLE_LABELS, USERS_PATH, canAccessPath, type Role } from "@/lib/access";
+import { BookUser, ChartLine, DollarSign, Gauge, Mail, Settings, Zap, User, LogOut, Search, X, Send, FileText, ImageIcon, Truck, Users, Receipt, History, FileSpreadsheet, Timer, StickyNote, TrendingUp, Package, UserCog, HardHat, KeyRound } from 'lucide-react';
 
 interface AdminLayoutShellProps {
   children: React.ReactNode;
   userEmail?: string | null;
+  userName?: string | null;
+  /** Kirjautuneen rooli: valikko näyttää vain osiot, joihin on pääsy (lib/access.ts) */
+  role: Role;
+  /** Aluevastaavan / partionjohtajan tiimi (näytetään käyttäjävalikossa) */
+  teamName?: string | null;
   /** Käynnissä olevien työaikaleimojen määrä (näytetään valikossa ja otsikkorivillä) */
   runningTimers?: number;
 }
 
-export default function AdminLayoutShell({ children, userEmail, runningTimers = 0 }: AdminLayoutShellProps) {
+export default function AdminLayoutShell({ children, userEmail, userName, role, teamName, runningTimers = 0 }: AdminLayoutShellProps) {
+  // Partionjohtajalla on vain partiosivu: ei sivupalkkia eikä hakua (puhelinkäyttö)
+  const crewOnly = role === "CREW_LEAD";
+  const timersHref = crewOnly ? CREW_HOME : "/hallinta/tyoajat";
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
@@ -38,11 +48,14 @@ export default function AdminLayoutShell({ children, userEmail, runningTimers = 
     { name: "Galleria", href: "/hallinta/galleria" },
     { name: "Analytiikka", href: "/hallinta/analytiikka" },
     { name: "Lokit", href: "/hallinta/lokit" },
+    { name: "Partio", href: CREW_HOME },
+    { name: "Käyttäjät", href: USERS_PATH },
   ];
-  // Piilotetut osiot (lib/features.ts) eivät näy valikossa, mutta niiden sivuilla otsikko löytyy silti
-  const links = sections.filter((link) => !isAdminSectionHidden(link.href));
+  // Piilotetut osiot (lib/features.ts) ja osiot, joihin roolilla ei ole pääsyä, eivät näy valikossa
+  const links = sections.filter((link) => !isAdminSectionHidden(link.href) && canAccessPath({ role }, link.href));
 
   const settingsLink = { name: "Asetukset", href: "/hallinta/asetukset" };
+  const showSettings = canAccessPath({ role }, settingsLink.href);
 
   // Close user menu on click outside
   useEffect(() => {
@@ -85,6 +98,7 @@ export default function AdminLayoutShell({ children, userEmail, runningTimers = 
     const link = allLinks.find(l => l.href === path);
     if (link) return link.name;
     if (path === "/hallinta/liidit/uusi") return "Keikka muualta";
+    if (path === PASSWORD_PATH) return "Salasana";
     if (/^\/hallinta\/liidit\/[^/]+\/tarjous$/.test(path)) return "Tarjous / vahvistus";
     if (path.startsWith("/hallinta/")) {
       // Fallback for subpages or unlisted routes, capitalize first letter
@@ -97,13 +111,14 @@ export default function AdminLayoutShell({ children, userEmail, runningTimers = 
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50 dark:bg-slate-900">
-      {sidebarOpen && (
+      {sidebarOpen && !crewOnly && (
         <div
           className="fixed inset-0 z-[45] bg-black/50 lg:hidden"
           onClick={() => setSidebarOpen(false)}
           aria-hidden="true"
         />
       )}
+      {!crewOnly && (
       <aside
         className={`absolute left-0 top-0 z-50 flex h-screen w-64 flex-col overflow-y-hidden bg-blue-500 shadow-xl duration-300 ease-linear dark:bg-slate-800 lg:static lg:w-[84px] lg:translate-x-0 lg:shadow-none ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -179,6 +194,8 @@ export default function AdminLayoutShell({ children, userEmail, runningTimers = 
                     {link.name === "Galleria" && <ImageIcon color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Analytiikka" && <ChartLine color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     {link.name === "Lokit" && <History color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
+                    {link.name === "Partio" && <HardHat color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
+                    {link.name === "Käyttäjät" && <UserCog color="white" className="[filter:brightness(1.2)_saturate(1.2)_drop-shadow(0_0_3px_rgba(255,255,255,0.4))]" />}
                     <span className="text-left text-sm tracking-tight lg:text-center lg:text-[10px]">{link.name}</span>
                   </Link>
                 </li>
@@ -186,6 +203,7 @@ export default function AdminLayoutShell({ children, userEmail, runningTimers = 
             </ul>
             
             {/* Settings at bottom with separator */}
+            {showSettings && (
             <div className="mt-auto pt-6">
               <div className="mb-3 h-px bg-white/25" />
               <ul className="flex flex-col items-center">
@@ -203,15 +221,17 @@ export default function AdminLayoutShell({ children, userEmail, runningTimers = 
                 </li>
               </ul>
             </div>
+            )}
           </nav>
         </div>
       </aside>
+      )}
       {/* Content Area */}
       <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
         {/* Header */}
         <header className="sticky top-0 z-40 flex w-full flex-col bg-white shadow dark:bg-slate-800 drop-shadow-1 dark:drop-shadow-none">
           <div className="flex flex-grow items-center justify-between px-4 py-3 shadow-2 sm:py-4 md:px-6 2xl:px-11">
-            <div className="flex items-center gap-2 sm:gap-4 lg:hidden">
+            <div className={`items-center gap-2 sm:gap-4 lg:hidden ${crewOnly ? "hidden" : "flex"}`}>
               {/* Hamburger Toggle BTN */}
               <button
                 aria-controls="sidebar"
@@ -250,9 +270,9 @@ export default function AdminLayoutShell({ children, userEmail, runningTimers = 
               </h1>
             </div>
 
-            {runningTimers > 0 && pathname !== "/hallinta/tyoajat" && (
+            {runningTimers > 0 && pathname !== timersHref && (
               <Link
-                href="/hallinta/tyoajat"
+                href={timersHref}
                 className="ml-2 flex shrink-0 items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-200"
               >
                 <span className="relative flex h-2.5 w-2.5">
@@ -265,10 +285,11 @@ export default function AdminLayoutShell({ children, userEmail, runningTimers = 
             )}
 
             {/* Middle: Search Bar */}
-            <GlobalSearch className="mx-4 hidden w-full max-w-md sm:block" />
+            {!crewOnly && <GlobalSearch className="mx-4 hidden w-full max-w-md sm:block" />}
 
             {/* Right: User Menu */}
             <div className="flex items-center gap-2 sm:gap-3 2xsm:gap-7">
+              {!crewOnly && (
               <button
                 type="button"
                 onClick={() => setMobileSearchOpen((open) => !open)}
@@ -278,6 +299,7 @@ export default function AdminLayoutShell({ children, userEmail, runningTimers = 
               >
                 {mobileSearchOpen ? <X className="h-5 w-5" /> : <Search className="h-5 w-5" />}
               </button>
+              )}
               <div className="relative" ref={userMenuRef}>
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
@@ -293,9 +315,24 @@ export default function AdminLayoutShell({ children, userEmail, runningTimers = 
                   <div className="absolute right-0 mt-4 flex w-62.5 flex-col rounded-sm border border-stroke bg-white shadow-default dark:border-strokedark dark:bg-boxdark z-50">
                     <div className="px-6 py-4 border-b border-stroke dark:border-strokedark">
                        <p className="text-sm text-gray-600 dark:text-gray-400">Kirjautunut käyttäjänä</p>
-                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{userEmail}</p>
+                       <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{userName && userName !== userEmail ? userName : userEmail}</p>
+                       {userName && userName !== userEmail && <p className="truncate text-xs text-gray-500 dark:text-gray-400">{userEmail}</p>}
+                       <p className="mt-1 text-xs font-semibold text-blue-700 dark:text-blue-300">
+                         {ROLE_LABELS[role]}{teamName ? ` · ${teamName}` : ""}
+                       </p>
                     </div>
                     <ul className="flex flex-col gap-1 border-b border-stroke p-2 dark:border-strokedark">
+                      <li>
+                        <Link
+                          href={PASSWORD_PATH}
+                          onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-3.5 px-4 py-2 text-sm font-medium duration-300 ease-in-out hover:text-primary lg:text-base"
+                        >
+                          <KeyRound className="h-5 w-5" />
+                          Vaihda salasana
+                        </Link>
+                      </li>
+                      {showSettings && (
                       <li>
                         <Link
                           href="/hallinta/asetukset"
@@ -306,15 +343,17 @@ export default function AdminLayoutShell({ children, userEmail, runningTimers = 
                           Asetukset
                         </Link>
                       </li>
+                      )}
                     </ul>
                     <div className="p-2">
-                       <a
-                        href="/api/auth/signout"
-                        className="flex items-center gap-3.5 px-4 py-2 text-sm font-medium duration-300 ease-in-out text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 lg:text-base"
+                       <button
+                        type="button"
+                        onClick={() => signOut({ callbackUrl: LOGIN_PATH })}
+                        className="flex w-full items-center gap-3.5 px-4 py-2 text-left text-sm font-medium duration-300 ease-in-out text-red-600 hover:bg-red-50 dark:hover:bg-red-900/10 lg:text-base"
                       >
                         <LogOut className="h-5 w-5" />
                         Kirjaudu ulos
-                      </a>
+                      </button>
                     </div>
                   </div>
                 )}
