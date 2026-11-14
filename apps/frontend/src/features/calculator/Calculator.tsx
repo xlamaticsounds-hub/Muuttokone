@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Script from 'next/script';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { calculateMovingPrice, CalculatorData, PriceBreakdown, FURNITURE_CATALOG, INCLUDED_DISTANCE_KM, RECYCLING_WASTE_TYPES, MAX_EXTRA_DESTINATIONS, EXTRA_DESTINATION_MINUTES, MAX_DISTANCE_KM, PRICING_CONSTANTS, APPLIANCE_SERVICES, MAX_APPLIANCES_PER_TYPE, CLEANING_PRICE } from './pricing';
 import { BOX_RENTAL, BOX_RENTAL_SUGGESTED_COUNT, calculateBoxRental, formatEuro, suggestBoxCount } from './boxRental';
@@ -11,7 +12,7 @@ import RentalDaysSlider from '@/features/vuokraus/RentalDaysSlider';
 import { computePartnerDiscount } from './discount';
 import { DiscountCodeField, partnerLabel, usePartnerDiscountCode } from './PartnerDiscountCode';
 import toast from 'react-hot-toast';
-import { Loader2, ArrowRight, ArrowLeft, Calculator as CalcIcon, Calendar, CheckCircle2, ChevronDown, Search, Camera, X } from 'lucide-react';
+import { Loader2, ArrowRight, ArrowLeft, Calculator as CalcIcon, ChevronDown, Search, Camera, X } from 'lucide-react';
 import Honeypot from '@/components/Forms/Honeypot';
 import GdprConsentCheckbox from '@/components/Forms/GdprConsentCheckbox';
 import { useLocale } from '@/i18n/LocaleContext';
@@ -616,7 +617,7 @@ export default function Calculator() {
       <div className="text-center py-20 px-4 bg-white dark:bg-black shadow-xl rounded-2xl max-w-2xl mx-auto border border-gray-100 dark:border-gray-800">
         <div className="flex justify-center mb-6">
           <div className="bg-green-100 dark:bg-green-900/30 p-4 rounded-full">
-            <CheckCircle2 className="w-16 h-16 text-green-600 dark:text-green-400" />
+            <Image src="/icons/tyoapu/valmis.png" alt="" width={128} height={128} className="h-16 w-16 object-contain" />
           </div>
         </div>
         <h2 className="text-3xl font-bold mb-4">{t('Kiitos varauksestasi!')}</h2>
@@ -724,7 +725,7 @@ export default function Calculator() {
                         : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    <div className="text-3xl mb-2">📦</div>
+                    <Image src="/icons/palvelut/kotimuutto.png" alt="" width={112} height={112} className="mb-2 h-14 w-14 object-contain" />
                     <h3 className="font-bold text-lg mb-2">{t('Muutto')}</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {t('Kodin tai toimiston muutto uuteen osoitteeseen.')}
@@ -740,7 +741,7 @@ export default function Calculator() {
                         : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    <div className="text-3xl mb-2">🚚</div>
+                    <Image src="/icons/palvelut/kuljetukset.png" alt="" width={112} height={112} className="mb-2 h-14 w-14 object-contain" />
                     <h3 className="font-bold text-lg mb-2">{t('Kuljetus')}</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {t('Yksittäisten tavaroiden, huonekalujen tai ostosten kuljetus.')}
@@ -756,7 +757,7 @@ export default function Calculator() {
                         : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
                     }`}
                   >
-                    <div className="text-3xl mb-2">♻️</div>
+                    <Image src="/icons/palvelut/kuolinpesa.png" alt="" width={112} height={112} className="mb-2 h-14 w-14 object-contain" />
                     <h3 className="font-bold text-lg mb-2">{t('Kierrätys')}</h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {t('Vanhojen huonekalujen, roskien ja ylimääräisten tavaroiden poisvienti.')}
@@ -1513,7 +1514,10 @@ export default function Calculator() {
                         Object.keys(formData.applianceServices).length > 0 ? 'border-primary bg-primary/5' : 'border-gray-100 dark:border-gray-800'
                       }`}
                     >
-                      <h4 className="font-bold">🔧 {t('Laitteiden irrotus ja asennus')}</h4>
+                      <h4 className="flex items-center gap-2 font-bold">
+                        <Image src="/icons/tyoapu/tyokalut.png" alt="" width={56} height={56} className="h-7 w-7 object-contain" />
+                        {t('Laitteiden irrotus ja asennus')}
+                      </h4>
                       <p className="text-xs text-gray-500">{t('Kiinteä hinta muuton yhteydessä')}</p>
                       <div className="mt-4 divide-y divide-gray-100 dark:divide-gray-800">
                         {APPLIANCE_SERVICES.map((service) => {
@@ -1579,7 +1583,10 @@ export default function Calculator() {
                           {formData.needsBoxRental && <span className="text-white text-xs">✓</span>}
                         </div>
                         <div className="flex-1">
-                          <h4 className="font-bold">📦 {t('Muuttolaatikot vuokralle')}</h4>
+                          <h4 className="flex items-center gap-2 font-bold">
+                            <Image src="/icons/palvelut/muuttolaatikot.png" alt="" width={56} height={56} className="h-7 w-7 object-contain" />
+                            {t('Muuttolaatikot vuokralle')}
+                          </h4>
                           <p className="text-xs text-gray-500">
                             {t('0,19 €/laatikko/vrk – ilmainen kotiinkuljetus muuton yhteydessä')}
                           </p>
@@ -1710,9 +1717,16 @@ export default function Calculator() {
 
                 {/* Trust signals */}
                 <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm text-gray-500">
-                  <span className="flex items-center gap-1.5">{t('🛡️ Vakuutus sisältyy')}</span>
-                  <span className="flex items-center gap-1.5">{t('✅ Ei piilokuluja')}</span>
-                  <span className="flex items-center gap-1.5">{t('📋 Hinta-arvio ei sido sinua')}</span>
+                  {[
+                    { icon: '/icons/tyoapu/suosituimmat.png', text: 'Vakuutus sisältyy' },
+                    { icon: '/icons/tyoapu/hinta.png', text: 'Ei piilokuluja' },
+                    { icon: '/icons/tyoapu/kerro-tarpeesi.png', text: 'Hinta-arvio ei sido sinua' },
+                  ].map((signal) => (
+                    <span key={signal.text} className="flex items-center gap-1.5">
+                      <Image src={signal.icon} alt="" width={48} height={48} className="h-6 w-6 object-contain" />
+                      {t(signal.text)}
+                    </span>
+                  ))}
                 </div>
 
                 <div className="max-w-xs sm:max-w-sm mx-auto flex flex-col sm:flex-row gap-3">
@@ -2038,7 +2052,7 @@ export default function Calculator() {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-semibold mb-2 flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-primary" /> {t('Toivottu muuttopäivä')}
+                        <Image src="/icons/tyoapu/ajankohta.png" alt="" width={48} height={48} className="h-6 w-6 object-contain" /> {t('Toivottu muuttopäivä')}
                       </label>
                       <input
                         type="date"

@@ -58,8 +58,9 @@ export default function PricingPreview() {
         {/* Pricing Badge */}
         <div className="animate_top mx-auto mb-8 max-w-fit rounded-full bg-white px-6 py-2 text-center shadow-lg ring-1 ring-black/5 md:mb-10 md:px-8 md:py-3 dark:bg-black dark:ring-white/10">
           <p className="flex flex-wrap items-center justify-center gap-2 text-sm font-semibold text-black md:text-base dark:text-white">
-            <span className="text-primary">
-              {locale === 'en' ? `🔥 Moves from ${euros(PLANS[0].price)}` : `🔥 Muutot alk. ${euros(PLANS[0].price)}`}
+            <span className="text-primary inline-flex items-center gap-2">
+              <Image src="/icons/tyoapu/hinta.png" alt="" width={48} height={48} className="h-6 w-6 object-contain" />
+              {locale === 'en' ? `Moves from ${euros(PLANS[0].price)}` : `Muutot alk. ${euros(PLANS[0].price)}`}
             </span>
             <span className="hidden h-1 w-1 rounded-full bg-gray-300 sm:block"></span>
             <span>{t('5 km sisältyy hintaan')}</span>

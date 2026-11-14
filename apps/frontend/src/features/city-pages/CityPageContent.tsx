@@ -1,13 +1,14 @@
 import Link from 'next/link';
-import { MapPin, ShieldCheck, Clock, Wallet } from 'lucide-react';
+import Image from 'next/image';
+import { MapPin } from 'lucide-react';
 import Faq from '@/components/Faq';
 import Cta from '@/components/Cta';
 import type { CityData } from './cityData';
 
 const trustPoints = [
-  { icon: ShieldCheck, title: 'Vakuutettu kuljetus', desc: 'Kaikki kuljetukset vakuutettu tiekuljetuslain mukaisesti.' },
-  { icon: Wallet, title: 'Kiinteä hinta', desc: 'Näet hinnan etukäteen muuttolaskurilla — ei piilokuluja.' },
-  { icon: Clock, title: 'Joustava aikataulu', desc: 'Sovimme ajankohdan, joka sopii sinulle parhaiten.' },
+  { icon: '/icons/palvelut/kuljetukset.png', title: 'Vakuutettu kuljetus', desc: 'Kaikki kuljetukset vakuutettu tiekuljetuslain mukaisesti.' },
+  { icon: '/icons/tyoapu/hinta.png', title: 'Kiinteä hinta', desc: 'Näet hinnan etukäteen muuttolaskurilla — ei piilokuluja.' },
+  { icon: '/icons/tyoapu/ajankohta.png', title: 'Joustava aikataulu', desc: 'Sovimme ajankohdan, joka sopii sinulle parhaiten.' },
 ];
 
 export default function CityPageContent({ city }: { city: CityData }) {
@@ -45,20 +46,17 @@ export default function CityPageContent({ city }: { city: CityData }) {
         <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
           <div className="relative rounded-2xl border border-black/5 bg-white/80 p-6 shadow-sm ring-1 ring-black/5 backdrop-blur md:p-8 dark:border-white/10 dark:bg-white/5 dark:ring-white/5">
             <div className="grid gap-7.5 sm:grid-cols-3">
-              {trustPoints.map((point) => {
-                const Icon = point.icon;
-                return (
-                  <div key={point.title} className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h3 className="mb-1 font-semibold text-black/90 dark:text-white">{point.title}</h3>
-                      <p className="text-sm text-black/70 dark:text-white/70">{point.desc}</p>
-                    </div>
+              {trustPoints.map((point) => (
+                <div key={point.title} className="flex items-start gap-4">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                    <Image src={point.icon} alt="" width={96} height={96} className="h-12 w-12 object-contain" />
                   </div>
-                );
-              })}
+                  <div>
+                    <h3 className="mb-1 font-semibold text-black/90 dark:text-white">{point.title}</h3>
+                    <p className="text-sm text-black/70 dark:text-white/70">{point.desc}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

@@ -14,6 +14,7 @@ import {
   formatEuro,
   formatPricePerDay,
   getAvailableRentalItems,
+  getRentalItem,
   isDeliveryAreaPostalCode,
   type RentalItem,
 } from './rental';
@@ -39,6 +40,12 @@ const addDays = (isoDate: string, days: number) => {
   return new Date(y, m - 1, d + days);
 };
 const formatDate = (d: Date) => d.toLocaleDateString('fi-FI');
+
+/** Yhteenvedon rivin kuvitus (rental.ts: icon), emoji jos tuotteella ei ole kuvitusta. */
+function LineIcon({ itemId, emoji }: { itemId: string; emoji: string }) {
+  const icon = getRentalItem(itemId)?.icon;
+  return icon ? <Image src={icon} alt="" width={40} height={40} className="h-5 w-5 shrink-0 object-contain" /> : <>{emoji}</>;
+}
 
 export default function RentalOrderForm() {
   const siteConfig = useSiteConfig();
@@ -265,8 +272,13 @@ export default function RentalOrderForm() {
                     <Image src={item.image} alt="" width={72} height={48} className="hidden h-12 w-[72px] shrink-0 rounded-lg bg-white object-contain sm:block" />
                   )}
                   <div className="flex-1">
-                    <h4 className="font-bold text-black dark:text-white">
-                      {item.emoji} {item.title}
+                    <h4 className="flex items-center gap-2 font-bold text-black dark:text-white">
+                      {item.icon ? (
+                        <Image src={item.icon} alt="" width={56} height={56} className="h-7 w-7 object-contain" />
+                      ) : (
+                        item.emoji
+                      )}{' '}
+                      {item.title}
                     </h4>
                     <p className="text-xs text-gray-500">
                       {formatPricePerDay(item.pricePerDay)} / kpl / vrk · {item.qty.min}–{item.qty.max} kpl · {item.days.min}–{item.days.max} vrk
@@ -499,8 +511,11 @@ export default function RentalOrderForm() {
             <div className="space-y-2">
               {order.lines.map((line) => (
                 <div key={line.itemId} className="flex justify-between gap-4">
-                  <span className="text-gray-600 dark:text-gray-300">
-                    {line.emoji} {line.title}: {line.qty} kpl × {line.days} vrk × {formatPricePerDay(line.pricePerDay)}
+                  <span className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                    <LineIcon itemId={line.itemId} emoji={line.emoji} />
+                    <span>
+                      {line.title}: {line.qty} kpl × {line.days} vrk × {formatPricePerDay(line.pricePerDay)}
+                    </span>
                   </span>
                   <span className="font-bold whitespace-nowrap">{formatEuro(line.cost)}</span>
                 </div>

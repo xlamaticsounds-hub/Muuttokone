@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { BadgeEuro, Receipt, Clock } from 'lucide-react';
 import { generateSEOMetadata, SEOConfigs } from '@/components/SEO/SEOHelpers';
 import StructuredData from '@/components/SEO/StructuredData';
 import ProcessSteps from '@/components/ProcessSteps';
@@ -33,17 +32,17 @@ const deliveryFee = `${RENTAL_DELIVERY.feeBothWays} €`;
 
 const trustPoints = [
   {
-    icon: BadgeEuro,
+    icon: '/icons/palvelut/kuljetukset.png',
     title: 'Ilmainen toimitus',
     desc: `Toimitus ja nouto kotiovelle ilmaiseksi muuton yhteydessä tai kun vuokra on vähintään ${freeFrom}. Muuten ${deliveryFee} yhteensä.`,
   },
   {
-    icon: Receipt,
+    icon: '/icons/tyoapu/hinta.png',
     title: 'Selkeä hinta',
     desc: 'Hinta näkyy heti ja ALV on mukana. Vuokra lasketaan toimituksesta noutoon.',
   },
   {
-    icon: Clock,
+    icon: '/icons/yhteystiedot/aukiolo.png',
     title: 'Joustava vuokra-aika',
     desc: 'Valitset vuokra-ajan itse. Vuokra jatkuu samalla päivähinnalla, kunnes noudamme tuotteet.',
   },
@@ -102,20 +101,17 @@ export default function MuuttolaatikotPage() {
         <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
           <div className="relative rounded-2xl border border-black/5 bg-white/80 p-6 shadow-sm ring-1 ring-black/5 backdrop-blur md:p-8 dark:border-white/10 dark:bg-white/5 dark:ring-white/5">
             <div className="grid gap-7.5 sm:grid-cols-3">
-              {trustPoints.map((point) => {
-                const Icon = point.icon;
-                return (
-                  <div key={point.title} className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h3 className="mb-1 font-semibold text-black/90 dark:text-white">{point.title}</h3>
-                      <p className="text-sm text-black/70 dark:text-white/70">{point.desc}</p>
-                    </div>
+              {trustPoints.map((point) => (
+                <div key={point.title} className="flex items-start gap-4">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                    <Image src={point.icon} alt="" width={96} height={96} className="h-12 w-12 object-contain" />
                   </div>
-                );
-              })}
+                  <div>
+                    <h3 className="mb-1 font-semibold text-black/90 dark:text-white">{point.title}</h3>
+                    <p className="text-sm text-black/70 dark:text-white/70">{point.desc}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -145,7 +141,9 @@ export default function MuuttolaatikotPage() {
                     className="mb-4 h-auto w-full rounded-xl bg-white"
                   />
                 ) : (
-                  <div className="mb-3 text-4xl">{item.emoji}</div>
+                  <div className="mb-3 text-4xl">
+                    {item.icon ? <Image src={item.icon} alt="" width={112} height={112} className="h-14 w-14 object-contain" /> : item.emoji}
+                  </div>
                 )}
                 <h3 className="text-xl font-semibold text-black/90 dark:text-white">{item.title}</h3>
                 {!item.inStock && (

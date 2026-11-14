@@ -1,29 +1,26 @@
 'use client';
 
 import Image from 'next/image';
-import { Calculator, CalendarCheck, Truck, PartyPopper, ClipboardList, CalendarRange, CheckCircle2, type LucideIcon } from 'lucide-react';
 import { useT } from '@/i18n/useT';
 import { processStepsDictionary } from '@/i18n/homeDictionary';
 
-// Icon-nimi (merkkijono) eikä komponenttiviite kulkee propsina — Server Componentista
-// (esim. page.tsx) ei voi välittää funktio-/komponenttiarvoja Client Componentin propseihin,
-// joten kutsuja (esim. businessProcessSteps.tsx) antaa vain nimen ja tämä tiedosto (joka on
-// itse 'use client') resolvoi sen oikeaksi ikonikomponentiksi.
-const iconMap: Record<string, LucideIcon> = {
-  Calculator,
-  CalendarCheck,
-  Truck,
-  PartyPopper,
-  ClipboardList,
-  CalendarRange,
-  CheckCircle2,
-};
+// Vaiheen kuvitus ikonin nimen mukaan (nimi kulkee merkkijonona, koska Server Componentista ei voi
+// välittää komponentteja Client Componentin propseihin). Kuvitukset: public/icons/.
+const iconMap = {
+  Calculator: '/icons/tyoapu/hinta.png',
+  CalendarCheck: '/icons/tyoapu/ajankohta.png',
+  CalendarRange: '/icons/tyoapu/ajankohta.png',
+  Truck: '/icons/palvelut/kuljetukset.png',
+  PartyPopper: '/icons/tyoapu/valmis.png',
+  ClipboardList: '/icons/tyoapu/kerro-tarpeesi.png',
+  CheckCircle2: '/icons/tyoapu/valmis.png',
+} as const;
 
 export type ProcessStep = {
   title: string;
   desc: string;
   icon: keyof typeof iconMap;
-  /** Kuvitus (esim. /icons/tyoapu/*.png) ikonin tilalle; ilman tätä näytetään icon. */
+  /** Oma kuvitus (esim. /icons/tyoapu/tarjous.png), jos ikonin oletuskuva ei sovi vaiheeseen. */
   image?: string;
   highlight?: boolean;
   href?: string;
@@ -80,7 +77,7 @@ export default function ProcessSteps({
 
         <div className="grid gap-6 md:grid-cols-2">
           {activeSteps.map((step, idx) => {
-            const Icon = iconMap[step.icon];
+            const image = step.image ?? iconMap[step.icon];
             const Wrapper = step.href ? 'a' : 'div';
             return (
               <Wrapper
@@ -94,14 +91,8 @@ export default function ProcessSteps({
               >
                 <div className="absolute right-[-40px] top-[-40px] h-32 w-32 rounded-full bg-primary/5 blur-3xl group-hover:bg-primary/10" />
                 <div className="relative flex items-start gap-4">
-                  <div
-                    className={`relative flex shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary ${step.image ? 'h-16 w-16' : 'h-12 w-12'}`}
-                  >
-                    {step.image ? (
-                      <Image src={step.image} alt="" width={96} height={96} className="h-12 w-12 object-contain" />
-                    ) : (
-                      <Icon className="h-6 w-6" />
-                    )}
+                  <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                    <Image src={image} alt="" width={96} height={96} className="h-12 w-12 object-contain" />
                     <span className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white ring-2 ring-white dark:ring-slate-900">
                       {idx + 1}
                     </span>

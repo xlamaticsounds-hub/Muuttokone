@@ -6,7 +6,7 @@ import Honeypot from '@/components/Forms/Honeypot';
 import GdprConsentCheckbox from '@/components/Forms/GdprConsentCheckbox';
 import { useSiteConfig } from '@/app/context/SiteConfigContext';
 import Link from 'next/link';
-import { Phone } from 'lucide-react';
+import Image from 'next/image';
 import { useT } from '@/i18n/useT';
 import { quoteFormDictionary } from '@/i18n/quoteFormDictionary';
 
@@ -442,7 +442,7 @@ export default function BusinessQuoteForm({ variant = 'business', className = 'm
             <div aria-live="polite">
               {isPhoneTopic && !isOther && (
                 <p className="bg-primary/5 mt-3 flex items-start gap-2 rounded-lg px-4 py-3 text-sm text-black/80 dark:bg-white/5 dark:text-white/80">
-                  <Phone aria-hidden="true" className="text-primary mt-0.5 h-4 w-4 shrink-0" />
+                  <Image src="/icons/yhteystiedot/puhelin.png" alt="" width={48} height={48} className="h-6 w-6 shrink-0 object-contain" />
                   {t('Jättäkää yhteystietonne, niin otamme teihin yhteyttä ja käymme tarpeenne läpi.')}
                 </p>
               )}

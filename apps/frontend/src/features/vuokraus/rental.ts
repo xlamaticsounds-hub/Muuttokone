@@ -25,7 +25,8 @@
 export interface RentalItem {
   id: string;
   title: string;
-  emoji: string;
+  emoji: string; // tekstiyhteenvedoissa (sähköposti, Discord)
+  icon?: string; // kuvitus sivulla emojin tilalla (polku public-kansiosta)
   image?: string; // tuotekuva (polku public-kansiosta)
   imageAlt?: string;
   description: string;
@@ -66,6 +67,7 @@ export const RENTAL_ITEMS: RentalItem[] = [
     id: BOX_ITEM_ID,
     title: 'Muuttolaatikot',
     emoji: '📦',
+    icon: '/icons/palvelut/muuttolaatikot.png',
     image: '/images/webp/muuttolaatikot/muuttolaatikko.webp',
     imageAlt: 'Musta muovinen muuttolaatikko, jossa kädensijat ja Muuttokone.fi-logo',
     description: 'Kestävät, pinottavat muuttolaatikot pakkaamiseen. Toimitamme kotiovelle ja noudamme tyhjinä muuton jälkeen.',

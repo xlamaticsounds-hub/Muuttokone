@@ -8,16 +8,8 @@ interface ServiceItemProps {
 }
 
 export default function ServiceItem({ service, index = 0 }: ServiceItemProps) {
-  // Fallback to available local icons if service.icon is missing
-  const fallbackIcons = [
-    '/icons/boxguy.webp',
-    '/icons/truck.webp',
-    '/icons/turva.webp',
-    '/icons/kello.webp',
-    '/icons/tape.webp',
-    '/icons/logo3.webp',
-  ];
-  const iconSrc = service.icon || fallbackIcons[index % fallbackIcons.length];
+  // Kuvitus serviceData.tsx:stä; työkalupakki varalla, jos se puuttuu
+  const iconSrc = service.icon || '/icons/palvelut/tyoapu.png';
   const className = `group relative overflow-hidden rounded-2xl border border-black/5 bg-white/90 p-7 shadow-sm ring-1 ring-black/5 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:ring-primary/30 dark:border-white/10 dark:bg-slate-900/80 dark:ring-white/5 ${
     service.href ? 'block' : ''
   } ${service.bgClass || ''}`;

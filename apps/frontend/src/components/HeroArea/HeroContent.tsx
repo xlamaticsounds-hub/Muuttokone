@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import SlideOnReveal from '@/components/SlideOnReveal';
 import { useSiteConfig } from '@/app/context/SiteConfigContext';
 import { useEffect, useMemo, useState } from 'react';
@@ -114,15 +115,12 @@ export default function HeroContent({ content }: { content?: any }) {
             </div>
 
             <div className="mt-6 flex flex-wrap gap-4 text-sm font-medium text-black/70 dark:text-white/70">
-              <span className="flex items-center gap-2">
-                <span className="text-green-500">✅</span> {t('Kiinteä hinta heti')}
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="text-green-500">✅</span> {t('Vakuutettu ja rekisteröity')}
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="text-green-500">✅</span> {t('Nopea vastaus')}
-              </span>
+              {['Kiinteä hinta heti', 'Vakuutettu ja rekisteröity', 'Nopea vastaus'].map((point) => (
+                <span key={point} className="flex items-center gap-2">
+                  <Image src="/icons/tyoapu/valmis.png" alt="" width={48} height={48} className="h-6 w-6 object-contain" />
+                  {t(point)}
+                </span>
+              ))}
             </div>
           </div>
         </div>

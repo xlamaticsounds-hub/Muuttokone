@@ -1,5 +1,4 @@
 import Image from 'next/image';
-import { Phone } from 'lucide-react';
 import type { TeamMember } from './teamData';
 
 export default function TeamCard({ member }: { member: TeamMember }) {
@@ -33,7 +32,7 @@ export default function TeamCard({ member }: { member: TeamMember }) {
           href={`tel:${member.phone.tel}`}
           className="text-body-color dark:text-body-color-dark hover:text-primary mt-4 flex items-center justify-center gap-2 text-sm font-medium"
         >
-          <Phone className="h-4 w-4" />
+          <Image src="/icons/yhteystiedot/puhelin.png" alt="" width={48} height={48} className="h-6 w-6 object-contain" />
           {member.phone.display}
         </a>
       )}

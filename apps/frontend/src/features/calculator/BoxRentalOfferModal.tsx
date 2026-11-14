@@ -5,6 +5,7 @@
 // joten ikkuna, laatikkokortti, hinta-arvio ja Discord-ilmoitus näyttävät aina saman hinnan.
 
 import React, { useEffect, useId, useRef, useState } from 'react';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import { BOX_RENTAL, calculateBoxRental, formatEuro } from './boxRental';
@@ -125,9 +126,7 @@ export default function BoxRentalOfferModal({ initialCount, initialDays, countSo
         </button>
 
         <div className="mb-6 pr-8">
-          <p className="mb-2 text-3xl" aria-hidden="true">
-            📦
-          </p>
+          <Image src="/icons/palvelut/muuttolaatikot.png" alt="" width={112} height={112} className="mb-2 h-14 w-14 object-contain" />
           <h2 id={titleId} className="text-xl font-bold text-gray-900 sm:text-2xl dark:text-white">
             {t('Tarvitsetko muuttolaatikoita?')}
           </h2>

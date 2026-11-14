@@ -1,24 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import {
-  Laptop,
-  Armchair,
-  Archive,
-  Recycle,
-  Warehouse,
-  ShieldCheck,
-  UserRound,
-  CalendarClock,
-  Sun,
-  Truck,
-  Tent,
-  Store,
-  Building2,
-  Repeat,
-  PackageCheck,
-  ArrowLeftRight,
-} from 'lucide-react';
 import { generateSEOMetadata, SEOConfigs } from '@/components/SEO/SEOHelpers';
 import ProcessSteps from '@/components/ProcessSteps';
 import Faq from '@/components/Faq';
@@ -39,17 +21,17 @@ export const metadata: Metadata = generateSEOMetadata({
 
 const trustPoints = [
   {
-    icon: CalendarClock,
+    icon: '/icons/tyoapu/ajankohta.png',
     title: 'Ei keskeytä työpäivää',
     desc: 'Muutto voidaan toteuttaa iltaisin tai viikonloppuisin, tarvittaessa vaiheittain osastoittain.',
   },
   {
-    icon: ShieldCheck,
+    icon: '/icons/palvelut/kuljetukset.png',
     title: 'Vakuutettu kuljetus',
     desc: 'Kaikki kuljetukset on vakuutettu lakisääteisen tiekuljetusvastuun mukaisesti.',
   },
   {
-    icon: UserRound,
+    icon: '/icons/yhteystiedot/y-tunnus.png',
     title: 'Yksi yhteyshenkilö',
     desc: 'Sovitte kaikesta yhden yhteyshenkilön kanssa alusta loppuun asti.',
   },
@@ -57,27 +39,27 @@ const trustPoints = [
 
 const businessServices = [
   {
-    icon: Laptop,
+    icon: '/icons/tyoapu/it-apu.png',
     title: 'IT-laitteet',
     desc: 'Työasemat, näytöt ja verkkolaitteet puretaan, kuljetetaan ja asennetaan merkitysti takaisin paikoilleen.',
   },
   {
-    icon: Armchair,
+    icon: '/icons/tyoapu/kantoapu.png',
     title: 'Kalusteet',
     desc: 'Työpisteet, kaapistot, neuvotteluhuoneiden kalusteet ja vastaanottotilat siirretään suojattuina.',
   },
   {
-    icon: Archive,
+    icon: '/icons/palvelut/pakkauspalvelu.png',
     title: 'Arkistot ja asiakirjat',
     desc: 'Arkistolaatikot ja asiakirjat kuljetetaan suljetuissa laatikoissa, luottamuksellisesti.',
   },
   {
-    icon: Warehouse,
+    icon: '/icons/palvelut/muuttolaatikot.png',
     title: 'Varastointi',
     desc: 'Tarvittaessa järjestämme väliaikaisen varastoinnin tavaroille muuton yhteydessä.',
   },
   {
-    icon: Recycle,
+    icon: '/icons/palvelut/kuolinpesa.png',
     title: 'Kierrätys',
     desc: 'Käytöstä poistuvat kalusteet ja laitteet kierrätetään tai toimitetaan hyötykäyttöön.',
   },
@@ -87,49 +69,49 @@ const businessServices = [
 // mihin tahansa yrityksen tavaransiirtotarpeeseen, myös toistuvasti.
 const customServices = [
   {
-    icon: Sun,
+    icon: '/icons/yrityksille/terassi.png',
     title: 'Terassikalusteiden kausisiirrot',
     desc: 'Keväällä kalusteet, varjot ja lämmittimet varastosta terassille ja paikoilleen aseteltuna, syksyllä takaisin talvisäilytykseen.',
     who: 'Ravintolat, kahvilat ja hotellit',
   },
   {
-    icon: Truck,
+    icon: '/icons/palvelut/kuljetukset.png',
     title: 'Tavaroiden poisvienti',
     desc: 'Vanhat kalusteet, laitteet ja varastoon kertynyt tavara kannetaan ulos ja viedään kierrätykseen tai jäteasemalle.',
     who: 'Toimistot, liikkeet ja varastot',
   },
   {
-    icon: Tent,
+    icon: '/icons/tyoapu/ajankohta.png',
     title: 'Tapahtumat ja messut',
     desc: 'Messuosastot, pöydät, tuolit ja tekniikka paikalle ennen tapahtumaa ja takaisin sen jälkeen — myös iltaisin ja viikonloppuisin.',
     who: 'Tapahtumajärjestäjät ja näytteilleasettajat',
   },
   {
-    icon: Store,
+    icon: '/icons/yrityksille/kauppa.png',
     title: 'Myymälän kausivaihdot',
     desc: 'Joulu- ja kampanjasomisteet, esittelytelineet ja kausituotteet varastosta myymälään ja takaisin sesongin mukaan.',
     who: 'Kaupat ja liikeketjut',
   },
   {
-    icon: ArrowLeftRight,
+    icon: '/icons/palvelut/yritysmuutto.png',
     title: 'Sisäiset kalustesiirrot',
     desc: 'Työpisteiden uudelleenjärjestely, kerrosten väliset siirrot ja neuvotteluhuoneiden muutokset ilman koko toimiston muuttoa.',
     who: 'Toimistot ja julkiset tilat',
   },
   {
-    icon: PackageCheck,
+    icon: '/icons/palvelut/pakkauspalvelu.png',
     title: 'Noudot ja toimitukset',
     desc: 'Hankitut kalusteet noudetaan liikkeestä, huutokaupasta tai toiselta toimipisteeltä ja kannetaan perille paikoilleen.',
     who: 'Yritykset, jotka kalustavat tai laajentavat',
   },
   {
-    icon: Building2,
+    icon: '/icons/tyoapu/yrityksille.png',
     title: 'Kiinteistöjen tyhjennykset',
     desc: 'Kellari- ja ullakkovarastojen, liiketilojen ja asuntojen tyhjennykset ennen remonttia tai uutta vuokralaista.',
     who: 'Isännöitsijät ja kiinteistöyhtiöt',
   },
   {
-    icon: Repeat,
+    icon: '/icons/yhteystiedot/aukiolo.png',
     title: 'Säännölliset kuljetukset',
     desc: 'Sovittu toistuva ajo, esimerkiksi viikoittain varastosta toimipisteisiin — sama tuttu tiimi joka kerta.',
     who: 'Useamman toimipisteen yritykset',
@@ -199,20 +181,17 @@ export default function YrityksillePage() {
         <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
           <div className="relative rounded-2xl border border-black/5 bg-white/80 p-6 shadow-sm ring-1 ring-black/5 backdrop-blur md:p-8 dark:border-white/10 dark:bg-white/5 dark:ring-white/5">
             <div className="grid gap-7.5 sm:grid-cols-3">
-              {trustPoints.map((point) => {
-                const Icon = point.icon;
-                return (
-                  <div key={point.title} className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                      <Icon className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <h3 className="mb-1 font-semibold text-black/90 dark:text-white">{point.title}</h3>
-                      <p className="text-sm text-black/70 dark:text-white/70">{point.desc}</p>
-                    </div>
+              {trustPoints.map((point) => (
+                <div key={point.title} className="flex items-start gap-4">
+                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                    <Image src={point.icon} alt="" width={96} height={96} className="h-12 w-12 object-contain" />
                   </div>
-                );
-              })}
+                  <div>
+                    <h3 className="mb-1 font-semibold text-black/90 dark:text-white">{point.title}</h3>
+                    <p className="text-sm text-black/70 dark:text-white/70">{point.desc}</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -228,21 +207,18 @@ export default function YrityksillePage() {
             </h2>
           </div>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {businessServices.map((service) => {
-              const Icon = service.icon;
-              return (
-                <div
-                  key={service.title}
-                  className="group relative overflow-hidden rounded-2xl border border-black/5 bg-white/90 p-7 shadow-sm ring-1 ring-black/5 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:ring-primary/30 dark:border-white/10 dark:bg-slate-900/80 dark:ring-white/5"
-                >
-                  <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <Icon className="h-7 w-7" />
-                  </div>
-                  <h3 className="mb-3 text-xl font-bold text-black/90 dark:text-white">{service.title}</h3>
-                  <p className="text-sm leading-relaxed text-black/70 dark:text-white/70">{service.desc}</p>
+            {businessServices.map((service) => (
+              <div
+                key={service.title}
+                className="group relative overflow-hidden rounded-2xl border border-black/5 bg-white/90 p-7 shadow-sm ring-1 ring-black/5 backdrop-blur transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:ring-primary/30 dark:border-white/10 dark:bg-slate-900/80 dark:ring-white/5"
+              >
+                <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-xl bg-primary/10">
+                  <Image src={service.icon} alt="" width={112} height={112} className="h-14 w-14 object-contain" />
                 </div>
-              );
-            })}
+                <h3 className="mb-3 text-xl font-bold text-black/90 dark:text-white">{service.title}</h3>
+                <p className="text-sm leading-relaxed text-black/70 dark:text-white/70">{service.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -261,22 +237,19 @@ export default function YrityksillePage() {
             </p>
           </div>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {customServices.map((service) => {
-              const Icon = service.icon;
-              return (
-                <div
-                  key={service.title}
-                  className="flex flex-col rounded-2xl border border-black/5 bg-white/90 p-6 shadow-sm ring-1 ring-black/5 dark:border-white/10 dark:bg-slate-900/80 dark:ring-white/5"
-                >
-                  <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <Icon className="h-6 w-6" />
-                  </div>
-                  <h3 className="mb-2 text-lg font-bold text-black/90 dark:text-white">{service.title}</h3>
-                  <p className="mb-4 text-sm leading-relaxed text-black/70 dark:text-white/70">{service.desc}</p>
-                  <p className="mt-auto text-xs font-semibold text-primary">{service.who}</p>
+            {customServices.map((service) => (
+              <div
+                key={service.title}
+                className="flex flex-col rounded-2xl border border-black/5 bg-white/90 p-6 shadow-sm ring-1 ring-black/5 dark:border-white/10 dark:bg-slate-900/80 dark:ring-white/5"
+              >
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10">
+                  <Image src={service.icon} alt="" width={96} height={96} className="h-12 w-12 object-contain" />
                 </div>
-              );
-            })}
+                <h3 className="mb-2 text-lg font-bold text-black/90 dark:text-white">{service.title}</h3>
+                <p className="mb-4 text-sm leading-relaxed text-black/70 dark:text-white/70">{service.desc}</p>
+                <p className="mt-auto text-xs font-semibold text-primary">{service.who}</p>
+              </div>
+            ))}
           </div>
           <p className="mt-8 text-black/70 dark:text-white/70">
             Eikö tarpeenne löydy listalta?{' '}

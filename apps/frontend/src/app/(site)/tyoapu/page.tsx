@@ -77,6 +77,20 @@ export default function TyoapuPage() {
         </div>
       </section>
 
+      {/* Tarjouslomake heti heron alla (hero ja sivun lopun CTA vievät tänne #tarjous) */}
+      <section id="tarjous" className="scroll-mt-20 bg-gray-1 py-16 lg:py-24 dark:bg-bg-color-dark">
+        <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
+          <div className="mb-10 text-center">
+            <p className="text-primary mb-2 text-sm font-semibold uppercase tracking-wide">Tarjouspyyntö</p>
+            <h2 className="text-3xl font-bold text-black/90 dark:text-white sm:text-4xl">Pyydä tarjous</h2>
+            <p className="mt-2 text-black/70 dark:text-white/70">
+              Kerro mitä pitää tehdä. Voimme sopia kiinteän hinnan tai tuntiveloituksen.
+            </p>
+          </div>
+          <TyoapuQuoteForm />
+        </div>
+      </section>
+
       {/* Trust row */}
       <section className="py-8 lg:py-12">
         <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
@@ -247,20 +261,6 @@ export default function TyoapuPage() {
         subtitle="Hinnoittelu, kotitalousvähennys ja mitä työhön kuuluu."
         items={tyoapuFaqData}
       />
-
-      {/* Quote form */}
-      <section id="tarjous" className="scroll-mt-20 bg-gray-1 py-16 lg:py-24 dark:bg-bg-color-dark">
-        <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
-          <div className="mb-10 text-center">
-            <p className="text-primary mb-2 text-sm font-semibold uppercase tracking-wide">Tarjouspyyntö</p>
-            <h2 className="text-3xl font-bold text-black/90 dark:text-white sm:text-4xl">Pyydä tarjous</h2>
-            <p className="mt-2 text-black/70 dark:text-white/70">
-              Kerro mitä pitää tehdä. Voimme sopia kiinteän hinnan tai tuntiveloituksen.
-            </p>
-          </div>
-          <TyoapuQuoteForm />
-        </div>
-      </section>
 
       <Cta
         title="Tarvitsetko lisäkäsiä?"
