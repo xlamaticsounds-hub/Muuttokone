@@ -215,6 +215,15 @@
   zoom: 90%;
 }
 
+/* Isot näytöt (ikkuna yli 2200 px, esim. 27" QHD 100 %:lla tai 4K 150 %:lla): suuren pikselitiheyden
+   takia sivu näyttäisi pieneltä. 112,5 % ≈ sama koko kuin tavallisella 24" Full HD -näytöllä.
+   Puhelimiin, tabletteihin, läppäreihin ja 1920 px -näyttöihin tämä ei vaikuta. */
+@media (min-width: 2200px) {
+  .site-zoom-out {
+    zoom: 112.5%;
+  }
+}
+
 /* html/body use a fixed height:100% (h-full) globally. Combined with zoom on a
    descendant, that fixed height stops scrollHeight from ever growing past the
    viewport — the page becomes unscrollable. Only relax it to min-height on
