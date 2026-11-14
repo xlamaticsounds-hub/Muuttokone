@@ -5,13 +5,17 @@
 // liideille, joiden hinnassa lisää ei vielä ole (formData.baseTripSurcharge puuttuu).
 //
 // Laskuri hinnoittelee vain matkan lähtöosoitteesta kohdeosoitteeseen. Kun muutto on kaukana
-// tukikohdasta (Helsinki), auto ajaa ensin tyhjänä tukikohdasta lähtöosoitteelle ja lopuksi kohteesta
+// tukikohdasta, auto ajaa ensin tyhjänä tukikohdasta lähtöosoitteelle ja lopuksi kohteesta
 // takaisin. Pitkän muuton hinta kattaa jo paluuajon, mutta paikallisen muuton kaukana (esim. Hamina →
 // Hamina) ei: 5 km:n hinta, mutta noin 300 km tyhjää ajoa. Kannattavuusanalyysin (20.10.2026) mukaan
 // yksiön ja kaksion tuntiansio jää silloin noin 3–13 €/h per henkilö.
 //
-// Arvio tehdään kuntatasolla (likimääräiset tieetäisyydet Helsingistä), joten sitä ei tarvitse
-// Google-kyselyä eikä tukikohdan osoitetta koodissa. Tulos on suuntaa-antava: "noin".
+// Tukikohtia on kaksi: Helsinki ja Tampere (Hervanta, Teinvarsi-parkki, 14.11.2026 alkaen). Keikka
+// lasketaan siitä tukikohdasta, josta tyhjää ajoa tulee vähemmän (tasapelissä Helsinki). Sama sääntö
+// ehdottaa liidille tiimiä (lib/teams.ts).
+//
+// Arvio tehdään kuntatasolla (likimääräiset tieetäisyydet tukikohdista), joten sitä ei tarvitse
+// Google-kyselyä eikä tukikohtien osoitteita koodissa. Tulos on suuntaa-antava: "noin".
 
 // Laskurin km-hinta (PRICING_CONSTANTS.ratePerKm) on vain auton osuus: muuton ajoaika laskutetaan sen
 // lisäksi tuntihinnalla. Tyhjää ajoa ei laskuteta tunneilla, joten tukikohtalisän km-hinta kattaa myös
@@ -21,38 +25,62 @@
 export const BASE_TRIP_RATE_PER_KM = 1.38;
 /** Sama kun keikalla on 3 henkilöä (muutto, täysi palvelu). ALV 0: 1,50 €. */
 export const BASE_TRIP_RATE_PER_KM_CREW3 = 1.88;
-/** Pääkaupunkiseudun sisäinen ajo, jota ei veloiteta erikseen (km, tyhjät osuudet yhteensä). */
+/** Tukikohdan lähialueen ajo, jota ei veloiteta erikseen (km, tyhjät osuudet yhteensä). */
 export const BASE_TRIP_FREE_KM = 30;
 /** Tätä pienempää lisää ei veloiteta eikä näytetä varoituksena (€ sis. ALV, ALV 0: 60 €). */
 export const BASE_TRIP_MIN_SURCHARGE = 75;
 /** Tätä suuremmalla lisällä laskuri ei näytä hintaa: keikka hinnoitellaan tarjouksella (€ sis. ALV). */
 export const BASE_TRIP_QUOTE_THRESHOLD = 400;
 
-/** Likimääräinen tieetäisyys tukikohdasta (Helsinki) kunnan keskustaan, km. Avain pienillä kirjaimilla. */
-const KM_FROM_BASE: Record<string, number> = {
-  // Pääkaupunkiseutu (tukikohdan lähialue: tyypillinen keikkaan kuuluva ajo)
-  helsinki: 10, vantaa: 15, espoo: 20, kauniainen: 20,
+export type BaseId = 'helsinki' | 'tampere';
+
+/**
+ * Likimääräinen tieetäisyys tukikohdista kunnan keskustaan, km: [Helsinki, Tampere (Hervanta)].
+ * Avain pienillä kirjaimilla.
+ */
+const KM_FROM_BASES: Record<string, readonly [helsinki: number, tampere: number]> = {
+  // Pääkaupunkiseutu (Helsingin tukikohdan lähialue: tyypillinen keikkaan kuuluva ajo)
+  helsinki: [10, 170], vantaa: [15, 160], espoo: [20, 175], kauniainen: [20, 175],
   // Muu Uusimaa
-  kerava: 30, sipoo: 30, tuusula: 35, kirkkonummi: 40, siuntio: 40, järvenpää: 40, nurmijärvi: 40, vihti: 55,
-  hyvinkää: 55, mäntsälä: 55, lohja: 55, porvoo: 50, pornainen: 50, inkoo: 55, askola: 60, karkkila: 70,
-  pukkila: 70, loviisa: 90, lapinjärvi: 100, raasepori: 100, hanko: 120,
+  kerava: [30, 160], sipoo: [30, 170], tuusula: [35, 150], kirkkonummi: [40, 195], siuntio: [40, 190],
+  järvenpää: [40, 150], nurmijärvi: [40, 140], vihti: [55, 165], hyvinkää: [55, 120], mäntsälä: [55, 145],
+  lohja: [55, 180], porvoo: [50, 190], pornainen: [50, 165], inkoo: [55, 205], askola: [60, 175],
+  karkkila: [70, 135], pukkila: [70, 165], loviisa: [90, 200], lapinjärvi: [100, 185], raasepori: [100, 215],
+  hanko: [120, 245],
   // Kanta-Häme
-  riihimäki: 70, hausjärvi: 65, loppi: 80, janakkala: 85, hämeenlinna: 100, hattula: 105, forssa: 115,
+  riihimäki: [70, 105], hausjärvi: [65, 115], loppi: [80, 105], janakkala: [85, 90], hämeenlinna: [100, 75],
+  hattula: [105, 70], forssa: [115, 90],
   // Päijät-Häme
-  orimattila: 80, hollola: 100, lahti: 105, asikkala: 115, heinola: 135,
+  orimattila: [80, 150], hollola: [100, 115], lahti: [105, 125], asikkala: [115, 120], heinola: [135, 155],
   // Kymenlaakso ja Etelä-Karjala
-  pyhtää: 115, kouvola: 135, kotka: 135, hamina: 150, virolahti: 170, lappeenranta: 220, imatra: 260,
-  // Pirkanmaa
-  valkeakoski: 150, akaa: 160, lempäälä: 165, kangasala: 175, tampere: 180, pirkkala: 185, nokia: 190,
-  ylöjärvi: 195, orivesi: 210,
+  pyhtää: [115, 215], kouvola: [135, 185], kotka: [135, 230], hamina: [150, 240], virolahti: [170, 265],
+  lappeenranta: [220, 270], imatra: [260, 305],
+  // Pirkanmaa (Tampereen tukikohdan lähialue)
+  tampere: [180, 10], kangasala: [175, 15], lempäälä: [165, 15], pirkkala: [185, 15], nokia: [190, 25],
+  ylöjärvi: [195, 25], valkeakoski: [150, 30], vesilahti: [175, 30], akaa: [160, 35], pälkäne: [165, 35],
+  orivesi: [210, 45], hämeenkyrö: [220, 45], urjala: [145, 55], ikaalinen: [235, 60], juupajoki: [225, 60],
+  sastamala: [190, 65], ruovesi: [245, 70], punkalaidun: [155, 75], mänttä: [240, 85], vilppula: [245, 85],
+  kuhmoinen: [195, 85], parkano: [265, 90], virrat: [270, 95], kihniö: [285, 110],
   // Varsinais-Suomi ja Satakunta
-  salo: 100, paimio: 140, lieto: 160, turku: 165, kaarina: 170, raisio: 170, naantali: 175, parainen: 190,
-  uusikaupunki: 230, pori: 250, rauma: 255,
+  salo: [100, 165], paimio: [140, 165], lieto: [160, 145], turku: [165, 165], kaarina: [170, 170],
+  raisio: [170, 175], naantali: [175, 185], parainen: [190, 195], loimaa: [155, 100], uusikaupunki: [230, 195],
+  huittinen: [180, 90], pori: [250, 120], rauma: [255, 155], kankaanpää: [270, 115],
   // Muita
-  mikkeli: 230, jyväskylä: 270,
+  mikkeli: [230, 235], jyväskylä: [270, 145],
 };
 
+const isKnownCity = (key: string) => Object.prototype.hasOwnProperty.call(KM_FROM_BASES, key);
+
+/** Kunnan lähin tukikohta (tasapelissä Helsinki). null, kun kuntaa ei ole taulukossa. */
+export function nearestBaseOfCity(cityKey: string): BaseId | null {
+  if (!isKnownCity(cityKey)) return null;
+  const [helsinki, tampere] = KM_FROM_BASES[cityKey];
+  return tampere < helsinki ? 'tampere' : 'helsinki';
+}
+
 export type BaseTripAdvice = {
+  /** Tukikohta, josta keikka lasketaan (lähempi). */
+  base: BaseId;
   fromCity: string;
   toCity: string;
   /** Tukikohdasta lähtöosoitteelle ja kohteesta tukikohtaan, km. */
@@ -76,7 +104,7 @@ export function cityFromAddress(address: string | null | undefined): { key: stri
   const tokens = address.toLowerCase().match(/\p{L}+/gu) ?? [];
   for (let i = tokens.length - 1; i >= 0; i--) {
     const key = tokens[i];
-    if (Object.prototype.hasOwnProperty.call(KM_FROM_BASE, key)) return { key, name: key.charAt(0).toUpperCase() + key.slice(1) };
+    if (isKnownCity(key)) return { key, name: key.charAt(0).toUpperCase() + key.slice(1) };
   }
   return null;
 }
@@ -93,8 +121,12 @@ export function baseTripAdvice(input: {
   const to = cityFromAddress(input.toAddress);
   if (!from || !to) return null;
 
-  const fromKm = KM_FROM_BASE[from.key];
-  const toKm = KM_FROM_BASE[to.key];
+  // Lähempi tukikohta: vähemmän tyhjää ajoa yhteensä (tasapelissä Helsinki).
+  const [fromHki, fromTre] = KM_FROM_BASES[from.key];
+  const [toHki, toTre] = KM_FROM_BASES[to.key];
+  const base: BaseId = fromTre + toTre < fromHki + toHki ? 'tampere' : 'helsinki';
+  const fromKm = base === 'tampere' ? fromTre : fromHki;
+  const toKm = base === 'tampere' ? toTre : toHki;
   const sameCity = from.key === to.key;
   const known = typeof input.distanceKm === 'number' && Number.isFinite(input.distanceKm) && input.distanceKm >= 0 ? input.distanceKm : null;
 
@@ -110,6 +142,7 @@ export function baseTripAdvice(input: {
   if (surchargeCrew3 < BASE_TRIP_MIN_SURCHARGE) return null;
 
   return {
+    base,
     fromCity: from.name,
     toCity: to.name,
     fromKm,
@@ -167,11 +200,13 @@ export function leadBaseTripAdvice(lead: {
 
 const eur = (value: number) => `${value.toLocaleString('fi-FI')} €`;
 
+const baseFrom = (advice: BaseTripAdvice) => (advice.base === 'tampere' ? 'Tampereen tukikohdasta' : 'Helsingin tukikohdasta');
+
 /** Yksi rivi Discordiin, kalenteriin ja listoihin. */
 export function baseTripSummary(advice: BaseTripAdvice): string {
   const place = advice.fromCity === advice.toCity ? advice.fromCity : `${advice.fromCity}–${advice.toCity}`;
   if (advice.includedInPrice != null) {
-    return `noin ${Math.round(advice.extraEmptyKm)} km tyhjää ajoa tukikohdasta (${place}). Tukikohtalisä ${eur(advice.includedInPrice)} sisältyy laskurin hintaan.`;
+    return `noin ${Math.round(advice.extraEmptyKm)} km tyhjää ajoa ${baseFrom(advice)} (${place}). Tukikohtalisä ${eur(advice.includedInPrice)} sisältyy laskurin hintaan.`;
   }
-  return `noin ${Math.round(advice.extraEmptyKm)} km tyhjää ajoa tukikohdasta (${place}), jota laskurin hinta ei kata. Ehdotettu lisä noin ${eur(advice.surcharge)} (3 hengellä noin ${eur(advice.surchargeCrew3)}).`;
+  return `noin ${Math.round(advice.extraEmptyKm)} km tyhjää ajoa ${baseFrom(advice)} (${place}), jota laskurin hinta ei kata. Ehdotettu lisä noin ${eur(advice.surcharge)} (3 hengellä noin ${eur(advice.surchargeCrew3)}).`;
 }

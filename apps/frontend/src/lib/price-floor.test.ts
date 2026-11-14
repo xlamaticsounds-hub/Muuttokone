@@ -63,8 +63,11 @@ describe('estimateFloorJob', () => {
   });
 
   it('kaukainen keikka: km sisältää tyhjän ajon tukikohdasta ja takaisin', () => {
-    const job = estimateFloorJob(calculatorLead({ distanceKm: 5 }, 'Katu 1, Hämeenlinna', 'Tie 2, Hämeenlinna'), false);
-    expect(job.kmDriven).toBe(205);
+    // Lahti Helsingin tukikohdasta: 105 + 5 + 105 km
+    const job = estimateFloorJob(calculatorLead({ distanceKm: 5 }, 'Katu 1, Lahti', 'Tie 2, Lahti'), false);
+    expect(job.kmDriven).toBe(215);
+    // Pori Tampereen tukikohdasta: 120 + 5 + 120 km
+    expect(estimateFloorJob(calculatorLead({ distanceKm: 5 }, 'Katu 1, Pori', 'Tie 2, Pori'), false).kmDriven).toBe(245);
     expect(job.hoursPerPerson).toBeGreaterThan(estimateFloorJob(calculatorLead({ distanceKm: 5 }), false).hoursPerPerson + 2);
   });
 

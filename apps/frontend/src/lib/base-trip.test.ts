@@ -30,17 +30,18 @@ describe('baseTripAdvice', () => {
     // 150 + 150 − 5 − 30 = 265 km tyhjää ajoa → × 1,38 €/km ≈ 365 €, × 1,88 €/km ≈ 500 € (sis. ALV)
     expect(hamina).toMatchObject({ fromCity: 'Hamina', toCity: 'Hamina', extraEmptyKm: 265, surcharge: 365, surchargeCrew3: 500, includedInPrice: null });
 
-    const hameenlinna = baseTripAdvice({ fromAddress: 'Hämeenlinna', toAddress: 'Hämeenlinna', distanceKm: 5 });
-    expect(hameenlinna?.extraEmptyKm).toBe(165);
-    expect(hameenlinna?.surcharge).toBe(230);
-    expect(hameenlinna?.surchargeCrew3).toBe(310);
+    expect(hamina?.base).toBe('helsinki');
+
+    // Lahti on lähempänä Helsinkiä: 105 + 105 − 5 − 30 = 175 km
+    const lahti = baseTripAdvice({ fromAddress: 'Lahti', toAddress: 'Lahti', distanceKm: 5 });
+    expect(lahti).toMatchObject({ base: 'helsinki', extraEmptyKm: 175, surcharge: 240, surchargeCrew3: 330 });
 
     const riihimaki = baseTripAdvice({ fromAddress: 'Riihimäki', toAddress: 'Riihimäki', distanceKm: 5 });
     expect(riihimaki?.surcharge).toBe(145);
   });
 
   it('pitkä muutto jonka toinen pää on lähellä tukikohtaa: ei lisää (paluuajo on jo hinnassa)', () => {
-    // Tampere → Helsinki 180 km: 180 + 10 − 180 − 30 < 0
+    // Tampere → Helsinki 180 km: Tampereen tukikohdasta 10 + 170 − 180 − 30 < 0
     expect(baseTripAdvice({ fromAddress: 'Tampere', toAddress: 'Helsinki', distanceKm: 180 })).toBeNull();
     // Vantaa → Hämeenlinna: laskurin etäisyyshaku epäonnistui ja jäi oletukseen 5 km — kolmioepäyhtälö estää väärän varoituksen
     expect(baseTripAdvice({ fromAddress: 'Vantaa', toAddress: 'Hämeenlinna', distanceKm: 5 })).toBeNull();
@@ -48,10 +49,29 @@ describe('baseTripAdvice', () => {
   });
 
   it('kaksi kaukaista eri kuntaa: veloitetaan vain muuton oman matkan ylittävä tyhjä ajo', () => {
-    // Tampere → Turku (155 km): 180 + 165 − 155 − 30 = 160 km
-    const advice = baseTripAdvice({ fromAddress: 'Tampere', toAddress: 'Turku', distanceKm: 155 });
-    expect(advice?.extraEmptyKm).toBe(160);
-    expect(advice?.surcharge).toBe(220);
+    // Hamina → Kotka (25 km): 150 + 135 − 25 − 30 = 230 km
+    const advice = baseTripAdvice({ fromAddress: 'Hamina', toAddress: 'Kotka', distanceKm: 25 });
+    expect(advice?.extraEmptyKm).toBe(230);
+    expect(advice?.surcharge).toBe(315);
+    // Tampere → Turku (160 km) lasketaan Tampereelta: 10 + 165 − 160 − 30 < 0
+    expect(baseTripAdvice({ fromAddress: 'Tampere', toAddress: 'Turku', distanceKm: 160 })).toBeNull();
+  });
+
+  it('lähempänä Tamperetta: lasketaan Tampereen tukikohdasta (Hervanta)', () => {
+    // Tampereen seudun muutot eivät saa lisää
+    expect(baseTripAdvice({ fromAddress: 'Hämeenkatu 1, Tampere', toAddress: 'Tie 2, Tampere', distanceKm: 5 })).toBeNull();
+    expect(baseTripAdvice({ fromAddress: 'Nokia', toAddress: 'Ylöjärvi', distanceKm: 25 })).toBeNull();
+    expect(baseTripAdvice({ fromAddress: 'Valkeakoski', toAddress: 'Valkeakoski', distanceKm: 5 })).toBeNull();
+    // Orivesi: 45 + 45 − 5 − 30 = 55 km
+    expect(baseTripAdvice({ fromAddress: 'Orivesi', toAddress: 'Orivesi', distanceKm: 5 })).toMatchObject({ base: 'tampere', extraEmptyKm: 55, surcharge: 75, surchargeCrew3: 105 });
+    // Hämeenlinna on lähempänä Tamperetta: 75 + 75 − 5 − 30 = 115 km (Helsingistä olisi 165 km)
+    expect(baseTripAdvice({ fromAddress: 'Hämeenlinna', toAddress: 'Hämeenlinna', distanceKm: 5 })).toMatchObject({ base: 'tampere', extraEmptyKm: 115, surcharge: 160, surchargeCrew3: 215 });
+    // Pori: 120 + 120 − 5 − 30 = 205 km → alle tarjousrajan (Helsingistä 465 km)
+    expect(baseTripAdvice({ fromAddress: 'Pori', toAddress: 'Pori', distanceKm: 5 })).toMatchObject({ base: 'tampere', extraEmptyKm: 205, surchargeCrew3: 385 });
+  });
+
+  it('tasapelissä Helsinki', () => {
+    expect(baseTripAdvice({ fromAddress: 'Turku', toAddress: 'Turku', distanceKm: 5 })?.base).toBe('helsinki');
   });
 
   it('pääkaupunkiseudun muutot eivät saa varoitusta', () => {
@@ -113,6 +133,8 @@ describe('baseTripSummary', () => {
     const advice = baseTripAdvice({ fromAddress: 'Hamina', toAddress: 'Hamina', distanceKm: 5 })!;
     const text = baseTripSummary(advice);
     expect(text).toContain('265 km');
+    expect(text).toContain('Helsingin tukikohdasta');
+    expect(baseTripSummary(baseTripAdvice({ fromAddress: 'Pori', toAddress: 'Pori', distanceKm: 5 })!)).toContain('Tampereen tukikohdasta');
     expect(text).toContain('Hamina');
     expect(text).toMatch(/noin 365[\s ]€/);
     expect(text).toMatch(/noin 500[\s ]€/);
