@@ -41,6 +41,8 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/package.json ./package.json
+# next start lukee asetukset ajon aikana: ilman tiedostoa kuva-asetukset (esim. images.qualities) jäävät oletuksiin
+COPY --from=builder /app/next.config.mjs ./next.config.mjs
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next ./.next
