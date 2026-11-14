@@ -2,10 +2,13 @@ import type { LeadStatus } from '@prisma/client';
 import { PIPELINE_STAGES } from '@/lib/pipeline';
 import { loadPipeline, type PipelineColumn, type PipelineSummaryItem } from '@/server/pipeline-data';
 import PipelineBoard from './PipelineBoard';
+import { requirePageAccess } from '@/server/access';
+import { teamWhere } from '@/lib/access';
 
 export const dynamic = 'force-dynamic';
 
 export default async function PipelinePage({ searchParams }: { searchParams: Promise<{ vaihe?: string }> }) {
+  const actor = await requirePageAccess('/hallinta/diilit');
   const { vaihe } = await searchParams;
   // ?vaihe=WON avaa puhelimella suoraan kyseisen vaiheen (jaettava linkki)
   const initialStage = PIPELINE_STAGES.includes(vaihe as LeadStatus) ? (vaihe as LeadStatus) : null;
@@ -15,7 +18,7 @@ export default async function PipelinePage({ searchParams }: { searchParams: Pro
   let summary: PipelineSummaryItem[] = [];
 
   try {
-    ({ columns, summary } = await loadPipeline());
+    ({ columns, summary } = await loadPipeline(new Date(), teamWhere(actor)));
   } catch (error) {
     dbUnavailable = true;
     console.warn('[hallinta/pipeline] Database unavailable, showing fallback view', error);

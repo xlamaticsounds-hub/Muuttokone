@@ -18,6 +18,7 @@ import {
   toHelsinkiDateTimeInput,
   validateEntryTimes,
   workedMinutes,
+  workerHours,
 } from './work-time';
 
 const at = (iso: string) => new Date(iso);
@@ -219,5 +220,44 @@ describe('entriesToCsv usealla leimalla samaan keikkaan', () => {
     );
     // Rivin omat henkilötunnit 4, mutta keikan yhteensä 10 -> 400 / 10 = 40
     expect(csv).toContain(';400,00;40,00;');
+  });
+});
+
+describe('workerHours', () => {
+  const period = { start: at('2026-11-09T00:00:00Z'), end: at('2026-11-16T00:00:00Z') };
+
+  it('jokainen leimalle valittu saa leiman työajan, tauot vähennettynä', () => {
+    const rows = workerHours(
+      [
+        { startedAt: at('2026-11-10T07:00:00Z'), endedAt: at('2026-11-10T15:00:00Z'), breakMinutes: 30, workerIds: ['a', 'b'] },
+        { startedAt: at('2026-11-11T08:00:00Z'), endedAt: at('2026-11-11T10:00:00Z'), breakMinutes: 0, workerIds: ['a'] },
+      ],
+      period,
+    );
+    expect(rows).toEqual([
+      { workerId: 'a', minutes: 450 + 120, entries: 2 },
+      { workerId: 'b', minutes: 450, entries: 1 },
+    ]);
+  });
+
+  it('jakson ulkopuoliset ja nimettömät leimat eivät näy, tupla-id lasketaan kerran', () => {
+    const rows = workerHours(
+      [
+        { startedAt: at('2026-11-02T07:00:00Z'), endedAt: at('2026-11-02T09:00:00Z'), breakMinutes: 0, workerIds: ['a'] },
+        { startedAt: at('2026-11-12T07:00:00Z'), endedAt: at('2026-11-12T09:00:00Z'), breakMinutes: 0, workerIds: [] },
+        { startedAt: at('2026-11-12T07:00:00Z'), endedAt: at('2026-11-12T08:00:00Z'), breakMinutes: 0, workerIds: ['c', 'c'] },
+      ],
+      period,
+    );
+    expect(rows).toEqual([{ workerId: 'c', minutes: 60, entries: 1 }]);
+  });
+
+  it('käynnissä oleva leima lasketaan nykyhetkeen asti', () => {
+    const rows = workerHours(
+      [{ startedAt: at('2026-11-13T08:00:00Z'), endedAt: null, breakMinutes: 0, workerIds: ['a'] }],
+      period,
+      at('2026-11-13T09:30:00Z'),
+    );
+    expect(rows[0].minutes).toBe(90);
   });
 });

@@ -5,6 +5,8 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
 import { upsertContactByEmail } from '@/server/repo/contacts';
+import { teamRelation } from '@/server/repo/leads';
+import { suggestTeamId } from '@/lib/teams';
 import { HELSINKI_TZ, toHelsinkiDateInput } from '@/lib/helsinki-time';
 import { formatIsoDateFi, offerTotals } from '@/lib/offer';
 import {
@@ -137,6 +139,8 @@ export async function createExternalLead(
   input: ExternalLeadInput,
   images: UploadedImage[],
   actor: string | null,
+  /** Aluevastaavan keikka menee aina hänen tiimilleen; muuten tiimi ehdotetaan osoitteista. */
+  forcedTeamId: string | null = null,
 ): Promise<{ leadId: string; attachmentError: string | null }> {
   const contactInput: Parameters<typeof upsertContactByEmail>[0] = { email: input.email };
   // Vain annetut kentät: olemassa olevan yhteystiedon tietoja ei tyhjennetä
@@ -165,6 +169,7 @@ export async function createExternalLead(
       toAddress: input.toAddress,
       notes: [`Keikka muualta (${origin}).`, input.summary].filter(Boolean).join('\n\n'),
       formData,
+      ...teamRelation(forcedTeamId ?? suggestTeamId({ fromAddress: input.fromAddress, toAddress: input.toAddress })),
     },
   });
 

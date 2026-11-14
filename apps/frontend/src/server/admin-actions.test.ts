@@ -10,8 +10,13 @@ const mocks = vi.hoisted(() => {
     logs: [] as Record<string, any>[],
     reports: [] as Record<string, any>[],
     finishedTimeEntries: 1,
+    // Kirjautunut omistaja (server/access.ts hakee roolin User-taulusta)
+    users: [{ id: 'u_admin', email: 'admin@example.com', name: 'Admin', role: 'OWNER', teamId: null, active: true, mustChangePassword: false }] as Record<string, any>[],
   };
   const prisma = {
+    user: {
+      findUnique: vi.fn(async ({ where }: any) => state.users.find((u) => u.email === where.email || u.id === where.id) ?? null),
+    },
     lead: {
       findUnique: vi.fn(async ({ where }: any) => state.leads.get(where.id) ?? null),
       update: vi.fn(async ({ where, data }: any) => {

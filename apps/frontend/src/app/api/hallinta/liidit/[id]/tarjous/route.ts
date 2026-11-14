@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/server/auth';
+import { getLeadSession } from '@/server/access';
 import { prisma } from '@/server/db';
 import { offerForLead } from '@/server/offer-data';
 import { renderOfferPdf } from '@/server/pdf/offer-pdf';
@@ -11,10 +10,10 @@ export const runtime = 'nodejs';
 
 /** Liidin tarjous / tilausvahvistus PDF:nä (tallennettu tai esitäytetty). ?lataa=1 lataa tiedostona. */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getServerSession(authOptions);
+  const { id } = await params;
+  const session = await getLeadSession(id);
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { id } = await params;
   const lead = await prisma.lead.findUnique({ where: { id }, include: { contact: true } });
   if (!lead) return NextResponse.json({ error: 'Liidiä ei löytynyt.' }, { status: 404 });
 

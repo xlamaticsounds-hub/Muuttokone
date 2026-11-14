@@ -5,6 +5,8 @@ import { Lead, Contact, LeadStatus } from '@prisma/client';
 import KeikatTable from './KeikatTable';
 import { INACTIVE_JOB_STATUSES } from '@/lib/lead-status';
 import { toHelsinkiDateInput } from '@/lib/helsinki-time';
+import { requirePageAccess } from '@/server/access';
+import { teamWhere } from '@/lib/access';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,14 +25,17 @@ export default async function KeikatPage({
 }: {
   searchParams: Promise<{ page?: string }>;
 }) {
+  const actor = await requirePageAccess('/hallinta/keikat');
   const { page: pageParam } = await searchParams;
   const page = Math.max(1, parseInt(pageParam ?? '1', 10) || 1);
 
   // requestedDate tallennetaan UTC-keskiyönä, joten "tänään" on Suomen päivä UTC-keskiyönä.
   const today = new Date(`${toHelsinkiDateInput(new Date())}T00:00:00Z`);
-  const UPCOMING_WHERE = { ...ACTIVE_WHERE, requestedDate: { gte: today } };
-  const PAST_WHERE = { ...ACTIVE_WHERE, requestedDate: { lt: today } };
-  const UNDATED_WHERE = { ...ACTIVE_WHERE, requestedDate: null };
+  // Aluevastaava näkee vain oman tiiminsä keikat
+  const scoped = { ...ACTIVE_WHERE, ...teamWhere(actor) };
+  const UPCOMING_WHERE = { ...scoped, requestedDate: { gte: today } };
+  const PAST_WHERE = { ...scoped, requestedDate: { lt: today } };
+  const UNDATED_WHERE = { ...scoped, requestedDate: null };
 
   let dbUnavailable = false;
   let upcoming: (Lead & { contact: Contact })[] = [];

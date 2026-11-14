@@ -8,6 +8,7 @@ import { UniversalTable, Column, TablePagination } from '@/components/ui/Univers
 import { LEAD_STATUS_LABELS, LEAD_STATUS_PILL_CLASSES, statusOptionsFor, isCompletedStatus } from '@/lib/lead-status';
 import { formatEuro } from '@/lib/format';
 import BaseTripBadge from './BaseTripBadge';
+import TeamBadge from './TeamBadge';
 import CompleteLeadDialog from './liidit/CompleteLeadDialog';
 import { completeTargetFor, type CompleteLeadTarget, type LeadForCompletion } from './liidit/complete-target';
 
@@ -16,9 +17,12 @@ type LeadWithContact = LeadForCompletion;
 export default function LeadsTable({
   leads,
   pagination,
+  showTeam = false,
 }: {
   leads: LeadWithContact[];
   pagination?: TablePagination;
+  /** Omistajille: Tampere- ja jakamattomat keikat merkitään */
+  showTeam?: boolean;
 }) {
   const router = useRouter();
   const [updating, setUpdating] = useState<string | null>(null);
@@ -95,6 +99,7 @@ export default function LeadsTable({
             {route && <span className="line-clamp-2">{route}</span>}
           </p>
         )}
+        {showTeam && <TeamBadge teamId={(lead as { teamId?: string | null }).teamId} />}
         <BaseTripBadge lead={lead} />
 
         <div className="flex flex-wrap items-center gap-2">
@@ -176,6 +181,7 @@ export default function LeadsTable({
               📅 {new Date(lead.requestedDate).toLocaleDateString('fi-FI')}
             </div>
           )}
+          {showTeam && <TeamBadge teamId={(lead as { teamId?: string | null }).teamId} />}
           <BaseTripBadge lead={lead} />
         </div>
       ),

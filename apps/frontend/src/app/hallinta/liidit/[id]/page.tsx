@@ -39,6 +39,10 @@ import { completeTargetFor } from '../complete-target';
 import { sentReportsContainingLead } from '@/server/partner-reports';
 import { formatHelsinkiDate, toHelsinkiDateInput } from '@/lib/helsinki-time';
 import { defaultFinalPrice } from '@/server/lead-format';
+import { canSeeLead, requirePageAccess } from '@/server/access';
+import LeadTeamSelector from './LeadTeamSelector';
+import LeadCrewNotesCard from './LeadCrewNotesCard';
+import { crewNotesOf } from '@/server/crew-jobs';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,7 +52,10 @@ export default async function LeadDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  
+  const actor = await requirePageAccess('/hallinta/liidit');
+  // Aluevastaava näkee vain oman tiiminsä liidit (muut kuin olemattomat)
+  if (!(await canSeeLead(actor, id))) notFound();
+
   const lead = await prisma.lead.findUnique({
     where: { id },
     include: {
@@ -214,7 +221,14 @@ export default async function LeadDetailPage({
           </div>
         </div>
 
-        <StatusSelector leadId={lead.id} initialStatus={lead.status} completeTarget={completeTarget} />
+        <div className="flex flex-wrap items-center gap-2">
+          <LeadTeamSelector
+            leadId={lead.id}
+            teamId={(lead as { teamId?: string | null }).teamId ?? null}
+            canChooseAny={actor.role === 'OWNER'}
+          />
+          <StatusSelector leadId={lead.id} initialStatus={lead.status} completeTarget={completeTarget} />
+        </div>
       </div>
 
       <LeadCompletionCard
@@ -252,6 +266,8 @@ export default async function LeadDetailPage({
       )}
 
       <BoxRentalCard leadId={lead.id} rental={boxRental} defaults={boxDefaults} warning={boxWarning} />
+
+      <LeadCrewNotesCard leadId={lead.id} initial={crewNotesOf(pfd)} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left Column: Contact & Move Info */}

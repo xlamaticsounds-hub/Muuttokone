@@ -1,10 +1,13 @@
 import { prisma } from '@/server/db';
 import NotesBoard from './NotesBoard';
 import { toNoteDto, type NoteDto } from './dto';
+import { requirePageAccess } from '@/server/access';
+import { canAccessTeam } from '@/lib/access';
 
 export const dynamic = 'force-dynamic';
 
 export default async function MuistiinpanotPage() {
+  const actor = await requirePageAccess('/hallinta/muistiinpanot');
   let dbUnavailable = false;
   let notes: NoteDto[] = [];
 
@@ -13,7 +16,13 @@ export default async function MuistiinpanotPage() {
     const leadIds = [...new Set(rows.map((n) => n.leadId).filter((id): id is string => Boolean(id)))];
     const leads = leadIds.length > 0 ? await prisma.lead.findMany({ where: { id: { in: leadIds } }, include: { contact: true } }) : [];
     const leadById = new Map(leads.map((l) => [l.id, l]));
-    notes = rows.map((n) => toNoteDto(n, n.leadId ? leadById.get(n.leadId) : null));
+    // Aluevastaava: omat muistiinpanot ja oman tiimin keikkoihin liitetyt (sama sääntö kuin note-actions.ts)
+    const visible = rows.filter((n) => {
+      if (actor.role === 'OWNER' || (n.createdBy && n.createdBy === actor.email)) return true;
+      const lead = n.leadId ? leadById.get(n.leadId) : undefined;
+      return Boolean(lead) && canAccessTeam(actor, (lead as { teamId?: string | null }).teamId ?? null);
+    });
+    notes = visible.map((n) => toNoteDto(n, n.leadId ? leadById.get(n.leadId) : null));
   } catch (error) {
     dbUnavailable = true;
     console.warn('[hallinta/muistiinpanot] Database unavailable, showing fallback view', error);

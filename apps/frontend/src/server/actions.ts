@@ -7,8 +7,9 @@ import { upsertContactByEmail } from './repo/contacts';
 import { createLead } from './repo/leads';
 import { createLog } from './repo/logs';
 import { LeadSource, LeadStatus } from '@prisma/client';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/server/auth';
+import { getLeadSession } from '@/server/access';
+import { suggestTeamId } from '@/lib/teams';
+import { teamRelation } from './repo/leads';
 import { isCompletedStatus } from '@/lib/lead-status';
 import { leadPreferredTime } from '@/lib/calendar-time';
 import { rateLimit } from '@/server/rate-limit';
@@ -95,6 +96,12 @@ export async function submitQuickQuote(formData: FormData) {
         toAddress: [data.toStreet, data.toPostalCode, data.toCity].filter(Boolean).join(', '),
         volumeM3: data.estimatedVolumeM3 ?? null,
         notes: data.description ?? null,
+        ...teamRelation(
+          suggestTeamId({
+            fromAddress: [data.fromStreet, data.fromPostalCode, data.fromCity].filter(Boolean).join(', '),
+            toAddress: [data.toStreet, data.toPostalCode, data.toCity].filter(Boolean).join(', '),
+          }),
+        ),
       });
 
       await createLog({
@@ -140,6 +147,12 @@ export async function submitQuote(formData: FormData) {
         toAddress: [data.toStreet, data.toPostalCode, data.toCity].filter(Boolean).join(', '),
         volumeM3: data.estimatedVolumeM3 ?? null,
         notes: data.description ?? null,
+        ...teamRelation(
+          suggestTeamId({
+            fromAddress: [data.fromStreet, data.fromPostalCode, data.fromCity].filter(Boolean).join(', '),
+            toAddress: [data.toStreet, data.toPostalCode, data.toCity].filter(Boolean).join(', '),
+          }),
+        ),
       });
 
       await createLog({
@@ -158,7 +171,7 @@ export async function submitQuote(formData: FormData) {
 }
 
 export async function updateLeadStatus(leadId: string, status: LeadStatus) {
-  const session = await getServerSession(authOptions);
+  const session = await getLeadSession(leadId);
   if (!session) {
     throw new Error('Unauthorized');
   }
@@ -206,7 +219,7 @@ export async function updateLeadStatus(leadId: string, status: LeadStatus) {
 }
 
 export async function updateLeadDetails(leadId: string, data: any) {
-  const session = await getServerSession(authOptions);
+  const session = await getLeadSession(leadId);
   if (!session) {
     throw new Error('Unauthorized');
   }

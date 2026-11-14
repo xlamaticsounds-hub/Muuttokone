@@ -11,6 +11,8 @@ import { getIngestMode } from '@/server/mail-ingest';
 import { describeLastRun } from '@/lib/mail-status';
 import { summarizeInventory } from '@/lib/box-inventory';
 import { loadInventoryRentals } from '@/server/box-rentals';
+import { requirePageAccess } from '@/server/access';
+import { ADMIN_HOME, scopeTeamId, teamWhere } from '@/lib/access';
 
 export const dynamic = 'force-dynamic'; // Ensure we always get fresh data
 
@@ -32,6 +34,11 @@ function preferredTimeOf(formData: unknown): string | null {
 }
 
 export default async function DashboardPage() {
+  const actor = await requirePageAccess(ADMIN_HOME);
+  // Aluevastaava näkee vain oman tiiminsä keikat; omistaja kaikki (+ jakamattomien määrä)
+  const scope = teamWhere(actor);
+  const isOwner = actor.role === 'OWNER';
+  let unassigned = 0;
   let dbUnavailable = false;
   let recentLeads: LeadWithContact[] = [];
   let calendarJobs: CalendarJob[] = [];
@@ -56,14 +63,16 @@ export default async function DashboardPage() {
     const todayUtc = new Date(`${todayKey}T00:00:00Z`);
     let undated = 0;
     let overdue = 0;
-    [recentLeads, calendarLeads, totalLeads, undated, overdue] = await Promise.all([
+    [recentLeads, calendarLeads, totalLeads, undated, overdue, unassigned] = await Promise.all([
       prisma.lead.findMany({
+        where: scope,
         include: { contact: true },
         orderBy: { createdAt: 'desc' },
         take: RECENT_LEADS_LIMIT,
       }),
       prisma.lead.findMany({
         where: {
+          ...scope,
           status: { notIn: ['LOST', 'ARCHIVED', 'CANCELLED'] },
           // gte/lt jättää NULL-päivämäärät automaattisesti pois
           requestedDate: { gte: calendarFrom, lt: calendarTo },
@@ -71,14 +80,16 @@ export default async function DashboardPage() {
         include: { contact: true },
         orderBy: { requestedDate: 'asc' },
       }),
-      prisma.lead.count(),
+      prisma.lead.count({ where: scope }),
       // Kalenterin huomautukset: keikat jotka eivät näy kalenterissa tai jäivät käsittelemättä
-      prisma.lead.count({ where: { ...activeWhere, requestedDate: null } }),
-      prisma.lead.count({ where: { ...activeWhere, requestedDate: { lt: todayUtc } } }),
+      prisma.lead.count({ where: { ...scope, ...activeWhere, requestedDate: null } }),
+      prisma.lead.count({ where: { ...scope, ...activeWhere, requestedDate: { lt: todayUtc } } }),
+      // Jakamattomat (ei tiimiä): vain omistajille, jotka valitsevat tiimin
+      isOwner ? prisma.lead.count({ where: { ...activeWhere, teamId: null, deletedAt: null } }) : Promise.resolve(0),
     ]);
     notices = { undated, overdue };
     try {
-      const inventory = summarizeInventory(0, await loadInventoryRentals(), todayKey);
+      const inventory = summarizeInventory(0, await loadInventoryRentals(scopeTeamId(actor)), todayKey);
       const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
       const deliveriesToday = inventory.upcoming.filter((r) => r.deliveryKey === todayKey).length;
       const pickupsToday = inventory.current.filter((r) => r.pickupKey === todayKey).length;
@@ -93,10 +104,19 @@ export default async function DashboardPage() {
     }
     // Huomiolista on lisäosa: jos sen haku epäonnistuu (esim. migraatiota ei ole ajettu), etusivu toimii silti
     try {
-      const [todos, total] = await Promise.all([
-        prisma.aiTodo.findMany({ where: { status: 'OPEN' }, orderBy: [{ priority: 'asc' }, { createdAt: 'desc' }], take: TODO_LIMIT }),
+      let [todos, total] = await Promise.all([
+        prisma.aiTodo.findMany({ where: { status: 'OPEN' }, orderBy: [{ priority: 'asc' }, { createdAt: 'desc' }], take: isOwner ? TODO_LIMIT : undefined }),
         prisma.aiTodo.count({ where: { status: 'OPEN' } }),
       ]);
+      if (!isOwner) {
+        // Aluevastaavalle vain oman tiimin liideihin liittyvät huomiot (avoimia on vähän, joten suodatus tässä)
+        const leadIds = [...new Set(todos.map((t) => t.leadId).filter((id): id is string => Boolean(id)))];
+        const teamLeads = leadIds.length ? await prisma.lead.findMany({ where: { id: { in: leadIds }, ...scope }, select: { id: true } }) : [];
+        const visible = new Set(teamLeads.map((l) => l.id));
+        todos = todos.filter((t) => t.leadId && visible.has(t.leadId));
+        total = todos.length;
+        todos = todos.slice(0, TODO_LIMIT);
+      }
       aiTodos = todos.map((t) => ({ id: t.id, leadId: t.leadId, type: t.type, priority: t.priority, title: t.title, reason: t.reason, suggestedStatus: t.suggestedStatus }));
       aiTodoTotal = total;
       const last = await getLastMailCycle();
@@ -135,6 +155,16 @@ export default async function DashboardPage() {
         </div>
       )}
 
+      {unassigned > 0 && (
+        <Link
+          href="/hallinta/liidit?tiimi=jakamaton"
+          className="flex min-h-11 flex-wrap items-center gap-x-2 rounded-lg border border-violet-200 bg-violet-50 px-4 py-2 text-sm text-violet-900 hover:bg-violet-100 dark:border-violet-900/40 dark:bg-violet-900/20 dark:text-violet-200 dark:hover:bg-violet-900/30"
+        >
+          <span className="font-semibold">Jakamattomat:</span> {unassigned} {unassigned === 1 ? 'keikka ilman tiimiä' : 'keikkaa ilman tiimiä'} (Helsinki vai Tampere?)
+          <span className="ml-auto font-semibold">Valitse tiimi →</span>
+        </Link>
+      )}
+
       {boxNotices.length > 0 && (
         <Link
           href="/hallinta/inventaario"
@@ -160,7 +190,7 @@ export default async function DashboardPage() {
             Näytä kaikki ({totalLeads}) →
           </Link>
         </div>
-        <LeadsTable leads={recentLeads} />
+        <LeadsTable leads={recentLeads} showTeam={isOwner} />
       </section>
     </div>
   );

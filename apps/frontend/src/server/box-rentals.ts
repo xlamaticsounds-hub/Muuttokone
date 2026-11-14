@@ -52,12 +52,14 @@ export async function getBoxStockTotal(): Promise<number | null> {
   return typeof value?.total === 'number' && Number.isFinite(value.total) ? value.total : null;
 }
 
-export async function loadInventoryRentals(): Promise<InventoryRental[]> {
+/** Vuokraukset. teamId rajaa yhden tiimin keikkoihin (aluevastaava, partio); null/puuttuu = kaikki. */
+export async function loadInventoryRentals(teamId: string | null = null): Promise<InventoryRental[]> {
   const rows = await prisma.boxRental.findMany({
-    where: { lead: { deletedAt: null } },
+    where: { lead: { deletedAt: null, ...(teamId ? { teamId } : {}) } },
     include: { lead: { include: { contact: true } } },
   });
-  return rows.map(toInventoryRental);
+  // Rajaus myös tässä: paikallinen mock-kanta ohittaa relaatiosuodattimet
+  return rows.filter((row) => !teamId || row.lead?.teamId === teamId).map(toInventoryRental);
 }
 
 function isUniqueViolation(error: unknown): boolean {

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/server/auth';
+import { getLeadSession } from '@/server/access';
 import { prisma } from '@/server/db';
 import { readImagesFromForm, saveLeadAttachments } from '@/server/external-lead';
 import { createLog } from '@/server/repo/logs';
@@ -10,10 +9,10 @@ export const runtime = 'nodejs';
 
 /** Lisää keskustelun kuvia olemassa olevalle keikalle (multipart: images). */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getServerSession(authOptions);
+  const { id } = await params;
+  const session = await getLeadSession(id);
   if (!session) return NextResponse.json({ success: false, message: 'Kirjaudu sisään.' }, { status: 401 });
 
-  const { id } = await params;
   const lead = await prisma.lead.findUnique({ where: { id }, select: { id: true } });
   if (!lead) return NextResponse.json({ success: false, message: 'Liidiä ei löytynyt.' }, { status: 404 });
 

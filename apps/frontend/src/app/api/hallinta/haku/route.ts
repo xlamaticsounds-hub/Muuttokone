@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/server/auth';
+import { getAdminSession } from '@/server/access';
+import { teamWhere } from '@/lib/access';
 import { prisma } from '@/server/db';
 import { LEAD_STATUS_LABELS } from '@/lib/lead-status';
 import { INVOICING_ENABLED, isAdminSectionHidden } from '@/lib/features';
@@ -19,8 +19,11 @@ const fullName = (c: { firstName: string | null; lastName: string | null; compan
 // Globaali haku: liidit, asiakkaat ja laskut. Puhelinnumerosta verrataan pelkkiä numeroita,
 // jotta "040 123" löytää myös "+358 40 123".
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // Aluevastaava: vain oman tiimin liidit ja niiden asiakkaat, ei laskuja (koko yrityksen)
+  const scope = teamWhere(session.actor);
+  const isOwner = session.actor.role === 'OWNER';
 
   const q = (req.nextUrl.searchParams.get('q') ?? '').trim().slice(0, 80);
   if (q.length < 2) return NextResponse.json({ leads: [], contacts: [], invoices: [] } satisfies SearchResults);
@@ -46,7 +49,7 @@ export async function GET(req: NextRequest) {
   try {
     const [leads, contacts, invoices] = await Promise.all([
       prisma.lead.findMany({
-        where: { OR: [{ contact: contactWhere }, { fromAddress: text }, { toAddress: text }] },
+        where: { ...scope, OR: [{ contact: contactWhere }, { fromAddress: text }, { toAddress: text }] },
         include: { contact: true },
         orderBy: { createdAt: 'desc' },
         take: LIMIT,
@@ -54,8 +57,12 @@ export async function GET(req: NextRequest) {
       // Piilotettujen osioiden (lib/features.ts) tuloksia ei haeta: asiakkaat löytyvät liideistä
       isAdminSectionHidden('/hallinta/asiakkaat')
         ? Promise.resolve([])
-        : prisma.contact.findMany({ where: contactWhere, orderBy: { updatedAt: 'desc' }, take: LIMIT }),
-      INVOICING_ENABLED
+        : prisma.contact.findMany({
+            where: isOwner ? contactWhere : { AND: [contactWhere, { leads: { some: scope } }] },
+            orderBy: { updatedAt: 'desc' },
+            take: LIMIT,
+          }),
+      INVOICING_ENABLED && isOwner
         ? prisma.invoice.findMany({
             where: {
               OR: [

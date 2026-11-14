@@ -3,8 +3,7 @@
 import { google } from '@ai-sdk/google';
 import { generateObject } from 'ai';
 import { z } from 'zod';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/server/auth';
+import { getOwnerSession } from '@/server/access';
 import { setAppState } from '@/server/app-state';
 import { loadBookedJobs } from '@/server/forecast-data';
 import { summarizeBookedJobs } from '@/lib/forecast';
@@ -23,7 +22,7 @@ export type ForecastAiActionResult = { success: true; result: ForecastAiResult; 
 
 /** "Pyydä AI-vinkit" Ennuste-sivulla: malli saa vain summat ja päivät, tulos tallennetaan AppStateen. */
 export async function generateForecastAiTips(): Promise<ForecastAiActionResult> {
-  const session = await getServerSession(authOptions);
+  const session = await getOwnerSession();
   if (!session) return { success: false, message: 'Kirjaudu uudelleen sisään.' };
   if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
     return { success: false, message: 'AI-palvelua ei ole määritetty (GOOGLE_GENERATIVE_AI_API_KEY puuttuu).' };

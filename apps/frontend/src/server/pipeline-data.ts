@@ -55,13 +55,17 @@ type InternalCard = PipelineCardData & { stage: LeadStatus; value: number | null
  * euromäärät vaiheittain. AI-tiedot ovat lisätietoa — jos niiden taulut puuttuvat (migraatiota ei ole ajettu),
  * pipeline toimii silti ilman niitä.
  */
-export async function loadPipeline(now = new Date()): Promise<{ columns: PipelineColumn[]; summary: PipelineSummaryItem[] }> {
+export async function loadPipeline(
+  now = new Date(),
+  /** Tiimirajaus (lib/access.ts: teamWhere): {} = kaikki, { teamId } = aluevastaavan tiimi */
+  scope: { teamId?: string } = {},
+): Promise<{ columns: PipelineColumn[]; summary: PipelineSummaryItem[] }> {
   const include = { contact: true, discount: { select: { partner: true } } } as const;
 
   const [openLeads, closedLists, closedCounts] = await Promise.all([
-    prisma.lead.findMany({ where: { status: { in: OPEN_STATUSES } }, include }),
-    Promise.all(CLOSED_STAGES.map((status) => prisma.lead.findMany({ where: { status }, include, orderBy: { updatedAt: 'desc' }, take: CLOSED_LIMIT }))),
-    Promise.all(CLOSED_STAGES.map((status) => prisma.lead.count({ where: { status } }))),
+    prisma.lead.findMany({ where: { ...scope, status: { in: OPEN_STATUSES } }, include }),
+    Promise.all(CLOSED_STAGES.map((status) => prisma.lead.findMany({ where: { ...scope, status }, include, orderBy: { updatedAt: 'desc' }, take: CLOSED_LIMIT }))),
+    Promise.all(CLOSED_STAGES.map((status) => prisma.lead.count({ where: { ...scope, status } }))),
   ]);
   const leads = [...openLeads, ...closedLists.flat()];
   const leadIds = new Set(leads.map((lead) => lead.id));

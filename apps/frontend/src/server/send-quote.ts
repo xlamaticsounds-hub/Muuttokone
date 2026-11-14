@@ -1,9 +1,8 @@
 'use server';
 
-import { getServerSession } from 'next-auth';
 import { isCompletedStatus } from '@/lib/lead-status';
 import { LeadStatus } from '@prisma/client';
-import { authOptions } from '@/server/auth';
+import { getLeadSession } from '@/server/access';
 import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
 import { isSmtpConfigured, sendMail, SMTP_NOT_CONFIGURED_MESSAGE } from '@/server/mailer';
@@ -27,7 +26,7 @@ export type SendQuoteResult = { success: true; sentTo: string } | { success: fal
 export async function getQuoteEmailPreviewData(
   leadId: string,
 ): Promise<{ contactEmail: string | null } & Omit<QuoteEmailParams, 'customMessage'>> {
-  const session = await getServerSession(authOptions);
+  const session = await getLeadSession(leadId);
   if (!session) {
     throw new Error('Unauthorized');
   }
@@ -88,7 +87,7 @@ export async function sendQuoteEmail(leadId: string, customMessage: string | nul
 }
 
 async function sendQuoteEmailInner(leadId: string, customMessage: string | null): Promise<SendQuoteResult> {
-  const session = await getServerSession(authOptions);
+  const session = await getLeadSession(leadId);
   if (!session) {
     return { success: false, message: 'Kirjaudu sisään lähettääksesi tarjouksen.' };
   }

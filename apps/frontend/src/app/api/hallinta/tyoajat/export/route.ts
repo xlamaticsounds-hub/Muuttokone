@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/server/auth';
+import { getAdminSession } from '@/server/access';
+import { teamWhere } from '@/lib/access';
 import { prisma } from '@/server/db';
 import { helsinkiMonthRange } from '@/lib/helsinki-time';
 import { entriesToCsv, monthParam, parseMonthParam, personHours, type CsvRow } from '@/lib/work-time';
@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
 // näytetään keikan ensimmäisellä rivillä ja lasketaan keikan kaikkien rivien henkilötunneista, jotta
 // sarakkeen summaaminen ei laske hintaa moneen kertaan.
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
+  const session = await getAdminSession();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
   const now = new Date();
 
   const entries = await prisma.timeEntry.findMany({
-    where: { startedAt: { gte: range.start, lt: range.end } },
+    where: { startedAt: { gte: range.start, lt: range.end }, ...teamWhere(session.actor) },
     orderBy: { startedAt: 'asc' },
     take: 2000,
   });

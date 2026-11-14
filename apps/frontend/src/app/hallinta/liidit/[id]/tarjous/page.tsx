@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { canSeeLead, requirePageAccess } from '@/server/access';
 import { prisma } from '@/server/db';
 import { offerForLead, offerSentInfo } from '@/server/offer-data';
 import { toHelsinkiDateInput } from '@/lib/helsinki-time';
@@ -8,6 +9,8 @@ export const dynamic = 'force-dynamic';
 
 export default async function TarjousPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  // Aluevastaava vain oman tiimin liideihin
+  if (!(await canSeeLead(await requirePageAccess('/hallinta/liidit'), id))) notFound();
   const lead = await prisma.lead.findUnique({ where: { id }, include: { contact: true } });
   if (!lead) notFound();
 

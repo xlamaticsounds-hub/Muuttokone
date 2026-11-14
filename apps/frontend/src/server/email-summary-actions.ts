@@ -1,7 +1,6 @@
 'use server';
 
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/server/auth';
+import { getLeadSession } from '@/server/access';
 import { generateLeadEmailSummary, type EmailSummaryResult } from '@/server/email-summary';
 
 /**
@@ -10,7 +9,7 @@ import { generateLeadEmailSummary, type EmailSummaryResult } from '@/server/emai
  * /api/cron/email-summaries-reitti, jolla ei ole käyttäjäsessiota.
  */
 export async function generateLeadEmailSummaryAction(leadId: string): Promise<EmailSummaryResult> {
-  const session = await getServerSession(authOptions);
+  const session = await getLeadSession(leadId);
   if (!session) {
     return { success: false, message: 'Kirjaudu sisään luodaksesi yhteenvedon.' };
   }

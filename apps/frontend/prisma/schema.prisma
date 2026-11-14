@@ -155,6 +155,11 @@ model Lead {
   // Muuttolaatikoiden vuokraus (inventaario), luodaan liidin tiedoista ks. src/server/box-rentals.ts
   boxRental BoxRental?
 
+  // Keikan tekevä tiimi. Ehdotetaan osoitteista luonnissa (lib/teams.ts), null = jakamaton:
+  // näkyy vain omistajille, kunnes tiimi valitaan.
+  team   Team?   @relation(fields: [teamId], references: [id], onDelete: SetNull)
+  teamId String?
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
@@ -165,6 +170,7 @@ model Lead {
   @@index([source])
   @@index([discountCodeId])
   @@index([completedAt])
+  @@index([teamId])
 }
 
 /// Kumppanien alennuskoodit. Uudet koodit (myös toimipaikka- ja välittäjäkohtaiset) lisätään
@@ -425,11 +431,72 @@ model TimeEntry {
   breakMinutes Int       @default(0) // tauot, joita ei lasketa työajaksi
   notes        String?
   createdBy    String? // kirjautuneen ylläpitäjän sähköposti
+  // Tiimi, jonka työtä leima on (liidin tiimi tai leimaajan tiimi). Pelkkä viite kuten leadId.
+  teamId       String?
+  // Ketkä tiimin työntekijät (Worker.id) olivat mukana. Kun lista on annettu, crewSize = listan pituus.
+  // Henkilökohtaiset tunnit lasketaan tästä (lib/work-time.ts: workerHours).
+  workerIds    String[]  @default([])
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
   @@index([startedAt])
   @@index([leadId])
+  @@index([teamId])
+}
+
+/**
+ * ===== Käyttäjät, roolit ja tiimit =====
+ * Hallinnan käyttäjät ja oikeudet: ks. src/lib/access.ts (säännöt) ja src/server/access.ts (tarkistus).
+ */
+
+enum UserRole {
+  OWNER // kaikki tiimit ja toiminnot + käyttäjähallinta
+  TEAM_ADMIN // aluevastaava: hallinnan työkalut, mutta vain oman tiimin keikat
+  CREW_LEAD // partionjohtaja: vain partiosivu (oman tiimin keikat, työajat, laatikot)
+}
+
+// Keikkatiimi (esim. Helsinki, Tampere). Tunnisteet "helsinki" ja "tampere" luodaan migraatiossa
+// ja niihin viitataan koodissa (lib/teams.ts), joten niitä ei poisteta.
+model Team {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users   User[]
+  workers Worker[]
+  leads   Lead[]
+}
+
+model User {
+  id                 String    @id @default(cuid())
+  email              String    @unique // aina pienillä kirjaimilla
+  name               String
+  role               UserRole
+  team               Team?     @relation(fields: [teamId], references: [id], onDelete: Restrict)
+  teamId             String? // pakollinen TEAM_ADMIN- ja CREW_LEAD-rooleille, OWNER: null
+  passwordHash       String? // lib/password.ts (scrypt). null = ei omaa salasanaa vielä
+  mustChangePassword Boolean   @default(true) // väliaikainen salasana: vaihdettava ensimmäisellä kirjautumisella
+  active             Boolean   @default(true) // false = ei pääse kirjautumaan, historia säilyy
+  lastLoginAt        DateTime?
+  createdBy          String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([teamId])
+}
+
+// Tiimin työntekijä ilman omaa tunnusta: partionjohtaja valitsee leimaan ketkä olivat mukana.
+model Worker {
+  id        String   @id @default(cuid())
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Restrict)
+  teamId    String
+  name      String
+  active    Boolean  @default(true) // false = ei näy valinnoissa, vanhat tunnit säilyvät
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([teamId])
 }
 
 // Muistiinpanot: paikka kirjata asioita ylös (huomioita, ideoita, asiakastietoja, tehtäviä).

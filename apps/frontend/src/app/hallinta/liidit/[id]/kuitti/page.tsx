@@ -1,5 +1,6 @@
 import { prisma } from '@/server/db';
 import { notFound } from 'next/navigation';
+import { canSeeLead, requirePageAccess } from '@/server/access';
 import { getStoredPrice, parseLeadFormData } from '@/server/lead-format';
 import ReceiptClient from './ReceiptClient';
 
@@ -11,6 +12,8 @@ export default async function ReceiptPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  // Aluevastaava vain oman tiimin liideihin
+  if (!(await canSeeLead(await requirePageAccess('/hallinta/liidit'), id))) notFound();
 
   const lead = await prisma.lead.findUnique({
     where: { id },

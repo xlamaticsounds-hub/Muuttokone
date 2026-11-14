@@ -1,31 +1,32 @@
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { findUserByEmail, isEnvOwner, normalizeEmail, recordLogin, resolveActor, tooManyFailedLogins } from "@/server/actors";
+import { safeEqual, verifyPassword } from "@/server/password";
+import { LOGIN_PATH } from "@/lib/access";
 
-const allowedEmails = (process.env.ALLOWED_EMAILS || "")
-  .split(",")
-  .map((e) => e.trim().toLowerCase())
-  .filter(Boolean);
-
-const builtInAllowedEmails = ["domenic.eklund@gmail.com", "paavo.penttinen@proton.me", "matias.typpo@gmail.com"];
-
-const isAllowedEmail = (email?: string | null) => {
-  if (!email) return false;
-  const normalized = email.trim().toLowerCase();
-  return builtInAllowedEmails.includes(normalized) || allowedEmails.includes(normalized);
-};
+// Kirjautuminen: jokaisella hallinnan käyttäjällä on oma salasana (User-taulu, käyttäjähallinta
+// /hallinta/kayttajat). Yhteinen ADMIN_LOGIN_PASSWORD toimii enää hätäavaimena ympäristömuuttujan
+// omistajille (server/actors.ts), ettei kukaan voi lukita itseään ulos. Google-kirjautuminen vain omistajille.
+// Roolit ja tiimit tarkistetaan joka pyynnöllä kannasta (server/access.ts), joten ne eivät ole tokenissa.
 
 const useSecureCookies = process.env.NEXTAUTH_URL?.startsWith("https://") || process.env.NODE_ENV === "production";
 
 const googleClientId = process.env.GOOGLE_CLIENT_ID ?? "";
 const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET ?? "";
-const hasGoogleOAuth = Boolean(googleClientId && googleClientSecret);
+export const hasGoogleOAuth = Boolean(googleClientId && googleClientSecret);
 const adminLoginPassword = process.env.ADMIN_LOGIN_PASSWORD ?? "";
 
 export const authOptions: NextAuthOptions = {
   debug: process.env.NODE_ENV === "development",
   session: {
     strategy: "jwt",
+  },
+  // Oma kirjautumissivu (app/kirjaudu). Virheet (esim. Google-kirjautuminen muulle kuin omistajalle)
+  // palaavat samalle sivulle ?error=-parametrilla.
+  pages: {
+    signIn: LOGIN_PATH,
+    error: LOGIN_PATH,
   },
   providers: [
     ...(hasGoogleOAuth
@@ -37,24 +38,34 @@ export const authOptions: NextAuthOptions = {
         ]
       : []),
     CredentialsProvider({
-      name: "Hallinta (dev)",
+      name: "Hallinta",
       credentials: {
-        email: { label: "Sahkoposti", type: "email" },
+        email: { label: "Sähköposti", type: "email" },
         password: { label: "Salasana", type: "password" },
       },
       async authorize(credentials) {
-        const email = credentials?.email?.trim().toLowerCase();
-        const password = credentials?.password;
+        const email = credentials?.email ? normalizeEmail(credentials.email) : "";
+        const password = credentials?.password ?? "";
 
         if (!email || !password) return null;
-        if (!isAllowedEmail(email)) return null;
-        if (!adminLoginPassword || password !== adminLoginPassword) return null;
+        if (await tooManyFailedLogins(email)) return null;
 
-        return {
-          id: email,
-          email,
-          name: email,
-        };
+        const user = await findUserByEmail(email);
+
+        // 1) Oma salasana
+        if (user?.active && user.passwordHash && (await verifyPassword(password, user.passwordHash))) {
+          await recordLogin(email, true, { method: "password" });
+          return { id: user.id, email, name: user.name };
+        }
+
+        // 2) Hätäavain: vain ympäristömuuttujan omistajat, eikä käytöstä poistettu käyttäjä
+        if (isEnvOwner(email) && (!user || user.active) && adminLoginPassword && safeEqual(password, adminLoginPassword)) {
+          await recordLogin(email, true, { method: "emergency_key" });
+          return { id: user?.id ?? email, email, name: user?.name ?? email };
+        }
+
+        await recordLogin(email, false);
+        return null;
       },
     }),
   ],
@@ -105,8 +116,16 @@ export const authOptions: NextAuthOptions = {
     },
   },
   callbacks: {
-    async signIn({ user }) {
-      return isAllowedEmail(user.email);
+    async signIn({ user, account }) {
+      // Salasanakirjautuminen on jo tarkistettu authorize():ssa
+      if (account?.provider === "credentials") return true;
+      // Google: vain aktiiviset omistajat
+      const actor = await resolveActor(user.email);
+      if (actor?.role === "OWNER") {
+        await recordLogin(user.email!, true, { method: "google" });
+        return true;
+      }
+      return false;
     },
   },
 };

@@ -6,6 +6,11 @@ export async function createLead(data: Prisma.LeadCreateInput) {
   return prisma.lead.create({ data });
 }
 
+/** Liidin tiimi luonnissa (relaatiomuodossa, koska luonti käyttää contact: { connect }). null = jakamaton. */
+export function teamRelation(teamId: string | null | undefined): { team?: { connect: { id: string } } } {
+  return teamId ? { team: { connect: { id: teamId } } } : {};
+}
+
 export async function updateLead(id: string, data: Prisma.LeadUpdateInput) {
   return prisma.lead.update({ where: { id }, data });
 }

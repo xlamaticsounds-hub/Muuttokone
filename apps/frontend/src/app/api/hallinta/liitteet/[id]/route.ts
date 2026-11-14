@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/server/auth';
+import { getAdminSession, getLeadSession } from '@/server/access';
 import { prisma } from '@/server/db';
 
 export const runtime = 'nodejs';
@@ -9,12 +8,14 @@ const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 /** Keikan kuvaliite vain kirjautuneille (kuvissa on asiakkaan henkilötietoja). */
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!(await getAdminSession())) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { id } = await params;
   const attachment = await prisma.leadAttachment.findUnique({ where: { id } });
-  if (!attachment) return NextResponse.json({ error: 'Kuvaa ei löytynyt.' }, { status: 404 });
+  // Aluevastaava näkee vain oman tiimin keikkojen kuvat
+  if (!attachment || !(await getLeadSession(attachment.leadId))) {
+    return NextResponse.json({ error: 'Kuvaa ei löytynyt.' }, { status: 404 });
+  }
 
   // Paikallinen mock-tietokanta palauttaa levyltä luetun Bufferin JSON-muodossa
   const data = attachment.data as unknown;

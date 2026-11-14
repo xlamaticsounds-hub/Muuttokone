@@ -8,12 +8,17 @@ import { cardClass, secondaryButton } from '../form-styles';
 import { leadOptionLabel, toTimeEntryDto, type LeadOption } from './dto';
 import TimeClock from './TimeClock';
 import TimeEntryList from './TimeEntryList';
+import { requirePageAccess } from '@/server/access';
+import { teamWhere } from '@/lib/access';
 
 export const dynamic = 'force-dynamic';
 
 const DAY_MS = 86_400_000;
 
 export default async function TyoajatPage({ searchParams }: { searchParams: Promise<{ kk?: string }> }) {
+  const actor = await requirePageAccess('/hallinta/tyoajat');
+  // Aluevastaava näkee vain oman tiiminsä leimat ja keikat
+  const scope = teamWhere(actor);
   const { kk } = await searchParams;
   const now = new Date();
   const selected = parseMonthParam(kk, now);
@@ -36,12 +41,13 @@ export default async function TyoajatPage({ searchParams }: { searchParams: Prom
 
   try {
     const [runningRows, monthRows, summaryRows, startLeads, manualLeads] = await Promise.all([
-      prisma.timeEntry.findMany({ where: { endedAt: null }, orderBy: { startedAt: 'asc' } }),
-      prisma.timeEntry.findMany({ where: { startedAt: { gte: range.start, lt: range.end } }, orderBy: { startedAt: 'desc' }, take: 500 }),
-      prisma.timeEntry.findMany({ where: { startedAt: { gte: summaryFrom } }, orderBy: { startedAt: 'desc' }, take: 1000 }),
+      prisma.timeEntry.findMany({ where: { endedAt: null, ...scope }, orderBy: { startedAt: 'asc' } }),
+      prisma.timeEntry.findMany({ where: { startedAt: { gte: range.start, lt: range.end }, ...scope }, orderBy: { startedAt: 'desc' }, take: 500 }),
+      prisma.timeEntry.findMany({ where: { startedAt: { gte: summaryFrom }, ...scope }, orderBy: { startedAt: 'desc' }, take: 1000 }),
       // Aloitettavat keikat: aktiiviset, viikko taaksepäin ja kaksi viikkoa eteenpäin
       prisma.lead.findMany({
         where: {
+          ...scope,
           status: { notIn: INACTIVE_JOB_STATUSES },
           requestedDate: { gte: new Date(todayUtc.getTime() - 7 * DAY_MS), lt: new Date(todayUtc.getTime() + 15 * DAY_MS) },
         },
@@ -52,6 +58,7 @@ export default async function TyoajatPage({ searchParams }: { searchParams: Prom
       // Käsin lisättävät: myös tehdyt ja laskutetut keikat parin kuukauden ajalta
       prisma.lead.findMany({
         where: {
+          ...scope,
           status: { notIn: ['LOST', 'ARCHIVED', 'CANCELLED'] },
           requestedDate: { gte: new Date(todayUtc.getTime() - 60 * DAY_MS), lt: new Date(todayUtc.getTime() + 15 * DAY_MS) },
         },

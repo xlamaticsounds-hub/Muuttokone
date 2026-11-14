@@ -1,7 +1,6 @@
 'use server';
 
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/server/auth';
+import { getLeadSession } from '@/server/access';
 import { createLog } from '@/server/repo/logs';
 import { isSmtpConfigured, sendMail, SMTP_NOT_CONFIGURED_MESSAGE } from '@/server/mailer';
 import { siteConfig } from '@/config/site';
@@ -129,7 +128,7 @@ export async function sendReceiptEmail(params: SendReceiptParams): Promise<SendR
 }
 
 async function sendReceiptEmailInner(params: SendReceiptParams): Promise<SendReceiptResult> {
-  const session = await getServerSession(authOptions);
+  const session = await getLeadSession(params.leadId);
   if (!session) {
     return { success: false, message: 'Kirjaudu sisään lähettääksesi kuitin.' };
   }

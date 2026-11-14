@@ -1,8 +1,7 @@
 'use server';
 
-import { getServerSession } from 'next-auth';
 import { revalidatePath } from 'next/cache';
-import { authOptions } from '@/server/auth';
+import { getAdminSession, getLeadSession } from '@/server/access';
 import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
 import { isSmtpConfigured, sendMail, SMTP_NOT_CONFIGURED_MESSAGE } from '@/server/mailer';
@@ -27,7 +26,7 @@ function refreshLead(leadId: string) {
 
 /** Tallentaa dokumentin liidille. Hintarivien summa päivitetään myös liidin vahvistetuksi hinnaksi. */
 export async function saveOffer(leadId: string, input: unknown): Promise<ActionResult<{ number: string; total: number }>> {
-  const session = await getServerSession(authOptions);
+  const session = await getLeadSession(leadId);
   if (!session) return noSession;
   try {
     const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { id: true, formData: true } });
@@ -52,7 +51,7 @@ export async function saveOffer(leadId: string, input: unknown): Promise<ActionR
 
 /** Lähettää tallennetun dokumentin PDF-liitteenä. Tarjous siirtää uuden liidin tilaan Tarjous lähetetty. */
 export async function sendOfferEmail(leadId: string, params: { to: string; message: string | null }): Promise<ActionResult<{ sentTo: string }>> {
-  const session = await getServerSession(authOptions);
+  const session = await getLeadSession(leadId);
   if (!session) return noSession;
   if (!isSmtpConfigured()) return { success: false, message: SMTP_NOT_CONFIGURED_MESSAGE };
   const to = (params.to ?? '').trim();
@@ -108,11 +107,13 @@ export async function sendOfferEmail(leadId: string, params: { to: string; messa
 }
 
 export async function deleteLeadAttachment(id: string): Promise<ActionResult> {
-  const session = await getServerSession(authOptions);
-  if (!session) return noSession;
+  if (!(await getAdminSession())) return noSession;
   try {
     const attachment = await prisma.leadAttachment.findUnique({ where: { id }, select: { id: true, leadId: true } });
     if (!attachment) return { success: true }; // jo poistettu
+    // Liitteen poisto kuuluu liidin tiimille (aluevastaava vain oman tiimin liideistä)
+    const session = await getLeadSession(attachment.leadId);
+    if (!session) return noSession;
     await prisma.leadAttachment.delete({ where: { id } });
     await createLog({
       entityType: 'Lead',
