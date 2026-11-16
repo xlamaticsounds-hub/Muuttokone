@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import { HERO_IMAGES } from './heroImages';
 
-const SLIDE_DURATION_MS = 5000;
+const SLIDE_DURATION_MS = 3500;
 
 type Slide = { current: number; previous: number | null };
 
