@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import SectionTitle from '@/components/SectionTitle';
+import { REPLACED_BLOG_POSTS } from '@/features/checklists/checklists';
 import { prisma } from '@/server/db';
 import { generateSEOMetadata, SEOConfigs } from '@/components/SEO/SEOHelpers';
 
@@ -51,15 +52,16 @@ export default async function BlogPage() {
     <section className="pt-32 pb-20 lg:pt-40 lg:pb-30">
         <div className="mb-16">
             <SectionTitle
-                title="Blogi"
-                subtitle="Ajankohtaista tietoa ja vinkkejä muuttamiseen liittyen."
+                as="h1"
+                title="Muuttoblogi"
+                subtitle="Muistilistat, pakkausvinkit ja muuton hinnat – käytännön neuvoja muuttoon."
             />
         </div>
         
         <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-0">
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
                 {posts.map((post) => (
-                    <Link key={post.slug} href={`/blogi/${post.slug}`} className="group relative block h-full bg-white rounded-lg shadow-solid-5 dark:bg-blacksection hover:shadow-xl transition-all duration-300 border border-stroke dark:border-strokedark p-8">
+                    <Link key={post.slug} href={REPLACED_BLOG_POSTS[post.slug] ?? `/blogi/${post.slug}`} className="group relative block h-full bg-white rounded-lg shadow-solid-5 dark:bg-blacksection hover:shadow-xl transition-all duration-300 border border-stroke dark:border-strokedark p-8">
                         <div className="flex flex-col h-full justify-between">
                             <div>
                                 {post.featuredImage && (

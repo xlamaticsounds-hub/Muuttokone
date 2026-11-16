@@ -5,6 +5,7 @@ import ServicesDivider from '@/components/ServicesDivider';
 import type { Service } from '@/types/service';
 import serviceData from '@/features/services/serviceData';
 import Cta from '@/components/Cta';
+import { CityLinks } from '@/features/landing/LandingSections';
 import Calculator from '@/features/calculator/Calculator';
 import { generateSEOMetadata, SEOConfigs } from '@/components/SEO/SEOHelpers';
 
@@ -33,7 +34,7 @@ export default async function Page() {
       <Services
         title="Muuttopalvelut"
         headingLevel="h1"
-        subtitle="Luotettavat ja monipuoliset muuttopalvelut koteihin ja yrityksille Helsingissä ja Uudellamaalla."
+        subtitle="Luotettavat ja monipuoliset muuttopalvelut koteihin ja yrityksille pääkaupunkiseudulla ja Tampereella."
         image={{ src: '/images/tiimi/tiimi-muuttopalvelut.jpg', alt: 'Muuttokoneen tiimi: Domenic, Paavo ja Hugo' }}
         items={items}
       />
@@ -53,6 +54,7 @@ export default async function Page() {
           </Suspense>
         </div>
       </section>
+      <CityLinks title="Muuttopalvelu kaupungeittain" />
       <ServicesDivider />
       <Cta />
     </>

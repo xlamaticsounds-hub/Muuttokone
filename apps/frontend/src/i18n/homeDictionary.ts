@@ -12,8 +12,8 @@ export const headerDictionary: Record<string, string> = {
 };
 
 export const footerDictionary: Record<string, string> = {
-  'Luotettava muuttopalveluyritys Helsingissä ja Uudellamaalla. Tarjoamme ammattitaitoisia koti- ja yritysmuuttoja, pakkausta, kuljetuksia ja kuolinpesätyhjennyksiä.':
-    'A trusted moving company in Helsinki and Uusimaa. We offer professional home and business moves, packing, transport, and estate clearances.',
+  'Luotettava muuttopalveluyritys pääkaupunkiseudulla ja Tampereella. Tarjoamme ammattitaitoisia koti- ja yritysmuuttoja, pakkausta, kuljetuksia ja kuolinpesätyhjennyksiä.':
+    'A trusted moving company in the Helsinki region and Tampere. We offer professional home and business moves, packing, transport, and estate clearances.',
   'Yhteystiedot': 'Contact details',
   'Asiakaspalvelu': 'Customer service',
   'Ota yhteyttä': 'Contact us',
@@ -27,8 +27,10 @@ export const heroDictionary: Record<string, string> = {
   'Laske tarkka hinta-arvio muutollesi suoraan tästä. Tämä ei sido sinua mihinkään.':
     'Calculate an accurate price estimate for your move right here. This does not commit you to anything.',
   'Luotettava apusi': 'Your Reliable Helper',
-  'Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Ammattitaitoiset ja tehokkaat muuttopalvelut yksityis- ja yritysasiakkaille. Ei piilokuluja, vain rehellinen hinnoittelu.':
-    'A fast, safe, and transparent move in Helsinki and Uusimaa. Professional, efficient moving services for private and business customers. No hidden fees, just honest pricing.',
+  'Muuttopalvelu pääkaupunkiseudulla ja Tampereella': 'Moving company in the Helsinki region and Tampere',
+  'Palvelualueet:': 'Service areas:',
+  'Nopea, turvallinen ja läpinäkyvä muutto pääkaupunkiseudulla ja Tampereella. Ammattitaitoiset ja tehokkaat muuttopalvelut yksityis- ja yritysasiakkaille. Ei piilokuluja, vain rehellinen hinnoittelu.':
+    'A fast, safe, and transparent move in the Helsinki region and Tampere. Professional, efficient moving services for private and business customers. No hidden fees, just honest pricing.',
   'Laske hinta': 'Get a price',
   'Maksuton kartoitus ja neuvonta': 'Free assessment and advice',
   'Kiinteä hinta heti': 'Fixed price instantly',
@@ -100,7 +102,7 @@ export const boxRentalDictionary: Record<string, string> = {
   'Lisää laatikot muuttoon': 'Add boxes to your move',
   'Vuokraa vain laatikot': 'Rent only boxes',
   'Toimitusalue': 'Delivery area',
-  'Hinnat sisältävät ALV:n. Toimitus pääkaupunkiseudulle.': 'Prices include VAT. Delivery within the Helsinki metropolitan area.',
+  'Hinnat sisältävät ALV:n. Toimitus pääkaupunkiseudulle ja Tampereen seudulle.': 'Prices include VAT. Delivery within the Helsinki and Tampere regions.',
   'laatikko / vuorokausi': 'per box per day',
   'toimitus ja nouto kotiovelle muuton yhteydessä': 'delivery and pickup at your door with your move',
   'toimitus ja nouto yhteensä ilman muuttoa – ilmainen, kun vuokra on vähintään':
@@ -139,6 +141,7 @@ export const processStepsDictionary: Record<string, string> = {
 
 export const muuttolaskuriPageDictionary: Record<string, string> = {
   'Muuttolaskuri': 'Moving Calculator',
+  'Muuttolaskuri – laske muuton hinta heti': 'Moving cost calculator – get your price instantly',
   'Laske ja saa hinta heti – tarkka hinta-arvio sekunneissa, ei piilokuluja. Suomen tarkin muuttolaskuri perustuu oikeaan tavaramäärään.':
     'Calculate and get a price instantly – an accurate estimate in seconds, no hidden fees. Finland’s most accurate moving calculator is based on your actual inventory.',
   'Syötä tiedot': 'Enter your details',
@@ -176,8 +179,8 @@ export const faqDictionary: Record<string, string> = {
     'Report any damage you notice to us in writing within 7 days of the move. Our statutory road transport and liability insurance compensates, per its terms, for damage caused by our negligence during transport. The insurance does not cover damage resulting from inadequate packing of items packed by the customer.',
 
   'Voinko vuokrata muuttolaatikot teiltä?': 'Can I rent moving boxes from you?',
-  'Kyllä. Vuokraamme kestäviä, pinottavia muuttolaatikoita 0,19 €/laatikko/vuorokausi (sis. ALV). Toimitus kotiovelle ja nouto ovat ilmaiset, kun vuokraat laatikot muuton yhteydessä. Ilman muuttoa ne ovat ilmaiset, kun vuokran arvo on vähintään 100 € (esim. 38 laatikkoa 14 vuorokaudeksi), muuten toimitus ja nouto maksavat yhteensä 39 € pääkaupunkiseudulla. Lisää laatikot muuttolaskurin lisäpalveluista tai vuokraa pelkät laatikot Muuttolaatikot-sivulta.':
-    'Yes. We rent out sturdy, stackable moving boxes for €0.19 per box per day (incl. VAT). Delivery to your door and pickup are free when you rent the boxes together with a move. Without a move they are free when the rental is worth at least €100 (e.g. 38 boxes for 14 days); otherwise delivery and pickup cost €39 in total in the Helsinki metropolitan area. Add the boxes under the extra services in the moving calculator, or rent just the boxes on the Moving boxes page.',
+  'Kyllä. Vuokraamme kestäviä, pinottavia muuttolaatikoita 0,19 €/laatikko/vuorokausi (sis. ALV). Toimitus kotiovelle ja nouto ovat ilmaiset, kun vuokraat laatikot muuton yhteydessä. Ilman muuttoa ne ovat ilmaiset, kun vuokran arvo on vähintään 100 € (esim. 38 laatikkoa 14 vuorokaudeksi), muuten toimitus ja nouto maksavat yhteensä 39 €. Lisää laatikot muuttolaskurin lisäpalveluista tai vuokraa pelkät laatikot Muuttolaatikot-sivulta.':
+    'Yes. We rent out sturdy, stackable moving boxes for €0.19 per box per day (incl. VAT). Delivery to your door and pickup are free when you rent the boxes together with a move. Without a move they are free when the rental is worth at least €100 (e.g. 38 boxes for 14 days); otherwise delivery and pickup cost €39 in total. Add the boxes under the extra services in the moving calculator, or rent just the boxes on the Moving boxes page.',
 
   'Kuinka monta muuttolaatikkoa tarvitsen?': 'How many moving boxes do I need?',
   'Nyrkkisääntönä noin yksi laatikko asuinneliötä kohti: yksiö 25–30, kaksio 45–55, kolmio 65–75 ja neliö tai suurempi noin 90 laatikkoa. Muuttolaskuri ehdottaa määrän tavaralistasi tai asunnon koon mukaan, ja voit muokata sitä vapaasti.':
@@ -218,7 +221,7 @@ export const servicesDataDictionary: Record<string, string> = {
   'Pakkauspalvelu': 'Packing service',
   'Säästä tunteja ja vältä vahingot: ammattilaiset pakkaavat keittiöt, lasit ja hauraat esineet huolella. Materiaali ja merkinnät sisältyvät.':
     'Save hours and avoid damage: professionals carefully pack kitchens, glassware, and fragile items. Materials and labeling included.',
-  'Kuolinpesätyhjennnykset': 'Estate clearances',
+  'Kuolinpesätyhjennykset': 'Estate clearances',
   'Hoidamme kuolinpesän tyhjennyksen ammattitaidolla ja hienovaraisesti. Kierrätetään, lahjoitetaan tai viedään kierrätyskeskukseen – kaikki sovitun mukaan. Helpotamme läheisen taakkaa vaikeana hetkenä.':
     'We handle estate clearances professionally and with sensitivity. Items are recycled, donated, or taken to a recycling center — all as agreed. We ease the burden on loved ones during a difficult time.',
   'Muuttosiivous': 'Move-out cleaning',

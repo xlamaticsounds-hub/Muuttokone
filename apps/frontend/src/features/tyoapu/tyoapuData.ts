@@ -48,7 +48,7 @@ export const tyoapuCategories: TyoapuCategory[] = [
     title: 'Kantoapu',
     intro: 'Kun jotain raskasta pitää siirtää, emmekä tarvitse koko muuttoa.',
     items: [
-      { title: 'Raskaat esineet', desc: 'Kassakaapit, kuntolaitteet, pianot ja muut painavat esineet portaissa ja ahtaissa paikoissa.' },
+      { title: 'Raskaat esineet', desc: 'Kuntolaitteet, amerikkalaiset jääkaapit ja muut painavat esineet portaissa ja ahtaissa paikoissa.' },
       { title: 'Kalusteiden siirrot', desc: 'Huonekalut toiseen huoneeseen, kerrokseen tai varastoon, esim. remontin ajaksi.' },
       { title: 'Tavaran poisvienti', desc: 'Vanhat huonekalut ja kodinkoneet ulos ja kierrätykseen tai jäteasemalle.' },
     ],

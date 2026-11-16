@@ -1,14 +1,18 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import SlideOnReveal from '@/components/SlideOnReveal';
+import { CITY_LINKS } from '@/features/city-pages/cityLinks';
+import RatingBadge from '@/components/RatingBadge';
+import type { GoogleRating } from '@/lib/google-rating';
 import { useSiteConfig } from '@/app/context/SiteConfigContext';
 import { useEffect, useMemo, useState } from 'react';
 import { useLocale } from '@/i18n/LocaleContext';
 import { useT } from '@/i18n/useT';
 import { heroDictionary } from '@/i18n/homeDictionary';
 
-export default function HeroContent({ content }: { content?: any }) {
+export default function HeroContent({ content, rating }: { content?: any; rating?: GoogleRating }) {
   const siteConfig = useSiteConfig();
   const { locale } = useLocale();
   const t = useT(heroDictionary);
@@ -81,6 +85,10 @@ export default function HeroContent({ content }: { content?: any }) {
         <div className="flex lg:items-center">
           <div className="animate_left max-w-[720px] md:max-w-none lg:pr-8 xl:pr-12">
             <h1 className="text-title-xl sm:text-title-xxl lg:text-title-xxl mb-4 leading-tight font-bold sm:font-semibold text-black/90 drop-shadow-sm dark:text-white">
+              {/* Hakusana H1:n alkuun (Google painottaa H1:tä); iso iskulause pysyy ennallaan */}
+              <span className="text-primary mb-3 block text-sm font-semibold tracking-wide uppercase sm:text-base">
+                {t('Muuttopalvelu pääkaupunkiseudulla ja Tampereella')}
+              </span>
               {content?.title || t('Luotettava apusi')}
               <span className="text-primary mt-2 block">
                 {displayText}
@@ -88,7 +96,7 @@ export default function HeroContent({ content }: { content?: any }) {
               </span>
             </h1>
             <p className="text-regular text-black/70 sm:text-lg dark:text-white/80">
-              {content?.description || t('Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Ammattitaitoiset ja tehokkaat muuttopalvelut yksityis- ja yritysasiakkaille. Ei piilokuluja, vain rehellinen hinnoittelu.')}
+              {content?.description || t('Nopea, turvallinen ja läpinäkyvä muutto pääkaupunkiseudulla ja Tampereella. Ammattitaitoiset ja tehokkaat muuttopalvelut yksityis- ja yritysasiakkaille. Ei piilokuluja, vain rehellinen hinnoittelu.')}
             </p>
 
             <div className="mt-8 flex flex-col-reverse gap-5 sm:flex-row">
@@ -122,6 +130,30 @@ export default function HeroContent({ content }: { content?: any }) {
                 </span>
               ))}
             </div>
+
+            {rating && (
+              <div className="mt-5">
+                <RatingBadge value={rating} tone="dark" />
+              </div>
+            )}
+
+            {/* Linkit kaupunkisivuille: etusivu on sivuston vahvin sivu, ja linkit kertovat Googlelle,
+                että kaupunkihauissa (esim. "muuttopalvelu tampere") oikea sivu on kaupunkisivu. */}
+            <p className="mt-4 flex flex-wrap items-center text-sm text-black/60 dark:text-white/60">
+              <span className="mr-2 font-medium">{t('Palvelualueet:')}</span>
+              {CITY_LINKS.map((city, index) => (
+                <span key={city.path}>
+                  <Link href={city.path} className="text-primary font-semibold hover:underline">
+                    {city.name}
+                  </Link>
+                  {index < CITY_LINKS.length - 1 && (
+                    <span aria-hidden="true" className="mx-1.5">
+                      ·
+                    </span>
+                  )}
+                </span>
+              ))}
+            </p>
           </div>
         </div>
       </SlideOnReveal>

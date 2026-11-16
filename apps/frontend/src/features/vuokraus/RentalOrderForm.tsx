@@ -429,7 +429,7 @@ export default function RentalOrderForm() {
               />
               {outsideArea && (
                 <p className="mt-2 text-xs text-orange-600">
-                  Toimitus on pääkaupunkiseudulle. Osoite on sen ulkopuolella – otamme yhteyttä ja sovimme toimituksesta ja sen hinnasta erikseen.
+                  Toimitamme pääkaupunkiseudulle ja Tampereen seudulle. Osoite on toimitusalueen ulkopuolella – otamme yhteyttä ja sovimme toimituksesta ja sen hinnasta erikseen.
                 </p>
               )}
             </div>

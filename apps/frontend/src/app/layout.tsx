@@ -23,18 +23,19 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     template: '%s | Muuttokone.fi',
-    default: 'Etusivu | Muuttokone.fi – Luotettava muuttopalvelu Helsingissä',
+    default: 'Muuttopalvelu Helsinki ja Tampere | Muuttokone.fi',
   },
   description:
-    'Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Koti- ja yritysmuutot, pakkaus, kuljetukset ja kuolinpesätyhjennnykset. Pyydä maksuton tarjous!',
+    'Muuttopalvelu Helsingissä, Espoossa, Vantaalla ja Tampereella. Koti- ja yritysmuutot, kantoapu, pakkaus ja muuttolaatikot kiinteällä hinnalla. Laske hinta heti!',
   keywords: [
     'muutto',
     'muuttofirma',
     'muuttopalvelu',
     'Helsinki',
-    'Uusimaa',
     'Espoo',
     'Vantaa',
+    'Tampere',
+    'Turku',
   ],
   authors: [{ name: 'Muuttokone.fi' }],
   creator: 'Muuttokone.fi',
@@ -49,9 +50,9 @@ export const metadata: Metadata = {
     locale: 'fi_FI',
     url: siteUrl,
     siteName: 'Muuttokone.fi',
-    title: 'Muuttokone.fi - Luotettava muuttopalvelu Helsingissä ja Uudellamaalla',
+    title: 'Muuttokone.fi – muuttopalvelu Helsingissä ja Tampereella',
     description:
-      'Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Koti- ja yritysmuutot, pakkaus, kuljetukset ja kuolinpesätyhjennnykset.',
+      'Muuttopalvelu pääkaupunkiseudulla ja Tampereella. Koti- ja yritysmuutot, kantoapu, pakkaus ja muuttolaatikot kiinteällä hinnalla.',
     images: [
       {
         url: '/images/webp/hero/hero.webp',
@@ -65,7 +66,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Muuttokone.fi - Luotettava muuttopalvelu',
     description:
-      'Nopea, turvallinen ja läpinäkyvä muutto Helsingissä ja Uudellamaalla. Koti- ja yritysmuutot, pakkaus, kuljetukset ja kuolinpesätyhjennnykset.',
+      'Muuttopalvelu pääkaupunkiseudulla ja Tampereella. Koti- ja yritysmuutot, kantoapu, pakkaus ja muuttolaatikot kiinteällä hinnalla.',
     images: ['/images/webp/hero/hero.webp'],
     creator: '@muuttokone',
   },

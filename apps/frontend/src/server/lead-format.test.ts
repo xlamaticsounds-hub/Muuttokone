@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { CalculatorSchema, calculateMovingPrice } from '@/features/calculator/pricing';
-import { defaultFinalPrice, getExtraServices, parseEuroAmount, partnerDiscountNote, recomputeLeadPrice } from './lead-format';
+import { CalculatorSchema, FURNITURE_CATALOG, calculateMovingPrice } from '@/features/calculator/pricing';
+import { defaultFinalPrice, getExtraServices, getInventoryEntries, parseEuroAmount, partnerDiscountNote, recomputeLeadPrice } from './lead-format';
 
 // Laskurin varauksen formData sellaisena kuin se saapuu /api/submit-reitille (JSON):
 // päivämäärä merkkijonona, yhteystiedot mukana, selaimen oma hinta-arvio mukana.
@@ -203,5 +203,17 @@ describe('getExtraServices: laitepalvelut', () => {
     const without = recomputeLeadPrice(data, null)!;
     const withWasher = recomputeLeadPrice({ ...data, applianceServices: { washing_machine: 1 } }, null)!;
     expect(withWasher.price - without.price).toBeCloseTo(49, 6);
+  });
+});
+
+describe('laskurista poistetut tavarat (pianot ja kassakaapit, 16.11.2026)', () => {
+  it('laskuri ei tarjoa niitä', () => {
+    const ids = FURNITURE_CATALOG.map((item) => item.id as string);
+    for (const removed of ['piano_large', 'grand_piano', 'safe_large']) expect(ids).not.toContain(removed);
+  });
+
+  it('vanhassa liidissä ne näkyvät edelleen nimellä eikä tunnisteella', () => {
+    const entries = getInventoryEntries({ furnitureItems: { piano_large: 1, safe_large: 2 } });
+    expect(entries.map((e) => e.label)).toEqual(['Piano', 'Kassakaappi iso']);
   });
 });

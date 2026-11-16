@@ -25,6 +25,9 @@ const nextConfig = {
       { source: "/vuokraa", destination: "/muuttolaatikot", permanent: true },
 
       // Finnish aliases
+      // Blogiartikkeli korvattu koodin sivulla (features/checklists/checklists.ts: REPLACED_BLOG_POSTS)
+      { source: "/blogi/muuton-muistilista-2026", destination: "/muuton-muistilista", permanent: true },
+      { source: "/blog/muuton-muistilista-2026", destination: "/muuton-muistilista", permanent: true },
       { source: "/blog", destination: "/blogi", permanent: true },
       { source: "/blog/:path*", destination: "/blogi/:path*", permanent: true },
       { source: "/ota-yhteytta", destination: "/yhteystiedot", permanent: true },

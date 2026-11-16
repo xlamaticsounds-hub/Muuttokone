@@ -34,7 +34,7 @@ export const vuokrausProcessSteps: ProcessStep[] = [
   },
   {
     title: 'Toimitamme kotiovelle',
-    desc: 'Tuotteet tulevat sovittuna päivänä pääkaupunkiseudulla.',
+    desc: 'Tuotteet tulevat sovittuna päivänä pääkaupunkiseudulla ja Tampereen seudulla.',
     icon: 'Truck',
   },
   {
@@ -63,7 +63,7 @@ export const vuokrausFaqData: FaqItem[] = [
     : []),
   {
     q: 'Onko toimitus ja nouto ilmaista?',
-    a: `Toimitus kotiovelle ja nouto ovat ilmaiset, kun vuokraat muuton yhteydessä. Ilman muuttoa ne ovat ilmaiset, kun vuokran arvo on vähintään ${RENTAL_DELIVERY.freeFromRental} € (esim. ${boxesForFreeDelivery} laatikkoa 14 vuorokaudeksi), muuten toimitus ja nouto maksavat yhteensä ${RENTAL_DELIVERY.feeBothWays} € pääkaupunkiseudulla.`,
+    a: `Toimitus kotiovelle ja nouto ovat ilmaiset, kun vuokraat muuton yhteydessä. Ilman muuttoa ne ovat ilmaiset, kun vuokran arvo on vähintään ${RENTAL_DELIVERY.freeFromRental} € (esim. ${boxesForFreeDelivery} laatikkoa 14 vuorokaudeksi), muuten toimitus ja nouto maksavat yhteensä ${RENTAL_DELIVERY.feeBothWays} €.`,
   },
   {
     q: 'Miten toimitus ja nouto sovitaan?',
@@ -82,7 +82,7 @@ export const vuokrausFaqData: FaqItem[] = [
       ]
     : []),
   {
-    q: 'Toimitatteko pääkaupunkiseudun ulkopuolelle?',
-    a: 'Toimitus on pääkaupunkiseudulle (Helsinki, Espoo, Vantaa ja Kauniainen). Muualle toimituksesta sovitaan erikseen – kirjoita osoite lomakkeeseen, niin otamme yhteyttä.',
+    q: 'Mihin toimitatte muuttolaatikot?',
+    a: 'Toimitamme pääkaupunkiseudulle (Helsinki, Espoo, Vantaa ja Kauniainen) sekä Tampereelle ja lähikuntiin (Pirkkala, Ylöjärvi, Kangasala, Nokia, Lempäälä ja Valkeakoski). Muualle toimituksesta sovitaan erikseen – kirjoita osoite lomakkeeseen, niin otamme yhteyttä.',
   },
 ];

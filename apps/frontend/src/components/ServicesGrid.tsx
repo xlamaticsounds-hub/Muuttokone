@@ -16,9 +16,9 @@ const ITEMS: { icon: string; title: string; text: string; href: string }[] = [
   { icon: '/icons/palvelut/muuttolaatikot.png', title: 'Muuttolaatikot', text: 'Vuokralle {rate}/vrk, toimitus kotiovelle.', href: '/muuttolaatikot' },
   { icon: '/icons/palvelut/tyoapu.png', title: 'Työapu ja asennukset', text: 'TV, pesukone, kalusteet ja IT-apu.', href: '/tyoapu' },
   { icon: '/icons/palvelut/pakkauspalvelu.png', title: 'Pakkauspalvelu', text: 'Pakkaamme keittiöt ja hauraat esineet.', href: '/palvelut' },
-  { icon: '/icons/palvelut/muuttosiivous.png', title: 'Muuttosiivous', text: 'Luovutussiivous samalla kertaa.', href: '/palvelut' },
-  { icon: '/icons/palvelut/kuolinpesa.png', title: 'Kuolinpesän tyhjennys', text: 'Hienovaraisesti, kierrätys hoidettuna.', href: '/palvelut' },
-  { icon: '/icons/palvelut/kuljetukset.png', title: 'Kuljetukset', text: 'Kaatopaikka-ajot ja yksittäiset kuljetukset.', href: '/palvelut' },
+  { icon: '/icons/palvelut/muuttosiivous.png', title: 'Muuttosiivous', text: 'Luovutussiivous samalla kertaa.', href: '/muuttosiivous' },
+  { icon: '/icons/palvelut/kuolinpesa.png', title: 'Kuolinpesän tyhjennys', text: 'Hienovaraisesti, kierrätys hoidettuna.', href: '/kierratys-ja-poisvienti' },
+  { icon: '/icons/palvelut/kuljetukset.png', title: 'Kuljetukset', text: 'Kaatopaikka-ajot ja yksittäiset kuljetukset.', href: '/kuljetuspalvelu' },
 ];
 
 export default function ServicesGrid({ title, subtitle }: { title?: string; subtitle?: string } = {}) {

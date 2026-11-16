@@ -12,6 +12,8 @@ export type OutgoingMail = {
   cc?: string; // esim. kumppaniraportin kopio meille
   subject: string;
   html: string;
+  /** Tekstiversio (valinnainen): parantaa toimitettavuutta, kun viestissä on sekä HTML että teksti. */
+  text?: string;
   attachments?: MailAttachment[];
 };
 
@@ -35,6 +37,7 @@ export async function sendMail(mail: OutgoingMail): Promise<void> {
     ...(mail.cc && { cc: mail.cc }),
     subject: mail.subject,
     html: mail.html,
+    ...(mail.text && { text: mail.text }),
     attachments: mail.attachments,
   };
 

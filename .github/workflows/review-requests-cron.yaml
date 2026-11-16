@@ -1,0 +1,24 @@
+name: Review Requests Cron
+
+# Lähettää Google-arvostelupyynnön eilen toteutuneiden keikkojen asiakkaille (vain jos käytössä
+# hallinnan asetuksissa). Vaatii repo-secretit APP_URL ja CRON_SECRET (kuten muut cron-ajot).
+on:
+  schedule:
+    - cron: '0 8 * * *' # joka päivä klo 08 UTC (10 Suomen talviaikaa, 11 kesäaikaa)
+  workflow_dispatch: {}
+
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call /api/cron/review-requests
+        run: |
+          status=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -X POST "${{ secrets.APP_URL }}/api/cron/review-requests" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          echo "HTTP status: $status"
+          cat /tmp/response.json
+          if [ "$status" -ge 300 ]; then
+            echo "Cron call failed with status $status"
+            exit 1
+          fi

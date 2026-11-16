@@ -7,6 +7,7 @@ const serviceData: Service[] = [
     description:
       'Ovelta ovelle -palvelu, jossa huolehdimme kaikesta kantamisesta ja kuljetuksesta. Selkeä hinnoittelu ilman piilokuluja – tiedät etukäteen mitä maksat.',
     bgClass: 'hover:bg-primary/5',
+    href: '/muuttoapu',
   },
   {
     icon: '/icons/palvelut/yritysmuutto.png',
@@ -25,10 +26,11 @@ const serviceData: Service[] = [
   },
   {
     icon: '/icons/palvelut/kuolinpesa.png',
-    title: 'Kuolinpesätyhjennnykset',
+    title: 'Kuolinpesätyhjennykset',
     description:
       'Hoidamme kuolinpesän tyhjennyksen ammattitaidolla ja hienovaraisesti. Kierrätetään, lahjoitetaan tai viedään kierrätyskeskukseen – kaikki sovitun mukaan. Helpotamme läheisen taakkaa vaikeana hetkenä.',
     bgClass: 'hover:bg-primary/5',
+    href: '/kierratys-ja-poisvienti',
   },
   {
     icon: '/icons/palvelut/muuttosiivous.png',
@@ -36,6 +38,7 @@ const serviceData: Service[] = [
     description:
       'Asunnon luovutussiivous takuulla: vanhan kodin jättäminen putipuhtaaksi vuokranantajalle tai ostajalle. Yksi paketti, valmis kerralla.',
     bgClass: 'hover:bg-primary/5',
+    href: '/muuttosiivous',
   },
   {
     icon: '/icons/palvelut/tyoapu.png',
@@ -53,6 +56,7 @@ const serviceData: Service[] = [
     description:
       'Kuljetus A:sta B:hen ilman stressiä – kaatopaikka-ajot, vanhan tavaran haku, huonekalujen siirrot tai muut yksittäiset kuljetustarpeet. Nopea, edullinen ja luotettava. Soita ja sovitaan.',
     bgClass: 'hover:bg-primary/5',
+    href: '/kuljetuspalvelu',
   },
 ];
 

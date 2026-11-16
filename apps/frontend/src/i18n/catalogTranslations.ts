@@ -148,9 +148,6 @@ export const FURNITURE_LABELS_EN: Record<string, string> = {
   metal_shelf: 'Metal shelf',
 
   // Raskaat tavarat / Heavy items
-  safe_large: 'Safe (large)',
-  piano_large: 'Piano',
-  grand_piano: 'Grand piano',
 };
 
 export const WASTE_TYPE_LABELS_EN: Record<string, { label: string; description: string }> = {

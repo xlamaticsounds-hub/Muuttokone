@@ -223,8 +223,8 @@ export const calculatorDictionary: Record<string, string> = {
     'We deliver the boxes about a week before the move and collect them empty after the move. The rental is counted from delivery to pickup – exact dates are agreed with you.',
   'Toimitus ja nouto kotiovelle': 'Delivery and pickup at your door',
   'Laatikot yhteensä': 'Boxes total',
-  'Hinnat sisältävät ALV:n. Toimitus pääkaupunkiseudulle. Lisätään hinta-arvioon.':
-    'Prices include VAT. Delivery within the Helsinki metropolitan area. Added to your price estimate.',
+  'Hinnat sisältävät ALV:n. Toimitus pääkaupunkiseudulle ja Tampereen seudulle. Lisätään hinta-arvioon.':
+    'Prices include VAT. Delivery within the Helsinki and Tampere regions. Added to your price estimate.',
   'Laatikkovuokra (ei alennusta)': 'Box rental (no discount)',
   'Laatikkovuokra': 'Box rental',
   'Laatikoiden toimitus ja nouto': 'Box delivery and pickup',

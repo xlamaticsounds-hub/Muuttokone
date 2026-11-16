@@ -1,7 +1,8 @@
 import { siteConfig } from '@/config/site';
 
 interface StructuredDataProps {
-  type: 'LocalBusiness' | 'Organization' | 'Service' | 'MovingCompany' | 'BlogPosting' | 'FAQPage' | 'Product' | 'BreadcrumbList';
+  // Custom: valmiiksi rakennettu schema.org-olio (esim. kaupunkisivun Service), tulostetaan sellaisenaan.
+  type: 'LocalBusiness' | 'Organization' | 'Service' | 'MovingCompany' | 'BlogPosting' | 'FAQPage' | 'Product' | 'BreadcrumbList' | 'Custom';
   data?: any;
 }
 
@@ -18,7 +19,7 @@ export default async function StructuredData({ type, data }: StructuredDataProps
       logo: `${siteUrl}/images/logo/logo.png`,
       image: `${siteUrl}/images/webp/hero/hero.webp`,
       description:
-        'Luotettava muuttopalvelu Helsingissä ja Uudellamaalla. Koti- ja yritysmuutot, pakkaus, kuljetukset, kuolinpesätyhjennnykset ja siivous.',
+        'Muuttopalvelu pääkaupunkiseudulla ja Tampereella: koti- ja yritysmuutot, kantoapu, pakkaus, kuljetukset, kuolinpesätyhjennykset ja muuttolaatikoiden vuokraus.',
       telephone: siteConfig.contact.phone.tel,
       email: siteConfig.contact.email,
       address: {
@@ -26,27 +27,30 @@ export default async function StructuredData({ type, data }: StructuredDataProps
         addressLocality: 'Helsinki',
         addressCountry: 'FI',
       },
+      // Toimipaikat: Helsinki (pääkaupunkiseutu) ja Tampere (tukikohta Hervannassa, 2026-11).
+      department: [
+        {
+          '@type': 'MovingCompany',
+          name: 'Muuttokone.fi Helsinki',
+          url: `${siteUrl}/muuttopalvelu-helsinki`,
+          telephone: siteConfig.contact.phone.tel,
+          address: { '@type': 'PostalAddress', addressLocality: 'Helsinki', addressRegion: 'Uusimaa', addressCountry: 'FI' },
+          areaServed: ['Helsinki', 'Espoo', 'Vantaa', 'Kauniainen'].map((name) => ({ '@type': 'City', name })),
+        },
+        {
+          '@type': 'MovingCompany',
+          name: 'Muuttokone.fi Tampere',
+          url: `${siteUrl}/muuttopalvelu-tampere`,
+          telephone: siteConfig.contact.phone.tel,
+          address: { '@type': 'PostalAddress', addressLocality: 'Tampere', addressRegion: 'Pirkanmaa', addressCountry: 'FI' },
+          areaServed: ['Tampere', 'Pirkkala', 'Kangasala', 'Lempäälä', 'Nokia', 'Ylöjärvi'].map((name) => ({ '@type': 'City', name })),
+        },
+      ],
       areaServed: [
-        {
-          '@type': 'Country',
-          name: 'Finland',
-        },
-        {
-          '@type': 'City',
-          name: 'Helsinki',
-        },
-        {
-          '@type': 'AdministrativeArea',
-          name: 'Uusimaa',
-        },
-        {
-          '@type': 'City',
-          name: 'Tampere',
-        },
-        {
-          '@type': 'City',
-          name: 'Turku',
-        },
+        { '@type': 'AdministrativeArea', name: 'Uusimaa' },
+        { '@type': 'AdministrativeArea', name: 'Pirkanmaa' },
+        ...['Helsinki', 'Espoo', 'Vantaa', 'Tampere', 'Turku'].map((name) => ({ '@type': 'City', name })),
+        { '@type': 'Country', name: 'Finland' },
       ],
       serviceType: [
         'Residential Moving',
@@ -80,7 +84,7 @@ export default async function StructuredData({ type, data }: StructuredDataProps
       case 'MovingCompany':
         return {
           ...baseOrganization,
-          '@type': 'LocalBusiness',
+          '@type': 'MovingCompany',
           priceRange: '€€',
           paymentAccepted: ['Cash', 'Credit Card', 'Bank Transfer'],
         };
@@ -165,6 +169,7 @@ export default async function StructuredData({ type, data }: StructuredDataProps
       // Valmiiksi rakennettu schema.org-data (ks. features/vuokraus/productSchema.ts)
       case 'Product':
       case 'BreadcrumbList':
+      case 'Custom':
         return data;
 
       default:

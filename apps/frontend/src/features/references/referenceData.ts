@@ -48,7 +48,7 @@ export const cases: ReferenceCase[] = [
     badge: 'Työapu',
   },
   {
-    title: 'Kuolinpesätyhjennnys Helsingissä',
+    title: 'Kuolinpesätyhjennys Helsingissä',
     body: 'Kokonainen asunto tyhjennetty hienotunteisesti. Tavarat lajiteltu – kierrätys, lahjoitus ja kaatopaikka-ajo hoidettu saman päivän aikana.',
     badge: 'Kuolinpesä',
   },

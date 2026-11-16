@@ -13,7 +13,7 @@ export default function Footer() {
   const t = useT(footerDictionary);
   return (
     <>
-      <footer>
+      <footer className="print:hidden">
         <div className="mx-auto max-w-1390 px-4 md:px-8 2xl:px-0">
           <div className="py-12 lg:py-16">
             <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
@@ -37,7 +37,7 @@ export default function Footer() {
                 </Link>
 
                 <p className="mt-5 mb-8 text-base">
-                  {t('Luotettava muuttopalveluyritys Helsingissä ja Uudellamaalla. Tarjoamme ammattitaitoisia koti- ja yritysmuuttoja, pakkausta, kuljetuksia ja kuolinpesätyhjennyksiä.')}
+                  {t('Luotettava muuttopalveluyritys pääkaupunkiseudulla ja Tampereella. Tarjoamme ammattitaitoisia koti- ja yritysmuuttoja, pakkausta, kuljetuksia ja kuolinpesätyhjennyksiä.')}
                 </p>
               </div>
 

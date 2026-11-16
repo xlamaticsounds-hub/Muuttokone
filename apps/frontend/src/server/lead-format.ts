@@ -6,6 +6,7 @@ import {
   calculateMovingPrice,
   describeApplianceLine,
   type PriceBreakdown,
+  REMOVED_FURNITURE_LABELS,
 } from '@/features/calculator/pricing';
 import { isCompletedStatus } from '@/lib/lead-status';
 import { BOX_RENTAL, calculateBoxRental, describeBoxRental } from '@/features/calculator/boxRental';
@@ -42,7 +43,7 @@ export function getInventoryEntries(data: unknown): InventoryEntry[] {
       const n = Number(qty);
       if (!n || n <= 0) continue;
       const item = FURNITURE_CATALOG.find((f) => f.id === id);
-      entries.push(item ? { icon: item.icon, label: item.label, qty: n } : { icon: '📦', label: id, qty: n });
+      entries.push(item ? { icon: item.icon, label: item.label, qty: n } : { icon: '📦', label: REMOVED_FURNITURE_LABELS[id] ?? id, qty: n });
     }
   }
 

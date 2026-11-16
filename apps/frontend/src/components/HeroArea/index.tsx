@@ -1,13 +1,14 @@
 import Graphics from '@/components/HeroArea/Graphics';
 import HeroContent from '@/components/HeroArea/HeroContent';
+import type { GoogleRating } from '@/lib/google-rating';
 
-export default function HeroArea({ content }: { content?: any }) {
+export default function HeroArea({ content, rating }: { content?: any; rating?: GoogleRating }) {
   return (
     <section id="home" className="relative overflow-visible py-10 md:overflow-hidden md:py-25">
       <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
         <div className="grid items-center gap-8 md:grid-cols-12 md:gap-12 lg:gap-16">
           <div className="md:col-span-7">
-            <HeroContent content={content} />
+            <HeroContent content={content} rating={rating} />
           </div>
           <div className="md:col-span-5">
             <Graphics />

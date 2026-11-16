@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Save, Loader2, RefreshCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
+import ReviewSettingsCard from './ReviewSettingsCard';
 
 interface PageData {
   slug: string;
@@ -70,6 +71,7 @@ export default function AsetuksetPage() {
 
   return (
     <div className="max-w-4xl space-y-8">
+      <ReviewSettingsCard />
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Sivuston hallinta</h1>

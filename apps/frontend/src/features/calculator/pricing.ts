@@ -155,19 +155,24 @@ export const FURNITURE_CATALOG = [
   { id: 'metal_shelf', label: 'Metallinen hylly', icon: '⛓️', category: 'Ulkokalusteet ja varasto', minutesEach: 5 },
 
   // Raskaat tavarat
-  { id: 'safe_large', label: 'Kassakaappi iso', icon: '🏋️', category: 'Raskaat tavarat', minutesEach: 45 },
-  { id: 'piano_large', label: 'Piano', icon: '🎹', category: 'Raskaat tavarat', minutesEach: 90 },
-  { id: 'grand_piano', label: 'Flyygeli', icon: '🎼', category: 'Raskaat tavarat', minutesEach: 120 },
 ] as const;
 
 export type FurnitureId = typeof FURNITURE_CATALOG[number]['id'];
 
+/**
+ * Laskurista poistetut tavarat (omistajan päätös 16.11.2026: pianoja ja kassakaappeja ei muuteta).
+ * Nimet säilytetään vain vanhojen liidien näyttämistä varten (lead-format.ts), jotta hallinnassa ei
+ * näy pelkkää tunnistetta. Laskuri ja hinnoittelu eivät tunne näitä enää.
+ */
+export const REMOVED_FURNITURE_LABELS: Record<string, string> = {
+  piano_large: 'Piano',
+  grand_piano: 'Flyygeli',
+  safe_large: 'Kassakaappi iso',
+};
+
 // Tavarat joiden kanto-osuuteen sovelletaan korotettua kerroskerrointa
 // (porraskäynti ilman hissiä rasittaa raskaiden tavaroiden kantoa enemmän kuin kevyiden).
 export const HEAVY_ITEM_IDS = new Set<FurnitureId>([
-  'piano_large',
-  'grand_piano',
-  'safe_large',
   'treadmill',
   'fitness_equipment',
   'fridge_us',

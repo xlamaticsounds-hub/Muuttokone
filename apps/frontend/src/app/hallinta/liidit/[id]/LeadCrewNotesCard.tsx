@@ -43,7 +43,7 @@ export default function LeadCrewNotesCard({ leadId, initial }: { leadId: string;
         rows={3}
         maxLength={2000}
         className={textareaClass}
-        placeholder="Esim. Ovikoodi 1234, pysäköinti pihaan, piano 3. kerroksessa."
+        placeholder="Esim. Ovikoodi 1234, pysäköinti pihaan, pesutorni 3. kerroksessa."
       />
       <div className="mt-2 flex items-center gap-3">
         <button type="button" onClick={save} disabled={saving || !dirty} className={primaryButton}>

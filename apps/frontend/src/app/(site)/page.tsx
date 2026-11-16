@@ -10,6 +10,7 @@ import Faq from '@/components/Faq';
 import { homeFaqData } from '@/components/Faq/faqData';
 import { generateSEOMetadata, SEOConfigs } from '@/components/SEO/SEOHelpers';
 import { getPageContent } from '@/server/repo/pages';
+import { getGoogleRating } from '@/server/review-requests';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,13 +25,13 @@ export const metadata: Metadata = generateSEOMetadata({
 });
 
 export default async function Home() {
-  const pageData = await getPageContent('home');
+  const [pageData, rating] = await Promise.all([getPageContent('home'), getGoogleRating()]);
 
   // Etusivu ohjaa yhteen tehtävään: hero → laskuri heti perään → hinnat → palvelut lyhyesti → UKK.
   // Pidemmät sisällöt (palvelukuvaukset, laatikkovuokra, yhteydenottolomake) ovat omilla sivuillaan.
   return (
     <>
-      <HeroArea content={pageData?.sections?.[0]?.props} />
+      <HeroArea content={pageData?.sections?.[0]?.props} rating={rating} />
       <section id="muuttolaskuri" className="bg-gray-1 dark:bg-bg-color-dark py-8 lg:py-12 scroll-mt-20">
         <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
           <CalculatorIntro />

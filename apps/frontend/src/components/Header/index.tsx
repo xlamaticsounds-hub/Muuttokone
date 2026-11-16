@@ -45,7 +45,7 @@ const Header = () => {
   return (
     <>
       <header
-        className={`navbar fixed top-0 left-0 z-999 w-full bg-white/95 shadow-sm backdrop-blur supports-[backdrop-filter]:backdrop-blur md:backdrop-blur-sm dark:bg-black/90`}
+        className={`navbar print:hidden fixed top-0 left-0 z-999 w-full bg-white/95 shadow-sm backdrop-blur supports-[backdrop-filter]:backdrop-blur md:backdrop-blur-sm dark:bg-black/90`}
       >
         <div className="relative mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
           <div className="flex items-center justify-between">

@@ -8,6 +8,7 @@ import Cta from '@/components/Cta';
 import Image from 'next/image';
 import RentalOrderForm from '@/features/vuokraus/RentalOrderForm';
 import RentalHeroImage from '@/features/vuokraus/RentalHeroImage';
+import BoxCountGuide from '@/features/vuokraus/BoxCountGuide';
 import { vuokrausFaqData, vuokrausProcessSteps } from '@/features/vuokraus/vuokrausData';
 import { RENTAL_DELIVERY, formatPricePerDay, getAvailableRentalItems } from '@/features/vuokraus/rental';
 import { BOX_CITIES } from '@/features/vuokraus/boxCityData';
@@ -70,10 +71,10 @@ export default function MuuttolaatikotPage() {
           <div className="max-w-2xl">
             <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/80">Muuttolaatikot</p>
             <h1 className="mb-5 text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
-              Muuttolaatikot vuokralle Helsingissä, Espoossa ja Vantaalla
+              Muuttolaatikot vuokralle pääkaupunkiseudulla ja Tampereella
             </h1>
             <p className="mb-8 text-lg text-white/90">
-              Kestävät, pinottavat muuttolaatikot ilman pahvijätettä – toimitamme kotiovelle koko pääkaupunkiseudulle. Toimitus
+              Kestävät, pinottavat muuttolaatikot ilman pahvijätettä – toimitamme kotiovelle pääkaupunkiseudulle ja Tampereen seudulle. Toimitus
               ja nouto ilmaiseksi muuton yhteydessä tai kun vuokra on vähintään {freeFrom}.
             </p>
             <div className="flex flex-wrap gap-3">
@@ -181,12 +182,12 @@ export default function MuuttolaatikotPage() {
         <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
           <div className="mb-8 text-center">
             <p className="text-primary mb-2 text-sm font-semibold uppercase tracking-wide">Toimitusalue</p>
-            <h2 className="text-3xl font-bold text-black/90 dark:text-white sm:text-4xl">Toimitamme koko pääkaupunkiseudulle</h2>
+            <h2 className="text-3xl font-bold text-black/90 dark:text-white sm:text-4xl">Toimitamme pääkaupunkiseudulle ja Tampereelle</h2>
             <p className="mx-auto mt-2 max-w-2xl text-black/70 dark:text-white/70">
-              Helsinki, Espoo, Vantaa ja Kauniainen. Valitse oma kaupunkisi nähdäksesi alueet ja paikalliset tiedot.
+              Helsinki, Espoo, Vantaa, Kauniainen sekä Tampere lähikuntineen. Valitse oma kaupunkisi nähdäksesi alueet ja paikalliset tiedot.
             </p>
           </div>
-          <div className="mx-auto grid max-w-4xl gap-4 sm:grid-cols-3">
+          <div className="mx-auto grid max-w-4xl gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {BOX_CITIES.map((city) => (
               <Link
                 key={city.slug}
@@ -200,6 +201,8 @@ export default function MuuttolaatikotPage() {
           </div>
         </div>
       </section>
+
+      <BoxCountGuide />
 
       {/* Tilauslomake */}
       <section id="tilaa" className="scroll-mt-20 bg-gray-1 py-16 lg:py-24 dark:bg-bg-color-dark">
@@ -238,7 +241,7 @@ export default function MuuttolaatikotPage() {
                 </li>
               ))}
               <li>
-                Toimitus kotiovelle ja nouto pääkaupunkiseudulla ovat ilmaiset muuton yhteydessä tai kun vuokran arvo on vähintään {freeFrom}.
+                Toimitus kotiovelle ja nouto toimitusalueella ovat ilmaiset muuton yhteydessä tai kun vuokran arvo on vähintään {freeFrom}.
                 Muuten toimituksesta ja noudosta veloitetaan yhteensä {deliveryFee}.
               </li>
               <li>Tuotteet palautetaan tyhjinä sovittuna noutopäivänä. Vuokra jatkuu, kunnes tuotteet on noudettu.</li>

@@ -1,9 +1,9 @@
-// Muuttolaatikot-kaupunkisivut (/muuttolaatikot/helsinki, /espoo, /vantaa). Jokaisella sivulla on
+// Muuttolaatikot-kaupunkisivut (/muuttolaatikot/helsinki, /espoo, /vantaa, /tampere). Jokaisella sivulla on
 // omaa paikallista sisältöä (alueet, postinumerot, vinkki, UKK), jotta sivut eivät ole kopioita
 // toisistaan. Hinnat ja toimitussäännöt luetaan rental.ts:stä.
 //
 // UUDEN KAUPUNGIN LISÄÄMINEN: lisää olio BOX_CITIES-taulukkoon ja tarkista, että toimitat sinne
-// oikeasti (lomakkeen toimitusalue on pääkaupunkiseutu, ks. isDeliveryAreaPostalCode rental.ts:ssä).
+// oikeasti (lomakkeen toimitusalue: pääkaupunkiseutu ja Tampereen seutu, ks. isDeliveryAreaPostalCode rental.ts:ssä).
 // Sivu, sivukartta ja linkitykset poimivat sen automaattisesti.
 import { BOX_ITEM_ID, RENTAL_DELIVERY, calculateRentalOrder, formatEuro, formatPricePerDay, getRentalItem } from './rental';
 
@@ -61,6 +61,20 @@ export const BOX_CITIES: BoxCity[] = [
       text: 'Vantaalla on sekä kerrostalo- että pientaloalueita, ja laatikoiden tarve vaihtelee: kerrostalokaksioon riittää usein noin 50 laatikkoa, rivitaloon noin 90. Lomakkeen pikavalinnat auttavat arvioimaan määrän.',
     },
   },
+  {
+    slug: 'tampere',
+    name: 'Tampere',
+    inessive: 'Tampereella',
+    illative: 'Tampereelle',
+    postalCodes: '33-, 36- ja 37-alkaiset postinumerot (Tampere, Pirkkala, Ylöjärvi, Kangasala, Nokia, Lempäälä ja Valkeakoski)',
+    districts: ['Keskusta', 'Hervanta', 'Kaleva', 'Tammela', 'Amuri', 'Pispala', 'Lielahti', 'Vuores', 'Pirkkala', 'Kangasala', 'Nokia', 'Ylöjärvi'],
+    intro:
+      'Tampereen tiimimme toimittaa muuttolaatikot kotiovelle Tampereelle ja lähikuntiin – Hervannasta Lielahteen ja Pirkkalasta Kangasalle. Valitset määrän ja vuokra-ajan, me tuomme laatikot ja haemme ne tyhjinä muuton jälkeen.',
+    localTip: {
+      title: 'Opiskelijamuuttoihin ja pieniin koteihin',
+      text: 'Hervannan ja Kalevan opiskelijayksiöihin riittää yleensä 20–30 laatikkoa. Vuokralaatikot ovat edullisempia kuin ostettavat pahvilaatikot, eikä muuton jälkeen jää pahvijätettä.',
+    },
+  },
 ];
 
 export function getBoxCity(slug: string): BoxCity | undefined {
@@ -96,7 +110,7 @@ export function getBoxCityFaq(city: BoxCity): { q: string; a: string }[] {
     },
     {
       q: `Paljonko muuttolaatikoiden vuokra maksaa ${city.inessive}?`,
-      a: `Hinta on sama koko pääkaupunkiseudulla: ${formatPricePerDay(box.pricePerDay)} / laatikko / vuorokausi (sis. ALV).${example ? ` Esimerkiksi 50 laatikkoa 14 vuorokaudeksi maksaa ${formatEuro(example.rentalCost)}.` : ''} Voit vuokrata ${box.qty.min}–${box.qty.max} laatikkoa ${box.days.min}–${box.days.max} vuorokaudeksi.`,
+      a: `Hinta on sama kaikilla toimitusalueillamme: ${formatPricePerDay(box.pricePerDay)} / laatikko / vuorokausi (sis. ALV).${example ? ` Esimerkiksi 50 laatikkoa 14 vuorokaudeksi maksaa ${formatEuro(example.rentalCost)}.` : ''} Voit vuokrata ${box.qty.min}–${box.qty.max} laatikkoa ${box.days.min}–${box.days.max} vuorokaudeksi.`,
     },
     {
       q: `Kuinka monta laatikkoa tarvitsen ${city.inessive} asuntoon?`,

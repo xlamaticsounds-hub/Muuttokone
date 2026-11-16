@@ -1,102 +1,121 @@
-import Link from 'next/link';
 import Image from 'next/image';
+import Link from 'next/link';
 import { MapPin } from 'lucide-react';
 import Faq from '@/components/Faq';
 import Cta from '@/components/Cta';
-import type { CityData } from './cityData';
+import StructuredData from '@/components/SEO/StructuredData';
+import { buildBreadcrumbSchema } from '@/features/vuokraus/productSchema';
+import {
+  CalculatorSection,
+  CityLinks,
+  ContactBanner,
+  InfoCards,
+  LandingHero,
+  MASCOT,
+  MovingSteps,
+  PackagesSection,
+  ServiceCards,
+  TrustBar,
+  card,
+  container,
+  type ServiceCard,
+} from '@/features/landing/LandingSections';
+import { CITY_PAGES, getCityPage, type CitySlug } from './cityData';
+import { buildCityServiceSchema } from './citySchema';
 
-const trustPoints = [
-  { icon: '/icons/palvelut/kuljetukset.png', title: 'Vakuutettu kuljetus', desc: 'Kaikki kuljetukset vakuutettu tiekuljetuslain mukaisesti.' },
-  { icon: '/icons/tyoapu/hinta.png', title: 'Kiinteä hinta', desc: 'Näet hinnan etukäteen muuttolaskurilla — ei piilokuluja.' },
-  { icon: '/icons/tyoapu/ajankohta.png', title: 'Joustava aikataulu', desc: 'Sovimme ajankohdan, joka sopii sinulle parhaiten.' },
-];
+// Kaupunkisivu (/muuttopalvelu-<kaupunki>): paikallinen sisältö cityData.ts:stä, osiot LandingSections.tsx:stä.
+export default function CityPageContent({ slug }: { slug: CitySlug }) {
+  const city = getCityPage(slug);
+  const cityByName = new Map(CITY_PAGES.map((c) => [c.name, c]));
 
-export default function CityPageContent({ city }: { city: CityData }) {
+  const services: ServiceCard[] = [
+    { icon: '/icons/palvelut/pakkauspalvelu.png', title: 'Kaikki muuttopalvelut', text: 'Pakkaus, muuttosiivous, kuolinpesät ja kuljetukset.', href: '/palvelut' },
+    { icon: '/icons/tyoapu/kantoapu.png', title: 'Muuttoapu ja kantoapu', text: 'Muuttomiehet ja lisäkädet juuri tarpeeseen.', href: '/muuttoapu' },
+    { icon: '/icons/palvelut/yritysmuutto.png', title: 'Yritysmuutot', text: 'Toimistot ja liiketilat, myös iltaisin ja viikonloppuisin.', href: '/yrityksille' },
+    city.boxPath
+      ? { icon: '/icons/palvelut/muuttolaatikot.png', title: `Muuttolaatikot ${city.inessive}`, text: 'Vuokralaatikot kotiovelle ja nouto tyhjinä.', href: city.boxPath }
+      : { icon: '/icons/tyoapu/kerro-tarpeesi.png', title: 'Muuttoblogi', text: 'Muistilistat ja vinkit muuton suunnitteluun.', href: '/blogi' },
+  ];
+
   return (
     <>
-      <section className="py-16 lg:py-24">
-        <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
-          <div className="max-w-2xl">
-            <p className="text-primary mb-2 flex items-center gap-2 text-sm font-semibold uppercase tracking-wide">
-              <MapPin className="h-4 w-4" /> {city.name}
-            </p>
-            <h1 className="mb-5 text-3xl font-bold text-black/90 dark:text-white sm:text-4xl lg:text-5xl">
-              {city.title}
-            </h1>
-            <p className="mb-8 text-lg text-black/70 dark:text-white/70">{city.intro}</p>
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="/muuttolaskuri"
-                className="hover:shadow-1 inline-flex rounded-full bg-primary px-7.5 py-3 font-medium text-white duration-300 ease-out"
-              >
-                Laske hinta {city.illative}
-              </Link>
-              <Link
-                href="/yhteystiedot"
-                className="inline-flex rounded-full border border-gray-300 px-7.5 py-3 font-medium text-black/80 duration-300 ease-out hover:border-primary dark:border-gray-700 dark:text-white"
-              >
-                Ota yhteyttä
-              </Link>
+      <StructuredData type="Custom" data={buildCityServiceSchema(city)} />
+      <StructuredData type="FAQPage" data={{ faqs: city.faq }} />
+      <StructuredData
+        type="BreadcrumbList"
+        data={buildBreadcrumbSchema([
+          { name: 'Etusivu', path: '/' },
+          { name: 'Muuttopalvelut', path: '/palvelut' },
+          { name: city.name, path: city.path },
+        ])}
+      />
+
+      <LandingHero
+        crumbs={[{ name: 'Etusivu', href: '/' }, { name: 'Muuttopalvelut', href: '/palvelut' }, { name: city.name }]}
+        eyebrow={city.baseNote}
+        title={city.h1}
+        lead={city.lead}
+        firstImage={city.heroImage}
+      />
+      <TrustBar />
+      <CalculatorSection
+        title={city.localByQuote ? `Laske muuton hinta ${city.illative} tai ${city.elative}` : `Laske muuton hinta ${city.inessive}`}
+        text={
+          city.localByQuote
+            ? `Kaukomuuton hinnan näet heti. Kaupungin sisäisissä muutoissa ${city.inessive} lähetämme tarjouksen sähköpostiisi.`
+            : 'Syötä osoitteet ja tavarat, niin näet kiinteän hinnan heti. Laskeminen ei sido sinua mihinkään.'
+        }
+      />
+      <PackagesSection />
+      <InfoCards eyebrow={city.name} title={`Muutto ${city.inessive} – hyvä tietää`} sections={city.sections} />
+      <MovingSteps />
+
+      {/* Palvelualue (kaupunkikohtainen) */}
+      <section className="py-14 lg:py-20">
+        <div className={container}>
+          <div className={`${card} grid items-center gap-8 overflow-hidden p-7 md:p-10 lg:grid-cols-[1fr_auto]`}>
+            <div>
+              <p className="text-primary mb-2 text-sm font-semibold uppercase tracking-wide">Palvelualue</p>
+              <h2 className="mb-6 text-3xl font-bold text-black/90 sm:text-4xl dark:text-white">Muutot {city.inessive} ja lähialueilla</h2>
+              <ul className="flex flex-wrap gap-2">
+                {city.districts.map((district) => (
+                  <li key={district} className="bg-primary/10 text-primary inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium">
+                    <MapPin className="h-3.5 w-3.5" aria-hidden="true" /> {district}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-6 text-black/70 dark:text-white/70">
+                {city.nearby.text}{' '}
+                {city.nearby.places.map((place, index) => {
+                  const page = cityByName.get(place);
+                  return (
+                    <span key={place}>
+                      {page ? (
+                        <Link href={page.path} className="text-primary font-semibold hover:underline">{place}</Link>
+                      ) : (
+                        place
+                      )}
+                      {index < city.nearby.places.length - 1 ? ', ' : '.'}
+                    </span>
+                  );
+                })}
+              </p>
             </div>
+            {/* Kuvassa on vaalea tausta: multiply sulauttaa sen valkoiseen korttiin */}
+            <Image src={MASCOT.keys} alt="" width={320} height={320} className="mx-auto hidden h-56 w-56 object-contain mix-blend-multiply lg:block dark:mix-blend-normal" />
           </div>
         </div>
       </section>
 
-      <section className="py-8 lg:py-12">
-        <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
-          <div className="relative rounded-2xl border border-black/5 bg-white/80 p-6 shadow-sm ring-1 ring-black/5 backdrop-blur md:p-8 dark:border-white/10 dark:bg-white/5 dark:ring-white/5">
-            <div className="grid gap-7.5 sm:grid-cols-3">
-              {trustPoints.map((point) => (
-                <div key={point.title} className="flex items-start gap-4">
-                  <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                    <Image src={point.icon} alt="" width={96} height={96} className="h-12 w-12 object-contain" />
-                  </div>
-                  <div>
-                    <h3 className="mb-1 font-semibold text-black/90 dark:text-white">{point.title}</h3>
-                    <p className="text-sm text-black/70 dark:text-white/70">{point.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 lg:py-24">
-        <div className="mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
-          <div className="mb-10 max-w-2xl">
-            <p className="text-primary mb-2 text-sm font-semibold uppercase tracking-wide">Palvelualue</p>
-            <h2 className="text-3xl font-bold text-black/90 dark:text-white sm:text-4xl">
-              Muutot {city.inessive} ja lähialueilla
-            </h2>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {city.districts.map((district) => (
-              <span
-                key={district}
-                className="rounded-full border border-black/5 bg-white/80 px-4 py-2 text-sm font-medium text-black/80 shadow-sm ring-1 ring-black/5 backdrop-blur dark:border-white/10 dark:bg-slate-900/70 dark:text-white/80 dark:ring-white/5"
-              >
-                {district}
-              </span>
-            ))}
-          </div>
-          <p className="mt-6 text-sm text-black/60 dark:text-white/60">
-            Muuttopalvelumme kattavat kotimuutot, yritysmuutot, pakkauspalvelun ja kuljetukset — katso{' '}
-            <Link href="/palvelut" className="font-semibold text-primary hover:underline">
-              kaikki muuttopalvelut
-            </Link>
-            .
-          </p>
-        </div>
-      </section>
-
-      <Faq />
-
+      <ServiceCards title={`Palvelut ${city.inessive}`} services={services} />
+      <ContactBanner title={`Kysyttävää muutosta ${city.inessive}?`} />
+      <Faq title={`Usein kysyttyä: muutto ${city.inessive}`} subtitle={`Vastauksia yleisimpiin kysymyksiin muutosta ${city.inessive}.`} items={city.faq} />
+      <CityLinks exclude={city.slug} />
       <Cta
-        title={`Suunnitteletko muuttoa ${city.illative.toLowerCase()}?`}
-        description="Saat meiltä maksuttoman kartoituksen ja tarjouksen 24 tunnin sisällä."
-        href="/muuttolaskuri"
-        label="Pyydä tarjous"
+        title={`Suunnitteletko muuttoa ${city.illative}?`}
+        description="Laske hinta heti tai pyydä tarjous – vastaamme yleensä vuorokauden sisällä."
+        href="#laskuri"
+        label="Laske hinta"
       />
     </>
   );

@@ -142,7 +142,7 @@ export default async function MuuttolaatikotKaupunkiPage({ params }: CityParams)
       <section className="py-8 lg:py-12">
         <div className="mx-auto max-w-3xl px-4 text-center md:px-8">
           <p className="text-black/70 dark:text-white/70">
-            Toimitamme muuttolaatikot koko pääkaupunkiseudulle:{' '}
+            Toimitamme muuttolaatikot myös muille alueille:{' '}
             {otherCities.map((other, index) => (
               <span key={other.slug}>
                 {index > 0 ? ', ' : ''}

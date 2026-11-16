@@ -71,6 +71,8 @@
 
   /* Optimized animations with transform and will-change */
   --animate-rotating: rotating 30s linear infinite;
+  /* Kaupunkisivun maskotti nousee herokortin takaa ja vilkuttaa */
+  --animate-mascot-peek: mascot-peek 0.9s var(--ease-spring) 0.3s both;
 
   @keyframes rotating {
     from {
@@ -78,6 +80,17 @@
     }
     to {
       transform: rotate(360deg);
+    }
+  }
+
+  @keyframes mascot-peek {
+    from {
+      transform: translateY(55%) rotate(6deg);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0) rotate(0deg);
+      opacity: 1;
     }
   }
 }

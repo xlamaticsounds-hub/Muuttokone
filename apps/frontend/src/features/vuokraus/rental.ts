@@ -44,16 +44,17 @@ export interface RentalItem {
   inStock: boolean;
 }
 
-// Toimitus ja nouto kotiovelle (pääkaupunkiseutu). Koskee koko tilausta, ei yksittäistä tuotetta.
+// Toimitus ja nouto kotiovelle (pääkaupunkiseutu ja Tampereen seutu). Koskee koko tilausta, ei yksittäistä tuotetta.
 export const RENTAL_DELIVERY = {
   feeBothWays: 39, // € — toimitus + nouto yhteensä
   freeFromRental: 100, // € — ilmainen, kun tilauksen vuokra on vähintään tämän verran
   freeWithMove: true, // ilmainen aina, kun vuokrataan muuton yhteydessä
 } as const;
 
-// Toimitusalue: pääkaupunkiseutu (Helsinki 00xxx, Vantaa 01xxx, Espoo ja Kauniainen 02xxx).
-// Muualle toimituksesta sovitaan erikseen — lomake varoittaa mutta ei estä lähettämistä.
-const DELIVERY_AREA_POSTAL_PREFIXES = ['00', '01', '02'];
+// Toimitusalue: pääkaupunkiseutu (Helsinki 00xxx, Vantaa 01xxx, Espoo ja Kauniainen 02xxx) ja Tampereen
+// seutu (Tampere, Pirkkala ja Ylöjärvi 33xxx, Kangasala 36xxx, Nokia, Lempäälä ja Valkeakoski 37xxx), jonne
+// Tampereen tiimi toimittaa (2026-11). Muualle toimituksesta sovitaan erikseen — lomake varoittaa mutta ei estä.
+const DELIVERY_AREA_POSTAL_PREFIXES = ['00', '01', '02', '33', '36', '37'];
 
 export function isDeliveryAreaPostalCode(postalCode: string): boolean {
   const code = postalCode.trim();

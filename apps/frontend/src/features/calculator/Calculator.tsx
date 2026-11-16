@@ -19,6 +19,7 @@ import { useLocale } from '@/i18n/LocaleContext';
 import { useT } from '@/i18n/useT';
 import { calculatorDictionary } from '@/i18n/calculatorDictionary';
 import { FURNITURE_LABELS_EN, CATEGORY_LABELS_EN, WASTE_TYPE_LABELS_EN } from '@/i18n/catalogTranslations';
+import { TYPICAL_ITEMS } from './typicalItems';
 
 const DIFFICULTY_BADGES: Record<PriceBreakdown['difficultyLevel'], { emoji: string; label: string }> = {
   easy: { emoji: '🟢', label: 'Helppo muutto' },
@@ -51,7 +52,17 @@ const STEPS = [
 // Arvo on aina "HH:MM", jota kalenteri ja liidin muistiinpanot käyttävät sellaisenaan.
 const PREFERRED_TIME_OPTIONS = Array.from({ length: 20 - 7 + 1 }, (_, i) => `${String(7 + i).padStart(2, '0')}:00`);
 
-export default function Calculator() {
+/**
+ * Muuttolaskuri. Palvelusivut voivat avata laskurin valmiiksi oikeasta palvelusta (esim. /kuljetuspalvelu
+ * -> Kuljetus) tai muuttosiivous valittuna (/muuttosiivous). Oletuksena Muutto, kuten ennenkin.
+ */
+export default function Calculator({
+  initialService = 'moving',
+  initialCleaning = false,
+}: {
+  initialService?: CalculatorData['serviceType'];
+  initialCleaning?: boolean;
+} = {}) {
   const { locale } = useLocale();
   const t = useT(calculatorDictionary);
   const furnitureLabel = (id: string, fallback: string) => (locale === 'en' ? FURNITURE_LABELS_EN[id] ?? fallback : fallback);
@@ -60,7 +71,7 @@ export default function Calculator() {
   const calculatorRef = useRef<HTMLDivElement>(null);
   const isFirstStepRender = useRef(true);
   const [formData, setFormData] = useState<CalculatorData>({
-    serviceType: 'moving',
+    serviceType: initialService,
     movingPackage: 'full_service',
     addressFrom: '',
     addressTo: '',
@@ -80,7 +91,7 @@ export default function Calculator() {
     customItems: [],
     photos: [],
     needsPacking: false,
-    needsCleaning: false,
+    needsCleaning: initialCleaning,
     services: [],
     selectedWasteTypes: [],
     needsBoxRental: false,
@@ -1172,18 +1183,9 @@ export default function Calculator() {
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {([
                         { label: t('Tyhjä / muutama asia'), items: {} },
-                        {
-                          label: t('Tyypillinen 1h'),
-                          items: { sofa_2: 1, bed_140: 1, wardrobe_assembled: 1, coffee_table: 1, bookshelf: 1, nightstand: 1, dresser_small: 1, box_standard: 10 },
-                        },
-                        {
-                          label: t('Tyypillinen 2h'),
-                          items: { sofa_3: 1, bed_140: 1, bed_80: 1, wardrobe_assembled: 2, coffee_table: 1, bookshelf: 2, nightstand: 2, dresser_small: 1, dining_table_small: 1, kitchen_chair: 4, box_standard: 20 },
-                        },
-                        {
-                          label: t('Tyypillinen 3h'),
-                          items: { sofa_3: 1, sofa_2: 1, bed_140: 1, bed_80: 2, wardrobe_assembled: 3, coffee_table: 1, bookshelf: 3, nightstand: 2, dresser_large: 1, dining_table_large: 1, kitchen_chair: 6, box_standard: 35 },
-                        },
+                        { label: t('Tyypillinen 1h'), items: { ...TYPICAL_ITEMS['1h'] } },
+                        { label: t('Tyypillinen 2h'), items: { ...TYPICAL_ITEMS['2h'] } },
+                        { label: t('Tyypillinen 3h'), items: { ...TYPICAL_ITEMS['3h'] } },
                       ] as { label: string; items: Record<string, number> }[]).map((preset) => (
                         <button
                           key={preset.label}
@@ -1694,7 +1696,7 @@ export default function Calculator() {
                                 <span>{t('Laatikot yhteensä')}</span>
                                 <span className="whitespace-nowrap">{formatEuro(boxRentalPreview.total)}</span>
                               </div>
-                              <p className="text-xs text-gray-400">{t('Hinnat sisältävät ALV:n. Toimitus pääkaupunkiseudulle. Lisätään hinta-arvioon.')}</p>
+                              <p className="text-xs text-gray-400">{t('Hinnat sisältävät ALV:n. Toimitus pääkaupunkiseudulle ja Tampereen seudulle. Lisätään hinta-arvioon.')}</p>
                             </div>
                           )}
                         </div>

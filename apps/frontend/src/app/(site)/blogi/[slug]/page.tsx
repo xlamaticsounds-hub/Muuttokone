@@ -98,7 +98,8 @@ export default async function Page(props: BlogParams) {
         )}
 
         <article className="prose prose-lg dark:prose-invert mx-auto">
-           {post.content ? <MDXRemote source={post.content} /> : <p>Ei sisältöä.</p>}
+           {/* Artikkelin otsikko on jo sivun H1, joten sisällön #-otsikot näytetään H2:na (yksi H1 per sivu). */}
+           {post.content ? <MDXRemote source={post.content} components={{ h1: (props) => <h2 {...props} /> }} /> : <p>Ei sisältöä.</p>}
         </article>
       </div>
     </section>

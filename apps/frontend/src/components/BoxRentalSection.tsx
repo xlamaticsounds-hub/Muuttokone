@@ -68,7 +68,7 @@ export default function BoxRentalSection() {
               </Link>
             </div>
             <p className="mt-4 text-xs text-black/50 dark:text-white/50">
-              {t('Hinnat sisältävät ALV:n. Toimitus pääkaupunkiseudulle.')}
+              {t('Hinnat sisältävät ALV:n. Toimitus pääkaupunkiseudulle ja Tampereen seudulle.')}
             </p>
             <p className="mt-2 text-sm text-black/60 dark:text-white/60">
               {t('Toimitusalue')}:{' '}
