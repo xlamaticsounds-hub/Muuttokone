@@ -20,6 +20,8 @@ export const GOOGLE_REVIEW_URL = 'https://g.page/r/Ccxilhyyg5HeEBM/review';
 export const DEFAULT_REVIEW_SETTINGS: ReviewSettings = { enabled: false, googleReviewUrl: GOOGLE_REVIEW_URL, googleReviewUrlTampere: '' };
 
 export const REVIEW_REQUEST_LOG_ACTION = 'lead.review_requested';
+/** Omistaja päätti, ettei keikalle lähetetä pyyntöä (esim. joukkomerkinnässä): automaattinen ajo ohittaa sen. */
+export const REVIEW_SKIPPED_LOG_ACTION = 'lead.review_skipped';
 /** Kuinka monta päivää taaksepäin toteutuneille lähetetään (ei vanhoille keikoille, kun ominaisuus otetaan käyttöön). */
 export const REVIEW_LOOKBACK_DAYS = 3;
 

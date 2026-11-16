@@ -8,6 +8,7 @@ import {
   DEFAULT_REVIEW_SETTINGS,
   REVIEW_REQUEST_LOG_ACTION,
   REVIEW_SETTINGS_KEY,
+  REVIEW_SKIPPED_LOG_ACTION,
   type ReviewSettings,
   renderReviewRequestHtml,
   renderReviewRequestText,
@@ -41,7 +42,11 @@ export async function sendDueReviewRequests(now = new Date()): Promise<ReviewRun
   });
   const ids = leads.map((lead) => lead.id);
   const sentLogs = ids.length
-    ? await prisma.log.findMany({ where: { action: REVIEW_REQUEST_LOG_ACTION, entityType: 'Lead', entityId: { in: ids } }, select: { entityId: true } })
+    ? await prisma.log.findMany({
+        // Lähetetyt ja ne, joille omistaja päätti olla lähettämättä
+        where: { action: { in: [REVIEW_REQUEST_LOG_ACTION, REVIEW_SKIPPED_LOG_ACTION] }, entityType: 'Lead', entityId: { in: ids } },
+        select: { entityId: true },
+      })
     : [];
   const alreadySent = new Set(sentLogs.map((log) => log.entityId));
 

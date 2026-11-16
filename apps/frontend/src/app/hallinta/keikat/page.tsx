@@ -7,6 +7,7 @@ import { INACTIVE_JOB_STATUSES } from '@/lib/lead-status';
 import { toHelsinkiDateInput } from '@/lib/helsinki-time';
 import { requirePageAccess } from '@/server/access';
 import { teamWhere } from '@/lib/access';
+import PastJobsCompletion from './PastJobsCompletion';
 
 export const dynamic = 'force-dynamic';
 
@@ -136,6 +137,7 @@ export default async function KeikatPage({
               {pastTotal > past.length && ` Näytetään ${past.length} tuoreinta (${pastTotal} yhteensä).`}
             </p>
           </div>
+          {actor.role === 'OWNER' && <PastJobsCompletion />}
           <KeikatTable jobs={past} />
         </section>
       )}
