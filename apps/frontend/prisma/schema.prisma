@@ -160,6 +160,13 @@ model Lead {
   team   Team?   @relation(fields: [teamId], references: [id], onDelete: SetNull)
   teamId String?
 
+  // Mistä kävijä tuli sivustolle ennen lomaketta (GEO-seuranta, ks. src/lib/traffic-source.ts).
+  // attribution: { referrerHost, utmSource, utmMedium, utmCampaign, landingPath }, vain domain ja polku.
+  // trafficSource: luokiteltu lähde, esim. 'chatgpt', 'perplexity', 'google', 'direct'. null = vanha liidi
+  // tai lomake ilman tietoa (esim. hallinnassa käsin lisätty).
+  attribution   Json?
+  trafficSource String?
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
@@ -171,6 +178,7 @@ model Lead {
   @@index([discountCodeId])
   @@index([completedAt])
   @@index([teamId])
+  @@index([trafficSource])
 }
 
 /// Kumppanien alennuskoodit. Uudet koodit (myös toimipaikka- ja välittäjäkohtaiset) lisätään

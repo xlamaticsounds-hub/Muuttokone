@@ -13,6 +13,7 @@ import {
   parseLeadFormData,
 } from '@/server/lead-format';
 import { baseTripSummary, leadBaseTripAdvice } from '@/lib/base-trip';
+import { AI_TRAFFIC_SOURCES, sanitizeAttribution, trafficSourceLabel, type TrafficSource } from '@/lib/traffic-source';
 import { leadMailSearchKeys } from '@/lib/mail-search';
 import { parseEmailSummary } from '@/server/email-summary';
 import StatusSelector from './StatusSelector';
@@ -73,6 +74,19 @@ export default async function LeadDetailPage({
   // in server/actions.ts) — Prisma's Json column returns whichever shape was actually
   // stored, so this has to handle both instead of always assuming a string.
   const formDataDisplay = lead.formData ? JSON.stringify(parseLeadFormData(lead.formData), null, 2) : '{}';
+
+  // Mistä kävijä tuli ennen lomaketta (lib/traffic-source.ts): esim. "chatgpt.com → /muuttopalvelu-helsinki".
+  const attribution = sanitizeAttribution(lead.attribution);
+  const trafficIsAi = AI_TRAFFIC_SOURCES.includes(lead.trafficSource as TrafficSource);
+  const trafficDetail = attribution
+    ? [
+        [attribution.referrerHost, attribution.landingPath].filter(Boolean).join(' → '),
+        attribution.utmSource && `utm_source=${attribution.utmSource}`,
+        attribution.utmCampaign && `utm_campaign=${attribution.utmCampaign}`,
+      ]
+        .filter(Boolean)
+        .join(' · ')
+    : null;
   const pfd = parseLeadFormData(lead.formData);
 
   const inventoryEntries = getInventoryEntries(pfd);
@@ -519,6 +533,16 @@ export default async function LeadDetailPage({
                 <span className="text-gray-500">Lähde</span>
                 <span className="font-medium text-gray-900 dark:text-white flex items-center gap-1">
                   <Globe className="h-3 w-3" /> {lead.source}
+                </span>
+              </div>
+              <div className="flex justify-between gap-4">
+                <span className="shrink-0 text-gray-500">Mistä tuli</span>
+                <span className="text-right">
+                  <span className={`font-medium ${trafficIsAi ? 'text-violet-700 dark:text-violet-300' : 'text-gray-900 dark:text-white'}`}>
+                    {trafficSourceLabel(lead.trafficSource) ?? 'Ei tietoa'}
+                    {trafficIsAi && ' (tekoälyhaku)'}
+                  </span>
+                  {trafficDetail && <span className="block text-xs text-gray-500">{trafficDetail}</span>}
                 </span>
               </div>
               <div className="flex justify-between">

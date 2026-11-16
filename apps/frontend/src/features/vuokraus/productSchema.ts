@@ -2,6 +2,7 @@
 // hakukoneille. Kaikki arvot luetaan rental.ts:stä — muuta hintaa tai saatavuutta (inStock) siellä,
 // niin sivun näkyvä teksti ja hakukoneille annettu tieto päivittyvät yhdessä.
 import type { RentalItem } from './rental';
+import { organizationId } from '@/components/SEO/organization';
 
 export const SERVICE_AREA_NAMES = ['Helsinki', 'Espoo', 'Vantaa', 'Kauniainen'];
 
@@ -33,7 +34,7 @@ export function buildRentalProductSchema(
       priceValidUntil,
       availability: item.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       areaServed: (options.areaServed ?? SERVICE_AREA_NAMES).map((name) => ({ '@type': 'City', name })),
-      seller: { '@type': 'Organization', name: 'Muuttokone.fi', url: siteUrl },
+      seller: { '@type': 'Organization', '@id': organizationId(siteUrl), name: 'Muuttokone.fi', url: siteUrl },
       priceSpecification: {
         '@type': 'UnitPriceSpecification',
         price,

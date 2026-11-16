@@ -16,6 +16,13 @@ import { recomputeLeadPrice } from '@/server/lead-format';
 import { baseTripSummary, leadBaseTripAdvice } from '@/lib/base-trip';
 import { suggestTeamId } from '@/lib/teams';
 import { teamRelation } from '@/server/repo/leads';
+import { attributionFields, trafficSourceLabel } from '@/lib/traffic-source';
+
+/** Discordin "Tyyppi"-kenttään myös kävijän lähde, esim. "STEP_FORM · ChatGPT". */
+const withTrafficSource = (label: string, trafficSource: string | null) => {
+  const traffic = trafficSourceLabel(trafficSource);
+  return traffic ? `${label} · ${traffic}` : label;
+};
 
 // Force Node.js runtime (multipart + File)
 export const runtime = 'nodejs';
@@ -255,12 +262,13 @@ async function submitLead(data: z.infer<typeof LeadSchema>) {
     });
     action = 'lead.update';
   } else {
-    // CREATE new lead
+    // CREATE new lead. Lähde (attribution) vain luonnissa: päivitys ei korvaa ensimmäistä kosketusta.
     lead = await prisma.lead.create({
       data: {
         ...leadData,
         source: leadSource,
         ...teamRelation(suggestTeamId({ fromAddress, toAddress })),
+        ...attributionFields(data.attribution),
       },
     });
     action = 'lead.create';
@@ -297,7 +305,7 @@ async function submitLead(data: z.infer<typeof LeadSchema>) {
       phone: data.phone ?? null,
       email: data.email ?? null,
       requestedDateLabel: data.moving_date || null,
-      sourceLabel: leadSource,
+      sourceLabel: withTrafficSource(leadSource, lead.trafficSource),
       priceLabel: null,
       apartmentSizeLabel: null,
       squareMeters,
@@ -629,6 +637,7 @@ async function submitBooking(data: any) {
       fromAddress: data.addressFrom,
       toAddress: data.addressTo,
       ...teamRelation(suggestTeamId({ fromAddress: data.addressFrom, toAddress: data.addressTo })),
+      ...attributionFields(data.attribution),
       notes: `${priceNote}${extraNotes ? `\n${extraNotes}` : ''}`,
       floor: data.floorFrom,
       hasElevator: data.elevatorFrom,
@@ -694,7 +703,7 @@ async function submitBooking(data: any) {
       ? `${new Date(data.date).toLocaleDateString('fi-FI', { timeZone: 'UTC' })}${data.preferredTime ? ` klo ${data.preferredTime}` : ''}`
       : null,
     preferredTime: typeof data.preferredTime === 'string' ? data.preferredTime : null,
-    sourceLabel: LeadSource.STEP_FORM,
+    sourceLabel: withTrafficSource(LeadSource.STEP_FORM, lead.trafficSource),
     priceLabel: priced
       ? partnerDiscount
         ? `${priced.price}€ (ennen alennusta ${partnerDiscount.priceBeforeDiscount}€)`

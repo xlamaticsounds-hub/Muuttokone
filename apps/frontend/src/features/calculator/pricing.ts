@@ -603,6 +603,9 @@ const CUSTOM_ITEM_MINUTES_EACH = 5;
 export const EXTRA_DESTINATION_MINUTES = 30;
 export const MAX_EXTRA_DESTINATIONS = 4;
 
+/** Kuljetuksen vähimmäishinta ennen päiväalennusta (€ sis. ALV; eivät nousseet ALV:n mukana). */
+export const TRANSPORT_MINIMUM = { oneDriver: 99, twoDrivers: 169 } as const;
+
 const EXTRA_STOP_MINUTES = 15; // ylimääräisen välipysähdyksen lastaus/purku-aika
 const DRIVER_COUNT_EFFICIENCY: Record<'1' | '2', number> = { '1': 1.0, '2': 0.65 };
 const SECOND_DRIVER_RATE_ADDON = withVat(30); // €/h, 2. kuljettajan lisähinta (ALV 0 % -aikana 89 + 30 = 119 €/h, ks. yllä)
@@ -826,7 +829,7 @@ function calculatePriceWithoutBoxRental(data: CalculatorData): PriceBreakdown {
     let subtotal = distanceCost + laborCost;
 
     // Minimum Charge for transport, korkeampi 2 kuljettajalle
-    const transportMinimum = driverCount === '2' ? 169 : 99; // € (vähimmäishinnat eivät nousseet ALV:n mukana)
+    const transportMinimum = driverCount === '2' ? TRANSPORT_MINIMUM.twoDrivers : TRANSPORT_MINIMUM.oneDriver;
     if (subtotal < transportMinimum) {
       subtotal = transportMinimum;
     }

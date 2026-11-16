@@ -19,6 +19,7 @@ import {
   type RentalItem,
 } from './rental';
 import RentalDaysSlider from './RentalDaysSlider';
+import { getAttribution } from '@/lib/attribution-client';
 
 const inputClass =
   'focus:ring-primary focus:border-primary w-full rounded-lg border border-gray-300 px-4 py-3 focus:ring-2 focus:outline-hidden dark:border-gray-700 dark:bg-black dark:text-white';
@@ -167,6 +168,7 @@ export default function RentalOrderForm() {
         body: JSON.stringify({
           type: 'lead',
           data: {
+            attribution: getAttribution(),
             name: form.name,
             phone: form.phone,
             email: form.email || null,

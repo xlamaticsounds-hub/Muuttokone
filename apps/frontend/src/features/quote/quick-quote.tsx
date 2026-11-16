@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useSiteConfig } from '@/app/context/SiteConfigContext';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { getAttribution } from '@/lib/attribution-client';
 
 export default function QuickQuote() {
   const siteConfig = useSiteConfig();
@@ -34,6 +35,7 @@ export default function QuickQuote() {
         body: JSON.stringify({
           type: 'lead',
           data: {
+            attribution: getAttribution(),
             name: formData.name,
             phone: formData.phone,
             email: formData.email || null,

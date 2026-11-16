@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Faq from '@/components/Faq';
 import Cta from '@/components/Cta';
 import StructuredData from '@/components/SEO/StructuredData';
+import { organizationRef } from '@/components/SEO/organization';
 import { generateSEOMetadata } from '@/components/SEO/SEOHelpers';
 import { buildBreadcrumbSchema } from '@/features/vuokraus/productSchema';
 import {
@@ -44,7 +45,7 @@ export default function ServicePageContent({ slug }: { slug: ServicePageSlug }) 
           serviceType: page.name,
           url: `${siteUrl}${page.path}`,
           description: page.lead,
-          provider: { '@type': 'MovingCompany', name: 'Muuttokone.fi', url: siteUrl },
+          provider: organizationRef(siteUrl),
           areaServed: ['Helsinki', 'Espoo', 'Vantaa', 'Tampere'].map((name) => ({ '@type': 'City', name })),
         }}
       />

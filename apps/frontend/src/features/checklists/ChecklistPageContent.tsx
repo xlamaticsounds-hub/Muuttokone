@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Faq from '@/components/Faq';
 import Cta from '@/components/Cta';
 import StructuredData from '@/components/SEO/StructuredData';
+import { organizationId } from '@/components/SEO/organization';
 import { generateSEOMetadata } from '@/components/SEO/SEOHelpers';
 import { buildBreadcrumbSchema } from '@/features/vuokraus/productSchema';
 import { CalculatorSection, ContactBanner, InfoCards, LandingHero, ServiceCards } from '@/features/landing/LandingSections';
@@ -43,8 +44,8 @@ export default function ChecklistPageContent({ slug }: { slug: ChecklistPage['sl
           dateModified: UPDATED,
           inLanguage: 'fi',
           mainEntityOfPage: `${siteUrl()}${page.path}`,
-          author: { '@type': 'Organization', name: 'Muuttokone.fi', url: siteUrl() },
-          publisher: { '@type': 'Organization', name: 'Muuttokone.fi', logo: { '@type': 'ImageObject', url: `${siteUrl()}/images/logo/logo.png` } },
+          author: { '@type': 'Organization', '@id': organizationId(siteUrl()), name: 'Muuttokone.fi', url: siteUrl() },
+          publisher: { '@type': 'Organization', '@id': organizationId(siteUrl()), name: 'Muuttokone.fi', logo: { '@type': 'ImageObject', url: `${siteUrl()}/images/logo/logo.png` } },
         }}
       />
       <StructuredData type="FAQPage" data={{ faqs: page.faq }} />

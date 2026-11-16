@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Faq from '@/components/Faq';
 import type { FaqItem } from '@/components/Faq/faqData';
 import StructuredData from '@/components/SEO/StructuredData';
+import { PRICE_FROM_TEXT } from '@/features/calculator/priceFrom';
 import { CITY_PAGES } from './cityData';
 
 const container = 'mx-auto max-w-1390 px-4 md:px-8 xl:px-21';
@@ -17,6 +18,10 @@ const factors = [
 ];
 
 const faq: FaqItem[] = [
+  {
+    q: 'Paljonko muutto maksaa?',
+    a: `Täyspalvelumuuton hinnat: ${PRICE_FROM_TEXT.fullService}. Kevyemmissä paketeissa ${PRICE_FROM_TEXT.lighterPackages}. Muuttosiivous on kiinteähintainen: ${PRICE_FROM_TEXT.cleaning}. Hinnat sisältävät ALV:n. ${PRICE_FROM_TEXT.cheaperDays} Laskuri näyttää oman muuttosi tarkan hinnan, kun lisäät tavarat ja osoitteet.`,
+  },
   {
     q: 'Kuinka tarkka muuttolaskurin hinta on?',
     a: 'Laskuri laskee hinnan samoilla perusteilla kuin me: tavaramäärä, kerrokset, hissit, ajomatka ja muuttopäivä. Kun tiedot pitävät paikkansa, hinta pysyy samana, vaikka muutto kestäisi arvioitua pidempään.',
@@ -44,7 +49,7 @@ const faq: FaqItem[] = [
 ];
 
 // Muuttolaskurin ohjeosio (vain suomenkielinen /muuttolaskuri): selittää hinnan muodostumisen ja
-// linkittää kaupunkisivuille. Hintoja ei kirjoiteta tekstiin, vaan ne näkyvät laskurista.
+// linkittää kaupunkisivuille. Tarkka hinta näkyy laskurista; UKK:ssa vain alkaen-hinnat (priceFrom.ts).
 export default function CalculatorGuide() {
   return (
     <>

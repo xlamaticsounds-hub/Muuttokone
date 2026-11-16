@@ -1,11 +1,14 @@
 // Muuttopalvelun kaupunkisivut (/muuttopalvelu-<kaupunki>). Jokaisella sivulla on omaa paikallista
 // sisältöä (alueen erityispiirteet, kaupunginosat, UKK), jotta sivut eivät ole kopioita toisistaan:
-// Google ei nosta lähes samanlaisia kaupunkisivuja. Hintoja ei kirjoiteta tekstiin: sivulla on muuttolaskuri.
+// Google ei nosta lähes samanlaisia kaupunkisivuja. Leipätekstissä ei ole hintoja (sivulla on muuttolaskuri),
+// mutta UKK:n hintakysymyksissä on laskurin alkaen-hinnat (priceFrom.ts), koska hakukoneet ja tekoälyhaut eivät
+// näe laskurin hintoja.
 //
 // UUDEN KAUPUNGIN LISÄÄMINEN: lisää olio CITY_PAGES-taulukkoon, tee reitti app/(site)/muuttopalvelu-<slug>
 // (kuten muut, pelkkä cityPageMetadata + CityPageContent) ja kirjoita kaupungille omat tekstit.
 // Sivukartta, footer ja linkitykset poimivat sen taulukosta.
 import type { FaqItem } from '@/components/Faq/faqData';
+import { PRICE_FROM_TEXT } from '@/features/calculator/priceFrom';
 
 export type CitySlug = 'helsinki' | 'espoo' | 'vantaa' | 'tampere' | 'turku' | 'pirkanmaa';
 
@@ -88,7 +91,7 @@ export const CITY_PAGES: CityData[] = [
     faq: [
       {
         q: 'Paljonko muutto maksaa Helsingissä?',
-        a: 'Muuton hinta Helsingissä riippuu tavaramäärästä, kerroksista ja hisseistä, ajomatkasta sekä muuttopäivästä. Laske oma hintasi tämän sivun muuttolaskurilla: näet kiinteän hinnan heti, ja se pysyy samana, kun tiedot pitävät paikkansa.',
+        a: `Täyspalvelumuuton hinnat Helsingissä: ${PRICE_FROM_TEXT.fullService}. Kevyemmissä paketeissa ${PRICE_FROM_TEXT.lighterPackages}. Hinnat sisältävät ALV:n. Oman muuttosi hinta riippuu tavaramäärästä, kerroksista ja hisseistä, ajomatkasta sekä muuttopäivästä. Laske se tämän sivun muuttolaskurilla: näet kiinteän hinnan heti, ja se pysyy samana, kun tiedot pitävät paikkansa.`,
       },
       {
         q: 'Mihin muuttoauto pysäköidään kantakaupungissa?',
@@ -161,7 +164,7 @@ export const CITY_PAGES: CityData[] = [
     faq: [
       {
         q: 'Paljonko muutto maksaa Espoossa?',
-        a: 'Hinta riippuu siitä, paljonko tavaraa on, missä kerroksessa asut ja onko talossa hissi. Rivi- ja omakotitalossa tavaraa on yleensä enemmän kuin kerrostalossa, joten käy laskurissa läpi myös varasto ja autotalli. Näet hinnan heti tämän sivun laskurista.',
+        a: `Täyspalvelumuuton hinnat Espoossa: ${PRICE_FROM_TEXT.fullService} (sis. ALV). Hinta riippuu siitä, paljonko tavaraa on, missä kerroksessa asut ja onko talossa hissi. Rivi- ja omakotitalossa tavaraa on yleensä enemmän kuin kerrostalossa, joten käy laskurissa läpi myös varasto ja autotalli. Näet oman hintasi heti tämän sivun laskurista.`,
       },
       {
         q: 'Muutatteko varaston, autotallin ja pihakalusteet?',
@@ -228,7 +231,7 @@ export const CITY_PAGES: CityData[] = [
     faq: [
       {
         q: 'Paljonko muutto maksaa Vantaalla?',
-        a: 'Muuton hinta muodostuu tavaramäärästä, kerroksista, hisseistä, ajomatkasta ja muuttopäivästä. Syötä tiedot tämän sivun muuttolaskuriin, niin saat kiinteän hinnan sekunneissa ilman sitoumusta.',
+        a: `Täyspalvelumuuton hinnat Vantaalla: ${PRICE_FROM_TEXT.fullService}. Kevyemmissä paketeissa ${PRICE_FROM_TEXT.lighterPackages}. Hinnat sisältävät ALV:n. Muuton hinta muodostuu tavaramäärästä, kerroksista, hisseistä, ajomatkasta ja muuttopäivästä. Syötä tiedot tämän sivun muuttolaskuriin, niin saat kiinteän hinnan sekunneissa ilman sitoumusta.`,
       },
       {
         q: 'Mikä päivä on edullisin muuttaa?',
@@ -312,7 +315,7 @@ export const CITY_PAGES: CityData[] = [
     faq: [
       {
         q: 'Paljonko muutto maksaa Tampereella?',
-        a: 'Tampereen muutot lasketaan Hervannan tukikohdasta, joten hinnassa ei ole tyhjää ajoa Helsingistä. Muuten hinta riippuu tavaramäärästä, kerroksista, hisseistä ja muuttopäivästä. Laske oma hintasi tämän sivun laskurilla.',
+        a: `Täyspalvelumuuton hinnat Tampereella: ${PRICE_FROM_TEXT.fullService} (sis. ALV). Tampereen muutot lasketaan Hervannan tukikohdasta, joten hinnassa ei ole tyhjää ajoa Helsingistä. Muuten hinta riippuu tavaramäärästä, kerroksista, hisseistä ja muuttopäivästä. ${PRICE_FROM_TEXT.cheaperDays} Laske oma hintasi tämän sivun laskurilla.`,
       },
       {
         q: 'Onko teillä oma tiimi Tampereella?',
@@ -482,7 +485,7 @@ export const CITY_PAGES: CityData[] = [
     faq: [
       {
         q: 'Paljonko muutto maksaa Pirkanmaalla?',
-        a: 'Tampereen lähikunnissa hinta lasketaan Hervannan tukikohdasta ilman tyhjän ajon lisää. Hinta riippuu tavaramäärästä, kerroksista, hisseistä ja päivästä – laske se tämän sivun laskurilla.',
+        a: `Tampereen lähikunnissa hinta lasketaan Hervannan tukikohdasta ilman tyhjän ajon lisää. Täyspalvelumuutossa ${PRICE_FROM_TEXT.fullService}, ja ${PRICE_FROM_TEXT.lighterPackages} (sis. ALV). Hinta riippuu tavaramäärästä, kerroksista, hisseistä, ajomatkasta ja päivästä – laske se tämän sivun laskurilla.`,
       },
       {
         q: 'Muutatteko Nokialle ja Ylöjärvelle?',

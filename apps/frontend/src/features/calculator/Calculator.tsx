@@ -20,6 +20,7 @@ import { useT } from '@/i18n/useT';
 import { calculatorDictionary } from '@/i18n/calculatorDictionary';
 import { FURNITURE_LABELS_EN, CATEGORY_LABELS_EN, WASTE_TYPE_LABELS_EN } from '@/i18n/catalogTranslations';
 import { TYPICAL_ITEMS } from './typicalItems';
+import { getAttribution } from '@/lib/attribution-client';
 
 const DIFFICULTY_BADGES: Record<PriceBreakdown['difficultyLevel'], { emoji: string; label: string }> = {
   easy: { emoji: '🟢', label: 'Helppo muutto' },
@@ -592,6 +593,7 @@ export default function Calculator({
         body: JSON.stringify({
           type: 'booking',
           data: {
+            attribution: getAttribution(),
             ...formData,
             boxCount: derivedBoxCount,
             price: priceResult.total,

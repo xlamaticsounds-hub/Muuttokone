@@ -1,21 +1,36 @@
 import { siteConfig } from '@/config/site';
+import { getSiteUrl, ORGANIZATION_SAME_AS, organizationId, organizationRef, websiteId } from './organization';
 
 interface StructuredDataProps {
   // Custom: valmiiksi rakennettu schema.org-olio (esim. kaupunkisivun Service), tulostetaan sellaisenaan.
-  type: 'LocalBusiness' | 'Organization' | 'Service' | 'MovingCompany' | 'BlogPosting' | 'FAQPage' | 'Product' | 'BreadcrumbList' | 'Custom';
+  type: 'LocalBusiness' | 'Organization' | 'Service' | 'MovingCompany' | 'WebSite' | 'BlogPosting' | 'FAQPage' | 'Product' | 'BreadcrumbList' | 'Custom';
   data?: any;
 }
 
 export default async function StructuredData({ type, data }: StructuredDataProps) {
-  const siteUrl = process.env.SITE_URL ?? 'https://muuttokone.fi';
+  const siteUrl = getSiteUrl();
 
   const getStructuredData = () => {
     const baseOrganization = {
       '@context': 'https://schema.org',
       '@type': 'MovingCompany',
+      '@id': organizationId(siteUrl),
       name: 'Muuttokone.fi',
       legalName: 'Muuttokone Oy',
+      alternateName: 'Muuttokone',
       url: siteUrl,
+      // Y-tunnus: tekoälyhaut ja hakemistot (Fonecta, YTJ) tunnistavat yrityksen tällä.
+      taxID: siteConfig.businessId,
+      identifier: { '@type': 'PropertyValue', propertyID: 'Y-tunnus', value: siteConfig.businessId },
+      sameAs: [...ORGANIZATION_SAME_AS],
+      contactPoint: {
+        '@type': 'ContactPoint',
+        contactType: 'customer service',
+        telephone: siteConfig.contact.phone.tel,
+        email: siteConfig.contact.email,
+        availableLanguage: ['Finnish', 'English'],
+        areaServed: 'FI',
+      },
       logo: `${siteUrl}/images/logo/logo.png`,
       image: `${siteUrl}/images/webp/hero/hero.webp`,
       description:
@@ -92,17 +107,24 @@ export default async function StructuredData({ type, data }: StructuredDataProps
       case 'Organization':
         return baseOrganization;
 
+      case 'WebSite':
+        return {
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          '@id': websiteId(siteUrl),
+          url: siteUrl,
+          name: 'Muuttokone.fi',
+          inLanguage: 'fi-FI',
+          publisher: { '@id': organizationId(siteUrl) },
+        };
+
       case 'Service':
         return {
           '@context': 'https://schema.org',
           '@type': 'Service',
           name: data?.name || 'Muuttopalvelut',
           description: data?.description || 'Luotettava muuttopalvelu Helsingissä ja Uudellamaalla',
-          provider: {
-            '@type': 'Organization',
-            name: 'Muuttokone.fi',
-            url: siteUrl,
-          },
+          provider: organizationRef(siteUrl),
           areaServed: {
             '@type': 'Country',
             name: 'Finland',
@@ -140,6 +162,7 @@ export default async function StructuredData({ type, data }: StructuredDataProps
           },
           publisher: {
             '@type': 'Organization',
+            '@id': organizationId(siteUrl),
             name: 'Muuttokone.fi',
             logo: {
               '@type': 'ImageObject',

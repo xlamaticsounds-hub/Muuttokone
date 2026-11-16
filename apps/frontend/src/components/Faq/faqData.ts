@@ -1,4 +1,5 @@
 import { CLEANING_PRICE } from '@/features/calculator/pricing';
+import { PRICE_FROM_TEXT } from '@/features/calculator/priceFrom';
 
 export type FaqItem = { q: string; a: string };
 
@@ -8,6 +9,10 @@ export const generalFaqData: FaqItem[] = [
   {
     q: 'Miksi valita meidät?',
     a: 'Olemme vakuutettu ja rekisteröity muuttopalvelu, joka tarjoaa rehellisen, kiinteän hinnan ilman piilokuluja ja nopean vastauksen tarjouspyyntöihin. Asiakkaamme arvostavat ammattitaitoista, joustavaa palveluamme ja selkeää hinnoittelua.',
+  },
+  {
+    q: 'Paljonko muutto maksaa?',
+    a: `Täyspalvelumuutto pääkaupunkiseudulla ja Tampereen seudulla: ${PRICE_FROM_TEXT.fullService}. Kevyemmissä paketeissa ${PRICE_FROM_TEXT.lighterPackages}. Hinnat sisältävät ALV:n ja ovat kiinteitä: kun tiedot pitävät paikkansa, hinta ei nouse, vaikka muutto kestäisi arvioitua pidempään. Näet oman muuttosi hinnan heti muuttolaskurista.`,
   },
   {
     q: 'Mitä tapahtuu, jos muutto kestää pidempään kuin tarjouksessa – kenelle maksu menee?',

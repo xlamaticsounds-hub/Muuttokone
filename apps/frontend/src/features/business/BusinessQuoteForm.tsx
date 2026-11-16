@@ -9,6 +9,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useT } from '@/i18n/useT';
 import { quoteFormDictionary } from '@/i18n/quoteFormDictionary';
+import { getAttribution } from '@/lib/attribution-client';
 
 // Sama lomake on käytössä kahdella sivulla:
 // - 'business' (Yrityksille-sivu): yrityspalveluiden aiheet, yrityksen nimi pakollinen.
@@ -258,6 +259,7 @@ export default function BusinessQuoteForm({ variant = 'business', className = 'm
         body: JSON.stringify({
           type: 'lead',
           data: {
+            attribution: getAttribution(),
             name: data.contactName.trim(),
             company_name: data.companyName.trim() || null,
             phone: data.phone.trim(),

@@ -7,6 +7,7 @@ import Honeypot from '@/components/Forms/Honeypot';
 import GdprConsentCheckbox from '@/components/Forms/GdprConsentCheckbox';
 import { useSiteConfig } from '@/app/context/SiteConfigContext';
 import { tyoapuCategories } from './tyoapuData';
+import { getAttribution } from '@/lib/attribution-client';
 
 const inputClass =
   'focus:ring-primary focus:border-primary w-full rounded-lg border border-gray-300 px-4 py-3 focus:ring-2 focus:outline-hidden dark:border-gray-700 dark:bg-black dark:text-white';
@@ -70,6 +71,7 @@ export default function TyoapuQuoteForm() {
         body: JSON.stringify({
           type: 'lead',
           data: {
+            attribution: getAttribution(),
             name: data.name,
             company_name: data.companyName || null,
             phone: data.phone,

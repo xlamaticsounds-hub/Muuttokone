@@ -3,6 +3,7 @@
 import { Dispatch, SetStateAction, useState } from 'react';
 import { QuoteData } from '.';
 import toast from 'react-hot-toast';
+import { getAttribution } from '@/lib/attribution-client';
 
 type Props = {
   data: QuoteData;
@@ -31,6 +32,7 @@ export default function Step2({ data, setData, onBack }: Props) {
         body: JSON.stringify({
           type: 'lead',
           data: {
+            attribution: getAttribution(),
             id: data.id || undefined,
             name: data.name,
             email: data.email || null,

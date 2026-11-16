@@ -9,6 +9,21 @@ import footerNavData from '@/components/Footer/footerNavData';
 import { buildCityServiceSchema } from './citySchema';
 import { BOX_CITIES, getBoxCity } from '@/features/vuokraus/boxCityData';
 import { isDeliveryAreaPostalCode } from '@/features/vuokraus/rental';
+import { ALL_PRICE_FROM_AMOUNTS } from '@/features/calculator/priceFrom';
+
+/**
+ * Leipätekstissä ei hintoja (hinta näkyy laskurista). UKK-vastauksissa saa olla vain laskurin
+ * alkaen-hintoja (priceFrom.ts), ei käsin kirjoitettuja lukuja, jotka vanhenisivat hinnoittelun muuttuessa.
+ */
+function expectNoPrices(text: string, label: string) {
+  expect(text, label).not.toMatch(/€|\d+\s*euroa/);
+}
+function expectOnlyPriceFromAmounts(text: string, label: string) {
+  expect(text, label).not.toMatch(/\d+\s*euroa/);
+  for (const [, amount] of text.matchAll(/(\d+)\s*€/g)) {
+    expect(ALL_PRICE_FROM_AMOUNTS, `${label}: ${amount} €`).toContain(Number(amount));
+  }
+}
 
 const SITE_APP = path.resolve(__dirname, '../../app/(site)');
 // Otsikkopohja lisää perään " | Muuttokone.fi" (16 merkkiä); Google näyttää noin 60 merkkiä.
@@ -38,11 +53,21 @@ describe('kaupunkisivut', () => {
     }
   });
 
-  it('teksteissä ei ole hintoja: hinta näkyy vain sivun laskurista', () => {
+  it('leipätekstissä ei hintoja, UKK:ssa vain laskurin alkaen-hinnat', () => {
     for (const city of CITY_PAGES) {
+      const answers = new Set(city.faq.map((f) => f.a));
       for (const text of allTexts(city)) {
-        expect(text, `${city.slug}: ${text.slice(0, 60)}`).not.toMatch(/€|\d+\s*euroa/);
+        const label = `${city.slug}: ${text.slice(0, 60)}`;
+        if (answers.has(text)) expectOnlyPriceFromAmounts(text, label);
+        else expectNoPrices(text, label);
       }
+    }
+  });
+
+  it('hintakysymyksiin vastataan alkaen-hinnalla (hakukoneet eivät näe laskurin hintaa)', () => {
+    for (const city of CITY_PAGES.filter((c) => !c.localByQuote)) {
+      const priceAnswer = city.faq.find((f) => f.q.startsWith(`Paljonko muutto maksaa ${city.inessive}`));
+      expect(priceAnswer?.a, city.slug).toMatch(/alkaen \d+ €/);
     }
   });
 
@@ -116,11 +141,14 @@ describe('palvelusivut', () => {
     }
   });
 
-  it('ei hintoja eikä toiselta sivulta kopioitua tekstiä', () => {
+  it('ei hintoja leipätekstissä eikä toiselta sivulta kopioitua tekstiä', () => {
     const seen = new Map<string, string>(CITY_PAGES.flatMap((c) => allTexts(c).map((t) => [t, c.slug] as const)));
     for (const page of SERVICE_PAGES) {
+      const answers = new Set(page.faq.map((f) => f.a));
       for (const text of textsOf(page)) {
-        expect(text, `${page.slug}: ${text.slice(0, 60)}`).not.toMatch(/€|\d+\s*euroa/);
+        const label = `${page.slug}: ${text.slice(0, 60)}`;
+        if (answers.has(text)) expectOnlyPriceFromAmounts(text, label);
+        else expectNoPrices(text, label);
         if (text.length < 40) continue; // lyhyet otsikot ja kysymykset saavat toistua
         expect(seen.get(text), `"${text.slice(0, 60)}" toistuu sivulla ${seen.get(text)}`).toBeUndefined();
         seen.set(text, page.slug);

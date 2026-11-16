@@ -1,9 +1,11 @@
 // Palvelusivut (/muuttoapu, /muuttosiivous, /kuljetuspalvelu, /kierratys-ja-poisvienti). Sama ilme kuin
 // kaupunkisivuilla (LandingSections.tsx). Hakusanat Search Consolesta 11/2026. Paketit, kuljettajat ja
-// jätelajit vastaavat laskuria (Calculator.tsx, pricing.ts); hintoja ei kirjoiteta tekstiin.
+// jätelajit vastaavat laskuria (Calculator.tsx, pricing.ts). Leipätekstissä ei ole hintoja; UKK:n
+// hintakysymyksissä on laskurin alkaen-hinnat (priceFrom.ts).
 //
 // UUSI PALVELUSIVU: lisää olio SERVICE_PAGES-taulukkoon ja reitti app/(site)/<slug>/page.tsx kuten muut.
 import type { FaqItem } from '@/components/Faq/faqData';
+import { PRICE_FROM_TEXT } from '@/features/calculator/priceFrom';
 import type { InfoSection, ServiceCard } from '@/features/landing/LandingSections';
 
 export type ServicePageSlug = 'muuttoapu' | 'muuttosiivous' | 'kuljetuspalvelu' | 'kierratys-ja-poisvienti';
@@ -117,7 +119,7 @@ export const SERVICE_PAGES: ServicePage[] = [
     faq: [
       {
         q: 'Paljonko muuttoapu maksaa?',
-        a: 'Hinta riippuu valitsemastasi paketista, tavaramäärästä, kerroksista ja hisseistä sekä muuttopäivästä. Näet kiinteän hinnan heti tämän sivun laskurista, eikä laskeminen sido sinua mihinkään.',
+        a: `Muuttoavussa ${PRICE_FROM_TEXT.lighterPackages}. Täyspalvelumuutossa, jossa me kannamme ja kuljetamme kaiken, ${PRICE_FROM_TEXT.fullService}. Hinnat sisältävät ALV:n. Lopullinen hinta riippuu paketista, tavaramäärästä, kerroksista ja hisseistä sekä muuttopäivästä. Näet kiinteän hinnan heti tämän sivun laskurista, eikä laskeminen sido sinua mihinkään.`,
       },
       {
         q: 'Mitä eroa on kantoavulla ja täyspalvelulla?',
@@ -194,7 +196,7 @@ export const SERVICE_PAGES: ServicePage[] = [
     faq: [
       {
         q: 'Paljonko muuttosiivous maksaa?',
-        a: 'Muuttosiivouksella on kiinteä hinta asunnon koon mukaan. Näet sen laskurissa heti, kun valitset muuttosiivouksen ja asunnon koon.',
+        a: `Muuttosiivouksella on kiinteä hinta asunnon koon mukaan: ${PRICE_FROM_TEXT.cleaning} (sis. ALV). Hinta ei riipu tavaramäärästä. Näet sen laskurissa heti, kun valitset muuttosiivouksen ja asunnon koon.`,
       },
       {
         q: 'Saako muuttosiivoukseen päiväalennuksen?',
@@ -270,7 +272,7 @@ export const SERVICE_PAGES: ServicePage[] = [
     faq: [
       {
         q: 'Paljonko kuljetus maksaa?',
-        a: 'Hinta riippuu matkasta, tavaroista, kerroksista ja kuljettajien määrästä. Laske hinta tämän sivun laskurilla – näet sen heti ilman sitoumusta.',
+        a: `Kuljetus maksaa ${PRICE_FROM_TEXT.transport} (sis. ALV). Lopullinen hinta riippuu matkasta, tavaroista, kerroksista ja kuljettajien määrästä. Laske hinta tämän sivun laskurilla – näet sen heti ilman sitoumusta.`,
       },
       {
         q: 'Kantavatteko kuljettajat tavarat sisälle?',

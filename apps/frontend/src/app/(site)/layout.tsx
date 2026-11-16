@@ -11,6 +11,7 @@ import { LOCALE_COOKIE, type Locale } from '@/i18n/LocaleContext';
 import GA from '@/components/Analytics/GA';
 import StructuredData from '@/components/SEO/StructuredData';
 import CookieConsent from '@/components/CookieConsent';
+import AttributionCapture from '@/components/AttributionCapture';
 
 export default async function SiteLayout({
   children,
@@ -29,6 +30,8 @@ export default async function SiteLayout({
   return (
     <>
       <StructuredData type="LocalBusiness" />
+      <StructuredData type="WebSite" />
+      <AttributionCapture />
       <ToasterContext />
       <Providers siteConfig={siteConfig} initialLocale={initialLocale}>
         <NextTopLoader color="#006BFF" crawlSpeed={300} showSpinner={false} shadow="none" />
