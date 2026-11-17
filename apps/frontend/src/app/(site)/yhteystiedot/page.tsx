@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Contact from '@/features/contact';
 import Team from '@/features/team';
 import OurStory from '@/components/OurStory';
+import CompanyFacts from '@/components/CompanyFacts';
 import { generateSEOMetadata, SEOConfigs } from '@/components/SEO/SEOHelpers';
 import { siteConfig } from '@/config/site';
 
@@ -37,6 +38,7 @@ export default function Page() {
       <Team />
       <OurStory />
       <Contact />
+      <CompanyFacts />
     </>
   );
 }

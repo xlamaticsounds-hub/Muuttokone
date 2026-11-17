@@ -5,6 +5,7 @@ import { buildLlmsTxt, llmsTxtSections } from './llmsTxt';
 import { CITY_PAGES } from '@/features/city-pages/cityData';
 import { SERVICE_PAGES } from '@/features/service-pages/servicePages';
 import { PRICE_FROM } from '@/features/calculator/priceFrom';
+import { COMPANY_FACTS } from '@/config/companyFacts';
 
 const SITE_APP = path.resolve(__dirname, '../../app/(site)');
 const routeExists = (p: string) => fs.existsSync(path.join(SITE_APP, p.replace(/^\//, ''), 'page.tsx'));
@@ -26,6 +27,12 @@ describe('llms.txt', () => {
     for (const page of [...CITY_PAGES, ...SERVICE_PAGES]) {
       expect(text, page.path).toContain(`(https://www.muuttokone.fi${page.path})`);
     }
+  });
+
+  it('yrityksen faktat tulevat companyFacts.ts:stä', () => {
+    expect(text).toContain(COMPANY_FACTS.movesText);
+    expect(text).toContain(COMPANY_FACTS.insuranceText);
+    expect(text).not.toMatch(/käteinen/i);
   });
 
   it('alkaen-hinnat tulevat laskurista', () => {

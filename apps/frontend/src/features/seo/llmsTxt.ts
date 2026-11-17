@@ -3,6 +3,7 @@
 // alkaen-hinnat), joten uusi sivu tai hinnanmuutos päivittyy tänne automaattisesti. llmsTxt.test.ts
 // tarkistaa, että jokainen linkki osoittaa olemassa olevaan sivuun.
 import { siteConfig } from '@/config/site';
+import { COMPANY_FACTS } from '@/config/companyFacts';
 import { SEOConfigs } from '@/components/SEO/SEOHelpers';
 import { CITY_PAGES } from '@/features/city-pages/cityData';
 import { SERVICE_PAGES } from '@/features/service-pages/servicePages';
@@ -62,23 +63,31 @@ export function llmsTxtSections(): { heading: string; links: Link[] }[] {
 
 export function buildLlmsTxt(siteUrl: string): string {
   const { contact, businessId } = siteConfig;
+  const f = COMPANY_FACTS;
   const facts = [
-    `Yritys: Muuttokone Oy, Y-tunnus ${businessId}. Tukikohdat Helsingissä ja Tampereella (Hervanta).`,
-    'Palvelualue: pääkaupunkiseutu (Helsinki, Espoo, Vantaa, Kauniainen), Tampere ja Pirkanmaa. Muutot myös Turkuun ja muualle Suomeen; kaukana tukikohdista hintaan tulee ajolisä tai hinta annetaan tarjouksella.',
+    `Yritys: Muuttokone Oy, Y-tunnus ${businessId}, perustettu ${f.foundedText}, toiminta alkoi ${f.operationsStartedText}. Takana ${f.movesText}.`,
+    `Tukikohdat Helsingissä ja Tampereella (Hervanta): ${f.crewText}.`,
+    'Palvelualue: pääkaupunkiseutu (Helsinki, Espoo, Vantaa, Kauniainen), Tampere ja Pirkanmaa sekä muutot koko Suomeen. Kaukana tukikohdista hintaan tulee ajolisä tai hinta annetaan tarjouksella.',
     'Palvelut: kotimuutot, yritysmuutot, kantoapu, kuljettaja ja auto, kuljetukset, muuttosiivous, kierrätys ja poisvienti, kuolinpesätyhjennykset, muuttolaatikoiden vuokraus sekä työapu (asennukset).',
+    `Kalusto: ${f.fleetText}`,
     `Täyspalvelumuuton hinnat (sis. ALV): ${PRICE_FROM_TEXT.fullService}. Lisäksi ${PRICE_FROM_TEXT.lighterPackages}.`,
     `Kuljetus ${PRICE_FROM_TEXT.transport}. Muuttosiivous kiinteään hintaan: ${PRICE_FROM_TEXT.cleaning}.`,
     `Hinta on kiinteä: kun annetut tiedot pitävät paikkansa, hinta ei nouse, vaikka muutto kestäisi arvioitua pidempään. ${PRICE_FROM_TEXT.cheaperDays} Oman muuton hinnan näkee heti muuttolaskurista.`,
-    'Kuljetukset on vakuutettu tiekuljetuslain mukaisesti.',
+    `Vakuutus: ${f.insuranceText}`,
+    `Maksutavat: ${f.paymentText}. Palvelukielet: ${f.languagesText}.`,
     `Yhteystiedot: puhelin ${contact.phone.display}, sähköposti ${contact.email}. Avoinna ${contact.openingHours.replace(/\.$/, '').toLowerCase()}.`,
   ];
 
   return [
     '# Muuttokone.fi',
     '',
-    '> Muuttokone.fi on muuttopalvelu pääkaupunkiseudulla ja Tampereella. Muuton kiinteän hinnan näkee heti verkkosivun muuttolaskurista, ja muuton voi varata suoraan verkossa.',
+    '> Muuttokone.fi on muuttopalvelu pääkaupunkiseudulla ja Tampereella, ja muutamme koko Suomeen. Muuton kiinteän hinnan näkee heti verkkosivun muuttolaskurista, ja muuton voi varata suoraan verkossa.',
     '',
     ...facts.map((fact) => `- ${fact}`),
+    '',
+    '## Miksi Muuttokone.fi',
+    '',
+    ...f.differentiators.map((text) => `- ${text}`),
     '',
     ...llmsTxtSections().flatMap((section) => [`## ${section.heading}`, '', ...section.links.map((link) => line(siteUrl, link)), '']),
   ].join('\n');

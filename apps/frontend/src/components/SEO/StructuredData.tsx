@@ -1,4 +1,5 @@
 import { siteConfig } from '@/config/site';
+import { COMPANY_FACTS } from '@/config/companyFacts';
 import { getSiteUrl, ORGANIZATION_SAME_AS, organizationId, organizationRef, websiteId } from './organization';
 
 interface StructuredDataProps {
@@ -23,6 +24,8 @@ export default async function StructuredData({ type, data }: StructuredDataProps
       taxID: siteConfig.businessId,
       identifier: { '@type': 'PropertyValue', propertyID: 'Y-tunnus', value: siteConfig.businessId },
       sameAs: [...ORGANIZATION_SAME_AS],
+      foundingDate: COMPANY_FACTS.foundingDate,
+      knowsLanguage: [...COMPANY_FACTS.languages],
       contactPoint: {
         '@type': 'ContactPoint',
         contactType: 'customer service',
@@ -34,7 +37,7 @@ export default async function StructuredData({ type, data }: StructuredDataProps
       logo: `${siteUrl}/images/logo/logo.png`,
       image: `${siteUrl}/images/webp/hero/hero.webp`,
       description:
-        'Muuttopalvelu pääkaupunkiseudulla ja Tampereella: koti- ja yritysmuutot, kantoapu, pakkaus, kuljetukset, kuolinpesätyhjennykset ja muuttolaatikoiden vuokraus.',
+        'Muuttopalvelu pääkaupunkiseudulla ja Tampereella sekä muutot koko Suomeen: koti- ja yritysmuutot, kantoapu, pakkaus, kuljetukset, muuttosiivous, kuolinpesätyhjennykset ja muuttolaatikoiden vuokraus. Kiinteä hinta heti muuttolaskurista.',
       telephone: siteConfig.contact.phone.tel,
       email: siteConfig.contact.email,
       address: {
@@ -101,7 +104,8 @@ export default async function StructuredData({ type, data }: StructuredDataProps
           ...baseOrganization,
           '@type': 'MovingCompany',
           priceRange: '€€',
-          paymentAccepted: ['Cash', 'Credit Card', 'Bank Transfer'],
+          // Ei käteistä (omistaja 16.11.2026), ks. config/companyFacts.ts
+          paymentAccepted: COMPANY_FACTS.paymentAccepted.join(', '),
         };
 
       case 'Organization':
