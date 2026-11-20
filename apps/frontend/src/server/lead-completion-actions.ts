@@ -40,7 +40,7 @@ export async function markLeadCompleted(leadId: string, finalPriceInput: string 
   if (!session) return { success: false, message: 'Kirjaudu sisään.' };
 
   const finalPrice = parseEuroAmount(finalPriceInput);
-  if (finalPrice === null || finalPrice <= 0 || finalPrice > MAX_FINAL_PRICE) {
+  if (finalPrice === null || finalPrice < 0 || finalPrice > MAX_FINAL_PRICE) {
     return { success: false, message: 'Syötä lopullinen hinta euroina, esim. 648 tai 648,50.' };
   }
 

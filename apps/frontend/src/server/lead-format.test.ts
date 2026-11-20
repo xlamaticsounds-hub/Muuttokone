@@ -144,6 +144,11 @@ describe('defaultFinalPrice', () => {
     expect(defaultFinalPrice({ ...lead, priceAfterDiscount: 648, formData })).toBe(648);
   });
 
+  it('vahvistettu 0 € (ilmainen keikka) ei putoa laskurin arvioon', () => {
+    const formData = JSON.stringify({ price: 719.6, confirmedPrice: '0' });
+    expect(defaultFinalPrice({ ...lead, priceAfterDiscount: 648, formData })).toBe(0);
+  });
+
   it('jo toteutuneella tallennettu lopullinen hinta', () => {
     expect(defaultFinalPrice({ ...lead, status: 'COMPLETED', finalPrice: 655.5, priceAfterDiscount: 648 })).toBe(655.5);
   });

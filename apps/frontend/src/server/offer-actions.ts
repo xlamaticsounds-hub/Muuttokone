@@ -38,7 +38,7 @@ export async function saveOffer(leadId: string, input: unknown): Promise<ActionR
     const formData = {
       ...parseLeadFormData(lead.formData),
       offer: result.value,
-      ...(total > 0 ? { confirmedPrice: confirmedPriceText(total) } : {}),
+      ...(result.value.lines.length > 0 ? { confirmedPrice: confirmedPriceText(total) } : {}),
     };
     await prisma.lead.update({ where: { id: leadId }, data: { formData: formData as never } });
     refreshLead(leadId);

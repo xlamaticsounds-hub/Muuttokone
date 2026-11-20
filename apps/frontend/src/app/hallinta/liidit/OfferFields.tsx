@@ -55,7 +55,7 @@ export default function OfferFields({
 }) {
   const validLines = value.lines
     .map((l) => ({ label: l.label, amount: parseAmount(l.amount), vatRate: l.vatRate }))
-    .filter((l) => Number.isFinite(l.amount) && l.amount > 0);
+    .filter((l) => Number.isFinite(l.amount) && l.amount >= 0);
   const totals = offerTotals(validLines);
   const zeroVat = validLines.some((l) => l.vatRate === 0);
 

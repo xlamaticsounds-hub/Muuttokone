@@ -226,7 +226,7 @@ export function defaultFinalPrice(lead: {
   if (isCompletedStatus(lead.status) && lead.finalPrice != null) return lead.finalPrice;
   const { confirmed, exact } = getStoredPrice(parseLeadFormData(lead.formData));
   const confirmedAmount = confirmed !== null ? parseEuroAmount(confirmed) : null;
-  if (confirmedAmount !== null && confirmedAmount > 0) return confirmedAmount;
+  if (confirmedAmount !== null && confirmedAmount >= 0) return confirmedAmount; // 0 € = ilmainen keikka
   if (lead.priceAfterDiscount != null) return lead.priceAfterDiscount;
   return exact !== null ? Math.round(exact) : null;
 }

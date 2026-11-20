@@ -161,7 +161,8 @@ export function normalizeOffer(input: unknown, todayIso: string): NormalizeResul
     const emptyAmount = l.amount == null || l.amount === '' || (typeof l.amount === 'number' && l.amount === 0);
     if (!label && emptyAmount) continue; // tyhjä rivi
     if (!label) return { ok: false, message: 'Anna jokaiselle hintariville selite.' };
-    if (!Number.isFinite(amount) || amount <= 0 || amount > MAX_OFFER_AMOUNT) {
+    // 0 € kelpaa (esim. ilmainen muutto some-yhteistyötä vastaan), tyhjä summa ei
+    if (!Number.isFinite(amount) || amount < 0 || amount > MAX_OFFER_AMOUNT) {
       return { ok: false, message: `Hintarivin "${label}" summa puuttuu tai ei kelpaa.` };
     }
     const vatRate = (OFFER_VAT_RATES as readonly number[]).includes(l.vatRate as number) ? (l.vatRate as number) : DEFAULT_OFFER_VAT_RATE;

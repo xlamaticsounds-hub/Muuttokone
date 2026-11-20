@@ -102,7 +102,7 @@ export async function completePastJobs(items: { leadId: string; sendReview: bool
       continue;
     }
     const finalPrice = defaultFinalPrice(lead);
-    if (finalPrice == null || finalPrice <= 0) {
+    if (finalPrice == null || finalPrice < 0) {
       skipped++;
       continue;
     }

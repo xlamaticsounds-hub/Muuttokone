@@ -155,7 +155,8 @@ export async function createExternalLead(
   const formData: Prisma.InputJsonObject = {
     external: { source: input.source, sourceLabel, detail: input.sourceDetail, createdAt: new Date().toISOString(), createdBy: actor },
     ...(input.time ? { preferredTime: input.time } : {}),
-    ...(total > 0 ? { confirmedPrice: confirmedPriceText(total) } : {}),
+    // Myös 0 € (ilmainen keikka) on vahvistettu hinta, kunhan hintarivejä on
+    ...(input.offer.lines.length > 0 ? { confirmedPrice: confirmedPriceText(total) } : {}),
     offer: input.offer as unknown as Prisma.InputJsonObject,
   };
 

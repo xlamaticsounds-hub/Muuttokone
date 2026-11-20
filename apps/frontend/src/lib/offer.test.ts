@@ -72,6 +72,11 @@ describe('normalizeOffer', () => {
     expect(normalizeOffer({ ...valid, lines: [{ label: 'X', amount: 1_000_000 }] }, today)).toMatchObject({ ok: false });
   });
 
+  it('hyväksyy 0 € hintarivin (ilmainen keikka some-yhteistyötä vastaan)', () => {
+    const free = normalizeOffer({ ...valid, lines: [{ label: 'Muuttopalvelu (some-yhteistyö)', amount: '0', vatRate: 0 }] }, today);
+    expect(free.ok && free.value.lines).toEqual([{ label: 'Muuttopalvelu (some-yhteistyö)', amount: 0, vatRate: 0 }]);
+  });
+
   it('hyväksyy vain tunnetut ALV-kannat (muuten oletus 0 %)', () => {
     const r = normalizeOffer({ ...valid, lines: [{ label: 'A', amount: 100, vatRate: 0.255 }, { label: 'B', amount: 50, vatRate: 0.24 }] }, today);
     expect(r.ok && r.value.lines.map((l) => l.vatRate)).toEqual([0.255, 0]);

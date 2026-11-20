@@ -105,7 +105,7 @@ export default function CompleteLeadDialog({
           </button>
           <button
             type="submit"
-            disabled={saving || amount === null || amount <= 0}
+            disabled={saving || amount === null || amount < 0}
             className="h-12 rounded-xl bg-emerald-600 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
           >
             {saving ? 'Tallennetaan...' : target.isEdit ? 'Tallenna hinta' : '✅ Toteutunut'}
