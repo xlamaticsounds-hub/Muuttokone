@@ -9,6 +9,6 @@ export function cityPageMetadata(slug: CitySlug): Metadata {
     description: city.seoDescription,
     keywords: city.keywords,
     canonical: city.path,
-    openGraph: { title: city.seoTitle, description: city.seoDescription, image: '/images/webp/hero/hero.webp', type: 'website' },
+    openGraph: { title: city.seoTitle, description: city.seoDescription, image: '/images/og/muuttokone-tiimi.jpg', type: 'website' },
   });
 }

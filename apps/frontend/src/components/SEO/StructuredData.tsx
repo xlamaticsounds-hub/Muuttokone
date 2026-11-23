@@ -35,7 +35,7 @@ export default async function StructuredData({ type, data }: StructuredDataProps
         areaServed: 'FI',
       },
       logo: `${siteUrl}/images/logo/logo.png`,
-      image: `${siteUrl}/images/webp/hero/hero.webp`,
+      image: `${siteUrl}/images/og/muuttokone-tiimi.jpg`,
       description:
         'Muuttopalvelu pääkaupunkiseudulla ja Tampereella sekä muutot koko Suomeen: koti- ja yritysmuutot, kantoapu, pakkaus, kuljetukset, muuttosiivous, kuolinpesätyhjennykset ja muuttolaatikoiden vuokraus. Kiinteä hinta heti muuttolaskurista.',
       telephone: siteConfig.contact.phone.tel,

@@ -55,7 +55,7 @@ export const metadata: Metadata = {
       'Muuttopalvelu pääkaupunkiseudulla ja Tampereella. Koti- ja yritysmuutot, kantoapu, pakkaus ja muuttolaatikot kiinteällä hinnalla.',
     images: [
       {
-        url: '/images/webp/hero/hero.webp',
+        url: '/images/og/muuttokone-tiimi.jpg',
         width: 1200,
         height: 630,
         alt: 'Muuttokone.fi - Luotettava muuttopalvelu',
@@ -67,7 +67,7 @@ export const metadata: Metadata = {
     title: 'Muuttokone.fi - Luotettava muuttopalvelu',
     description:
       'Muuttopalvelu pääkaupunkiseudulla ja Tampereella. Koti- ja yritysmuutot, kantoapu, pakkaus ja muuttolaatikot kiinteällä hinnalla.',
-    images: ['/images/webp/hero/hero.webp'],
+    images: ['/images/og/muuttokone-tiimi.jpg'],
     creator: '@muuttokone',
   },
   robots: {

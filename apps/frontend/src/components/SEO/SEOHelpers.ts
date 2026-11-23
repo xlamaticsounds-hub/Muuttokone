@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
 
+/** Linkin jakokuva (WhatsApp, Facebook, LinkedIn...): tiimikuva 1200 × 630, sama kuin Yrityksille-sivun ylhäällä. */
+export const DEFAULT_OG_IMAGE = '/images/og/muuttokone-tiimi.jpg';
+
 interface SEOProps {
   title?: string;
   description?: string;
@@ -51,16 +54,15 @@ export function generateSEOMetadata({
       ? {
           title: openGraph.title || title,
           description: openGraph.description || description,
-          images: openGraph.image
-            ? [
-                {
-                  url: openGraph.image,
-                  width: 1200,
-                  height: 630,
-                  alt: openGraph.title || title,
-                },
-              ]
-            : undefined,
+          // Sivun oma openGraph korvaa layoutin kokonaan, joten ilman kuvaa jaetussa linkissä ei olisi kuvaa
+          images: [
+            {
+              url: openGraph.image || DEFAULT_OG_IMAGE,
+              width: 1200,
+              height: 630,
+              alt: openGraph.title || title,
+            },
+          ],
           type: openGraph.type || 'website',
           url: canonical ? `${siteUrl}${canonical}` : siteUrl,
         }

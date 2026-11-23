@@ -25,7 +25,7 @@ export function servicePageMetadata(slug: ServicePageSlug): Metadata {
     description: page.seoDescription,
     keywords: page.keywords,
     canonical: page.path,
-    openGraph: { title: page.seoTitle, description: page.seoDescription, image: '/images/webp/hero/hero.webp', type: 'website' },
+    openGraph: { title: page.seoTitle, description: page.seoDescription, image: '/images/og/muuttokone-tiimi.jpg', type: 'website' },
   });
 }
 

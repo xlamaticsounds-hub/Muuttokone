@@ -19,7 +19,7 @@ export const metadata: Metadata = generateSEOMetadata({
   openGraph: {
     title: SEOConfigs.home.title,
     description: SEOConfigs.home.description,
-    image: '/images/webp/hero/hero.webp',
+    image: '/images/og/muuttokone-tiimi.jpg',
     type: 'website',
   },
 });

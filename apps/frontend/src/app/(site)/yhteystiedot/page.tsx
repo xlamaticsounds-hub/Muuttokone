@@ -11,7 +11,7 @@ export const metadata: Metadata = generateSEOMetadata({
   openGraph: {
     title: SEOConfigs.contact.title,
     description: SEOConfigs.contact.description,
-    image: '/images/webp/hero/hero.webp',
+    image: '/images/og/muuttokone-tiimi.jpg',
     type: 'website',
   },
 });
