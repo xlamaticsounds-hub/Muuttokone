@@ -1,60 +1,83 @@
 import { describe, expect, it } from 'vitest';
-import { TEAM_HELSINKI, TEAM_TAMPERE, baseOfAddress, suggestTeamId, teamLabel } from './teams';
+import { TEAM_HELSINKI, TEAM_TAMPERE, kmFromBasesOfAddress, suggestTeamId, teamLabel } from './teams';
 
-describe('baseOfAddress', () => {
-  it('lähin tukikohta kunnan mukaan', () => {
-    expect(baseOfAddress('Hämeenkatu 1, 33100 Tampere')).toBe('tampere');
-    expect(baseOfAddress('Kauppakatu 5, Nokia, Finland')).toBe('tampere');
-    expect(baseOfAddress('Ylöjärventie 2, Ylöjärvi')).toBe('tampere');
-    expect(baseOfAddress('Raatihuoneenkatu 1, Hämeenlinna')).toBe('tampere');
-    expect(baseOfAddress('Yrjönkatu 1, Pori')).toBe('tampere');
-    expect(baseOfAddress('Kauppakatu 1, Vammala')).toBe('tampere');
-    expect(baseOfAddress('Mannerheimintie 1, 00100 Helsinki')).toBe('helsinki');
-    expect(baseOfAddress('Aleksanterinkatu 1, Lahti')).toBe('helsinki');
-    expect(baseOfAddress('Kirkkokatu 1, Oulu')).toBe('helsinki');
-    // Turku on yhtä kaukana: tasapelissä Helsinki
-    expect(baseOfAddress('Turuntie 10, Turku')).toBe('helsinki');
+describe('kmFromBasesOfAddress', () => {
+  it('kunnan nimestä, myös ruotsiksi ja entisillä nimillä', () => {
+    expect(kmFromBasesOfAddress('Hämeenkatu 1, 33100 Tampere')).toEqual({ helsinki: 180, tampere: 10 });
+    expect(kmFromBasesOfAddress('Kauppakatu 5, Nokia, Finland')?.tampere).toBe(25);
+    expect(kmFromBasesOfAddress('Mannerheimintie 1, 00100 Helsingfors')?.helsinki).toBe(10);
+    expect(kmFromBasesOfAddress('Kauppakatu 1, Vammala')?.tampere).toBe(65);
+    expect(kmFromBasesOfAddress('Kirkkokatu 1, Oulu')?.helsinki).toBe(Infinity);
   });
 
-  it('kadunnimi ei ratkaise kuntaa', () => {
-    expect(baseOfAddress('Tampereentie 5, Helsinki')).toBe('helsinki');
-    expect(baseOfAddress('Helsinginkatu 3, Tampere')).toBe('tampere');
+  it('kadunnimi ei ole kunta: viimeinen tunnettu kunta ratkaisee', () => {
+    expect(kmFromBasesOfAddress('Tampereentie 5, Helsinki')?.helsinki).toBe(10);
+    expect(kmFromBasesOfAddress('Helsinginkatu 3, Tampere')?.tampere).toBe(10);
   });
 
-  it('postinumero, kun kuntaa ei tunnisteta', () => {
-    expect(baseOfAddress('Jokukatu 1, 33720')).toBe('tampere');
-    expect(baseOfAddress('Jokukatu 1, 00500')).toBe('helsinki');
-    // 38xxx–39xxx sekoittuu Satakuntaan: ei arvata
-    expect(baseOfAddress('Jokukatu 1, 38700')).toBeNull();
+  it('postinumerosta vain Uusimaa (00–09) ja Tampereen seutu (33–37)', () => {
+    expect(kmFromBasesOfAddress('Jokukatu 1, 00500')?.helsinki).toBeLessThanOrEqual(100);
+    expect(kmFromBasesOfAddress('Jokukatu 1, 04400')?.helsinki).toBeLessThanOrEqual(100);
+    expect(kmFromBasesOfAddress('Jokukatu 1, 33720')?.tampere).toBeLessThanOrEqual(100);
+    expect(kmFromBasesOfAddress('Jokukatu 1, 38700')).toBeNull();
+    expect(kmFromBasesOfAddress('Jokukatu 1, 20100')).toBeNull();
   });
 
-  it('tuntematon tai tyhjä', () => {
-    expect(baseOfAddress('Jokukatu 1')).toBeNull();
-    expect(baseOfAddress(null)).toBeNull();
+  it('tuntematon', () => {
+    expect(kmFromBasesOfAddress('Jokukatu 1')).toBeNull();
+    expect(kmFromBasesOfAddress('Constructor 1')).toBeNull();
+    expect(kmFromBasesOfAddress(null)).toBeNull();
   });
 });
 
 describe('suggestTeamId', () => {
-  it('Pirkanmaan sisäinen muutto Tampereelle', () => {
-    expect(suggestTeamId({ fromAddress: 'Hervannan valtaväylä 1, Tampere', toAddress: 'Pirkkalantie 3, Pirkkala' })).toBe(TEAM_TAMPERE);
-  });
-
-  it('lähempänä Tamperetta myös Pirkanmaan ulkopuolella', () => {
-    expect(suggestTeamId({ fromAddress: 'Katu 1, Hämeenlinna', toAddress: 'Tie 2, Hattula' })).toBe(TEAM_TAMPERE);
-  });
-
-  it('lähempänä Helsinkiä Helsingille', () => {
+  it('pääkaupunkiseutu Helsingille', () => {
     expect(suggestTeamId({ fromAddress: 'Kamppi, Helsinki', toAddress: 'Tapiola, Espoo' })).toBe(TEAM_HELSINKI);
-    expect(suggestTeamId({ fromAddress: 'Aurakatu 1, Turku', toAddress: null })).toBe(TEAM_HELSINKI);
+    expect(suggestTeamId({ fromAddress: 'Tikkurilantie 1, Vantaa', toAddress: 'Kauniaistentie 2, Kauniainen' })).toBe(TEAM_HELSINKI);
+    expect(suggestTeamId({ fromAddress: 'Jokukatu 1, 00500', toAddress: 'Toinenkatu 2, 02100' })).toBe(TEAM_HELSINKI);
   });
 
-  it('yksi Pirkanmaan osoite (esim. laatikkotilaus) Tampereelle', () => {
+  it('kaupunginosa tai kauppakeskus ilman kuntaa', () => {
+    expect(suggestTeamId({ fromAddress: 'Picnic Columbus Vuosaari', toAddress: 'Tripla' })).toBe(TEAM_HELSINKI);
+    expect(suggestTeamId({ fromAddress: 'Pohjois-Haaga', toAddress: 'Sello' })).toBe(TEAM_HELSINKI);
+    expect(suggestTeamId({ fromAddress: 'Tikkurila', toAddress: 'Etu-Töölö' })).toBe(TEAM_HELSINKI);
+    expect(suggestTeamId({ fromAddress: 'Hervanta', toAddress: 'Ideapark' })).toBe(TEAM_TAMPERE);
+    // Kunta osoitteen lopussa ratkaisee kaupunginosan sijaan
+    expect(kmFromBasesOfAddress('Kallio, Hanko')?.helsinki).toBe(120);
+  });
+
+  it('alle 100 km tukikohdasta sen tiimille', () => {
+    expect(suggestTeamId({ fromAddress: 'Hervannan valtaväylä 1, Tampere', toAddress: 'Pirkkalantie 3, Pirkkala' })).toBe(TEAM_TAMPERE);
+    expect(suggestTeamId({ fromAddress: 'Katu 1, Porvoo', toAddress: 'Tie 2, Hyvinkää' })).toBe(TEAM_HELSINKI);
+    expect(suggestTeamId({ fromAddress: 'Katu 1, Valkeakoski', toAddress: 'Tie 2, Virrat' })).toBe(TEAM_TAMPERE);
+    expect(suggestTeamId({ fromAddress: 'Helsinki', toAddress: 'Lohja' })).toBe(TEAM_HELSINKI);
+  });
+
+  it('molempien säteellä lähemmälle', () => {
+    expect(suggestTeamId({ fromAddress: 'Katu 1, Hämeenlinna', toAddress: 'Tie 2, Janakkala' })).toBe(TEAM_TAMPERE);
+    expect(suggestTeamId({ fromAddress: 'Katu 1, Riihimäki', toAddress: 'Tie 2, Riihimäki' })).toBe(TEAM_HELSINKI);
+  });
+
+  it('kaikkien osoitteiden pitää olla saman tiimin säteellä', () => {
+    // Helsinki 10 km ja Hämeenlinna 100 km Helsingistä: Helsinki. Tampereelta Helsinki on liian kaukana.
+    expect(suggestTeamId({ fromAddress: 'Helsinki', toAddress: 'Hämeenlinna' })).toBe(TEAM_HELSINKI);
+    expect(suggestTeamId({ fromAddress: 'Tampere', toAddress: 'Helsinki' })).toBeNull();
+    expect(suggestTeamId({ fromAddress: 'Espoo', toAddress: 'Oulu' })).toBeNull();
+  });
+
+  it('yli 100 km kummastakin tukikohdasta jää avoimeksi', () => {
+    expect(suggestTeamId({ fromAddress: 'Aurakatu 1, Turku', toAddress: null })).toBeNull();
+    expect(suggestTeamId({ fromAddress: 'Aleksanterinkatu 1, Lahti', toAddress: 'Lahti' })).toBeNull();
+    expect(suggestTeamId({ fromAddress: 'Yrjönkatu 1, Pori', toAddress: 'Pori' })).toBeNull();
+    expect(suggestTeamId({ fromAddress: 'Kirkkokatu 1, 90100 Oulu', toAddress: 'Oulu' })).toBeNull();
+    expect(suggestTeamId({ fromAddress: 'Kauppakatu 1, Hanko', toAddress: 'Hanko' })).toBeNull();
+  });
+
+  it('yksi osoite (esim. laatikkotilaus) riittää', () => {
     expect(suggestTeamId({ fromAddress: 'Satakunnankatu 10, 33210 Tampere', toAddress: '' })).toBe(TEAM_TAMPERE);
   });
 
-  it('alueiden välinen, tuntematon tai puuttuva osoite jää jakamattomaksi', () => {
-    expect(suggestTeamId({ fromAddress: 'Tampere', toAddress: 'Helsinki' })).toBeNull();
-    expect(suggestTeamId({ fromAddress: 'Hämeenlinna', toAddress: 'Helsinki' })).toBeNull();
+  it('tuntematon tai puuttuva osoite jää jakamattomaksi', () => {
     expect(suggestTeamId({ fromAddress: 'Jokukatu 1', toAddress: 'Tampere' })).toBeNull();
     expect(suggestTeamId({ fromAddress: null, toAddress: null })).toBeNull();
   });

@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => {
   const matches = (row: Row, where: Row = {}) =>
     Object.entries(where).every(([key, value]) => {
       if (value && typeof value === 'object' && 'in' in value) return (value.in as unknown[]).includes(row[key]);
+      if (value && typeof value === 'object' && 'notIn' in value) return !(value.notIn as unknown[]).includes(row[key]);
       return row[key] === value;
     });
   const logMatches = (row: Row, where: Row = {}) =>
@@ -49,7 +50,13 @@ const mocks = vi.hoisted(() => {
     },
     lead: {
       findUnique: vi.fn(async ({ where }: any) => byId(state.leads, where.id)),
+      findMany: vi.fn(async ({ where }: any) => state.leads.filter((l) => matches(l, where))),
       update: vi.fn(async ({ where, data }: any) => Object.assign(byId(state.leads, where.id)!, data)),
+      updateMany: vi.fn(async ({ where, data }: any) => {
+        const rows = state.leads.filter((l) => matches(l, where));
+        rows.forEach((row) => Object.assign(row, data));
+        return { count: rows.length };
+      }),
     },
     timeEntry: {
       findUnique: vi.fn(async ({ where }: any) => byId(state.entries, where.id)),
@@ -117,7 +124,7 @@ vi.mock('@/server/app-state', () => ({ setAppState: vi.fn(async () => {}), getAp
 
 const { updateLeadStatus } = await import('./actions');
 const { saveDiscountCode } = await import('./discount-code-actions');
-const { setLeadTeam } = await import('./team-actions');
+const { setLeadTeam, autoAssignUnassignedLeads } = await import('./team-actions');
 const { startTimeEntry, stopTimeEntry, saveTimeEntry, deleteTimeEntry } = await import('./time-actions');
 const { setBoxRentalStatus, adjustBoxStock } = await import('./box-rental-actions');
 const { createUser, setUserActive, deleteUser, changeOwnPassword, addWorker, resetUserPassword } = await import('./user-actions');
@@ -292,6 +299,24 @@ describe('omistajan käyttäjähallinta', () => {
     await new Promise((resolve) => setTimeout(resolve, 5));
     for (let i = 0; i < 10; i++) await recordLogin('crew@example.com', false);
     expect(await tooManyFailedLogins('crew@example.com')).toBe(true);
+  });
+});
+
+describe('keikkojen automaattinen jako', () => {
+  it('omistaja jakaa jakamattomat osoitteen mukaan, kaukaiset jäävät avoimiksi', async () => {
+    const open = { status: 'NEW', formData: null, calendarEventId: null, requestedDate: null, deletedAt: null, teamId: null };
+    mocks.state.leads.push(
+      { ...open, id: 'u_pks', fromAddress: 'Kamppi, Helsinki', toAddress: 'Tapiola, Espoo' },
+      { ...open, id: 'u_tre', fromAddress: 'Hervanta, Tampere', toAddress: 'Nokia' },
+      { ...open, id: 'u_far', fromAddress: 'Aurakatu 1, Turku', toAddress: 'Turku' },
+      { ...open, id: 'u_done', status: 'COMPLETED', fromAddress: 'Helsinki', toAddress: 'Vantaa' },
+    );
+    as('elias@example.com');
+    expect((await autoAssignUnassignedLeads()).success).toBe(false);
+    as('owner@example.com');
+    expect(await autoAssignUnassignedLeads()).toEqual({ success: true, assigned: 2, left: 1 });
+    const team = (id: string) => mocks.state.leads.find((l) => l.id === id)!.teamId;
+    expect([team('u_pks'), team('u_tre'), team('u_far'), team('u_done')]).toEqual(['helsinki', 'tampere', null, null]);
   });
 });
 

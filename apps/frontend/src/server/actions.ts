@@ -8,7 +8,7 @@ import { createLead } from './repo/leads';
 import { createLog } from './repo/logs';
 import { LeadSource, LeadStatus } from '@prisma/client';
 import { getLeadSession } from '@/server/access';
-import { suggestTeamId } from '@/lib/teams';
+import { suggestTeamId, teamLabel } from '@/lib/teams';
 import { teamRelation } from './repo/leads';
 import { isCompletedStatus } from '@/lib/lead-status';
 import { leadPreferredTime } from '@/lib/calendar-time';
@@ -234,8 +234,11 @@ export async function updateLeadDetails(leadId: string, data: any) {
   // lähetetty lopullinen TARJOUS voivat olla eri asioita.
   const existingLead = await prisma.lead.findUnique({
     where: { id: leadId },
-    select: { formData: true, calendarEventId: true, requestedDate: true, contactId: true, discountPercent: true, status: true },
+    select: { formData: true, calendarEventId: true, requestedDate: true, contactId: true, discountPercent: true, status: true, teamId: true },
   });
+  // Jakamaton keikka saa tiimin, kun osoitteet korjataan jaettaviksi (lib/teams.ts). Valittua tiimiä ei vaihdeta.
+  const autoTeamId =
+    existingLead && !existingLead.teamId ? suggestTeamId({ fromAddress: data.fromAddress, toAddress: data.toAddress }) : null;
   const existingFormData = parseLeadFormData(existingLead?.formData ?? null);
   const confirmedPriceRaw = typeof data.confirmedPrice === 'string' ? data.confirmedPrice.trim() : data.confirmedPrice;
   const updatedFormData = { ...existingFormData };
@@ -315,8 +318,19 @@ export async function updateLeadDetails(leadId: string, data: any) {
       notes: data.notes,
       formData: JSON.stringify(updatedFormData),
       ...discountPrices,
+      ...(autoTeamId && { teamId: autoTeamId }),
     },
   });
+  if (autoTeamId) {
+    await createLog({
+      entityType: 'Lead',
+      entityId: leadId,
+      action: 'lead.team_changed',
+      message: `Tiimi: ${teamLabel(null)} -> ${teamLabel(autoTeamId)} (automaattinen, osoitteen mukaan)`,
+      data: { from: null, to: autoTeamId, auto: true },
+      actorId: session.user.email,
+    }).catch(() => {});
+  }
 
   if (existingLead?.contactId && typeof data.customerName === 'string') {
     const customerName = data.customerName.trim();

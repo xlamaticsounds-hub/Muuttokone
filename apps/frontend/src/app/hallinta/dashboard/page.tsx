@@ -6,6 +6,7 @@ import { toHelsinkiDateInput } from '@/lib/helsinki-time';
 import JobsCalendar, { type CalendarJob, type CalendarNotices } from './JobsCalendar';
 import { INACTIVE_JOB_STATUSES } from '@/lib/lead-status';
 import AiTodoList, { type AiTodoItem, type MailStatus } from './AiTodoList';
+import AutoAssignButton from './AutoAssignButton';
 import { getLastMailCycle } from '@/server/mail-cycle';
 import { getIngestMode } from '@/server/mail-ingest';
 import { describeLastRun } from '@/lib/mail-status';
@@ -156,13 +157,17 @@ export default async function DashboardPage() {
       )}
 
       {unassigned > 0 && (
-        <Link
-          href="/hallinta/liidit?tiimi=jakamaton"
-          className="flex min-h-11 flex-wrap items-center gap-x-2 rounded-lg border border-violet-200 bg-violet-50 px-4 py-2 text-sm text-violet-900 hover:bg-violet-100 dark:border-violet-900/40 dark:bg-violet-900/20 dark:text-violet-200 dark:hover:bg-violet-900/30"
-        >
-          <span className="font-semibold">Jakamattomat:</span> {unassigned} {unassigned === 1 ? 'keikka ilman tiimiä' : 'keikkaa ilman tiimiä'} (Helsinki vai Tampere?)
-          <span className="ml-auto font-semibold">Valitse tiimi →</span>
-        </Link>
+        <div className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-violet-200 bg-violet-50 px-4 py-2 text-sm text-violet-900 dark:border-violet-900/40 dark:bg-violet-900/20 dark:text-violet-200">
+          <span>
+            <span className="font-semibold">Jakamattomat:</span> {unassigned} {unassigned === 1 ? 'keikka ilman tiimiä' : 'keikkaa ilman tiimiä'}
+          </span>
+          <span className="ml-auto flex flex-wrap items-center gap-3">
+            <AutoAssignButton />
+            <Link href="/hallinta/liidit?tiimi=jakamaton" className="font-semibold hover:underline">
+              Valitse tiimi →
+            </Link>
+          </span>
+        </div>
       )}
 
       {boxNotices.length > 0 && (

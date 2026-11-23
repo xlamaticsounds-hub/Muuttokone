@@ -11,8 +11,8 @@
 // yksiön ja kaksion tuntiansio jää silloin noin 3–13 €/h per henkilö.
 //
 // Tukikohtia on kaksi: Helsinki ja Tampere (Hervanta, Teinvarsi-parkki, 14.11.2026 alkaen). Keikka
-// lasketaan siitä tukikohdasta, josta tyhjää ajoa tulee vähemmän (tasapelissä Helsinki). Sama sääntö
-// ehdottaa liidille tiimiä (lib/teams.ts).
+// lasketaan siitä tukikohdasta, josta tyhjää ajoa tulee vähemmän (tasapelissä Helsinki). Liidin tiimi
+// jaetaan saman etäisyystaulukon avulla (lib/teams.ts: 100 km säde).
 //
 // Arvio tehdään kuntatasolla (likimääräiset tieetäisyydet tukikohdista), joten sitä ei tarvitse
 // Google-kyselyä eikä tukikohtien osoitteita koodissa. Tulos on suuntaa-antava: "noin".
@@ -71,12 +71,13 @@ const KM_FROM_BASES: Record<string, readonly [helsinki: number, tampere: number]
 
 const isKnownCity = (key: string) => Object.prototype.hasOwnProperty.call(KM_FROM_BASES, key);
 
-/** Kunnan lähin tukikohta (tasapelissä Helsinki). null, kun kuntaa ei ole taulukossa. */
-export function nearestBaseOfCity(cityKey: string): BaseId | null {
+/** Likimääräinen tieetäisyys tukikohdista kuntaan (km). null, kun kuntaa ei ole taulukossa. */
+export function kmFromBasesOfCity(cityKey: string): Record<BaseId, number> | null {
   if (!isKnownCity(cityKey)) return null;
   const [helsinki, tampere] = KM_FROM_BASES[cityKey];
-  return tampere < helsinki ? 'tampere' : 'helsinki';
+  return { helsinki, tampere };
 }
+
 
 export type BaseTripAdvice = {
   /** Tukikohta, josta keikka lasketaan (lähempi). */

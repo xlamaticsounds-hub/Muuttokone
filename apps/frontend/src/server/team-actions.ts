@@ -3,9 +3,10 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
-import { getLeadSession } from '@/server/access';
+import { getLeadSession, getOwnerSession } from '@/server/access';
 import { CREW_HOME } from '@/lib/access';
-import { isTeamId, teamLabel } from '@/lib/teams';
+import { INACTIVE_JOB_STATUSES } from '@/lib/lead-status';
+import { isTeamId, suggestTeamId, teamLabel } from '@/lib/teams';
 import { parseLeadFormData } from '@/server/lead-format';
 import { CREW_NOTES_KEY, MAX_CREW_NOTES } from '@/server/crew-jobs';
 
@@ -40,6 +41,51 @@ export async function setCrewNotes(leadId: string, text: string): Promise<TeamAc
   } catch (error) {
     console.error('[team-actions] setCrewNotes epäonnistui', error);
     return { success: false, message: 'Tallennus epäonnistui. Yritä uudelleen.' };
+  }
+}
+
+export type AutoAssignResult = { success: true; assigned: number; left: number } | { success: false; message: string };
+
+/**
+ * Jakaa avoimet jakamattomat keikat tiimeille osoitteen mukaan, samalla säännöllä kuin uudet liidit
+ * (lib/teams.ts: pääkaupunkiseutu Helsingille, muut 100 km säteellä tiimille). Kauempana olevat ja
+ * tunnistamattomat jäävät jakamattomiksi. Vain omistaja.
+ */
+export async function autoAssignUnassignedLeads(): Promise<AutoAssignResult> {
+  const session = await getOwnerSession();
+  if (!session) return { success: false, message: 'Ei oikeuksia.' };
+  try {
+    const leads = await prisma.lead.findMany({
+      where: { status: { notIn: INACTIVE_JOB_STATUSES }, teamId: null, deletedAt: null },
+      select: { id: true, fromAddress: true, toAddress: true },
+    });
+    let assigned = 0;
+    for (const lead of leads) {
+      const teamId = suggestTeamId(lead);
+      if (!teamId) continue;
+      // Ehto teamId: null: ei ohiteta tiimiä, jonka joku valitsi samaan aikaan
+      const { count } = await prisma.lead.updateMany({ where: { id: lead.id, teamId: null }, data: { teamId } });
+      if (count === 0) continue;
+      assigned++;
+      await createLog({
+        entityType: 'Lead',
+        entityId: lead.id,
+        action: 'lead.team_changed',
+        message: `Tiimi: ${teamLabel(null)} -> ${teamLabel(teamId)} (automaattinen, osoitteen mukaan)`,
+        data: { from: null, to: teamId, auto: true },
+        actorId: session.user.email,
+      }).catch(() => {});
+    }
+    if (assigned > 0) {
+      revalidatePath('/hallinta/liidit');
+      revalidatePath('/hallinta/keikat');
+      revalidatePath('/hallinta/dashboard');
+      revalidatePath(CREW_HOME);
+    }
+    return { success: true, assigned, left: leads.length - assigned };
+  } catch (error) {
+    console.error('[team-actions] autoAssignUnassignedLeads epäonnistui', error);
+    return { success: false, message: 'Automaattinen jako epäonnistui. Yritä uudelleen.' };
   }
 }
 
