@@ -4,8 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { prisma } from '@/server/db';
 import { createLog } from '@/server/repo/logs';
 import { getActor, getAdminSession, getOwnerSession } from '@/server/access';
-import { findUserByEmail, isEnvOwner, normalizeEmail } from '@/server/actors';
-import { generateTempPassword, hashPassword, passwordProblem, verifyPassword } from '@/server/password';
+import { clearFailedLogins, findUserByEmail, isEnvOwner, normalizeEmail } from '@/server/actors';
+import { generateTempPassword, hashPassword, passwordProblem, verifyPassword, verifyUserPassword } from '@/server/password';
 import { CREW_HOME, USERS_PATH, canAccessTeam, isRole, roleNeedsTeam, ROLE_LABELS, type Role } from '@/lib/access';
 import { isTeamId, teamLabel } from '@/lib/teams';
 
@@ -143,6 +143,7 @@ export async function resetUserPassword(id: string): Promise<UserActionResult> {
     if (!user) return { success: false, message: 'Käyttäjää ei löytynyt.' };
     const tempPassword = generateTempPassword();
     await prisma.user.update({ where: { id }, data: { passwordHash: await hashPassword(tempPassword), mustChangePassword: true } });
+    await clearFailedLogins(user.email, session.user.email);
     await log('user.password_reset', id, `Väliaikainen salasana annettu: ${user.email}`, session.user.email);
     refreshUsers();
     return { success: true, tempPassword };
@@ -188,7 +189,7 @@ export async function changeOwnPassword(input: { current?: string; next: string;
   try {
     const user = await findUserByEmail(actor.email);
     if (user?.passwordHash) {
-      if (!(await verifyPassword(input.current ?? '', user.passwordHash))) return { success: false, message: 'Nykyinen salasana on väärin.' };
+      if (!(await verifyUserPassword(input.current ?? '', user))) return { success: false, message: 'Nykyinen salasana on väärin.' };
       if (await verifyPassword(next, user.passwordHash)) return { success: false, message: 'Valitse eri salasana kuin nykyinen.' };
     }
     const passwordHash = await hashPassword(next);

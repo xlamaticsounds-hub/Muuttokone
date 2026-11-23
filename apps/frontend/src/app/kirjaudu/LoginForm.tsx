@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from 'react';
 import { signIn } from 'next-auth/react';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { LOGIN_LOCKED_ERROR, LOGIN_LOCKED_MESSAGE } from '@/lib/access';
 
 const inputClass =
   'block h-12 w-full rounded-xl border border-gray-300 bg-white px-4 text-base text-gray-900 shadow-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/30';
@@ -30,7 +31,11 @@ export default function LoginForm({
     try {
       const result = await signIn('credentials', { email: email.trim(), password, redirect: false, callbackUrl });
       if (!result?.ok || result.error) {
-        setError('Sähköposti tai salasana on väärin. Monen väärän yrityksen jälkeen kirjautuminen estetään 15 minuutiksi.');
+        setError(
+          result?.error === LOGIN_LOCKED_ERROR
+            ? LOGIN_LOCKED_MESSAGE
+            : 'Sähköposti tai salasana on väärin. Monen väärän yrityksen jälkeen kirjautuminen estetään 15 minuutiksi.',
+        );
         setPassword('');
         setPending(false);
         return;
@@ -79,6 +84,10 @@ export default function LoginForm({
               id="password"
               type={showPassword ? 'text' : 'password'}
               autoComplete="current-password"
+              // Näkyvissä salasana on tekstikenttä: ilman näitä puhelin muuttaa alkukirjaimen isoksi
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}

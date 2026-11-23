@@ -20,6 +20,15 @@ const mocks = vi.hoisted(() => {
       if (value && typeof value === 'object' && 'in' in value) return (value.in as unknown[]).includes(row[key]);
       return row[key] === value;
     });
+  const logMatches = (row: Row, where: Row = {}) =>
+    Object.entries(where).every(([key, value]) => {
+      if (value && typeof value === 'object' && !(value instanceof Date)) {
+        if ('in' in value) return (value.in as unknown[]).includes(row[key]);
+        if ('gt' in value) return row[key] > value.gt;
+        if ('gte' in value) return row[key] >= value.gte;
+      }
+      return row[key] === value;
+    });
   let seq = 0;
   const prisma = {
     user: {
@@ -72,8 +81,15 @@ const mocks = vi.hoisted(() => {
       update: vi.fn(async ({ where, data }: any) => Object.assign(byId(state.rentals, where.id)!, data)),
     },
     log: {
-      create: vi.fn(async ({ data }: any) => (state.logs.push(data), data)),
-      count: vi.fn(async () => 0),
+      create: vi.fn(async ({ data }: any) => {
+        const row = { createdAt: new Date(), ...data };
+        state.logs.push(row);
+        return row;
+      }),
+      count: vi.fn(async ({ where }: any) => state.logs.filter((l) => logMatches(l, where)).length),
+      findFirst: vi.fn(
+        async ({ where }: any) => state.logs.filter((l) => logMatches(l, where)).sort((a, b) => b.createdAt - a.createdAt)[0] ?? null,
+      ),
     },
   };
   return { state, prisma };
@@ -104,8 +120,8 @@ const { saveDiscountCode } = await import('./discount-code-actions');
 const { setLeadTeam } = await import('./team-actions');
 const { startTimeEntry, stopTimeEntry, saveTimeEntry, deleteTimeEntry } = await import('./time-actions');
 const { setBoxRentalStatus, adjustBoxStock } = await import('./box-rental-actions');
-const { createUser, setUserActive, deleteUser, changeOwnPassword, addWorker } = await import('./user-actions');
-const { resolveActor } = await import('./actors');
+const { createUser, setUserActive, deleteUser, changeOwnPassword, addWorker, resetUserPassword } = await import('./user-actions');
+const { resolveActor, recordLogin, tooManyFailedLogins } = await import('./actors');
 const { verifyPassword } = await import('./password');
 
 const user = (id: string, email: string, role: string, teamId: string | null, extra: Record<string, unknown> = {}) => ({
@@ -265,6 +281,18 @@ describe('omistajan käyttäjähallinta', () => {
     expect((await deleteUser('crew')).success).toBe(true);
     expect(mocks.state.users.some((u) => u.id === 'crew')).toBe(false);
   });
+
+  it('uusi väliaikainen salasana avaa kirjautumislukon heti', async () => {
+    for (let i = 0; i < 10; i++) await recordLogin('Crew@example.com', false);
+    expect(await tooManyFailedLogins('crew@example.com')).toBe(true);
+    const result = await resetUserPassword('crew');
+    expect(result.success).toBe(true);
+    expect(await tooManyFailedLogins('crew@example.com')).toBe(false);
+    // Uudet väärät yritykset lasketaan taas avauksesta alkaen
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    for (let i = 0; i < 10; i++) await recordLogin('crew@example.com', false);
+    expect(await tooManyFailedLogins('crew@example.com')).toBe(true);
+  });
 });
 
 describe('oma salasana', () => {
@@ -275,7 +303,13 @@ describe('oma salasana', () => {
     as('leader@example.com');
     expect((await changeOwnPassword({ current: 'väärä', next: 'uusi hyvä salasana', confirm: 'uusi hyvä salasana' })).success).toBe(false);
     expect((await changeOwnPassword({ current: temp, next: 'uusi hyvä salasana', confirm: 'eri salasana tässä' })).success).toBe(false);
-    expect((await changeOwnPassword({ current: temp, next: 'uusi hyvä salasana', confirm: 'uusi hyvä salasana' })).success).toBe(true);
+    // Puhelimen isolla alkukirjaimella kirjoittama väliaikainen kelpaa nykyiseksi
+    expect((await changeOwnPassword({ current: temp.toUpperCase(), next: 'uusi hyvä salasana', confirm: 'uusi hyvä salasana' })).success).toBe(true);
+    as('owner@example.com');
+    const again = await resetUserPassword(mocks.state.users.find((u) => u.email === 'leader@example.com')!.id);
+    const temp2 = again.success ? again.tempPassword! : '';
+    as('leader@example.com');
+    expect((await changeOwnPassword({ current: temp2, next: 'uusi hyvä salasana', confirm: 'uusi hyvä salasana' })).success).toBe(true);
     const row = mocks.state.users.find((u) => u.email === 'leader@example.com')!;
     expect(row.mustChangePassword).toBe(false);
     expect(await verifyPassword('uusi hyvä salasana', row.passwordHash)).toBe(true);

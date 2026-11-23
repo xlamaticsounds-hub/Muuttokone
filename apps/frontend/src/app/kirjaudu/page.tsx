@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getActor } from '@/server/access';
 import { hasGoogleOAuth } from '@/server/auth';
-import { homePath, safeCallbackPath } from '@/lib/access';
+import { LOGIN_LOCKED_ERROR, LOGIN_LOCKED_MESSAGE, homePath, safeCallbackPath } from '@/lib/access';
 import LoginForm from './LoginForm';
 
 // Hallinnan kirjautuminen Muuttokoneen ilmeellä (NextAuthin oletussivun tilalla, server/auth.ts: pages).
@@ -21,6 +21,7 @@ export const dynamic = 'force-dynamic';
 function errorMessage(code: string | undefined): string | null {
   if (!code || code === 'SessionRequired') return null;
   if (code === 'CredentialsSignin') return 'Sähköposti tai salasana on väärin.';
+  if (code === LOGIN_LOCKED_ERROR) return LOGIN_LOCKED_MESSAGE;
   if (code === 'AccessDenied') return 'Google-kirjautuminen on vain omistajille. Kirjaudu sähköpostilla ja salasanalla.';
   return 'Kirjautuminen ei onnistunut. Yritä uudelleen.';
 }

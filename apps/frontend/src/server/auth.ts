@@ -2,8 +2,8 @@ import NextAuth, { type NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { findUserByEmail, isEnvOwner, normalizeEmail, recordLogin, resolveActor, tooManyFailedLogins } from "@/server/actors";
-import { safeEqual, verifyPassword } from "@/server/password";
-import { LOGIN_PATH } from "@/lib/access";
+import { safeEqual, verifyUserPassword } from "@/server/password";
+import { LOGIN_LOCKED_ERROR, LOGIN_PATH } from "@/lib/access";
 
 // Kirjautuminen: jokaisella hallinnan käyttäjällä on oma salasana (User-taulu, käyttäjähallinta
 // /hallinta/kayttajat). Yhteinen ADMIN_LOGIN_PASSWORD toimii enää hätäavaimena ympäristömuuttujan
@@ -48,12 +48,13 @@ export const authOptions: NextAuthOptions = {
         const password = credentials?.password ?? "";
 
         if (!email || !password) return null;
-        if (await tooManyFailedLogins(email)) return null;
+        // Oma virhe lukitukselle: muuten oikeakin salasana näyttää lomakkeella väärältä
+        if (await tooManyFailedLogins(email)) throw new Error(LOGIN_LOCKED_ERROR);
 
         const user = await findUserByEmail(email);
 
-        // 1) Oma salasana
-        if (user?.active && user.passwordHash && (await verifyPassword(password, user.passwordHash))) {
+        // 1) Oma salasana. Väliaikainen hyväksytään myös puhelimen muokkaamana (iso alkukirjain, välilyönnit).
+        if (user?.active && user.passwordHash && (await verifyUserPassword(password, user))) {
           await recordLogin(email, true, { method: "password" });
           return { id: user.id, email, name: user.name };
         }

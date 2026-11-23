@@ -35,6 +35,11 @@ export const ADMIN_HOME = '/hallinta/dashboard';
 export const USERS_PATH = '/hallinta/kayttajat';
 export const LOGIN_PATH = '/kirjaudu';
 
+/** Kirjautumisen virhekoodi, kun sähköpostilla on liian monta väärää yritystä (server/auth.ts). */
+export const LOGIN_LOCKED_ERROR = 'LoginLocked';
+export const LOGIN_LOCKED_MESSAGE =
+  'Liian monta väärää yritystä. Kirjautuminen on estetty 15 minuutiksi, tai pyydä omistajalta uusi väliaikainen salasana (se avaa eston heti).';
+
 /** Kirjautumissivu, jolta palataan annetulle hallinnan sivulle. */
 export function loginUrl(callbackPath: string): string {
   return `${LOGIN_PATH}?callbackUrl=${encodeURIComponent(callbackPath)}`;

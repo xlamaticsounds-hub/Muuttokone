@@ -67,18 +67,41 @@ export async function resolveActor(email: string | null | undefined): Promise<Ac
 }
 
 // Kirjautumisyritysten rajoitus sähköpostia kohden (Log-taulu, kuten muukin rajoitus).
+const LOGIN_OK = 'auth.login';
 const LOGIN_FAILED = 'auth.login_failed';
+const LOGIN_UNLOCK = 'auth.unlock';
 const MAX_FAILED_LOGINS = 10;
 const FAILED_WINDOW_MS = 15 * 60 * 1000;
 
 export async function tooManyFailedLogins(email: string): Promise<boolean> {
+  const entityId = normalizeEmail(email);
+  const windowStart = new Date(Date.now() - FAILED_WINDOW_MS);
   try {
+    // Onnistunut kirjautuminen tai omistajan antama uusi salasana nollaa laskurin. Ilman tätä
+    // väliaikainen salasana näytti väärältä, kunnes edellisistä yrityksistä oli kulunut 15 minuuttia.
+    const reset = await prisma.log.findFirst({
+      where: { entityType: 'User', entityId, action: { in: [LOGIN_OK, LOGIN_UNLOCK] }, createdAt: { gte: windowStart } },
+      orderBy: { createdAt: 'desc' },
+      select: { createdAt: true },
+    });
     const count = await prisma.log.count({
-      where: { entityType: 'User', entityId: normalizeEmail(email), action: LOGIN_FAILED, createdAt: { gte: new Date(Date.now() - FAILED_WINDOW_MS) } },
+      where: { entityType: 'User', entityId, action: LOGIN_FAILED, createdAt: reset ? { gt: reset.createdAt } : { gte: windowStart } },
     });
     return count >= MAX_FAILED_LOGINS;
   } catch {
     return false;
+  }
+}
+
+/** Avaa kirjautumislukon (omistaja antoi uuden väliaikaisen salasanan). */
+export async function clearFailedLogins(email: string, actorId: string): Promise<void> {
+  const normalized = normalizeEmail(email);
+  try {
+    await prisma.log.create({
+      data: { entityType: 'User', entityId: normalized, action: LOGIN_UNLOCK, message: `Kirjautumislukko avattu: ${normalized}`, actorId },
+    });
+  } catch (error) {
+    console.error('[actors] Kirjautumislukon avaus epäonnistui', error);
   }
 }
 

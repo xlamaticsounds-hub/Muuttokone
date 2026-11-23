@@ -59,6 +59,24 @@ export function generateTempPassword(): string {
   return [group(), group(), group()].join('-');
 }
 
+/**
+ * Puhelimella kirjoitettu väliaikainen salasana takaisin muotoon "k7mp-x3qa-9fhd": näppäimistö voi
+ * aloittaa isolla kirjaimella, ja viivan tilalla voi olla välilyönti, ajatusviiva tai ei mitään.
+ * null, jos syöte ei ole väliaikaisen salasanan muotoinen.
+ */
+export function normalizeTempPassword(input: string): string | null {
+  const compact = input.toLowerCase().replace(/[\s\-\u2010-\u2015\u2212]/g, '');
+  if (compact.length !== 12 || [...compact].some((c) => !TEMP_ALPHABET.includes(c))) return null;
+  return [compact.slice(0, 4), compact.slice(4, 8), compact.slice(8)].join('-');
+}
+
+/** Käyttäjän salasanan tarkistus (kirjautuminen ja salasanan vaihto). */
+export async function verifyUserPassword(password: string, user: { passwordHash?: string | null; mustChangePassword?: boolean }): Promise<boolean> {
+  if (await verifyPassword(password, user.passwordHash)) return true;
+  const temp = user.mustChangePassword ? normalizeTempPassword(password) : null;
+  return Boolean(temp && temp !== password && (await verifyPassword(temp, user.passwordHash)));
+}
+
 /** Merkkijonojen vertailu vakioajassa (hätäavain). */
 export function safeEqual(a: string, b: string): boolean {
   const ab = Buffer.from(a);
