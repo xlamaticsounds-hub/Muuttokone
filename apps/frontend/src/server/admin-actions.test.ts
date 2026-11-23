@@ -117,7 +117,14 @@ describe('markLeadCompleted', () => {
     expect(mocks.syncCalendarWithLeadStatus).not.toHaveBeenCalled();
   });
 
-  it.each(['', '0', 'abc', '-100', '200000'])('hylkää virheellisen hinnan %j', async (input) => {
+  it('hyväksyy 0 € (ilmainen keikka some-yhteistyötä vastaan)', async () => {
+    expect(await markLeadCompleted('lead_1', '0')).toEqual({ success: true });
+    const lead = mocks.state.leads.get('lead_1')!;
+    expect(lead.status).toBe('COMPLETED');
+    expect(lead.finalPrice).toBe(0);
+  });
+
+  it.each(['', 'abc', '-100', '200000'])('hylkää virheellisen hinnan %j', async (input) => {
     const result = await markLeadCompleted('lead_1', input);
     expect(result.success).toBe(false);
     expect(mocks.state.leads.get('lead_1')!.status).toBe('WON');
