@@ -14,6 +14,7 @@ export const metadata: Metadata = generateSEOMetadata({
   openGraph: {
     title: SEOConfigs.tyoapu.title,
     description: SEOConfigs.tyoapu.description,
+    image: '/images/og/tyoapu-johdot.jpg',
     type: 'website',
   },
 });
@@ -50,7 +51,21 @@ export default function TyoapuPage() {
       {/* Hero */}
       <section className="bg-primary relative overflow-hidden py-20 lg:py-28">
         <div className="relative z-10 mx-auto max-w-1390 px-4 md:px-8 xl:px-21">
-          <div className="max-w-2xl">
+          <div className="flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
+          {/* Kuva: puhelimella tekstin yläpuolella, isoilla näytöillä oikealla (kuten Yrityksille-sivulla) */}
+          <div className="w-full lg:order-last lg:w-[46%] lg:shrink-0">
+            <Image
+              src="/images/tiimi/tyoapu-johdot.jpg"
+              alt="Muuttokoneen työntekijä kantaa johtoja, jatkojohtoja ja laturia"
+              width={1800}
+              height={1200}
+              priority
+              quality={90}
+              sizes="(min-width: 1390px) 600px, (min-width: 1024px) 46vw, 100vw"
+              className="h-auto w-full rounded-2xl shadow-2xl ring-1 ring-white/20"
+            />
+          </div>
+          <div className="max-w-2xl lg:flex-1">
             <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-white/80">Työapu</p>
             <h1 className="mb-5 text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
               Lisäkädet asennuksiin ja arjen töihin
@@ -73,6 +88,7 @@ export default function TyoapuPage() {
                 Katso mitä teemme
               </Link>
             </div>
+          </div>
           </div>
         </div>
       </section>
