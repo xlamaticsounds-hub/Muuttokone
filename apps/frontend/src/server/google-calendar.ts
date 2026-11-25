@@ -6,6 +6,11 @@
 // target calendar (GOOGLE_CALENDAR_ID) shared with the service account's
 // `client_email` with "Make changes to events" permission.
 //
+// Tiimien omat kalenterit: GOOGLE_CALENDAR_ID_<TIIMI> (esim. GOOGLE_CALENDAR_ID_TAMPERE) ohjaa tiimin
+// keikat ja laatikkovuokrat omaan kalenteriinsa. Ilman sitä tiimi käyttää yhteistä GOOGLE_CALENDAR_ID:tä.
+// Kalenteri päätellään liidin tiimistä joka kerta. Jos tapahtuma on vielä vanhassa kalenterissa (tiimi
+// vaihtui tai tiimin kalenteri otettiin käyttöön myöhemmin), se siirretään ennen muokkausta.
+//
 // Every function here is best-effort: a Calendar failure is logged (via the
 // existing Log model) and swallowed rather than thrown, because creating the
 // lead and posting it to Discord must never depend on Calendar being
@@ -30,6 +35,7 @@ import {
 import { helsinkiLocalToUtc } from '@/lib/helsinki-time';
 import { GoogleAuth } from 'google-auth-library';
 import { createLog } from '@/server/repo/logs';
+import { TEAMS } from '@/lib/teams';
 import { setLeadCalendarEventId } from '@/server/repo/leads';
 import type { LeadStatus } from '@prisma/client';
 
@@ -57,6 +63,83 @@ const COLOR_ID_CONFIRMED = '10'; // Basil (green)
 
 function getCalendarId(): string | null {
   return process.env.GOOGLE_CALENDAR_ID || null;
+}
+
+/** Tiimin kalenteri: GOOGLE_CALENDAR_ID_<TIIMI> jos asetettu, muuten yhteinen kalenteri. */
+export function calendarIdForTeam(teamId: string | null | undefined): string | null {
+  const own = teamId ? process.env[`GOOGLE_CALENDAR_ID_${teamId.toUpperCase()}`]?.trim() : '';
+  return own || getCalendarId();
+}
+
+/** Tiimit, joilla on oma kalenteri (eri kuin yhteinen). */
+export function teamsWithOwnCalendar(): string[] {
+  const shared = getCalendarId();
+  return TEAMS.map((t) => t.id).filter((id) => {
+    const own = calendarIdForTeam(id);
+    return Boolean(own && own !== shared);
+  });
+}
+
+/** Kaikki käytössä olevat kalenterit (yhteinen ja tiimien omat), ilman tuplia. */
+function configuredCalendarIds(): string[] {
+  const ids = [getCalendarId(), ...TEAMS.map((t) => calendarIdForTeam(t.id))].filter((id): id is string => Boolean(id));
+  return Array.from(new Set(ids));
+}
+
+async function teamIdOfLead(leadId: string): Promise<string | null> {
+  const { prisma } = await import('@/server/db');
+  const lead = await prisma.lead.findUnique({ where: { id: leadId }, select: { teamId: true } });
+  return lead?.teamId ?? null;
+}
+
+/** Kalenteri, johon liidin merkinnät kuuluvat (liidin tiimin mukaan). */
+async function leadCalendarId(leadId: string): Promise<string | null> {
+  if (teamsWithOwnCalendar().length === 0) return getCalendarId();
+  return calendarIdForTeam(await teamIdOfLead(leadId));
+}
+
+const isGoneError = (error: unknown) => {
+  const code = (error as { code?: number })?.code;
+  return code === 404 || code === 410;
+};
+
+async function eventExists(client: calendar_v3.Calendar, calendarId: string, eventId: string): Promise<boolean> {
+  try {
+    const res = await client.events.get({ calendarId, eventId });
+    return res.data.status !== 'cancelled';
+  } catch (error) {
+    if (isGoneError(error)) return false;
+    throw error;
+  }
+}
+
+/**
+ * Kalenteri, jossa liidin tapahtuman kuuluu olla. Jos tapahtuma on toisessa käytössä olevassa
+ * kalenterissa, se siirretään sinne ensin (events.move). Palauttaa kohdekalenterin, tai null jos
+ * kalenteria ei ole määritetty. Jos tapahtumaa ei löydy mistään, kutsuja saa 404:n kuten ennenkin.
+ */
+async function resolveEventCalendar(
+  client: calendar_v3.Calendar,
+  leadId: string,
+  eventId: string,
+): Promise<{ calendarId: string | null; moved: boolean }> {
+  const target = await leadCalendarId(leadId);
+  if (!target) return { calendarId: null, moved: false };
+  const others = configuredCalendarIds().filter((id) => id !== target);
+  if (others.length === 0 || (await eventExists(client, target, eventId))) return { calendarId: target, moved: false };
+  for (const source of others) {
+    if (!(await eventExists(client, source, eventId))) continue;
+    await client.events.move({ calendarId: source, eventId, destination: target });
+    await createLog({
+      entityType: 'Lead',
+      entityId: leadId,
+      action: 'calendar.moved',
+      message: 'Kalenterimerkintä siirretty tiimin kalenteriin.',
+      data: { eventId, from: source, to: target },
+    }).catch(() => {});
+    return { calendarId: target, moved: true };
+  }
+  return { calendarId: target, moved: false };
 }
 
 export function isCalendarConfigured(): boolean {
@@ -118,8 +201,8 @@ export type LeadEventDetails = {
  * returns an empty list rather than blocking lead creation.
  */
 export async function findOverlappingEvents(leadId: string, date: Date): Promise<string[]> {
-  const calendarId = getCalendarId();
   const client = getCalendarClient();
+  const calendarId = client ? await leadCalendarId(leadId).catch(() => getCalendarId()) : null;
   if (!calendarId || !client) return [];
 
   // Suomen vuorokausi, ei palvelimen (UTC) — muuten päivän rajat heittävät 2–3 tuntia.
@@ -153,8 +236,8 @@ export async function findOverlappingEvents(leadId: string, date: Date): Promise
 export async function createTentativeLeadEvent(
   details: LeadEventDetails,
 ): Promise<{ eventId: string; htmlLink: string | null } | null> {
-  const calendarId = getCalendarId();
   const client = getCalendarClient();
+  const calendarId = client ? await leadCalendarId(details.leadId).catch(() => getCalendarId()) : getCalendarId();
   if (!calendarId || !client) {
     // Silently returning null here used to be indistinguishable from a real
     // API failure — nothing told you WHY no event showed up. Now it's clear
@@ -215,11 +298,12 @@ export async function createTentativeLeadEvent(
 
 /** Called when a lead is marked WON — the job is really happening. */
 export async function confirmCalendarEvent(leadId: string, eventId: string): Promise<void> {
-  const calendarId = getCalendarId();
   const client = getCalendarClient();
-  if (!calendarId || !client) return;
+  if (!getCalendarId() || !client) return;
 
   try {
+    const { calendarId } = await resolveEventCalendar(client, leadId, eventId);
+    if (!calendarId) return;
     // Pelkkä status/väri ei riitä: kuvaukseen jäi muuten teksti "Alustava merkintä —
     // vahvistuu kun…", vaikka liidi oli jo vahvistettu Discordissa.
     const existing = await client.events.get({ calendarId, eventId });
@@ -244,11 +328,13 @@ ${CONFIRMED_NOTE}`.trim();
 
 /** Called when a lead is marked LOST — the tentative slot frees back up. */
 export async function cancelCalendarEvent(leadId: string, eventId: string): Promise<void> {
-  const calendarId = getCalendarId();
   const client = getCalendarClient();
-  if (!calendarId || !client) return;
+  if (!getCalendarId() || !client) return;
 
   try {
+    // Poistetaan sieltä missä tapahtuma on: tiimin kalenterissa tai vielä vanhassa (siirto ensin)
+    const { calendarId } = await resolveEventCalendar(client, leadId, eventId);
+    if (!calendarId) return;
     await client.events.delete({ calendarId, eventId });
   } catch (error) {
     const code = (error as { code?: number })?.code;
@@ -264,14 +350,15 @@ export async function updateCalendarEventTime(
   newRequestedDate: Date,
   preferredTime?: string | null,
 ): Promise<void> {
-  const calendarId = getCalendarId();
   const client = getCalendarClient();
-  if (!calendarId || !client) return;
+  if (!getCalendarId() || !client) return;
 
   const newStart = calendarEventStart(newRequestedDate, preferredTime);
   const newEnd = new Date(newStart.getTime() + DEFAULT_JOB_DURATION_HOURS * 60 * 60 * 1000);
 
   try {
+    const { calendarId } = await resolveEventCalendar(client, leadId, eventId);
+    if (!calendarId) return;
     await client.events.patch({
       calendarId,
       eventId,
@@ -368,9 +455,8 @@ const CALENDAR_STATUSES: LeadStatus[] = ['SCHEDULED', 'WON'];
  * vahvistetulle keikalle. Jos merkintä on poistettu kalenterista käsin, luodaan uusi. Ei heitä.
  */
 export async function resyncLeadCalendarEvent(leadId: string): Promise<CalendarSyncResult> {
-  const calendarId = getCalendarId();
   const client = getCalendarClient();
-  if (!calendarId || !client) return { ok: false, message: 'Google-kalenteria ei ole määritetty palvelimelle.' };
+  if (!getCalendarId() || !client) return { ok: false, message: 'Google-kalenteria ei ole määritetty palvelimelle.' };
 
   try {
     const { prisma } = await import('@/server/db');
@@ -386,6 +472,8 @@ export async function resyncLeadCalendarEvent(leadId: string): Promise<CalendarS
     if (lead.calendarEventId) {
       let gone = false;
       try {
+        const { calendarId } = await resolveEventCalendar(client, lead.id, lead.calendarEventId);
+        if (!calendarId) return { ok: false, message: 'Google-kalenteria ei ole määritetty palvelimelle.' };
         const res = await client.events.patch({
           calendarId,
           eventId: lead.calendarEventId,
@@ -431,9 +519,8 @@ export async function upsertAllDayEvent(
   eventId: string | null,
   event: { summary: string; description: string; dateKey: string; confirmed: boolean },
 ): Promise<string | null> {
-  const calendarId = getCalendarId();
   const client = getCalendarClient();
-  if (!calendarId || !client) return null;
+  if (!getCalendarId() || !client) return null;
 
   const next = new Date(`${event.dateKey}T00:00:00Z`);
   next.setUTCDate(next.getUTCDate() + 1);
@@ -448,13 +535,14 @@ export async function upsertAllDayEvent(
   };
 
   try {
+    const calendarId = eventId ? (await resolveEventCalendar(client, leadId, eventId)).calendarId : await leadCalendarId(leadId);
+    if (!calendarId) return null;
     if (eventId) {
       try {
         const res = await client.events.patch({ calendarId, eventId, requestBody });
         if (res.data.status !== 'cancelled') return eventId;
       } catch (error) {
-        const code = (error as { code?: number })?.code;
-        if (code !== 404 && code !== 410) throw error;
+        if (!isGoneError(error)) throw error;
       }
     }
     const res = await client.events.insert({ calendarId, requestBody });
@@ -463,4 +551,106 @@ export async function upsertAllDayEvent(
     await logCalendarFailure('upsertAllDayEvent', leadId, error);
     return eventId;
   }
+}
+
+/**
+ * Siirtää liidin kalenterimerkinnät (keikka sekä laatikoiden toimitus ja nouto) liidin tiimin
+ * kalenteriin. Kutsutaan kun tiimi vaihtuu. Palauttaa siirrettyjen määrän. Ei heitä.
+ */
+export async function moveLeadEventsToTeamCalendar(leadId: string): Promise<{ moved: number; failed: number }> {
+  const client = getCalendarClient();
+  if (!getCalendarId() || !client || configuredCalendarIds().length < 2) return { moved: 0, failed: 0 };
+  let moved = 0;
+  let failed = 0;
+  try {
+    const { prisma } = await import('@/server/db');
+    const lead = await prisma.lead.findUnique({
+      where: { id: leadId },
+      select: { calendarEventId: true, boxRental: { select: { deliveryEventId: true, pickupEventId: true } } },
+    });
+    const eventIds = [lead?.calendarEventId, lead?.boxRental?.deliveryEventId, lead?.boxRental?.pickupEventId].filter(
+      (id): id is string => Boolean(id),
+    );
+    for (const eventId of eventIds) {
+      try {
+        if ((await resolveEventCalendar(client, leadId, eventId)).moved) moved++;
+      } catch (error) {
+        failed++;
+        await logCalendarFailure('moveLeadEventsToTeamCalendar', leadId, error);
+      }
+    }
+  } catch (error) {
+    failed++;
+    await logCalendarFailure('moveLeadEventsToTeamCalendar', leadId, error);
+  }
+  return { moved, failed };
+}
+
+/**
+ * Kertasiirto, kun tiimille otetaan oma kalenteri käyttöön: kaikkien tiimin keikkojen merkinnät
+ * siirretään yhteisestä kalenterista tiimin kalenteriin. Turvallinen ajaa uudelleen. Ei heitä.
+ */
+export async function moveTeamEventsToTeamCalendars(): Promise<{ leads: number; moved: number; failed: number }> {
+  const teams = teamsWithOwnCalendar();
+  if (teams.length === 0 || !getCalendarClient()) return { leads: 0, moved: 0, failed: 0 };
+  const { prisma } = await import('@/server/db');
+  const leads = await prisma.lead.findMany({
+    where: {
+      teamId: { in: teams },
+      OR: [
+        { calendarEventId: { not: null } },
+        { boxRental: { OR: [{ deliveryEventId: { not: null } }, { pickupEventId: { not: null } }] } },
+      ],
+    },
+    select: { id: true },
+  });
+  let moved = 0;
+  let failed = 0;
+  for (const lead of leads) {
+    const result = await moveLeadEventsToTeamCalendar(lead.id);
+    moved += result.moved;
+    failed += result.failed;
+  }
+  return { leads: leads.length, moved, failed };
+}
+
+const TEAM_CALENDAR_MOVE_KEY = 'calendar.teamMoveDone';
+
+/** Tiimikalenterien asetus tunnisteena: kun uusi tiimikalenteri otetaan käyttöön, kertasiirto tarjotaan uudelleen. */
+function teamCalendarSignature(): string {
+  return teamsWithOwnCalendar()
+    .map((teamId) => `${teamId}:${calendarIdForTeam(teamId)}`)
+    .join('|');
+}
+
+/**
+ * Hallinnan etusivun ilmoitus: tiimeillä on omat kalenterit, mutta vanhoja merkintöjä ei ole vielä
+ * siirretty. null = ei mitään tehtävää.
+ */
+export async function teamCalendarMoveStatus(): Promise<{ teams: string[]; leads: number } | null> {
+  const teams = teamsWithOwnCalendar();
+  if (teams.length === 0 || !getCalendarClient()) return null;
+  try {
+    const { getAppState } = await import('@/server/app-state');
+    if ((await getAppState<string>(TEAM_CALENDAR_MOVE_KEY)) === teamCalendarSignature()) return null;
+    const { prisma } = await import('@/server/db');
+    const leads = await prisma.lead.count({
+      where: {
+        teamId: { in: teams },
+        OR: [
+          { calendarEventId: { not: null } },
+          { boxRental: { OR: [{ deliveryEventId: { not: null } }, { pickupEventId: { not: null } }] } },
+        ],
+      },
+    });
+    return { teams, leads };
+  } catch {
+    return null;
+  }
+}
+
+/** Merkitsee kertasiirron tehdyksi nykyisille tiimikalentereille. */
+export async function markTeamCalendarMoveDone(): Promise<void> {
+  const { setAppState } = await import('@/server/app-state');
+  await setAppState(TEAM_CALENDAR_MOVE_KEY, teamCalendarSignature());
 }

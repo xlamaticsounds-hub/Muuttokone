@@ -16,6 +16,16 @@ import { rateLimit } from '@/server/rate-limit';
 
 import type { NextRequest } from 'next/server';
 
+/** Tiimi vaihtui: keikan ja laatikkovuokran kalenterimerkinnät tiimin kalenteriin (esim. Tampere). Ei heitä. */
+async function moveEventsToTeamCalendar(leadId: string): Promise<void> {
+  try {
+    const { moveLeadEventsToTeamCalendar } = await import('@/server/google-calendar');
+    await moveLeadEventsToTeamCalendar(leadId);
+  } catch (error) {
+    console.warn('[team-calendar] kalenterimerkintöjen siirto epäonnistui', leadId, error);
+  }
+}
+
 // Extract client IP from NextRequest headers (x-forwarded-for, x-real-ip, etc.)
 export async function ipFromHeaders(request?: NextRequest): Promise<string | null> {
   if (!request) return null;
@@ -330,6 +340,7 @@ export async function updateLeadDetails(leadId: string, data: any) {
       data: { from: null, to: autoTeamId, auto: true },
       actorId: session.user.email,
     }).catch(() => {});
+    await moveEventsToTeamCalendar(leadId);
   }
 
   if (existingLead?.contactId && typeof data.customerName === 'string') {

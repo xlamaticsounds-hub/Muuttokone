@@ -112,6 +112,7 @@ vi.mock('@/server/google-calendar', () => ({
   syncCalendarWithLeadStatus: vi.fn(async () => {}),
   recreateConfirmedLeadEvent: vi.fn(async () => {}),
   updateCalendarEventTime: vi.fn(async () => {}),
+  moveLeadEventsToTeamCalendar: vi.fn(async () => ({ moved: 0, failed: 0 })),
 }));
 vi.mock('@/server/box-rentals', () => ({
   boxRentalWarning: vi.fn(async () => null),

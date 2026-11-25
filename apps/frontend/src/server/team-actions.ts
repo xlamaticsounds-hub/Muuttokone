@@ -10,6 +10,16 @@ import { isTeamId, suggestTeamId, teamLabel } from '@/lib/teams';
 import { parseLeadFormData } from '@/server/lead-format';
 import { CREW_NOTES_KEY, MAX_CREW_NOTES } from '@/server/crew-jobs';
 
+/** Tiimi vaihtui: keikan ja laatikkovuokran kalenterimerkinnät tiimin kalenteriin (esim. Tampere). Ei heitä. */
+async function moveEventsToTeamCalendar(leadId: string): Promise<void> {
+  try {
+    const { moveLeadEventsToTeamCalendar } = await import('@/server/google-calendar');
+    await moveLeadEventsToTeamCalendar(leadId);
+  } catch (error) {
+    console.warn('[team-calendar] kalenterimerkintöjen siirto epäonnistui', leadId, error);
+  }
+}
+
 export type TeamActionResult = { success: true } | { success: false; message: string };
 
 /**
@@ -75,6 +85,7 @@ export async function autoAssignUnassignedLeads(): Promise<AutoAssignResult> {
         data: { from: null, to: teamId, auto: true },
         actorId: session.user.email,
       }).catch(() => {});
+      await moveEventsToTeamCalendar(lead.id);
     }
     if (assigned > 0) {
       revalidatePath('/hallinta/liidit');
@@ -116,6 +127,7 @@ export async function setLeadTeam(leadId: string, teamId: string | null): Promis
       data: { from: previous, to: teamId },
       actorId: session.user.email,
     });
+    await moveEventsToTeamCalendar(leadId);
     revalidatePath(`/hallinta/liidit/${leadId}`);
     revalidatePath('/hallinta/liidit');
     revalidatePath('/hallinta/keikat');

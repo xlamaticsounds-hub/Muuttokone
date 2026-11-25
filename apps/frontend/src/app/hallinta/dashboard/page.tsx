@@ -7,6 +7,9 @@ import JobsCalendar, { type CalendarJob, type CalendarNotices } from './JobsCale
 import { INACTIVE_JOB_STATUSES } from '@/lib/lead-status';
 import AiTodoList, { type AiTodoItem, type MailStatus } from './AiTodoList';
 import AutoAssignButton from './AutoAssignButton';
+import MoveTeamCalendarButton from './MoveTeamCalendarButton';
+import { teamCalendarMoveStatus } from '@/server/google-calendar';
+import { teamLabel } from '@/lib/teams';
 import { getLastMailCycle } from '@/server/mail-cycle';
 import { getIngestMode } from '@/server/mail-ingest';
 import { describeLastRun } from '@/lib/mail-status';
@@ -40,6 +43,8 @@ export default async function DashboardPage() {
   const scope = teamWhere(actor);
   const isOwner = actor.role === 'OWNER';
   let unassigned = 0;
+  // Tiimin oma kalenteri otettu käyttöön (esim. GOOGLE_CALENDAR_ID_TAMPERE): vanhat merkinnät siirtämättä
+  const teamCalendarMove = isOwner ? await teamCalendarMoveStatus() : null;
   let dbUnavailable = false;
   let recentLeads: LeadWithContact[] = [];
   let calendarJobs: CalendarJob[] = [];
@@ -153,6 +158,18 @@ export default async function DashboardPage() {
       {dbUnavailable && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/40 dark:bg-amber-900/20 dark:text-amber-200">
           Tietokantaan ei juuri nyt saada yhteyttä. Hallintapaneeli on silti käytettävissä, mutta data ei päivity.
+        </div>
+      )}
+
+      {teamCalendarMove && teamCalendarMove.leads > 0 && (
+        <div className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border border-sky-200 bg-sky-50 px-4 py-2 text-sm text-sky-900 dark:border-sky-900/40 dark:bg-sky-900/20 dark:text-sky-200">
+          <span>
+            <span className="font-semibold">Tiimikalenteri:</span> {teamCalendarMove.teams.map(teamLabel).join(', ')} käyttää nyt omaa
+            kalenteria. Siirrä tiimin nykyiset {teamCalendarMove.leads} keikkaa sinne.
+          </span>
+          <span className="ml-auto">
+            <MoveTeamCalendarButton label={`Siirrä ${teamCalendarMove.teams.map(teamLabel).join(' ja ')}-keikat`} />
+          </span>
         </div>
       )}
 
